@@ -4,6 +4,7 @@ import { Gavel, LockKeyhole, RotateCcw } from "lucide-react";
 
 import { lockRoundAction, unlockRoundAction } from "@/app/actions";
 import { RoundForm } from "@/components/round-form";
+import { RoundMapProtocol } from "@/components/round-map-protocol";
 import { Section } from "@/components/section";
 import { computeRound } from "@/lib/scoring";
 import { getAppState, getRound } from "@/lib/store";
@@ -87,6 +88,8 @@ export default async function RoundDetailPage({
           </p>
         </div>
       </div>
+
+      <RoundMapProtocol snapshot={round.mapSnapshot} />
 
       <Section
         title="Protokollføring"

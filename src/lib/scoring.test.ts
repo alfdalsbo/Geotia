@@ -41,6 +41,58 @@ describe("SlowGeo scoring", () => {
     expect(computed.results.find((result) => result.player.id === "jorgen")?.points).toBe(5);
   });
 
+  it("uses the valid participant count as the max score", () => {
+    const sixPlayers = computeRound(
+      round([
+        { playerId: "alf", status: "deltatt", actualKm: 10 },
+        { playerId: "vegard", status: "deltatt", actualKm: 20 },
+        { playerId: "jorgen", status: "deltatt", actualKm: 30 },
+        { playerId: "steinar", status: "deltatt", actualKm: 40 },
+        { playerId: "sverre", status: "deltatt", actualKm: 50 },
+        { playerId: "danny", status: "deltatt", actualKm: 60 },
+      ]),
+      players,
+    );
+    const eightPlayers = computeRound(
+      round([
+        { playerId: "alf", status: "deltatt", actualKm: 10 },
+        { playerId: "vegard", status: "deltatt", actualKm: 20 },
+        { playerId: "jorgen", status: "deltatt", actualKm: 30 },
+        { playerId: "steinar", status: "deltatt", actualKm: 40 },
+        { playerId: "sverre", status: "deltatt", actualKm: 50 },
+        { playerId: "fredrik", status: "deltatt", actualKm: 60 },
+        { playerId: "ruben", status: "deltatt", actualKm: 70 },
+        { playerId: "danny", status: "deltatt", actualKm: 80 },
+      ]),
+      players,
+    );
+
+    expect(sixPlayers.maxPoints).toBe(6);
+    expect(sixPlayers.results.find((result) => result.player.id === "alf")?.points).toBe(6);
+    expect(sixPlayers.results.find((result) => result.player.id === "danny")?.points).toBe(1);
+    expect(eightPlayers.maxPoints).toBe(8);
+    expect(eightPlayers.results.find((result) => result.player.id === "alf")?.points).toBe(8);
+    expect(eightPlayers.results.find((result) => result.player.id === "danny")?.points).toBe(1);
+  });
+
+  it("includes Danny in SlowGeo standings without changing his voting status", () => {
+    const danny = players.find((player) => player.id === "danny");
+    const standings = computeStandings(players, [
+      round([
+        { playerId: "alf", status: "deltatt", actualKm: 10 },
+        { playerId: "vegard", status: "deltatt", actualKm: 20 },
+        { playerId: "jorgen", status: "deltatt", actualKm: 30 },
+        { playerId: "steinar", status: "deltatt", actualKm: 40 },
+        { playerId: "sverre", status: "deltatt", actualKm: 50 },
+        { playerId: "danny", status: "deltatt", actualKm: 60 },
+      ]),
+    ]);
+
+    expect(danny?.canCompete).toBe(true);
+    expect(danny?.canVote).toBe(false);
+    expect(standings.find((standing) => standing.player.id === "danny")?.roundsPlayed).toBe(1);
+  });
+
   it("charges non-participants with the average of the three worst valid km results", () => {
     const results: Round["results"] = [
       { playerId: "alf", status: "deltatt", actualKm: 10 },

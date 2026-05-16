@@ -31,8 +31,8 @@ describe("multi-game scoring", () => {
     const standings = computeGameStandings(players, [session("geo", { alf: 1000, vegard: 900 })], game);
 
     expect(standings[0].player.id).toBe("alf");
-    expect(standings[0].totalPoints).toBe(7);
-    expect(standings.find((standing) => standing.player.id === "vegard")?.totalPoints).toBe(6);
+    expect(standings[0].totalPoints).toBe(2);
+    expect(standings.find((standing) => standing.player.id === "vegard")?.totalPoints).toBe(1);
   });
 
   it("ranks Globle by fewest attempts", () => {
@@ -40,7 +40,7 @@ describe("multi-game scoring", () => {
     const standings = computeGameStandings(players, [session("globle", { alf: 5, vegard: 3 })], game);
 
     expect(standings[0].player.id).toBe("vegard");
-    expect(standings[0].totalPoints).toBe(7);
+    expect(standings[0].totalPoints).toBe(2);
   });
 });
 

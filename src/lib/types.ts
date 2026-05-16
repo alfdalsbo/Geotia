@@ -1,10 +1,39 @@
 export type ResultStatus = "deltatt" | "ikke_deltatt" | "ugyldig";
 
-export type RoundStatus = "draft" | "locked";
+export type RoundStatus = "draft" | "open" | "revealed" | "locked";
 
 export type GameId = "slowgeo" | "geo" | "maptap" | "satle" | "globle";
 
 export type ScoreDirection = "higher" | "lower";
+
+export type DistanceSource = "auto" | "manual";
+
+export type GeoLocation = {
+  lat: number;
+  lon: number;
+  label: string;
+  query: string;
+  country?: string;
+  source: "nominatim" | "manual" | "google_street_view";
+};
+
+export type SlowGeoChallenge = {
+  id: string;
+  candidateId: string;
+  source: "google_street_view";
+  lat: number;
+  lon: number;
+  label: string;
+  country: string;
+  continent: string;
+  heading: number;
+  pitch: number;
+  fov: number;
+  panoId?: string;
+  imageDate?: string;
+  copyright?: string;
+  createdAt: string;
+};
 
 export type GameDefinition = {
   id: GameId;
@@ -56,7 +85,32 @@ export type PlayerResult = {
   playerId: string;
   status: ResultStatus;
   actualKm: number | null;
+  guessText?: string;
+  guessLocation?: GeoLocation | null;
+  guessUpdatedAt?: string | null;
+  distanceSource?: DistanceSource | null;
   note?: string;
+};
+
+export type RoundMapMarker = {
+  id: string;
+  type: "answer" | "guess";
+  playerId?: string;
+  label: string;
+  lat: number;
+  lon: number;
+  color: string;
+  distanceKm?: number | null;
+};
+
+export type RoundMapSnapshot = {
+  bounds: {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  };
+  markers: RoundMapMarker[];
 };
 
 export type GameResult = {
@@ -72,6 +126,11 @@ export type Round = {
   date: string;
   name: string;
   answer: string;
+  answerLocation?: GeoLocation | null;
+  mapSnapshot?: RoundMapSnapshot | null;
+  challenge?: SlowGeoChallenge | null;
+  deadlineAt?: string | null;
+  revealedAt?: string | null;
   country: string;
   continent: string;
   comment: string;
@@ -111,12 +170,14 @@ export type ComputedGameResult = GameResult & {
 export type ComputedGameSession = Omit<GameSession, "results"> & {
   game: GameDefinition;
   participantCount: number;
+  maxPoints: number;
   winnerNames: string[];
   results: ComputedGameResult[];
 };
 
 export type ComputedRound = Omit<Round, "results"> & {
   participantCount: number;
+  maxPoints: number;
   worstThreeAverage: number | null;
   results: ComputedPlayerResult[];
   winnerNames: string[];

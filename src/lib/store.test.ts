@@ -4,6 +4,8 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { GeoLocation } from "@/lib/types";
+
 let tempDir: string | null = null;
 
 afterEach(async () => {
@@ -22,17 +24,48 @@ describe("Geotia file store", () => {
     vi.resetModules();
 
     const { upsertRound, lockRound, getAppState } = await import("@/lib/store");
+    const answerLocation: GeoLocation = {
+      lat: 48.2082,
+      lon: 16.3738,
+      label: "Wien, Østerrike",
+      query: "Wien",
+      country: "Østerrike",
+      source: "nominatim",
+    };
+    const guessLocation: GeoLocation = {
+      lat: 47.4979,
+      lon: 19.0402,
+      label: "Budapest, Ungarn",
+      query: "Budapest",
+      country: "Ungarn",
+      source: "nominatim",
+    };
 
     const saved = await upsertRound({
       date: "2026-05-16",
       name: "Testprotokollen",
       answer: "Wien",
+      answerLocation,
       country: "Østerrike",
       continent: "Europa",
       comment: "Embetsmessig prøve",
       results: [
-        { playerId: "alf", status: "deltatt", actualKm: 10 },
-        { playerId: "vegard", status: "deltatt", actualKm: 20 },
+        {
+          playerId: "alf",
+          status: "deltatt",
+          actualKm: 10,
+          guessText: "Wien sentrum",
+          guessLocation: answerLocation,
+          distanceSource: "auto",
+        },
+        {
+          playerId: "vegard",
+          status: "deltatt",
+          actualKm: 214,
+          guessText: "Budapest",
+          guessLocation,
+          distanceSource: "manual",
+        },
         { playerId: "jorgen", status: "deltatt", actualKm: 30 },
         { playerId: "steinar", status: "deltatt", actualKm: 40 },
         { playerId: "sverre", status: "deltatt", actualKm: 50 },
@@ -48,6 +81,13 @@ describe("Geotia file store", () => {
     expect(state.rounds).toHaveLength(1);
     expect(state.rounds[0].status).toBe("locked");
     expect(state.rounds[0].number).toBe(1);
+    expect(state.rounds[0].answerLocation?.label).toBe("Wien, Østerrike");
+    expect(state.rounds[0].results.find((result) => result.playerId === "vegard")?.distanceSource).toBe("manual");
+    expect(state.rounds[0].mapSnapshot?.markers.map((marker) => marker.id)).toEqual([
+      "answer",
+      "guess-alf",
+      "guess-vegard",
+    ]);
   });
 
   it("persists Geoterindeksen adjustments in the local protocol file", async () => {

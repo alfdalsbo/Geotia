@@ -196,21 +196,34 @@ export function getGeoterIndexHistory(playerId: string, adjustments: GeoterIndex
     {
       id: "start",
       score,
+      scoreBefore: score,
+      scoreAfter: score,
       delta: 0,
       title: "Grunnscore",
       createdAt: "",
+      reason: "Alle geoter starter på normaltilstanden.",
+      createdBy: "system",
     },
     ...playerAdjustments.map((adjustment) => {
+      const scoreBefore = score;
       score = clampIndexScore(score + adjustment.delta);
       return {
         id: adjustment.id,
         score,
+        scoreBefore,
+        scoreAfter: score,
         delta: adjustment.delta,
         title: adjustment.title,
+        reason: adjustment.reason,
         createdAt: adjustment.createdAt,
+        createdBy: adjustment.createdBy,
       };
     }),
   ];
+}
+
+export function getGeoterIndexAdjustmentTrail(playerId: string, adjustments: GeoterIndexAdjustment[]) {
+  return getGeoterIndexHistory(playerId, adjustments).filter((point) => point.id !== "start");
 }
 
 export function getGeoterIndexRows(players: Player[], adjustments: GeoterIndexAdjustment[]) {

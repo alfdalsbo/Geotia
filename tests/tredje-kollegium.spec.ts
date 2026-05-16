@@ -9,13 +9,18 @@ async function login(page: Page, username: string) {
 }
 
 for (const username of ["SS", "PKK", "IRA"]) {
-  test(`Tredje Kollegium is visible for ${username}`, async ({ page }) => {
+  test(`Tredje Kollegium is reachable through Min geot for ${username}`, async ({ page }) => {
     await login(page, username);
 
+    await expect(page.getByRole("link", { name: "Tredje Kollegium" })).toHaveCount(0);
+    await page.getByRole("link", { name: "Min geot" }).click();
+    await expect(page.getByRole("heading", { name: /Alf Kåre|Steinar|Vegard/ })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("link", { name: "Tredje Kollegium" })).toBeVisible();
+    await page.getByRole("link", { name: "Tredje Kollegium" }).click();
     await page.goto("/tredje-kollegium");
     await expect(page.getByRole("heading", { name: "Tredje Kollegium" })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("heading", { name: "GEOTERINDEKSEN" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Åpne poengsystemet")).toBeVisible();
     await page.getByLabel("Vis større bilde: Seglet til Tredje Kollegium").click();
     await expect(page.getByRole("dialog")).toBeVisible();
   });
@@ -26,6 +31,8 @@ test("Tredje Kollegium stays invisible for every non-member", async ({ page }) =
     await page.context().clearCookies();
     await login(page, username);
 
+    await expect(page.getByRole("link", { name: "Tredje Kollegium" })).toHaveCount(0);
+    await page.getByRole("link", { name: "Min geot" }).click();
     await expect(page.getByRole("link", { name: "Tredje Kollegium" })).toHaveCount(0);
     await expect(page.getByText("GEOTERINDEKSEN")).toHaveCount(0);
     const pageResponse = await page.goto("/tredje-kollegium");

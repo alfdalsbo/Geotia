@@ -56,9 +56,9 @@ export default async function DashboardPage() {
             </h1>
             <p className="mt-4 max-w-3xl text-lg leading-8 text-[#4f412b]">
               Et geotisk mikrounivers bygget på geografispill, brutal
-              sannhetssøken og et statsapparat som nekter å være en
-              kommuneportal. Her føres kilometer, ære, desertering og
-              partipropaganda med høytidelig hånd i Geotias statsarkiv.
+              sannhetssøken og et statsapparat som fører riket med alvorlig
+              smil. Her føres kilometer, ære, desertering og partipropaganda
+              med høytidelig hånd i Geotias statsarkiv.
             </p>
 
             <div className="geotia-ornament mt-6 text-center text-sm font-semibold uppercase tracking-[0.18em] text-[#7c2430]">

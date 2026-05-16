@@ -31,12 +31,12 @@ export default async function RoundsPage({
           Runder og protokoller
         </h1>
         <p className="mt-3 max-w-3xl text-[#60553f]">
-          Før km, deltakelse og hendelser. Ikke skriv faktiske svarsteder; staten har valgt
-          lavere byråkrati og høyere overlevelse.
+          Før fasit, geotenes svar, km og hendelser. Kartografen kan regne avstander,
+          men GeoVAR lar deg fortsatt overstyre når verden oppfører seg urimelig.
         </p>
         <p className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm leading-6 text-[#4f412b]">
-          Tom km-celle betyr ikke deltatt. Kattometeret beregner snittet av de tre
-          dårligste, og poengrekken står fast: 7, 6, 5, 4, 3, 2, 1 og 0 for desertering.
+          Poengrekken følger antall gyldige deltakere i runden. Kattometeret beregner
+          fortsatt snittet av de tre dårligste for desertering og ugyldige svar.
         </p>
       </div>
 

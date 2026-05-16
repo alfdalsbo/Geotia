@@ -33,6 +33,7 @@ import {
   geoterIndexMultipliers,
   geoterIndexProcedures,
   geoterIndexTiers,
+  getGeoterIndexAdjustmentTrail,
   getGeoterIndexRows,
   negativeIndexRules,
   positiveIndexRules,
@@ -100,8 +101,7 @@ export default async function ThirdCollegePage({
   const geoterIndexLeader = geoterIndexRows[0];
   const geoterIndexRisk = [...geoterIndexRows].sort((a, b) => a.score - b.score)[0];
   const latestIndexAdjustments = [...state.geoterIndexAdjustments]
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .slice(0, 6);
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const geoticOrderRows = getGeoticOrderRows(
     state.players,
     standings,
@@ -577,13 +577,17 @@ function GeoterIndexSection({
             </div>
             <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
-                Siste hemmelige føringer
+                Justeringslogg
               </p>
-              <div className="mt-3 space-y-3">
+              <div className="mt-3 max-h-[560px] space-y-3 overflow-y-auto pr-1">
                 {latestAdjustments.length ? (
                   latestAdjustments.map((adjustment) => {
                     const player = playerById.get(adjustment.playerId);
                     const category = categoryById.get(adjustment.category);
+                    const operator = playerById.get(adjustment.createdBy);
+                    const trailPoint = getGeoterIndexAdjustmentTrail(adjustment.playerId, latestAdjustments).find(
+                      (point) => point.id === adjustment.id,
+                    );
                     return (
                       <div key={adjustment.id} className="rounded border border-[#c49a3c]/30 bg-[#020b11]/35 p-3 text-sm">
                         <p className="flex items-center justify-between gap-3">
@@ -594,8 +598,17 @@ function GeoterIndexSection({
                           </span>
                         </p>
                         <p className="mt-1 text-[#eadcbd]">{adjustment.title}</p>
-                        <p className="mt-1 text-xs text-[#cdbd97]">
-                          {category?.label ?? adjustment.category} · {dateTimeLabel(adjustment.createdAt)}
+                        <p className="mt-1 text-xs leading-5 text-[#cdbd97]">
+                          {category?.label ?? adjustment.category} · {dateTimeLabel(adjustment.createdAt)} · ført av{" "}
+                          {operator?.shortName ?? adjustment.createdBy}
+                        </p>
+                        {trailPoint ? (
+                          <p className="mt-2 rounded border border-[#c49a3c]/20 bg-[#fff7e6]/8 px-2 py-1 font-mono text-xs text-[#fff7e6]">
+                            {trailPoint.scoreBefore} → {trailPoint.scoreAfter}
+                          </p>
+                        ) : null}
+                        <p className="mt-2 text-xs leading-5 text-[#eadcbd]">
+                          {adjustment.reason || "Ingen begrunnelse ført. Mistenkelig, men lovlig."}
                         </p>
                       </div>
                     );
@@ -680,8 +693,17 @@ function GeoterIndexSection({
         </aside>
       </div>
 
-      <div className="border-t border-[#c49a3c]/45 bg-[#f4e6c7] p-5 text-[#161713] sm:p-7">
-        <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <details className="border-t border-[#c49a3c]/45 bg-[#f4e6c7] text-[#161713]">
+        <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-4 text-sm font-semibold text-[#062b40] marker:text-[#7c2430] sm:px-7">
+          <span className="inline-flex items-center gap-2">
+            <FileText className="h-4 w-4" aria-hidden="true" />
+            Åpne poengsystemet
+          </span>
+          <span className="hidden text-xs uppercase tracking-[0.16em] text-[#7c2430] sm:inline">
+            nivåer · regler · multiplikatorer
+          </span>
+        </summary>
+        <div className="grid gap-6 border-t border-[#c49a3c]/30 p-5 sm:p-7 xl:grid-cols-[0.9fr_1.1fr]">
           <div>
             <p className="inline-flex items-center gap-2 rounded border border-[#7c2430]/35 bg-[#7c2430]/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#7c2430]">
               <FileText className="h-4 w-4" aria-hidden="true" />
@@ -713,7 +735,7 @@ function GeoterIndexSection({
             <RulePanel title="Kollegiets prosedyrer" items={geoterIndexProcedures} />
           </div>
         </div>
-      </div>
+      </details>
     </section>
   );
 }
@@ -1003,51 +1025,91 @@ function IndexSparkline({ row }: { row: GeoterIndexRow }) {
 }
 
 function IndexHistoryGraph({ rows }: { rows: GeoterIndexRow[] }) {
-  const width = 720;
-  const height = 250;
+  const width = 760;
+  const height = 290;
+  const plot = { left: 46, right: 132, top: 20, bottom: 32 };
+  const plotWidth = width - plot.left - plot.right;
+  const plotHeight = height - plot.top - plot.bottom;
   const maxPoints = Math.max(...rows.map((row) => row.history.length), 1);
+  const xFor = (index: number) => plot.left + (maxPoints <= 1 ? 0 : (index / (maxPoints - 1)) * plotWidth);
+  const yFor = (score: number) => plot.top + (1 - score / 1000) * plotHeight;
 
   return (
-    <div className="mt-4 overflow-x-auto">
-      <svg aria-label="Samlet historikk for Geoterindeksen" className="min-w-[640px]" role="img" viewBox={`0 0 ${width} ${height}`}>
-        <rect fill="rgba(255,247,230,0.06)" height={height} rx="8" width={width} />
-        {[950, 850, 750, 650, 550, 400, 250].map((score) => {
-          const y = height - (score / 1000) * height;
+    <div className="mt-4 overflow-x-auto rounded border border-[#c49a3c]/25 bg-[#020b11]/55 p-2">
+      <svg aria-label="Samlet historikk for Geoterindeksen" className="min-w-[720px]" role="img" viewBox={`0 0 ${width} ${height}`}>
+        <defs>
+          <linearGradient id="indexGraphFade" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%" stopColor="rgba(225,192,108,0.22)" />
+            <stop offset="55%" stopColor="rgba(255,247,230,0.08)" />
+            <stop offset="100%" stopColor="rgba(124,36,48,0.18)" />
+          </linearGradient>
+        </defs>
+        <rect fill="rgba(255,247,230,0.04)" height={height} rx="12" width={width} />
+        {geoterIndexTiers.map((tier) => {
+          const yTop = yFor(tier.max);
+          const yBottom = yFor(tier.min);
+          return (
+            <g key={tier.name}>
+              <rect
+                fill={tier.tone}
+                height={Math.max(2, yBottom - yTop)}
+                opacity="0.08"
+                width={plotWidth}
+                x={plot.left}
+                y={yTop}
+              />
+              <text fill="rgba(255,247,230,0.46)" fontSize="10" x={plot.left + plotWidth + 10} y={Math.max(plot.top + 10, yTop + 13)}>
+                {tier.name}
+              </text>
+            </g>
+          );
+        })}
+        <rect fill="url(#indexGraphFade)" height={plotHeight} opacity="0.35" width={plotWidth} x={plot.left} y={plot.top} />
+        {[1000, 900, 800, 700, 600, 500, 400, 300, 200, 100, 0].map((score) => {
+          const y = yFor(score);
           return (
             <g key={score}>
-              <line stroke="rgba(225,192,108,0.18)" x1="0" x2={width} y1={y} y2={y} />
-              <text fill="rgba(255,247,230,0.56)" fontSize="11" x="8" y={Math.max(12, y - 4)}>
+              <line stroke="rgba(225,192,108,0.14)" x1={plot.left} x2={plot.left + plotWidth} y1={y} y2={y} />
+              <text fill="rgba(255,247,230,0.58)" fontSize="11" textAnchor="end" x={plot.left - 8} y={Math.max(12, y + 4)}>
                 {score}
               </text>
             </g>
           );
         })}
+        <line stroke="rgba(255,247,230,0.55)" strokeWidth="2" x1={plot.left} x2={plot.left + plotWidth} y1={yFor(700)} y2={yFor(700)} />
+        <text fill="#fff7e6" fontSize="11" fontWeight="700" x={plot.left + 8} y={yFor(700) - 7}>
+          grunnscore 700
+        </text>
         {rows.map((row, index) => {
           const d = row.history
-            .map((point, index) => {
-              const x = maxPoints <= 1 ? 28 : 28 + (index / (maxPoints - 1)) * (width - 52);
-              const y = height - (point.score / 1000) * height;
-              return `${index === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
+            .map((point, pointIndex) => {
+              const x = xFor(pointIndex);
+              const y = yFor(point.score);
+              return `${pointIndex === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
             })
             .join(" ");
           const lastPoint = row.history.at(-1)!;
-          const lastX = maxPoints <= 1 ? 28 : 28 + ((row.history.length - 1) / (maxPoints - 1)) * (width - 52);
-          const lastY = height - (lastPoint.score / 1000) * height;
+          const lastX = xFor(row.history.length - 1);
+          const lastY = yFor(lastPoint.score);
           const labelY = Math.min(
-            height - 8,
-            Math.max(14, lastY + (index - (rows.length - 1) / 2) * 15),
+            height - plot.bottom + 4,
+            Math.max(plot.top + 12, lastY + (index - (rows.length - 1) / 2) * 13),
           );
           return (
             <g key={row.player.id}>
-              <path d={d} fill="none" opacity="0.84" stroke={row.player.color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
-              <circle cx={lastX} cy={lastY} fill={row.player.color} r="5" />
+              <path d={d} fill="none" opacity="0.92" stroke={row.player.color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" />
+              {row.history.map((point, pointIndex) => (
+                <circle key={`${row.player.id}-${point.id}`} cx={xFor(pointIndex)} cy={yFor(point.score)} fill="#061d2b" r="4.5" stroke={row.player.color} strokeWidth="2" />
+              ))}
+              <circle cx={lastX} cy={lastY} fill={row.player.color} r="6" stroke="#fff7e6" strokeWidth="2" />
               <text
                 fill="#fff7e6"
                 fontSize="12"
+                fontWeight="700"
                 paintOrder="stroke"
                 stroke="#061d2b"
                 strokeWidth="4"
-                x={Math.min(width - 110, lastX + 10)}
+                x={Math.min(width - 110, lastX + 12)}
                 y={labelY}
               >
                 {row.player.shortName} {row.score}
@@ -1055,6 +1117,9 @@ function IndexHistoryGraph({ rows }: { rows: GeoterIndexRow[] }) {
             </g>
           );
         })}
+        <text fill="rgba(255,247,230,0.54)" fontSize="11" x={plot.left} y={height - 8}>
+          Hver prikk er en protokollført justering. Tom historikk hviler på 700.
+        </text>
       </svg>
     </div>
   );

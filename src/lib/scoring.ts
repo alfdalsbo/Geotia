@@ -11,8 +11,6 @@ import type {
   Standing,
 } from "@/lib/types";
 
-const MAX_POINTS = 7;
-
 function competingPlayers(players: Player[]) {
   return players.filter((player) => player.canCompete !== false);
 }
@@ -42,6 +40,7 @@ export function computeRound(round: Round, players: Player[]): ComputedRound {
   const validResults = round.results.filter(
     (result) => result.status === "deltatt" && typeof result.actualKm === "number",
   );
+  const maxPoints = validResults.length;
 
   const computedResults: ComputedPlayerResult[] = round.results.map((result) => {
     const player = playerById.get(result.playerId);
@@ -55,7 +54,7 @@ export function computeRound(round: Round, players: Player[]): ComputedRound {
         validResults.filter((candidate) => {
           return typeof candidate.actualKm === "number" && candidate.actualKm < result.actualKm!;
         }).length;
-      const points = Math.max(MAX_POINTS - rank + 1, 0);
+      const points = Math.max(maxPoints - rank + 1, 0);
 
       return {
         ...result,
@@ -78,12 +77,13 @@ export function computeRound(round: Round, players: Player[]): ComputedRound {
   });
 
   const winnerNames = computedResults
-    .filter((result) => result.points === MAX_POINTS)
+    .filter((result) => maxPoints > 0 && result.points === maxPoints)
     .map((result) => result.player.shortName);
 
   return {
     ...round,
     participantCount: validResults.length,
+    maxPoints,
     worstThreeAverage,
     results: computedResults,
     winnerNames,
@@ -135,7 +135,7 @@ export function computeStandings(players: Player[], rounds: Round[]): Standing[]
 
       if (result.status === "deltatt") {
         roundsPlayed += 1;
-        if (result.points === MAX_POINTS) wins += 1;
+        if (round.maxPoints > 0 && result.points === round.maxPoints) wins += 1;
         if (result.points >= 5) top3 += 1;
         if (result.rank !== null && result.rank === maxRank) lastPlaces += 1;
         if (typeof result.actualKm === "number") {
@@ -231,6 +231,7 @@ export function computeGameSession(
   const validResults = session.results.filter(
     (result) => result.status === "deltatt" && typeof result.score === "number",
   );
+  const maxPoints = validResults.length;
 
   const computedResults = session.results.map((result) => {
     const player = playerById.get(result.playerId);
@@ -247,7 +248,7 @@ export function computeGameSession(
             ? candidate.score > result.score!
             : candidate.score < result.score!;
         }).length;
-      const points = Math.max(MAX_POINTS - rank + 1, 0);
+      const points = Math.max(maxPoints - rank + 1, 0);
       return { ...result, player, rank, points };
     }
 
@@ -255,13 +256,14 @@ export function computeGameSession(
   });
 
   const winnerNames = computedResults
-    .filter((result) => result.points === MAX_POINTS)
+    .filter((result) => maxPoints > 0 && result.points === maxPoints)
     .map((result) => result.player.shortName);
 
   return {
     ...session,
     game,
     participantCount: validResults.length,
+    maxPoints,
     winnerNames,
     results: computedResults,
   };
@@ -295,7 +297,7 @@ export function computeGameStandings(
       if (result.status === "deltatt" && typeof result.score === "number") {
         totalScore += result.score;
         sessionsPlayed += 1;
-        if (result.points === MAX_POINTS) wins += 1;
+        if (session.maxPoints > 0 && result.points === session.maxPoints) wins += 1;
         bestScore =
           bestScore === null
             ? result.score
@@ -345,6 +347,9 @@ export function emptyResults(players: Player[]): PlayerResult[] {
     playerId: player.id,
     status: "ikke_deltatt",
     actualKm: null,
+    guessText: "",
+    guessLocation: null,
+    distanceSource: null,
     note: "",
   }));
 }

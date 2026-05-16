@@ -5,7 +5,6 @@ import {
   Crown,
   DoorOpen,
   Gavel,
-  Eye,
   Landmark,
   Milestone,
   Map,
@@ -13,11 +12,11 @@ import {
   ShieldCheck,
   TableProperties,
   Trophy,
+  UserRound,
 } from "lucide-react";
 
 import { logoutAction } from "@/app/actions";
 import { getCurrentGeot } from "@/lib/auth";
-import { isThirdCollegeMember } from "@/lib/kollegium";
 import { getStorageMode } from "@/lib/store";
 
 const navItems = [
@@ -29,16 +28,11 @@ const navItems = [
   { href: "/ordenen", label: "Ordenen", icon: Milestone },
   { href: "/hall-of-fame", label: "Æreshallen", icon: Trophy },
   { href: "/arkiv", label: "Oppslagsverk", icon: BookOpen },
+  { href: "/min-geot", label: "Min geot", icon: UserRound },
 ];
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const currentGeot = await getCurrentGeot();
-  const visibleNavItems = currentGeot && isThirdCollegeMember(currentGeot.id)
-    ? [
-        ...navItems,
-        { href: "/tredje-kollegium", label: "Tredje Kollegium", icon: Eye },
-      ]
-    : navItems;
 
   return (
     <div className="geotia-civic-bg min-h-screen text-[#161713]">
@@ -70,7 +64,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
 
           <nav className="flex flex-wrap items-center gap-2">
-            {visibleNavItems.map((item) => {
+            {navItems.map((item) => {
               const Icon = item.icon;
               return (
                 <Link

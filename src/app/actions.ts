@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { createSession, destroySession, isCorrectPasscode, playerIdFromUsername, requireSession } from "@/lib/auth";
 import { GEO_OATH_TEXT } from "@/lib/geoting";
+import { haversineKm, parseGeoLocationJson } from "@/lib/geo";
 import { geoterIndexCategories } from "@/lib/geoterindeks";
 import { geoticOrderHiddenCategories, geoticOrderRanks, geoticOrderStatuses } from "@/lib/geotisk-orden";
 import { isThirdCollegeMember } from "@/lib/kollegium";
@@ -21,6 +22,7 @@ import {
   upsertRound,
 } from "@/lib/store";
 import type {
+  DistanceSource,
   GameId,
   GameResult,
   GeoterIndexCategory,
@@ -55,6 +57,11 @@ function statusField(value: string): ResultStatus {
   return "ikke_deltatt";
 }
 
+function distanceSourceField(value: string): DistanceSource | null {
+  if (value === "auto" || value === "manual") return value;
+  return null;
+}
+
 export async function loginAction(formData: FormData) {
   const username = field(formData, "username");
   const playerId = playerIdFromUsername(username);
@@ -74,14 +81,27 @@ export async function logoutAction() {
 
 export async function saveRoundAction(formData: FormData) {
   await requireSession();
+  const answerLocation = parseGeoLocationJson(field(formData, "answer_location_json"));
 
   const results: PlayerResult[] = competingPlayers.map((player) => {
     const status = statusField(field(formData, `status_${player.id}`));
-    const actualKm = status === "deltatt" ? kmField(formData, `km_${player.id}`) : null;
+    const guessLocation = parseGeoLocationJson(field(formData, `guess_location_json_${player.id}`));
+    const distanceSource = distanceSourceField(field(formData, `distance_source_${player.id}`));
+    const autoKm = answerLocation && guessLocation ? haversineKm(answerLocation, guessLocation) : kmField(formData, `auto_km_${player.id}`);
+    const manualKm = kmField(formData, `km_${player.id}`);
+    const actualKm =
+      status === "deltatt"
+        ? distanceSource === "auto" && autoKm !== null
+          ? autoKm
+          : manualKm ?? autoKm
+        : null;
     return {
       playerId: player.id,
       status,
       actualKm,
+      guessText: field(formData, `guess_text_${player.id}`),
+      guessLocation,
+      distanceSource: status === "deltatt" && actualKm !== null ? distanceSource ?? (autoKm !== null ? "auto" : "manual") : null,
       note: field(formData, `note_${player.id}`),
     };
   });
@@ -91,6 +111,7 @@ export async function saveRoundAction(formData: FormData) {
     date: field(formData, "date") || new Date().toISOString().slice(0, 10),
     name: field(formData, "name") || "Navnløs runde",
     answer: field(formData, "answer"),
+    answerLocation,
     country: field(formData, "country"),
     continent: field(formData, "continent"),
     comment: field(formData, "comment"),
@@ -101,6 +122,7 @@ export async function saveRoundAction(formData: FormData) {
   revalidatePath("/runder");
   revalidatePath("/stilling");
   revalidatePath("/hall-of-fame");
+  revalidatePath("/min-geot");
   redirect("/runder?status=lagret");
 }
 
@@ -134,6 +156,7 @@ export async function saveGameSessionAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/spill");
+  revalidatePath("/min-geot");
   redirect("/spill?status=lagret");
 }
 
@@ -145,6 +168,7 @@ export async function lockRoundAction(formData: FormData) {
   revalidatePath("/runder");
   revalidatePath("/stilling");
   revalidatePath("/hall-of-fame");
+  revalidatePath("/min-geot");
 
   if (!result.ok) {
     redirect(`/runder/${id}?error=${encodeURIComponent(result.reason ?? "GeoVAR fant en ukjent feil.")}`);
@@ -160,6 +184,7 @@ export async function unlockRoundAction(formData: FormData) {
   revalidatePath("/runder");
   revalidatePath("/stilling");
   revalidatePath("/hall-of-fame");
+  revalidatePath("/min-geot");
   redirect(`/runder/${id}?status=geovar`);
 }
 

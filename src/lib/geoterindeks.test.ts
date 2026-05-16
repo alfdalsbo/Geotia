@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { getGeoterIndexRows, getGeoterIndexTier } from "@/lib/geoterindeks";
+import {
+  getGeoterIndexAdjustmentTrail,
+  getGeoterIndexRows,
+  getGeoterIndexTier,
+} from "@/lib/geoterindeks";
 import { players } from "@/lib/seed";
 import type { GeoterIndexAdjustment } from "@/lib/types";
 
@@ -35,6 +39,17 @@ describe("Geoterindeksen", () => {
 
     expect(alf?.score).toBe(740);
     expect(alf?.history.map((point) => point.score)).toEqual([700, 750, 740]);
+    expect(alf?.history[1]).toMatchObject({
+      scoreBefore: 700,
+      scoreAfter: 750,
+      reason: "Høyt ut og blink.",
+      createdBy: "steinar",
+    });
+    expect(getGeoterIndexAdjustmentTrail("alf", adjustments)[1]).toMatchObject({
+      scoreBefore: 750,
+      scoreAfter: 740,
+      reason: "Automatisk sosial balanse.",
+    });
     expect(danny?.score).toBe(700);
   });
 

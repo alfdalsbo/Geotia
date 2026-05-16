@@ -176,7 +176,7 @@ export const players: Player[] = [
     partyId: "",
     username: "danny",
     role: "tingvitne",
-    canCompete: false,
+    canCompete: true,
     canVote: false,
     color: "#5b4a7d",
     title: "Tingvitne",
@@ -730,15 +730,7 @@ const geotingCases: GeotingCase[] = [
   },
 ];
 
-const oldSlowGeo: OldSlowGeoRecord[] = [
-  { player: "Alf Kåre", points: 84, pointRounds: 18, kattometer: 12104, kattometerRounds: 18 },
-  { player: "Fredrik", points: 106, pointRounds: 19, kattometer: 10592, kattometerRounds: 19 },
-  { player: "Jørgen", points: 17, pointRounds: 3, kattometer: 629, kattometerRounds: 3 },
-  { player: "Sverre", points: 41, pointRounds: 10, kattometer: 8227, kattometerRounds: 11 },
-  { player: "Steinar", points: 77, pointRounds: 18, kattometer: 12909, kattometerRounds: 18 },
-  { player: "Vegard", points: 87, pointRounds: 19, kattometer: 13720, kattometerRounds: 18 },
-  { player: "Ruben", points: 83, pointRounds: 18, kattometer: 13666, kattometerRounds: 18 },
-];
+const oldSlowGeo: OldSlowGeoRecord[] = [];
 
 const knowledgeGroups: KnowledgeGroup[] = [
   {

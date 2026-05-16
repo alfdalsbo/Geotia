@@ -5,10 +5,12 @@ import { randomUUID } from "node:crypto";
 import { archive, competingPlayers, games, initialState, parties, players } from "@/lib/seed";
 import { canLockRound, emptyResults } from "@/lib/scoring";
 import { addVotingWindow, GEO_OATH_TEXT, normalizeVoteValue, resolveProposalIfReady } from "@/lib/geoting";
+import { buildRoundMapSnapshot } from "@/lib/geo";
 import type {
   AppState,
   GameId,
   GameResult,
+  GeoLocation,
   GameSession,
   GeoterIndexAdjustment,
   GeoterIndexCategory,
@@ -22,6 +24,7 @@ import type {
   PlayerResult,
   ProposalRuleType,
   Round,
+  RoundMapSnapshot,
   RoundStatus,
   VoteValue,
 } from "@/lib/types";
@@ -31,6 +34,7 @@ type RoundInput = {
   date: string;
   name: string;
   answer: string;
+  answerLocation?: GeoLocation | null;
   country: string;
   continent: string;
   comment: string;
@@ -50,6 +54,7 @@ type DbRoundRow = {
   created_at: string;
   updated_at: string;
   results_json: PlayerResult[] | string;
+  location_json?: RoundLocationData | string | null;
 };
 
 type GameSessionInput = {
@@ -158,12 +163,33 @@ type DbGeoticOrderAssessmentRow = {
   updated_by: string;
 };
 
+type GeocodeCacheEntry = {
+  queryKey: string;
+  location: GeoLocation | null;
+  updatedAt: string;
+};
+
+type DbGeocodeCacheRow = {
+  query_key: string;
+  result_json: GeoLocation | string | null;
+  updated_at: string;
+};
+
+type RoundLocationData = {
+  answerLocation: GeoLocation | null;
+  mapSnapshot: RoundMapSnapshot | null;
+};
+
 type FileState = {
+  meta?: {
+    resetDynamicScoringV2?: string;
+  };
   rounds: Round[];
   gameSessions: GameSession[];
   geotingProposals: GeotingProposal[];
   geoterIndexAdjustments: GeoterIndexAdjustment[];
   geoticOrderAssessments: GeoticOrderAssessment[];
+  geocodeCache: GeocodeCacheEntry[];
 };
 
 const dataFile =
@@ -171,6 +197,7 @@ const dataFile =
   (process.env.VERCEL
     ? path.join("/tmp", "geotia-data.json")
     : path.join(process.cwd(), ".data", "geotia-data.json"));
+const backupDataFile = `${dataFile}.bak`;
 
 let schemaReady = false;
 
@@ -187,18 +214,32 @@ function nowIso() {
 
 function normalizeRound(round: Round): Round {
   const existing = new Map(round.results.map((result) => [result.playerId, result]));
+  const results = competingPlayers.map((player) => {
+    const result = existing.get(player.id);
+    return result
+      ? {
+          ...result,
+          guessText: result.guessText ?? "",
+          guessLocation: result.guessLocation ?? null,
+          distanceSource: result.distanceSource ?? null,
+          note: result.note ?? "",
+        }
+      : {
+          playerId: player.id,
+          status: "ikke_deltatt" as const,
+          actualKm: null,
+          guessText: "",
+          guessLocation: null,
+          distanceSource: null,
+          note: "",
+        };
+  });
+  const answerLocation = round.answerLocation ?? null;
   return {
     ...round,
-    results: competingPlayers.map((player) => {
-      return (
-        existing.get(player.id) ?? {
-          playerId: player.id,
-          status: "ikke_deltatt",
-          actualKm: null,
-          note: "",
-        }
-      );
-    }),
+    answerLocation,
+    results,
+    mapSnapshot: round.mapSnapshot ?? buildRoundMapSnapshot({ answerLocation, players, results }),
   };
 }
 
@@ -245,11 +286,13 @@ async function ensureFileState() {
       dataFile,
       JSON.stringify(
         {
+          meta: { resetDynamicScoringV2: "done" },
           rounds: [],
           gameSessions: [],
           geotingProposals: [],
           geoterIndexAdjustments: [],
           geoticOrderAssessments: [],
+          geocodeCache: [],
         },
         null,
         2,
@@ -262,19 +305,53 @@ async function ensureFileState() {
 async function readFileState(): Promise<FileState> {
   await ensureFileState();
   const raw = await fs.readFile(dataFile, "utf8");
-  const parsed = JSON.parse(raw) as Partial<FileState>;
-  return {
-    rounds: (parsed.rounds ?? []).map(normalizeRound),
-    gameSessions: (parsed.gameSessions ?? []).map(normalizeGameSession),
+  const parsed = parseFileState(raw) ?? (await readBackupFileState());
+  const resetDone = parsed.meta?.resetDynamicScoringV2 === "done";
+  const state = {
+    meta: { ...(parsed.meta ?? {}), resetDynamicScoringV2: "done" },
+    rounds: resetDone ? (parsed.rounds ?? []).map(normalizeRound) : [],
+    gameSessions: resetDone ? (parsed.gameSessions ?? []).map(normalizeGameSession) : [],
     geotingProposals: (parsed.geotingProposals ?? []).map(normalizeProposal),
     geoterIndexAdjustments: parsed.geoterIndexAdjustments ?? [],
     geoticOrderAssessments: parsed.geoticOrderAssessments ?? [],
+    geocodeCache: parsed.geocodeCache ?? [],
   };
+  if (!resetDone) {
+    await writeFileState(state);
+  }
+  return state;
+}
+
+function parseFileState(raw: string): Partial<FileState> | null {
+  if (!raw.trim()) return null;
+  try {
+    return JSON.parse(raw) as Partial<FileState>;
+  } catch {
+    return null;
+  }
+}
+
+async function readBackupFileState(): Promise<Partial<FileState>> {
+  try {
+    const raw = await fs.readFile(backupDataFile, "utf8");
+    const parsed = parseFileState(raw);
+    if (parsed) return parsed;
+  } catch {
+    // No backup exists yet. The original parse error below is more useful than this branch.
+  }
+  throw new Error("Geotia-protokollen kunne ikke leses. Hovedfil og backup mangler gyldig JSON.");
 }
 
 async function writeFileState(state: FileState) {
   await fs.mkdir(path.dirname(dataFile), { recursive: true });
-  await fs.writeFile(dataFile, JSON.stringify(state, null, 2), "utf8");
+  const tempFile = `${dataFile}.${process.pid}.${Date.now()}.${randomUUID()}.tmp`;
+  await fs.writeFile(tempFile, JSON.stringify(state, null, 2), "utf8");
+  try {
+    await fs.copyFile(dataFile, backupDataFile);
+  } catch {
+    // First write has nothing to back up yet.
+  }
+  await fs.rename(tempFile, dataFile);
 }
 
 async function readFileRounds(): Promise<Round[]> {
@@ -323,6 +400,7 @@ async function ensureSchema() {
       results_json jsonb NOT NULL DEFAULT '[]'::jsonb
     )
   `;
+  await sql`ALTER TABLE geotia_rounds ADD COLUMN IF NOT EXISTS location_json jsonb`;
   await sql`
     CREATE TABLE IF NOT EXISTS geotia_game_sessions (
       id text PRIMARY KEY,
@@ -385,6 +463,14 @@ async function ensureSchema() {
     )
   `;
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS geotia_geocode_cache (
+      query_key text PRIMARY KEY,
+      result_json jsonb,
+      updated_at text NOT NULL
+    )
+  `;
+
   const resetKey = "reset_active_scores_multigame_v1";
   const resetRows = (await sql`
     SELECT value FROM geotia_meta WHERE key = ${resetKey}
@@ -399,8 +485,31 @@ async function ensureSchema() {
     `;
   }
 
+  const dynamicResetKey = "reset_dynamic_slowgeo_v2";
+  const dynamicResetRows = (await sql`
+    SELECT value FROM geotia_meta WHERE key = ${dynamicResetKey}
+  `) as Array<{ value: string }>;
+  if (dynamicResetRows.length === 0) {
+    await sql`DELETE FROM geotia_rounds`;
+    await sql`DELETE FROM geotia_game_sessions`;
+    await sql`
+      INSERT INTO geotia_meta (key, value, updated_at)
+      VALUES (${dynamicResetKey}, 'done', ${nowIso()})
+      ON CONFLICT (key) DO NOTHING
+    `;
+  }
+
   schemaReady = true;
   return sql;
+}
+
+function parseRoundLocationData(value: RoundLocationData | string | null | undefined): RoundLocationData {
+  if (!value) return { answerLocation: null, mapSnapshot: null };
+  const parsed = typeof value === "string" ? (JSON.parse(value) as Partial<RoundLocationData>) : value;
+  return {
+    answerLocation: parsed.answerLocation ?? null,
+    mapSnapshot: parsed.mapSnapshot ?? null,
+  };
 }
 
 function parseDbRound(row: DbRoundRow): Round {
@@ -408,6 +517,7 @@ function parseDbRound(row: DbRoundRow): Round {
     typeof row.results_json === "string"
       ? (JSON.parse(row.results_json) as PlayerResult[])
       : row.results_json;
+  const locationData = parseRoundLocationData(row.location_json);
 
   return normalizeRound({
     id: row.id,
@@ -415,6 +525,8 @@ function parseDbRound(row: DbRoundRow): Round {
     date: row.date,
     name: row.name,
     answer: row.answer,
+    answerLocation: locationData.answerLocation,
+    mapSnapshot: locationData.mapSnapshot,
     country: row.country,
     continent: row.continent,
     comment: row.comment,
@@ -498,12 +610,23 @@ function parseDbGeoticOrderAssessment(row: DbGeoticOrderAssessmentRow): GeoticOr
   };
 }
 
+function parseDbGeocodeCache(row: DbGeocodeCacheRow): GeocodeCacheEntry {
+  return {
+    queryKey: row.query_key,
+    location:
+      typeof row.result_json === "string"
+        ? (JSON.parse(row.result_json) as GeoLocation | null)
+        : row.result_json,
+    updatedAt: row.updated_at,
+  };
+}
+
 async function readDbRounds(): Promise<Round[] | null> {
   const sql = await ensureSchema();
   if (!sql) return null;
 
   const rows = (await sql`
-    SELECT id, number, date, name, answer, country, continent, comment, status, created_at, updated_at, results_json
+    SELECT id, number, date, name, answer, country, continent, comment, status, created_at, updated_at, results_json, location_json
     FROM geotia_rounds
     ORDER BY number ASC
   `) as DbRoundRow[];
@@ -517,7 +640,7 @@ async function upsertDbRound(round: Round) {
 
   await sql`
     INSERT INTO geotia_rounds (
-      id, number, date, name, answer, country, continent, comment, status, created_at, updated_at, results_json
+      id, number, date, name, answer, country, continent, comment, status, created_at, updated_at, results_json, location_json
     )
     VALUES (
       ${round.id},
@@ -531,7 +654,8 @@ async function upsertDbRound(round: Round) {
       ${round.status},
       ${round.createdAt},
       ${round.updatedAt},
-      ${JSON.stringify(round.results)}::jsonb
+      ${JSON.stringify(round.results)}::jsonb,
+      ${JSON.stringify({ answerLocation: round.answerLocation ?? null, mapSnapshot: round.mapSnapshot ?? null })}::jsonb
     )
     ON CONFLICT (id) DO UPDATE SET
       date = EXCLUDED.date,
@@ -542,7 +666,8 @@ async function upsertDbRound(round: Round) {
       comment = EXCLUDED.comment,
       status = EXCLUDED.status,
       updated_at = EXCLUDED.updated_at,
-      results_json = EXCLUDED.results_json
+      results_json = EXCLUDED.results_json,
+      location_json = EXCLUDED.location_json
   `;
   return true;
 }
@@ -786,6 +911,34 @@ async function upsertDbGeoticOrderAssessment(assessment: GeoticOrderAssessment) 
   return true;
 }
 
+async function readDbGeocodeCache(queryKey: string): Promise<GeocodeCacheEntry | null> {
+  const sql = await ensureSchema();
+  if (!sql) return null;
+
+  const rows = (await sql`
+    SELECT query_key, result_json, updated_at
+    FROM geotia_geocode_cache
+    WHERE query_key = ${queryKey}
+    LIMIT 1
+  `) as DbGeocodeCacheRow[];
+
+  return rows[0] ? parseDbGeocodeCache(rows[0]) : null;
+}
+
+async function upsertDbGeocodeCache(entry: GeocodeCacheEntry) {
+  const sql = await ensureSchema();
+  if (!sql) return false;
+
+  await sql`
+    INSERT INTO geotia_geocode_cache (query_key, result_json, updated_at)
+    VALUES (${entry.queryKey}, ${JSON.stringify(entry.location)}::jsonb, ${entry.updatedAt})
+    ON CONFLICT (query_key) DO UPDATE SET
+      result_json = EXCLUDED.result_json,
+      updated_at = EXCLUDED.updated_at
+  `;
+  return true;
+}
+
 async function readRounds(): Promise<Round[]> {
   const dbRounds = await readDbRounds();
   if (dbRounds) return dbRounds;
@@ -870,6 +1023,37 @@ async function saveGeoticOrderAssessments(geoticOrderAssessments: GeoticOrderAss
   await writeFileState({ ...state, geoticOrderAssessments });
 }
 
+export async function getCachedGeocodeLocation(queryKey: string) {
+  const dbEntry = await readDbGeocodeCache(queryKey);
+  if (dbEntry) return dbEntry.location;
+
+  const state = await readFileState();
+  return state.geocodeCache.find((entry) => entry.queryKey === queryKey)?.location ?? undefined;
+}
+
+export async function setCachedGeocodeLocation(queryKey: string, location: GeoLocation | null) {
+  const entry: GeocodeCacheEntry = {
+    queryKey,
+    location,
+    updatedAt: nowIso(),
+  };
+  const sql = await ensureSchema();
+  if (sql) {
+    await upsertDbGeocodeCache(entry);
+    return entry;
+  }
+
+  const state = await readFileState();
+  await writeFileState({
+    ...state,
+    geocodeCache: [
+      entry,
+      ...state.geocodeCache.filter((candidate) => candidate.queryKey !== queryKey),
+    ].slice(0, 500),
+  });
+  return entry;
+}
+
 export async function getAppState(): Promise<AppState> {
   const [rounds, gameSessions, geotingProposals, geoterIndexAdjustments, geoticOrderAssessments] = await Promise.all([
     readRounds(),
@@ -908,6 +1092,7 @@ export async function upsertRound(input: RoundInput) {
     date: input.date,
     name: input.name,
     answer: input.answer,
+    answerLocation: input.answerLocation ?? null,
     country: input.country,
     continent: input.continent,
     comment: input.comment,
@@ -1129,6 +1314,8 @@ export function makeEmptyRound(): Round {
     date: new Date().toISOString().slice(0, 10),
     name: "",
     answer: "",
+    answerLocation: null,
+    mapSnapshot: null,
     country: "",
     continent: "",
     comment: "",
