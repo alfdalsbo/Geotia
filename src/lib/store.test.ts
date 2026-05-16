@@ -70,4 +70,30 @@ describe("Geotia file store", () => {
     expect(state.geoterIndexAdjustments).toHaveLength(1);
     expect(state.geoterIndexAdjustments[0].delta).toBe(30);
   });
+
+  it("persists Den Geotiske Orden assessments in the local protocol file", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    vi.resetModules();
+
+    const { upsertGeoticOrderAssessment, getAppState } = await import("@/lib/store");
+
+    await upsertGeoticOrderAssessment({
+      playerId: "danny",
+      rankId: "anerkjent_borger",
+      serviceWeeks: 4,
+      hiddenCategory: "turist",
+      status: "provetid",
+      sponsor: "SS",
+      trial: "Borgerløftet",
+      publicNote: "Tingvitnet viser tegn til ordensbarhet.",
+      internalNote: "Følges uten at han får vite av hvem.",
+      updatedBy: "alf",
+    });
+
+    const state = await getAppState();
+    expect(state.geoticOrderAssessments).toHaveLength(1);
+    expect(state.geoticOrderAssessments[0].rankId).toBe("anerkjent_borger");
+    expect(state.geoticOrderAssessments[0].hiddenCategory).toBe("turist");
+  });
 });

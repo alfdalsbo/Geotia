@@ -240,6 +240,33 @@ export type GeoterIndexAdjustment = {
   createdBy: string;
 };
 
+export type GeoticOrderRankId =
+  | "borger"
+  | "anerkjent_borger"
+  | "partiaspirant"
+  | "partimedlem"
+  | "geomentariker"
+  | "partileder"
+  | "partigrunder";
+
+export type GeoticOrderHiddenCategory = "baerer" | "krutt" | "stolpe" | "risiko" | "turist";
+
+export type GeoticOrderStatus = "normal" | "provetid" | "frosset" | "degradert";
+
+export type GeoticOrderAssessment = {
+  playerId: string;
+  rankId: GeoticOrderRankId;
+  serviceWeeks: number;
+  hiddenCategory: GeoticOrderHiddenCategory;
+  status: GeoticOrderStatus;
+  sponsor: string;
+  trial: string;
+  publicNote: string;
+  internalNote: string;
+  updatedAt: string;
+  updatedBy: string;
+};
+
 export type OldSlowGeoRecord = {
   player: string;
   points: number;
@@ -287,4 +314,5 @@ export type AppState = {
   gameSessions: GameSession[];
   geotingProposals: GeotingProposal[];
   geoterIndexAdjustments: GeoterIndexAdjustment[];
+  geoticOrderAssessments: GeoticOrderAssessment[];
 };

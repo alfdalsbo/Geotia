@@ -6,6 +6,7 @@ import {
   Gamepad2,
   Gavel,
   Landmark,
+  Milestone,
   ScrollText,
   TableProperties,
   Trophy,
@@ -78,6 +79,13 @@ export default async function DashboardPage() {
               >
                 Åpne statsarkivet
                 <BookOpen className="h-4 w-4" aria-hidden="true" />
+              </Link>
+              <Link
+                href="/ordenen"
+                className="inline-flex h-11 items-center gap-2 rounded border border-[#062b40]/30 bg-[#fff7e6] px-4 text-sm font-semibold text-[#062b40] shadow-sm transition hover:border-[#c49a3c]"
+              >
+                Gå ordensveien
+                <Milestone className="h-4 w-4" aria-hidden="true" />
               </Link>
             </div>
 

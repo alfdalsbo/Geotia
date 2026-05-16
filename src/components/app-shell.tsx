@@ -7,6 +7,7 @@ import {
   Gavel,
   Eye,
   Landmark,
+  Milestone,
   Map,
   ScrollText,
   ShieldCheck,
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/runder", label: "SlowGeo", icon: TableProperties },
   { href: "/stilling", label: "SlowGeo-tabell", icon: Crown },
   { href: "/geotinget", label: "GeoTinget", icon: Gavel },
+  { href: "/ordenen", label: "Ordenen", icon: Milestone },
   { href: "/hall-of-fame", label: "Æreshallen", icon: Trophy },
   { href: "/arkiv", label: "Oppslagsverk", icon: BookOpen },
 ];

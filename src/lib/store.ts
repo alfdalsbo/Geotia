@@ -12,6 +12,10 @@ import type {
   GameSession,
   GeoterIndexAdjustment,
   GeoterIndexCategory,
+  GeoticOrderAssessment,
+  GeoticOrderHiddenCategory,
+  GeoticOrderRankId,
+  GeoticOrderStatus,
   GeotingProposal,
   GeotingProposalStatus,
   GeotingVote,
@@ -80,6 +84,19 @@ type GeoterIndexAdjustmentInput = {
   createdBy: string;
 };
 
+type GeoticOrderAssessmentInput = {
+  playerId: string;
+  rankId: GeoticOrderRankId;
+  serviceWeeks: number;
+  hiddenCategory: GeoticOrderHiddenCategory;
+  status: GeoticOrderStatus;
+  sponsor: string;
+  trial: string;
+  publicNote: string;
+  internalNote: string;
+  updatedBy: string;
+};
+
 type StartVoteInput = {
   proposalId: string;
   playerId: string;
@@ -127,11 +144,26 @@ type DbGeoterIndexAdjustmentRow = {
   created_by: string;
 };
 
+type DbGeoticOrderAssessmentRow = {
+  player_id: string;
+  rank_id: GeoticOrderRankId;
+  service_weeks: number;
+  hidden_category: GeoticOrderHiddenCategory;
+  status: GeoticOrderStatus;
+  sponsor: string | null;
+  trial: string | null;
+  public_note: string | null;
+  internal_note: string | null;
+  updated_at: string;
+  updated_by: string;
+};
+
 type FileState = {
   rounds: Round[];
   gameSessions: GameSession[];
   geotingProposals: GeotingProposal[];
   geoterIndexAdjustments: GeoterIndexAdjustment[];
+  geoticOrderAssessments: GeoticOrderAssessment[];
 };
 
 const dataFile =
@@ -211,7 +243,17 @@ async function ensureFileState() {
     await fs.mkdir(path.dirname(dataFile), { recursive: true });
     await fs.writeFile(
       dataFile,
-      JSON.stringify({ rounds: [], gameSessions: [], geotingProposals: [], geoterIndexAdjustments: [] }, null, 2),
+      JSON.stringify(
+        {
+          rounds: [],
+          gameSessions: [],
+          geotingProposals: [],
+          geoterIndexAdjustments: [],
+          geoticOrderAssessments: [],
+        },
+        null,
+        2,
+      ),
       "utf8",
     );
   }
@@ -226,6 +268,7 @@ async function readFileState(): Promise<FileState> {
     gameSessions: (parsed.gameSessions ?? []).map(normalizeGameSession),
     geotingProposals: (parsed.geotingProposals ?? []).map(normalizeProposal),
     geoterIndexAdjustments: parsed.geoterIndexAdjustments ?? [],
+    geoticOrderAssessments: parsed.geoticOrderAssessments ?? [],
   };
 }
 
@@ -326,6 +369,22 @@ async function ensureSchema() {
     )
   `;
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS geotia_geotic_order_assessments (
+      player_id text PRIMARY KEY,
+      rank_id text NOT NULL,
+      service_weeks integer NOT NULL,
+      hidden_category text NOT NULL,
+      status text NOT NULL,
+      sponsor text NOT NULL,
+      trial text NOT NULL,
+      public_note text NOT NULL,
+      internal_note text NOT NULL,
+      updated_at text NOT NULL,
+      updated_by text NOT NULL
+    )
+  `;
+
   const resetKey = "reset_active_scores_multigame_v1";
   const resetRows = (await sql`
     SELECT value FROM geotia_meta WHERE key = ${resetKey}
@@ -420,6 +479,22 @@ function parseDbGeoterIndexAdjustment(row: DbGeoterIndexAdjustmentRow): GeoterIn
     reason: row.reason,
     createdAt: row.created_at,
     createdBy: row.created_by,
+  };
+}
+
+function parseDbGeoticOrderAssessment(row: DbGeoticOrderAssessmentRow): GeoticOrderAssessment {
+  return {
+    playerId: row.player_id,
+    rankId: row.rank_id,
+    serviceWeeks: row.service_weeks,
+    hiddenCategory: row.hidden_category,
+    status: row.status,
+    sponsor: row.sponsor ?? "",
+    trial: row.trial ?? "",
+    publicNote: row.public_note ?? "",
+    internalNote: row.internal_note ?? "",
+    updatedAt: row.updated_at,
+    updatedBy: row.updated_by,
   };
 }
 
@@ -641,6 +716,76 @@ async function upsertDbGeoterIndexAdjustment(adjustment: GeoterIndexAdjustment) 
   return true;
 }
 
+async function readDbGeoticOrderAssessments(): Promise<GeoticOrderAssessment[] | null> {
+  const sql = await ensureSchema();
+  if (!sql) return null;
+
+  const rows = (await sql`
+    SELECT
+      player_id,
+      rank_id,
+      service_weeks,
+      hidden_category,
+      status,
+      sponsor,
+      trial,
+      public_note,
+      internal_note,
+      updated_at,
+      updated_by
+    FROM geotia_geotic_order_assessments
+    ORDER BY updated_at DESC
+  `) as DbGeoticOrderAssessmentRow[];
+
+  return rows.map(parseDbGeoticOrderAssessment);
+}
+
+async function upsertDbGeoticOrderAssessment(assessment: GeoticOrderAssessment) {
+  const sql = await ensureSchema();
+  if (!sql) return false;
+
+  await sql`
+    INSERT INTO geotia_geotic_order_assessments (
+      player_id,
+      rank_id,
+      service_weeks,
+      hidden_category,
+      status,
+      sponsor,
+      trial,
+      public_note,
+      internal_note,
+      updated_at,
+      updated_by
+    )
+    VALUES (
+      ${assessment.playerId},
+      ${assessment.rankId},
+      ${assessment.serviceWeeks},
+      ${assessment.hiddenCategory},
+      ${assessment.status},
+      ${assessment.sponsor},
+      ${assessment.trial},
+      ${assessment.publicNote},
+      ${assessment.internalNote},
+      ${assessment.updatedAt},
+      ${assessment.updatedBy}
+    )
+    ON CONFLICT (player_id) DO UPDATE SET
+      rank_id = EXCLUDED.rank_id,
+      service_weeks = EXCLUDED.service_weeks,
+      hidden_category = EXCLUDED.hidden_category,
+      status = EXCLUDED.status,
+      sponsor = EXCLUDED.sponsor,
+      trial = EXCLUDED.trial,
+      public_note = EXCLUDED.public_note,
+      internal_note = EXCLUDED.internal_note,
+      updated_at = EXCLUDED.updated_at,
+      updated_by = EXCLUDED.updated_by
+  `;
+  return true;
+}
+
 async function readRounds(): Promise<Round[]> {
   const dbRounds = await readDbRounds();
   if (dbRounds) return dbRounds;
@@ -668,6 +813,12 @@ async function readGeoterIndexAdjustments(): Promise<GeoterIndexAdjustment[]> {
   const dbAdjustments = await readDbGeoterIndexAdjustments();
   if (dbAdjustments) return dbAdjustments;
   return (await readFileState()).geoterIndexAdjustments;
+}
+
+async function readGeoticOrderAssessments(): Promise<GeoticOrderAssessment[]> {
+  const dbAssessments = await readDbGeoticOrderAssessments();
+  if (dbAssessments) return dbAssessments;
+  return (await readFileState()).geoticOrderAssessments;
 }
 
 async function saveRounds(rounds: Round[]) {
@@ -709,12 +860,23 @@ async function saveGeoterIndexAdjustments(geoterIndexAdjustments: GeoterIndexAdj
   await writeFileState({ ...state, geoterIndexAdjustments });
 }
 
+async function saveGeoticOrderAssessments(geoticOrderAssessments: GeoticOrderAssessment[]) {
+  const sql = await ensureSchema();
+  if (sql) {
+    await Promise.all(geoticOrderAssessments.map(upsertDbGeoticOrderAssessment));
+    return;
+  }
+  const state = await readFileState();
+  await writeFileState({ ...state, geoticOrderAssessments });
+}
+
 export async function getAppState(): Promise<AppState> {
-  const [rounds, gameSessions, geotingProposals, geoterIndexAdjustments] = await Promise.all([
+  const [rounds, gameSessions, geotingProposals, geoterIndexAdjustments, geoticOrderAssessments] = await Promise.all([
     readRounds(),
     readGameSessions(),
     readProposals(),
     readGeoterIndexAdjustments(),
+    readGeoticOrderAssessments(),
   ]);
   return {
     ...initialState,
@@ -726,6 +888,7 @@ export async function getAppState(): Promise<AppState> {
     gameSessions,
     geotingProposals,
     geoterIndexAdjustments,
+    geoticOrderAssessments,
   };
 }
 
@@ -903,6 +1066,30 @@ export async function addGeoterIndexAdjustment(input: GeoterIndexAdjustmentInput
 
   await saveGeoterIndexAdjustments([...existing, adjustment]);
   return adjustment;
+}
+
+export async function upsertGeoticOrderAssessment(input: GeoticOrderAssessmentInput) {
+  const existing = await readGeoticOrderAssessments();
+  const timestamp = nowIso();
+  const nextAssessment: GeoticOrderAssessment = {
+    playerId: input.playerId,
+    rankId: input.rankId,
+    serviceWeeks: Math.max(0, Math.round(input.serviceWeeks)),
+    hiddenCategory: input.hiddenCategory,
+    status: input.status,
+    sponsor: input.sponsor,
+    trial: input.trial,
+    publicNote: input.publicNote,
+    internalNote: input.internalNote,
+    updatedAt: timestamp,
+    updatedBy: input.updatedBy,
+  };
+
+  await saveGeoticOrderAssessments([
+    nextAssessment,
+    ...existing.filter((assessment) => assessment.playerId !== input.playerId),
+  ]);
+  return nextAssessment;
 }
 
 export async function lockRound(id: string) {

@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { createSession, destroySession, isCorrectPasscode, playerIdFromUsername, requireSession } from "@/lib/auth";
 import { GEO_OATH_TEXT } from "@/lib/geoting";
 import { geoterIndexCategories } from "@/lib/geoterindeks";
+import { geoticOrderHiddenCategories, geoticOrderRanks, geoticOrderStatuses } from "@/lib/geotisk-orden";
 import { isThirdCollegeMember } from "@/lib/kollegium";
 import { competingPlayers, games, isVotingPlayerId, players } from "@/lib/seed";
 import {
@@ -15,10 +16,22 @@ import {
   saveGeotingVote,
   startGeotingVote,
   unlockRound,
+  upsertGeoticOrderAssessment,
   upsertGameSession,
   upsertRound,
 } from "@/lib/store";
-import type { GameId, GameResult, GeoterIndexCategory, PlayerResult, ProposalRuleType, ResultStatus, VoteValue } from "@/lib/types";
+import type {
+  GameId,
+  GameResult,
+  GeoterIndexCategory,
+  GeoticOrderHiddenCategory,
+  GeoticOrderRankId,
+  GeoticOrderStatus,
+  PlayerResult,
+  ProposalRuleType,
+  ResultStatus,
+  VoteValue,
+} from "@/lib/types";
 
 function field(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -166,6 +179,20 @@ function geoterIndexCategory(value: string): GeoterIndexCategory {
     : "fellesskap";
 }
 
+function geoticOrderRank(value: string): GeoticOrderRankId {
+  return geoticOrderRanks.some((rank) => rank.id === value) ? (value as GeoticOrderRankId) : "borger";
+}
+
+function geoticOrderHiddenCategory(value: string): GeoticOrderHiddenCategory {
+  return geoticOrderHiddenCategories.some((category) => category.id === value)
+    ? (value as GeoticOrderHiddenCategory)
+    : "stolpe";
+}
+
+function geoticOrderStatus(value: string): GeoticOrderStatus {
+  return geoticOrderStatuses.some((status) => status.id === value) ? (value as GeoticOrderStatus) : "normal";
+}
+
 export async function submitGeotingProposalAction(formData: FormData) {
   const session = await requireSession();
   await createGeotingProposal({
@@ -256,4 +283,34 @@ export async function submitGeoterIndexAdjustmentAction(formData: FormData) {
 
   revalidatePath("/tredje-kollegium");
   redirect("/tredje-kollegium?status=geoterindeks");
+}
+
+export async function submitGeoticOrderAssessmentAction(formData: FormData) {
+  const session = await requireSession();
+  if (!isThirdCollegeMember(session.playerId)) {
+    redirect("/");
+  }
+
+  const playerId = field(formData, "playerId");
+  if (!players.some((player) => player.id === playerId)) {
+    redirect("/tredje-kollegium?error=orden");
+  }
+
+  await upsertGeoticOrderAssessment({
+    playerId,
+    rankId: geoticOrderRank(field(formData, "rankId")),
+    serviceWeeks: Math.max(0, Math.min(999, Math.round(numberField(formData, "serviceWeeks")))),
+    hiddenCategory: geoticOrderHiddenCategory(field(formData, "hiddenCategory")),
+    status: geoticOrderStatus(field(formData, "status")),
+    sponsor: field(formData, "sponsor"),
+    trial: field(formData, "trial"),
+    publicNote: field(formData, "publicNote"),
+    internalNote: field(formData, "internalNote"),
+    updatedBy: session.playerId,
+  });
+
+  revalidatePath("/tredje-kollegium");
+  revalidatePath("/ordenen");
+  revalidatePath("/");
+  redirect("/tredje-kollegium?status=orden");
 }

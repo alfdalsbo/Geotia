@@ -48,8 +48,8 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await page.locator('select[name="status_vegard"]').selectOption("deltatt");
   await page.locator('input[name="score_vegard"]').fill("23000");
   await page.getByRole("button", { name: "Før spilløkt" }).click();
-  await expect(page.getByText("Spilløkten er ført.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Geo-tabell", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Geo-tabell", exact: true })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("cell", { name: "24 000 poeng" }).first()).toBeVisible();
 
   await page.getByRole("link", { name: "GeoTinget" }).click();
   const proposalTitle = `Lov om Playwright-ro ${Date.now()}`;

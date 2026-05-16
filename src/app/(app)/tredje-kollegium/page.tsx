@@ -3,22 +3,26 @@ import { notFound } from "next/navigation";
 import {
   ArrowRight,
   BarChart3,
+  BadgeCheck,
   Crown,
   Eye,
   FileText,
+  Footprints,
   Gavel,
   History,
   KeyRound,
   Landmark,
   LockKeyhole,
+  Milestone,
   PlusCircle,
   Scale,
   ScrollText,
   ShieldCheck,
   TableProperties,
+  UserCog,
 } from "lucide-react";
 
-import { submitGeoterIndexAdjustmentAction } from "@/app/actions";
+import { submitGeoterIndexAdjustmentAction, submitGeoticOrderAssessmentAction } from "@/app/actions";
 import { ExpandableImage } from "@/components/expandable-image";
 import { Section, StatTile } from "@/components/section";
 import { getCurrentGeot } from "@/lib/auth";
@@ -33,6 +37,13 @@ import {
   negativeIndexRules,
   positiveIndexRules,
 } from "@/lib/geoterindeks";
+import {
+  geoticOrderHiddenCategories,
+  geoticOrderRanks,
+  geoticOrderStatuses,
+  getGeoticOrderRows,
+  partyTrials,
+} from "@/lib/geotisk-orden";
 import {
   getThirdCollegeSeat,
   isThirdCollegeMember,
@@ -91,6 +102,12 @@ export default async function ThirdCollegePage({
   const latestIndexAdjustments = [...state.geoterIndexAdjustments]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, 6);
+  const geoticOrderRows = getGeoticOrderRows(
+    state.players,
+    standings,
+    state.geoterIndexAdjustments,
+    state.geoticOrderAssessments,
+  );
 
   const memberRows = thirdCollegeSeats.map((seat) => {
     const player = playerById.get(seat.playerId);
@@ -222,6 +239,8 @@ export default async function ThirdCollegePage({
         rows={geoterIndexRows}
         players={state.players}
       />
+
+      <GeoticOrderControlSection currentGeot={currentGeot} rows={geoticOrderRows} players={state.players} />
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Section
@@ -416,6 +435,14 @@ function ThirdCollegeStatus({ status, error }: { status?: string; error?: string
     );
   }
 
+  if (error === "orden") {
+    return (
+      <div className="rounded border border-[#7c2430]/30 bg-[#7c2430]/10 px-4 py-3 text-sm font-semibold text-[#7c2430]">
+        Ordensprotokollen avviste føringen. Geoten må finnes før Kollegiet kan skyve ham opp eller ned trappen.
+      </div>
+    );
+  }
+
   if (status === "geoterindeks") {
     return (
       <div className="rounded border border-[#194832]/30 bg-[#194832]/10 px-4 py-3 text-sm font-semibold text-[#194832]">
@@ -424,10 +451,19 @@ function ThirdCollegeStatus({ status, error }: { status?: string; error?: string
     );
   }
 
+  if (status === "orden") {
+    return (
+      <div className="rounded border border-[#194832]/30 bg-[#194832]/10 px-4 py-3 text-sm font-semibold text-[#194832]">
+        Ordensrang er ført. Den offentlige veien ser høytidelig ut; årsaken forblir bak døren.
+      </div>
+    );
+  }
+
   return null;
 }
 
 type GeoterIndexRow = ReturnType<typeof getGeoterIndexRows>[number];
+type GeoticOrderRow = ReturnType<typeof getGeoticOrderRows>[number];
 
 function GeoterIndexSection({
   currentGeot,
@@ -677,6 +713,249 @@ function GeoterIndexSection({
             <RulePanel title="Kollegiets prosedyrer" items={geoterIndexProcedures} />
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+function GeoticOrderControlSection({
+  currentGeot,
+  players,
+  rows,
+}: {
+  currentGeot: Player;
+  players: Player[];
+  rows: GeoticOrderRow[];
+}) {
+  const firstRow = rows[0];
+
+  return (
+    <section className="overflow-hidden rounded border border-[#c49a3c]/70 bg-[#061d2b] text-[#fff7e6] shadow-[0_22px_48px_rgba(0,0,0,0.24)]">
+      <div className="grid gap-0 2xl:grid-cols-[minmax(0,1fr)_390px]">
+        <div className="p-5 sm:p-7">
+          <p className="inline-flex items-center gap-2 rounded border border-[#c49a3c]/55 bg-[#020b11]/45 px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#e1c06c]">
+            <Milestone className="h-4 w-4" aria-hidden="true" />
+            Den Geotiske Orden · skjult kontroll
+          </p>
+          <h2 className="font-display mt-4 text-4xl font-semibold leading-tight sm:text-5xl">
+            Ordensforvaltningen
+          </h2>
+          <p className="mt-3 max-w-4xl text-base leading-7 text-[#eadcbd]">
+            Utenfor rommet ser geotene en høytidelig vei oppover. Her inne ser
+            Kollegiet selve mekanikken: rang, tjenestetid, frys, degradering,
+            partiprøver og den tause vurderingen av hvem som bærer, brenner,
+            støtter eller bare turisterer.
+          </p>
+          <div className="geotia-ornament mt-5 text-center text-sm font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
+            <span>Offentlig stige. Skjult hånd på gelenderet.</span>
+          </div>
+
+          <div className="mt-6 grid gap-3 md:grid-cols-4">
+            <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">Høyeste rang</p>
+              <p className="font-display mt-2 text-2xl font-semibold">{firstRow?.rank.name ?? "-"}</p>
+            </div>
+            <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">Under prøving</p>
+              <p className="font-display mt-2 text-2xl font-semibold">
+                {rows.filter((row) => row.status.id === "provetid").length}
+              </p>
+            </div>
+            <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">Frosset</p>
+              <p className="font-display mt-2 text-2xl font-semibold">
+                {rows.filter((row) => row.status.id === "frosset").length}
+              </p>
+            </div>
+            <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">Turistfare</p>
+              <p className="font-display mt-2 text-2xl font-semibold">
+                {rows.filter((row) => row.hiddenCategory.id === "turist").length}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 overflow-x-auto rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8">
+            <table className="w-full min-w-[980px] text-left text-sm">
+              <thead className="border-b border-[#c49a3c]/45 text-xs uppercase tracking-[0.12em] text-[#e1c06c]">
+                <tr>
+                  <th className="px-4 py-3">Geot</th>
+                  <th className="px-4 py-3">Synlig rang</th>
+                  <th className="px-4 py-3">Skjult type</th>
+                  <th className="px-4 py-3 text-right">Uker</th>
+                  <th className="px-4 py-3 text-right">Poeng</th>
+                  <th className="px-4 py-3 text-right">Indeks</th>
+                  <th className="px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.player.id} className="border-b border-[#c49a3c]/20 last:border-0">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <span className="h-9 w-2 rounded-full" style={{ background: row.player.color }} />
+                        <div>
+                          <p className="font-semibold text-[#fff7e6]">{row.player.shortName}</p>
+                          <p className="text-xs text-[#eadcbd]">{row.player.title}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="font-semibold text-[#fff7e6]">{row.rank.name}</p>
+                      <p className="text-xs text-[#cdbd97]">Rå terskel: {row.eligibleRank.name}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="font-semibold text-[#e1c06c]">{row.hiddenCategory.label}</p>
+                      <p className="max-w-xs text-xs leading-5 text-[#eadcbd]">{row.hiddenCategory.description}</p>
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold">{row.serviceWeeks}</td>
+                    <td className="px-4 py-3 text-right font-semibold">{formatNumber(row.lifetimePoints)}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-[#e1c06c]">{row.trustScore}</td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 px-2 py-1 font-semibold">
+                        {row.status.label}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            <div className="rounded border border-[#c49a3c]/45 bg-[#020b11]/45 p-4">
+              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
+                <BadgeCheck className="h-4 w-4" aria-hidden="true" />
+                Kollegiets skjulte kategorier
+              </p>
+              <div className="mt-3 grid gap-2">
+                {geoticOrderHiddenCategories.map((category) => (
+                  <p key={category.id} className="rounded border border-[#c49a3c]/30 bg-[#fff7e6]/8 px-3 py-2 text-sm leading-6">
+                    <span className="font-semibold text-[#fff7e6]">{category.label}:</span>{" "}
+                    <span className="text-[#eadcbd]">{category.description}</span>
+                  </p>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded border border-[#c49a3c]/45 bg-[#020b11]/45 p-4">
+              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
+                <Footprints className="h-4 w-4" aria-hidden="true" />
+                Aspirantprøver
+              </p>
+              <div className="mt-3 grid gap-2">
+                {partyTrials.map((trial) => (
+                  <p key={trial} className="rounded border border-[#c49a3c]/30 bg-[#fff7e6]/8 px-3 py-2 text-sm leading-6 text-[#eadcbd]">
+                    {trial}
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside className="border-t border-[#c49a3c]/45 bg-[#020b11] p-5 2xl:border-l 2xl:border-t-0">
+          <form action={submitGeoticOrderAssessmentAction} className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8 p-4">
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
+              <UserCog className="h-4 w-4" aria-hidden="true" />
+              Før ordensrang
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[#eadcbd]">
+              Operatør: {currentGeot.shortName}. Dette endrer den synlige ordensveien uten å forklare hvem som vippet vekten.
+            </p>
+            <label className="mt-4 block text-sm font-semibold text-[#fff7e6]">
+              Geot
+              <select name="playerId" className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]">
+                {players.map((player) => (
+                  <option key={player.id} value={player.id}>
+                    {player.shortName}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+              Synlig rang
+              <select name="rankId" defaultValue={firstRow?.rank.id} className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]">
+                {geoticOrderRanks.map((rank) => (
+                  <option key={rank.id} value={rank.id}>
+                    {rank.number}. {rank.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+              Tjenesteuker
+              <input
+                name="serviceWeeks"
+                type="number"
+                min="0"
+                max="999"
+                defaultValue={firstRow?.serviceWeeks ?? 0}
+                className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]"
+                required
+              />
+            </label>
+            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+              Skjult kategori
+              <select name="hiddenCategory" defaultValue={firstRow?.hiddenCategory.id} className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]">
+                {geoticOrderHiddenCategories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+              Status
+              <select name="status" defaultValue={firstRow?.status.id} className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]">
+                {geoticOrderStatuses.map((status) => (
+                  <option key={status.id} value={status.id}>
+                    {status.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+              Sponsor / parti
+              <input
+                name="sponsor"
+                className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]"
+                placeholder="F.eks. SS, PKK eller Vegard med hevet bryn"
+              />
+            </label>
+            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+              Prøve / ritual
+              <input
+                name="trial"
+                className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]"
+                placeholder="F.eks. PKK-prøven gjennomført uten sosial kollaps"
+              />
+            </label>
+            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+              Offentlig merknad
+              <textarea
+                name="publicNote"
+                className="mt-2 min-h-20 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 py-2 text-[#161713]"
+                placeholder="Tekst som kan vises på ordenssiden uten å avsløre Kollegiet."
+              />
+            </label>
+            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+              Intern merknad
+              <textarea
+                name="internalNote"
+                className="mt-2 min-h-24 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 py-2 text-[#161713]"
+                placeholder="Det egentlige notatet. Her kan mistanken ha navn."
+              />
+            </label>
+            <button
+              type="submit"
+              className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded bg-[#7c2430] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#641923]"
+            >
+              <UserCog className="h-4 w-4" aria-hidden="true" />
+              Før rang i ordenen
+            </button>
+          </form>
+        </aside>
       </div>
     </section>
   );

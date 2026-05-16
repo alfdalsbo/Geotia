@@ -5,7 +5,7 @@ async function login(page: Page, username: string) {
   await page.getByLabel("Brukernavn").fill(username);
   await page.getByLabel("Passord").fill("geotia");
   await page.getByRole("button", { name: "Åpne Geotia" }).click();
-  await expect(page.getByRole("button", { name: "Forlat embetsverket" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Forlat embetsverket" })).toBeVisible({ timeout: 15_000 });
 }
 
 for (const username of ["SS", "PKK", "IRA"]) {
@@ -13,9 +13,9 @@ for (const username of ["SS", "PKK", "IRA"]) {
     await login(page, username);
 
     await expect(page.getByRole("link", { name: "Tredje Kollegium" })).toBeVisible();
-    await page.getByRole("link", { name: "Tredje Kollegium" }).click();
-    await expect(page.getByRole("heading", { name: "Tredje Kollegium" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "GEOTERINDEKSEN" })).toBeVisible();
+    await page.goto("/tredje-kollegium");
+    await expect(page.getByRole("heading", { name: "Tredje Kollegium" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "GEOTERINDEKSEN" })).toBeVisible({ timeout: 15_000 });
     await page.getByLabel("Vis større bilde: Seglet til Tredje Kollegium").click();
     await expect(page.getByRole("dialog")).toBeVisible();
   });

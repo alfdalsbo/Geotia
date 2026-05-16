@@ -1008,4 +1008,5 @@ export const initialState: AppState = {
   gameSessions: [],
   geotingProposals: [],
   geoterIndexAdjustments: [],
+  geoticOrderAssessments: [],
 };
