@@ -193,7 +193,12 @@ test("SlowGeo can auto-calculate distances and archive a map protocol", async ({
 
   await page.getByRole("button", { name: "Lagre protokoll" }).click();
   await expect(page.getByText("Protokollen er lagret.")).toBeVisible();
-  await page.getByRole("row").filter({ hasText: roundName }).getByRole("link", { name: "Åpne" }).click();
-  await expect(page.getByText("Kartprotokoll")).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText("Danny")).toBeVisible();
+  const archiveRow = page.getByRole("row").filter({ hasText: roundName });
+  await Promise.all([
+    page.waitForURL(/\/runder\/[^/]+$/),
+    archiveRow.getByRole("link", { name: "Åpne" }).click(),
+  ]);
+  await expect(page.getByRole("heading", { name: roundName })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("Kartprotokoll", { exact: true })).toBeVisible();
+  await expect(page.getByRole("row", { name: /Danny Tingvitne/ })).toBeVisible();
 });

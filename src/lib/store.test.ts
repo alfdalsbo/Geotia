@@ -10,6 +10,9 @@ let tempDir: string | null = null;
 
 afterEach(async () => {
   delete process.env.GEOTIA_DATA_FILE;
+  delete process.env.GOOGLE_MAPS_SERVER_API_KEY;
+  delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  delete process.env.SLOWGEO_MONTHLY_ROUND_CAP;
   vi.resetModules();
   if (tempDir) {
     await rm(tempDir, { recursive: true, force: true });
@@ -135,5 +138,51 @@ describe("Geotia file store", () => {
     expect(state.geoticOrderAssessments).toHaveLength(1);
     expect(state.geoticOrderAssessments[0].rankId).toBe("anerkjent_borger");
     expect(state.geoticOrderAssessments[0].hiddenCategory).toBe("turist");
+  });
+
+  it("creates a SlowGeo round, accepts a pin, and reveals due rounds", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    process.env.GOOGLE_MAPS_SERVER_API_KEY = "";
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    vi.resetModules();
+
+    const { createSlowGeoRound, submitSlowGeoGuess, revealDueSlowGeoRounds, getAppState } = await import("@/lib/store");
+
+    const created = await createSlowGeoRound({ title: "Street View-prøven", deadlineMinutes: 60 });
+    if (!created.ok || !created.round?.answerLocation) throw new Error("SlowGeo-runden ble ikke opprettet");
+
+    expect(created.round.status).toBe("open");
+    expect(created.round.answerLocation.source).toBe("google_street_view");
+    expect(created.round.mapSnapshot).toBeNull();
+
+    const submitted = await submitSlowGeoGuess({
+      roundId: created.round.id,
+      playerId: "alf",
+      location: {
+        lat: created.round.answerLocation.lat,
+        lon: created.round.answerLocation.lon,
+        label: "Testpin",
+        query: "pin",
+        source: "manual",
+      },
+    });
+
+    expect(submitted.ok).toBe(true);
+    expect(submitted.round?.status).toBe("open");
+    expect(submitted.round?.results.find((result) => result.playerId === "alf")?.guessLocation?.label).toBe("Testpin");
+
+    const reveal = await revealDueSlowGeoRounds(new Date(Date.now() + 25 * 60 * 60 * 1000));
+    const state = await getAppState();
+    const round = state.rounds.find((candidate) => candidate.id === created.round.id);
+
+    expect(reveal.revealed).toBe(1);
+    expect(round?.status).toBe("revealed");
+    expect(round?.revealedAt).toBeTruthy();
+    expect(round?.results.find((result) => result.playerId === "alf")).toMatchObject({
+      status: "deltatt",
+      actualKm: 0,
+      distanceSource: "auto",
+    });
   });
 });

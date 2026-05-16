@@ -11,6 +11,7 @@ export function proxy(request: NextRequest) {
   if (
     pathname.startsWith("/login") ||
     pathname.startsWith("/_next") ||
+    pathname === "/api/cron/slowgeo-reveal" ||
     pathname.startsWith("/geotia-assets") ||
     pathname === "/favicon.ico" ||
     PUBLIC_FILE.test(pathname)

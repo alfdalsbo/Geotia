@@ -6,13 +6,62 @@ import { lockRoundAction, unlockRoundAction } from "@/app/actions";
 import { RoundForm } from "@/components/round-form";
 import { RoundMapProtocol } from "@/components/round-map-protocol";
 import { Section } from "@/components/section";
+import { SlowGeoPlay } from "@/components/slowgeo-play";
+import { SlowGeoRevealMap } from "@/components/slowgeo-reveal-map";
+import { getCurrentGeot } from "@/lib/auth";
 import { computeRound } from "@/lib/scoring";
-import { getAppState, getRound } from "@/lib/store";
+import { getAppState, maybeRevealRound } from "@/lib/store";
+import { buildStreetViewImageUrl } from "@/lib/streetview-url";
+import type { RoundStatus } from "@/lib/types";
 import { dateLabel, formatKm } from "@/lib/utils";
 
 export const metadata = {
   title: "Rundeprotokoll",
 };
+
+function statusName(status: RoundStatus) {
+  const labels: Record<RoundStatus, string> = {
+    draft: "Utkast",
+    open: "Åpen",
+    revealed: "Fasit vist",
+    locked: "Låst",
+  };
+  return labels[status];
+}
+
+function roundAction(roundId: string, status: RoundStatus) {
+  if (status === "revealed" || status === "draft") {
+    return (
+      <form action={lockRoundAction}>
+        <input type="hidden" name="id" value={roundId} />
+        <button
+          type="submit"
+          className="inline-flex h-10 items-center gap-2 rounded bg-[#285c45] px-3 text-sm font-semibold text-white"
+        >
+          <LockKeyhole className="h-4 w-4" aria-hidden="true" />
+          Lås protokollen
+        </button>
+      </form>
+    );
+  }
+
+  if (status === "locked") {
+    return (
+      <form action={unlockRoundAction}>
+        <input type="hidden" name="id" value={roundId} />
+        <button
+          type="submit"
+          className="inline-flex h-10 items-center gap-2 rounded border border-[#b8892f]/40 bg-[#b8892f]/10 px-3 text-sm font-semibold text-[#7b591d]"
+        >
+          <Gavel className="h-4 w-4" aria-hidden="true" />
+          Send til GeoVAR
+        </button>
+      </form>
+    );
+  }
+
+  return null;
+}
 
 export default async function RoundDetailPage({
   params,
@@ -23,10 +72,42 @@ export default async function RoundDetailPage({
 }) {
   const { id } = await params;
   const query = (await searchParams) ?? {};
-  const [round, state] = await Promise.all([getRound(id), getAppState()]);
+  const round = await maybeRevealRound(id);
   if (!round) notFound();
 
+  const [state, currentGeot] = await Promise.all([getAppState(), getCurrentGeot()]);
   const computed = computeRound(round, state.players);
+  const isStreetViewRound = Boolean(round.challenge);
+  const isOpenStreetViewRound = isStreetViewRound && round.status === "open";
+  const publicGoogleKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+  const streetViewUrl = round.challenge
+    ? buildStreetViewImageUrl({
+        challenge: round.challenge,
+        apiKey: publicGoogleKey,
+        allowLocationFallback: round.status !== "open",
+      })
+    : null;
+  const currentResult = currentGeot
+    ? round.results.find((result) => result.playerId === currentGeot.id)
+    : null;
+  const existingGuess = currentResult?.guessLocation
+    ? {
+        lat: currentResult.guessLocation.lat,
+        lon: currentResult.guessLocation.lon,
+        label: currentResult.guessLocation.label,
+        updatedAt: currentResult.guessUpdatedAt,
+      }
+    : null;
+  const revealMarkers =
+    round.mapSnapshot?.markers.map((marker) => ({
+      id: marker.id,
+      type: marker.type,
+      label: marker.label,
+      lat: marker.lat,
+      lon: marker.lon,
+      color: marker.color,
+      distanceKm: marker.distanceKm,
+    })) ?? [];
 
   return (
     <div className="space-y-6">
@@ -39,7 +120,8 @@ export default async function RoundDetailPage({
             {round.name}
           </h1>
           <p className="mt-3 text-[#60553f]">
-            {dateLabel(round.date)} · {round.answer || "Fasit ikke ført"} ·{" "}
+            {dateLabel(round.date)} ·{" "}
+            {isOpenStreetViewRound ? "Fasit skjult til reveal" : round.answer || "Fasit ikke ført"} ·{" "}
             {computed.participantCount} gyldige deltakere
           </p>
         </div>
@@ -56,9 +138,17 @@ export default async function RoundDetailPage({
           {query.error}
         </div>
       ) : null}
-      {query.status === "geovar" ? (
-        <div className="rounded border border-[#b8892f]/30 bg-[#b8892f]/10 px-4 py-3 text-sm font-medium text-[#7b591d]">
-          GeoVAR har åpnet protokollen for ny behandling.
+      {query.status ? (
+        <div className="rounded border border-[#285c45]/25 bg-[#285c45]/8 px-4 py-3 text-sm font-medium text-[#285c45]">
+          {query.status === "geovar"
+            ? "GeoVAR har åpnet protokollen for ny behandling."
+            : query.status === "gjettet"
+              ? "Pin-svaret er ført. Siste svar gjelder fram til reveal."
+              : query.status === "avslort"
+                ? "Alle geoter har svart. Fasit er avslørt."
+                : query.status === "apnet"
+                  ? "SlowGeo-runden er åpnet."
+                  : "Protokollen er oppdatert."}
         </div>
       ) : null}
 
@@ -67,9 +157,7 @@ export default async function RoundDetailPage({
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5b6257]">
             Status
           </p>
-          <p className="mt-2 text-2xl font-semibold text-[#203c62]">
-            {round.status === "locked" ? "Låst" : "Utkast"}
-          </p>
+          <p className="mt-2 text-2xl font-semibold text-[#203c62]">{statusName(round.status)}</p>
         </div>
         <div className="rounded border border-[#d8ded0] bg-white p-4 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5b6257]">
@@ -84,41 +172,41 @@ export default async function RoundDetailPage({
             Vinner
           </p>
           <p className="mt-2 text-2xl font-semibold text-[#285c45]">
-            {computed.winnerNames.join(", ") || "-"}
+            {round.status === "open" ? "-" : computed.winnerNames.join(", ") || "-"}
           </p>
         </div>
       </div>
 
-      <RoundMapProtocol snapshot={round.mapSnapshot} />
+      {isOpenStreetViewRound && round.challenge ? (
+        <SlowGeoPlay
+          roundId={round.id}
+          deadlineAt={round.deadlineAt ?? null}
+          streetViewUrl={streetViewUrl}
+          googleMapsApiKey={publicGoogleKey}
+          existingGuess={existingGuess}
+          imageDate={round.challenge.imageDate}
+          copyright={round.challenge.copyright}
+        />
+      ) : null}
+
+      {isStreetViewRound && round.challenge && round.status !== "open" ? (
+        <SlowGeoRevealMap
+          streetViewUrl={streetViewUrl}
+          googleMapsApiKey={publicGoogleKey}
+          markers={revealMarkers}
+          imageDate={round.challenge.imageDate}
+          copyright={round.challenge.copyright}
+        />
+      ) : null}
+
+      {!isStreetViewRound ? <RoundMapProtocol snapshot={round.mapSnapshot} /> : null}
 
       <Section
-        title="Protokollføring"
-        eyebrow="Km, deltakelse og kattometer"
+        title={isOpenStreetViewRound ? "Rundestatus" : "Protokollføring"}
+        eyebrow={isOpenStreetViewRound ? "Svarfrist og innsendte pins" : "Km, deltakelse og kattometer"}
         action={
           <div className="flex flex-wrap gap-2">
-            {round.status === "draft" ? (
-              <form action={lockRoundAction}>
-                <input type="hidden" name="id" value={round.id} />
-                <button
-                  type="submit"
-                  className="inline-flex h-10 items-center gap-2 rounded bg-[#285c45] px-3 text-sm font-semibold text-white"
-                >
-                  <LockKeyhole className="h-4 w-4" aria-hidden="true" />
-                  Lås protokollen
-                </button>
-              </form>
-            ) : (
-              <form action={unlockRoundAction}>
-                <input type="hidden" name="id" value={round.id} />
-                <button
-                  type="submit"
-                  className="inline-flex h-10 items-center gap-2 rounded border border-[#b8892f]/40 bg-[#b8892f]/10 px-3 text-sm font-semibold text-[#7b591d]"
-                >
-                  <Gavel className="h-4 w-4" aria-hidden="true" />
-                  Send til GeoVAR
-                </button>
-              </form>
-            )}
+            {roundAction(round.id, round.status)}
             <Link
               href="/runder"
               className="inline-flex h-10 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
@@ -129,7 +217,47 @@ export default async function RoundDetailPage({
           </div>
         }
       >
-        <RoundForm round={round} />
+        {isStreetViewRound ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <thead className="border-b border-[#d8ded0] text-xs uppercase tracking-[0.12em] text-[#5b6257]">
+                <tr>
+                  <th className="py-2 pr-3">Geot</th>
+                  <th className="py-2 pr-3">Svar</th>
+                  <th className="py-2 pr-3 text-right">Km</th>
+                  <th className="py-2 pr-3 text-right">Poeng</th>
+                  <th className="py-2 pr-3">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {computed.results.map((result) => (
+                  <tr key={result.playerId} className="border-b border-[#eef1eb] last:border-b-0">
+                    <td className="py-3 pr-3">
+                      <span className="inline-flex items-center gap-2 font-semibold text-[#203c62]">
+                        <span className="h-3 w-3 rounded-sm" style={{ background: result.player.color }} />
+                        {result.player.shortName}
+                      </span>
+                    </td>
+                    <td className="py-3 pr-3">
+                      {round.status === "open"
+                        ? result.playerId === currentGeot?.id && result.guessLocation
+                          ? "Ditt pin-svar er lagret"
+                          : result.guessLocation
+                            ? "Svar mottatt"
+                            : "-"
+                        : result.guessText || result.guessLocation?.label || "-"}
+                    </td>
+                    <td className="py-3 pr-3 text-right font-mono">{round.status === "open" ? "-" : formatKm(result.actualKm)}</td>
+                    <td className="py-3 pr-3 text-right font-mono">{round.status === "open" ? "-" : result.points}</td>
+                    <td className="py-3 pr-3">{result.status === "deltatt" ? "Deltatt" : result.guessLocation ? "Levert" : "Ikke levert"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <RoundForm round={round} />
+        )}
       </Section>
     </div>
   );

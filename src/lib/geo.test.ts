@@ -29,10 +29,20 @@ describe("SlowGeo geography", () => {
   });
 
   it("keeps old or incomplete location JSON safe", () => {
+    const streetViewLocation: GeoLocation = {
+      lat: 43.8594,
+      lon: 18.4312,
+      label: "Baščaršija, Sarajevo",
+      query: "sarajevo-bascarsija",
+      country: "Bosnia-Hercegovina",
+      source: "google_street_view",
+    };
+
     expect(parseGeoLocationJson("")).toBeNull();
     expect(parseGeoLocationJson("{")).toBeNull();
     expect(parseGeoLocationJson(JSON.stringify({ lat: "48.2", lon: 16.3 }))).toBeNull();
     expect(parseGeoLocationJson(JSON.stringify(vienna))).toEqual(vienna);
+    expect(parseGeoLocationJson(JSON.stringify(streetViewLocation))).toEqual(streetViewLocation);
   });
 
   it("builds map protocol data and respects manual distance overrides", () => {

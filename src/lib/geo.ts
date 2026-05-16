@@ -16,7 +16,9 @@ export function isGeoLocation(value: unknown): value is GeoLocation {
     Number.isFinite(candidate.lon) &&
     typeof candidate.label === "string" &&
     typeof candidate.query === "string" &&
-    (candidate.source === "nominatim" || candidate.source === "manual")
+    (candidate.source === "nominatim" ||
+      candidate.source === "manual" ||
+      candidate.source === "google_street_view")
   );
 }
 

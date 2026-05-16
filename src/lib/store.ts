@@ -6,6 +6,8 @@ import { archive, competingPlayers, games, initialState, parties, players } from
 import { canLockRound, emptyResults } from "@/lib/scoring";
 import { addVotingWindow, GEO_OATH_TEXT, normalizeVoteValue, resolveProposalIfReady } from "@/lib/geoting";
 import { buildRoundMapSnapshot } from "@/lib/geo";
+import { finalizeSlowGeoRound, isSlowGeoOpenRound, shouldRevealSlowGeoRound } from "@/lib/slowgeo";
+import { createStreetViewChallenge, getSlowGeoMonthlyRoundCap } from "@/lib/streetview";
 import type {
   AppState,
   GameId,
@@ -26,6 +28,7 @@ import type {
   Round,
   RoundMapSnapshot,
   RoundStatus,
+  SlowGeoChallenge,
   VoteValue,
 } from "@/lib/types";
 
@@ -35,6 +38,9 @@ type RoundInput = {
   name: string;
   answer: string;
   answerLocation?: GeoLocation | null;
+  challenge?: SlowGeoChallenge | null;
+  deadlineAt?: string | null;
+  revealedAt?: string | null;
   country: string;
   continent: string;
   comment: string;
@@ -178,12 +184,13 @@ type DbGeocodeCacheRow = {
 type RoundLocationData = {
   answerLocation: GeoLocation | null;
   mapSnapshot: RoundMapSnapshot | null;
+  challenge?: SlowGeoChallenge | null;
+  deadlineAt?: string | null;
+  revealedAt?: string | null;
 };
 
 type FileState = {
-  meta?: {
-    resetDynamicScoringV2?: string;
-  };
+  meta?: Record<string, string>;
   rounds: Round[];
   gameSessions: GameSession[];
   geotingProposals: GeotingProposal[];
@@ -200,6 +207,7 @@ const dataFile =
 const backupDataFile = `${dataFile}.bak`;
 
 let schemaReady = false;
+let fileWriteQueue: Promise<void> = Promise.resolve();
 
 export function getStorageMode() {
   if (process.env.GEOTIA_FORCE_FILE_STORAGE === "1") return "Lokal filprotokoll";
@@ -212,6 +220,11 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+function normalizeRoundStatus(status: RoundStatus | string | undefined): RoundStatus {
+  if (status === "open" || status === "revealed" || status === "locked") return status;
+  return "draft";
+}
+
 function normalizeRound(round: Round): Round {
   const existing = new Map(round.results.map((result) => [result.playerId, result]));
   const results = competingPlayers.map((player) => {
@@ -221,6 +234,7 @@ function normalizeRound(round: Round): Round {
           ...result,
           guessText: result.guessText ?? "",
           guessLocation: result.guessLocation ?? null,
+          guessUpdatedAt: result.guessUpdatedAt ?? null,
           distanceSource: result.distanceSource ?? null,
           note: result.note ?? "",
         }
@@ -230,16 +244,25 @@ function normalizeRound(round: Round): Round {
           actualKm: null,
           guessText: "",
           guessLocation: null,
+          guessUpdatedAt: null,
           distanceSource: null,
           note: "",
         };
   });
   const answerLocation = round.answerLocation ?? null;
+  const status = normalizeRoundStatus(round.status);
   return {
     ...round,
+    status,
     answerLocation,
+    challenge: round.challenge ?? null,
+    deadlineAt: round.deadlineAt ?? null,
+    revealedAt: round.revealedAt ?? null,
     results,
-    mapSnapshot: round.mapSnapshot ?? buildRoundMapSnapshot({ answerLocation, players, results }),
+    mapSnapshot:
+      status === "open"
+        ? null
+        : (round.mapSnapshot ?? buildRoundMapSnapshot({ answerLocation, players, results })),
   };
 }
 
@@ -286,7 +309,7 @@ async function ensureFileState() {
       dataFile,
       JSON.stringify(
         {
-          meta: { resetDynamicScoringV2: "done" },
+          meta: {},
           rounds: [],
           gameSessions: [],
           geotingProposals: [],
@@ -306,20 +329,15 @@ async function readFileState(): Promise<FileState> {
   await ensureFileState();
   const raw = await fs.readFile(dataFile, "utf8");
   const parsed = parseFileState(raw) ?? (await readBackupFileState());
-  const resetDone = parsed.meta?.resetDynamicScoringV2 === "done";
-  const state = {
-    meta: { ...(parsed.meta ?? {}), resetDynamicScoringV2: "done" },
-    rounds: resetDone ? (parsed.rounds ?? []).map(normalizeRound) : [],
-    gameSessions: resetDone ? (parsed.gameSessions ?? []).map(normalizeGameSession) : [],
+  return {
+    meta: parsed.meta ?? {},
+    rounds: (parsed.rounds ?? []).map(normalizeRound),
+    gameSessions: (parsed.gameSessions ?? []).map(normalizeGameSession),
     geotingProposals: (parsed.geotingProposals ?? []).map(normalizeProposal),
     geoterIndexAdjustments: parsed.geoterIndexAdjustments ?? [],
     geoticOrderAssessments: parsed.geoticOrderAssessments ?? [],
     geocodeCache: parsed.geocodeCache ?? [],
   };
-  if (!resetDone) {
-    await writeFileState(state);
-  }
-  return state;
 }
 
 function parseFileState(raw: string): Partial<FileState> | null {
@@ -342,7 +360,7 @@ async function readBackupFileState(): Promise<Partial<FileState>> {
   throw new Error("Geotia-protokollen kunne ikke leses. Hovedfil og backup mangler gyldig JSON.");
 }
 
-async function writeFileState(state: FileState) {
+async function writeFileStateUnlocked(state: FileState) {
   await fs.mkdir(path.dirname(dataFile), { recursive: true });
   const tempFile = `${dataFile}.${process.pid}.${Date.now()}.${randomUUID()}.tmp`;
   await fs.writeFile(tempFile, JSON.stringify(state, null, 2), "utf8");
@@ -351,7 +369,23 @@ async function writeFileState(state: FileState) {
   } catch {
     // First write has nothing to back up yet.
   }
-  await fs.rename(tempFile, dataFile);
+  try {
+    await fs.rename(tempFile, dataFile);
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code !== "EPERM" && code !== "EEXIST") throw error;
+    await fs.copyFile(tempFile, dataFile);
+    await fs.rm(tempFile, { force: true });
+  }
+}
+
+async function writeFileState(state: FileState) {
+  const nextWrite = fileWriteQueue.then(
+    () => writeFileStateUnlocked(state),
+    () => writeFileStateUnlocked(state),
+  );
+  fileWriteQueue = nextWrite.catch(() => undefined);
+  return nextWrite;
 }
 
 async function readFileRounds(): Promise<Round[]> {
@@ -471,44 +505,19 @@ async function ensureSchema() {
     )
   `;
 
-  const resetKey = "reset_active_scores_multigame_v1";
-  const resetRows = (await sql`
-    SELECT value FROM geotia_meta WHERE key = ${resetKey}
-  `) as Array<{ value: string }>;
-  if (resetRows.length === 0) {
-    await sql`DELETE FROM geotia_rounds`;
-    await sql`DELETE FROM geotia_game_sessions`;
-    await sql`
-      INSERT INTO geotia_meta (key, value, updated_at)
-      VALUES (${resetKey}, 'done', ${nowIso()})
-      ON CONFLICT (key) DO NOTHING
-    `;
-  }
-
-  const dynamicResetKey = "reset_dynamic_slowgeo_v2";
-  const dynamicResetRows = (await sql`
-    SELECT value FROM geotia_meta WHERE key = ${dynamicResetKey}
-  `) as Array<{ value: string }>;
-  if (dynamicResetRows.length === 0) {
-    await sql`DELETE FROM geotia_rounds`;
-    await sql`DELETE FROM geotia_game_sessions`;
-    await sql`
-      INSERT INTO geotia_meta (key, value, updated_at)
-      VALUES (${dynamicResetKey}, 'done', ${nowIso()})
-      ON CONFLICT (key) DO NOTHING
-    `;
-  }
-
   schemaReady = true;
   return sql;
 }
 
 function parseRoundLocationData(value: RoundLocationData | string | null | undefined): RoundLocationData {
-  if (!value) return { answerLocation: null, mapSnapshot: null };
+  if (!value) return { answerLocation: null, mapSnapshot: null, challenge: null, deadlineAt: null, revealedAt: null };
   const parsed = typeof value === "string" ? (JSON.parse(value) as Partial<RoundLocationData>) : value;
   return {
     answerLocation: parsed.answerLocation ?? null,
     mapSnapshot: parsed.mapSnapshot ?? null,
+    challenge: parsed.challenge ?? null,
+    deadlineAt: parsed.deadlineAt ?? null,
+    revealedAt: parsed.revealedAt ?? null,
   };
 }
 
@@ -527,6 +536,9 @@ function parseDbRound(row: DbRoundRow): Round {
     answer: row.answer,
     answerLocation: locationData.answerLocation,
     mapSnapshot: locationData.mapSnapshot,
+    challenge: locationData.challenge ?? null,
+    deadlineAt: locationData.deadlineAt ?? null,
+    revealedAt: locationData.revealedAt ?? null,
     country: row.country,
     continent: row.continent,
     comment: row.comment,
@@ -655,7 +667,13 @@ async function upsertDbRound(round: Round) {
       ${round.createdAt},
       ${round.updatedAt},
       ${JSON.stringify(round.results)}::jsonb,
-      ${JSON.stringify({ answerLocation: round.answerLocation ?? null, mapSnapshot: round.mapSnapshot ?? null })}::jsonb
+      ${JSON.stringify({
+        answerLocation: round.answerLocation ?? null,
+        mapSnapshot: round.mapSnapshot ?? null,
+        challenge: round.challenge ?? null,
+        deadlineAt: round.deadlineAt ?? null,
+        revealedAt: round.revealedAt ?? null,
+      })}::jsonb
     )
     ON CONFLICT (id) DO UPDATE SET
       date = EXCLUDED.date,
@@ -1055,6 +1073,7 @@ export async function setCachedGeocodeLocation(queryKey: string, location: GeoLo
 }
 
 export async function getAppState(): Promise<AppState> {
+  await revealDueSlowGeoRounds();
   const [rounds, gameSessions, geotingProposals, geoterIndexAdjustments, geoticOrderAssessments] = await Promise.all([
     readRounds(),
     readGameSessions(),
@@ -1093,6 +1112,9 @@ export async function upsertRound(input: RoundInput) {
     name: input.name,
     answer: input.answer,
     answerLocation: input.answerLocation ?? null,
+    challenge: input.challenge ?? existing?.challenge ?? null,
+    deadlineAt: input.deadlineAt ?? existing?.deadlineAt ?? null,
+    revealedAt: input.revealedAt ?? existing?.revealedAt ?? null,
     country: input.country,
     continent: input.continent,
     comment: input.comment,
@@ -1108,6 +1130,161 @@ export async function upsertRound(input: RoundInput) {
 
   await saveRounds(nextRounds);
   return nextRound;
+}
+
+function clampDeadlineMinutes(value: number | undefined) {
+  if (!value || !Number.isFinite(value)) return 120;
+  return Math.max(60, Math.min(24 * 60, Math.round(value)));
+}
+
+function monthKey(value: string) {
+  return value.slice(0, 7);
+}
+
+export async function createSlowGeoRound(input: { title?: string; deadlineMinutes?: number } = {}) {
+  const rounds = await readRounds();
+  const timestamp = nowIso();
+  const monthlyCap = getSlowGeoMonthlyRoundCap();
+  const currentMonth = monthKey(timestamp);
+  const slowGeoRoundsThisMonth = rounds.filter((round) => {
+    const createdAt = round.challenge?.createdAt ?? round.createdAt;
+    return round.challenge && monthKey(createdAt) === currentMonth;
+  }).length;
+
+  if (monthlyCap > 0 && slowGeoRoundsThisMonth >= monthlyCap) {
+    return {
+      ok: false,
+      reason: `Månedstaket for SlowGeo er nådd (${monthlyCap}). Hev SLOWGEO_MONTHLY_ROUND_CAP når Google-kvoten tåler det.`,
+    };
+  }
+
+  const challenge = await createStreetViewChallenge({
+    excludeCandidateIds: rounds
+      .filter((round) => round.challenge)
+      .slice(-8)
+      .map((round) => round.challenge!.candidateId),
+  });
+  const nextNumber = rounds.reduce((max, round) => Math.max(max, round.number), 0) + 1;
+  const deadlineMinutes = clampDeadlineMinutes(input.deadlineMinutes);
+  const deadlineAt = new Date(Date.now() + deadlineMinutes * 60 * 1000).toISOString();
+  const answerLocation: GeoLocation = {
+    lat: challenge.lat,
+    lon: challenge.lon,
+    label: challenge.label,
+    query: challenge.candidateId,
+    country: challenge.country,
+    source: "google_street_view",
+  };
+
+  const round: Round = normalizeRound({
+    id: randomUUID(),
+    number: nextNumber,
+    date: timestamp.slice(0, 10),
+    name: input.title?.trim() || `SlowGeo #${nextNumber}`,
+    answer: challenge.label,
+    answerLocation,
+    challenge,
+    deadlineAt,
+    revealedAt: null,
+    country: challenge.country,
+    continent: challenge.continent,
+    comment: challenge.imageDate ? `Street View ${challenge.imageDate}` : "Google Street View",
+    status: "open",
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    results: emptyResults(competingPlayers),
+  });
+
+  await saveRounds([...rounds, round]);
+  return { ok: true, round };
+}
+
+export async function submitSlowGeoGuess(input: {
+  roundId: string;
+  playerId: string;
+  location: GeoLocation;
+}) {
+  const rounds = await readRounds();
+  const round = rounds.find((candidate) => candidate.id === input.roundId);
+  if (!round) {
+    return { ok: false, reason: "Runden finnes ikke i protokollen." };
+  }
+  if (!competingPlayers.some((player) => player.id === input.playerId)) {
+    return { ok: false, reason: "Bare konkurrerende geoter kan avgi SlowGeo-svar." };
+  }
+  if (!isSlowGeoOpenRound(round)) {
+    return { ok: false, reason: "Denne SlowGeo-runden er ikke åpen for svar." };
+  }
+
+  const now = new Date();
+  if (shouldRevealSlowGeoRound(round, players, now)) {
+    const finalized = finalizeSlowGeoRound(round, players, now.toISOString());
+    await saveRounds(rounds.map((candidate) => (candidate.id === round.id ? finalized : candidate)));
+    return { ok: false, reason: "Fristen er ute og fasit er avslørt." };
+  }
+
+  if (
+    !Number.isFinite(input.location.lat) ||
+    !Number.isFinite(input.location.lon) ||
+    Math.abs(input.location.lat) > 90 ||
+    Math.abs(input.location.lon) > 180
+  ) {
+    return { ok: false, reason: "Pinnen må stå på jorden." };
+  }
+
+  const timestamp = now.toISOString();
+  const results = round.results.map((result) =>
+    result.playerId === input.playerId
+      ? {
+          ...result,
+          guessText: input.location.label,
+          guessLocation: {
+            ...input.location,
+            source: "manual" as const,
+          },
+          guessUpdatedAt: timestamp,
+          actualKm: null,
+          distanceSource: null,
+        }
+      : result,
+  );
+  const answeredRound: Round = {
+    ...round,
+    results,
+    updatedAt: timestamp,
+  };
+  const revealed = shouldRevealSlowGeoRound(answeredRound, players, now);
+  const nextRound = revealed ? finalizeSlowGeoRound(answeredRound, players, timestamp) : normalizeRound(answeredRound);
+
+  await saveRounds(rounds.map((candidate) => (candidate.id === round.id ? nextRound : candidate)));
+  return { ok: true, round: nextRound, revealed };
+}
+
+export async function revealDueSlowGeoRounds(now = new Date()) {
+  const rounds = await readRounds();
+  const ids: string[] = [];
+  const timestamp = now.toISOString();
+  const nextRounds = rounds.map((round) => {
+    if (!shouldRevealSlowGeoRound(round, players, now)) return round;
+    ids.push(round.id);
+    return finalizeSlowGeoRound(round, players, timestamp);
+  });
+
+  if (ids.length > 0) {
+    await saveRounds(nextRounds);
+  }
+
+  return { revealed: ids.length, ids };
+}
+
+export async function maybeRevealRound(id: string, now = new Date()) {
+  const rounds = await readRounds();
+  const round = rounds.find((candidate) => candidate.id === id);
+  if (!round || !shouldRevealSlowGeoRound(round, players, now)) return round ?? null;
+
+  const revealed = finalizeSlowGeoRound(round, players, now.toISOString());
+  await saveRounds(rounds.map((candidate) => (candidate.id === id ? revealed : candidate)));
+  return revealed;
 }
 
 export async function upsertGameSession(input: GameSessionInput) {
@@ -1283,6 +1460,9 @@ export async function lockRound(id: string) {
   if (!round) {
     return { ok: false, reason: "Runden finnes ikke i protokollen." };
   }
+  if (round.status === "open") {
+    return { ok: false, reason: "Runden er fortsatt åpen. Vent på frist eller alle svar før låsing." };
+  }
   if (!canLockRound(round)) {
     return {
       ok: false,
@@ -1301,7 +1481,11 @@ export async function unlockRound(id: string) {
   if (!round) {
     return { ok: false, reason: "Runden finnes ikke i protokollen." };
   }
-  const updated = { ...round, status: "draft" as RoundStatus, updatedAt: nowIso() };
+  const updated = {
+    ...round,
+    status: round.challenge ? ("revealed" as RoundStatus) : ("draft" as RoundStatus),
+    updatedAt: nowIso(),
+  };
   await saveRounds(rounds.map((candidate) => (candidate.id === id ? updated : candidate)));
   return { ok: true, round: updated };
 }
@@ -1316,6 +1500,9 @@ export function makeEmptyRound(): Round {
     answer: "",
     answerLocation: null,
     mapSnapshot: null,
+    challenge: null,
+    deadlineAt: null,
+    revealedAt: null,
     country: "",
     continent: "",
     comment: "",

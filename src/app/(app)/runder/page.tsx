@@ -7,6 +7,8 @@ import { computeRound } from "@/lib/scoring";
 import { getAppState, makeEmptyRound } from "@/lib/store";
 import { dateLabel, formatKm } from "@/lib/utils";
 import { RoundForm } from "@/components/round-form";
+import { SlowGeoRoundLauncher } from "@/components/slowgeo-round-launcher";
+import type { RoundStatus } from "@/lib/types";
 
 export const metadata = {
   title: "Runder",
@@ -15,7 +17,7 @@ export const metadata = {
 export default async function RoundsPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ status?: string }>;
+  searchParams?: Promise<{ error?: string; status?: string }>;
 }) {
   const params = (await searchParams) ?? {};
   const state = await getAppState();
@@ -40,13 +42,27 @@ export default async function RoundsPage({
         </p>
       </div>
 
-      {params.status ? (
-        <div className="rounded border border-[#285c45]/25 bg-[#285c45]/8 px-4 py-3 text-sm font-medium text-[#285c45]">
-          {params.status === "last" ? "Protokollen er låst. Kattometeret har talt." : "Protokollen er lagret."}
+      {params.error ? (
+        <div className="rounded border border-[#8e3030]/25 bg-[#8e3030]/8 px-4 py-3 text-sm font-medium text-[#8e3030]">
+          {params.error}
         </div>
       ) : null}
 
-      <Section title="Ny runde" eyebrow="Embetsverkets hurtigskjema">
+      {params.status ? (
+        <div className="rounded border border-[#285c45]/25 bg-[#285c45]/8 px-4 py-3 text-sm font-medium text-[#285c45]">
+          {params.status === "last"
+            ? "Protokollen er låst. Kattometeret har talt."
+            : params.status === "apnet"
+              ? "SlowGeo-runden er åpnet."
+              : "Protokollen er lagret."}
+        </div>
+      ) : null}
+
+      <Section title="Ny SlowGeo" eyebrow="Street View og pin-svar">
+        <SlowGeoRoundLauncher />
+      </Section>
+
+      <Section title="Manuell protokoll" eyebrow="Embetsverkets hurtigskjema">
         <RoundForm round={makeEmptyRound()} />
       </Section>
 
@@ -69,17 +85,25 @@ export default async function RoundsPage({
               <tbody>
                 {sortedRounds.map((round) => {
                   const computed = computeRound(round, state.players);
+                  const statusLabel: Record<RoundStatus, string> = {
+                    draft: "Utkast",
+                    open: "Åpen",
+                    revealed: "Fasit vist",
+                    locked: "Låst",
+                  };
                   return (
                     <tr key={round.id} className="border-b border-[#eef1eb] last:border-b-0">
                       <td className="py-3 pr-3 font-mono text-[#8e3030]">{round.number}</td>
                       <td className="py-3 pr-3 font-semibold text-[#203c62]">{round.name}</td>
                       <td className="py-3 pr-3">{dateLabel(round.date)}</td>
-                      <td className="py-3 pr-3">{round.answer || "-"}</td>
+                      <td className="py-3 pr-3">
+                        {round.status === "open" && round.challenge ? "Skjult til fasit" : round.answer || "-"}
+                      </td>
                       <td className="py-3 pr-3 text-right">{computed.participantCount}</td>
                       <td className="py-3 pr-3 text-right">{formatKm(computed.worstThreeAverage)}</td>
                       <td className="py-3 pr-3">
                         <span className="inline-flex rounded border border-[#d8ded0] bg-[#f7f8f5] px-2 py-1 text-xs font-semibold">
-                          {round.status === "locked" ? "Låst" : "Utkast"}
+                          {statusLabel[round.status]}
                         </span>
                       </td>
                       <td className="py-3 text-right">
@@ -91,7 +115,7 @@ export default async function RoundsPage({
                             <Edit3 className="h-4 w-4" aria-hidden="true" />
                             Åpne
                           </Link>
-                          {round.status === "draft" ? (
+                          {round.status === "draft" || round.status === "revealed" ? (
                             <form action={lockRoundAction}>
                               <input type="hidden" name="id" value={round.id} />
                               <button
@@ -102,10 +126,14 @@ export default async function RoundsPage({
                                 Lås
                               </button>
                             </form>
-                          ) : (
+                          ) : round.status === "locked" ? (
                             <span className="inline-flex h-9 items-center gap-2 rounded bg-[#285c45]/10 px-3 text-sm font-semibold text-[#285c45]">
                               <ShieldCheck className="h-4 w-4" aria-hidden="true" />
                               Ført
+                            </span>
+                          ) : (
+                            <span className="inline-flex h-9 items-center gap-2 rounded bg-[#b8892f]/10 px-3 text-sm font-semibold text-[#7b591d]">
+                              Åpen
                             </span>
                           )}
                         </div>

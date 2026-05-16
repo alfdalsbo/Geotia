@@ -12,10 +12,12 @@ import { isThirdCollegeMember } from "@/lib/kollegium";
 import { competingPlayers, games, isVotingPlayerId, players } from "@/lib/seed";
 import {
   addGeoterIndexAdjustment,
+  createSlowGeoRound,
   createGeotingProposal,
   lockRound,
   saveGeotingVote,
   startGeotingVote,
+  submitSlowGeoGuess,
   unlockRound,
   upsertGeoticOrderAssessment,
   upsertGameSession,
@@ -25,6 +27,7 @@ import type {
   DistanceSource,
   GameId,
   GameResult,
+  GeoLocation,
   GeoterIndexCategory,
   GeoticOrderHiddenCategory,
   GeoticOrderRankId,
@@ -124,6 +127,66 @@ export async function saveRoundAction(formData: FormData) {
   revalidatePath("/hall-of-fame");
   revalidatePath("/min-geot");
   redirect("/runder?status=lagret");
+}
+
+function revalidateSlowGeoPaths(roundId?: string) {
+  revalidatePath("/");
+  revalidatePath("/runder");
+  if (roundId) revalidatePath(`/runder/${roundId}`);
+  revalidatePath("/stilling");
+  revalidatePath("/hall-of-fame");
+  revalidatePath("/min-geot");
+}
+
+export async function createSlowGeoRoundAction(formData: FormData) {
+  await requireSession();
+  const title = field(formData, "title");
+  const deadlineMinutes = Math.round(numberField(formData, "deadline_minutes"));
+
+  const result = await createSlowGeoRound({
+    title,
+    deadlineMinutes,
+  });
+
+  revalidateSlowGeoPaths(result.ok ? result.round?.id : undefined);
+
+  if (!result.ok || !result.round) {
+    redirect(`/runder?error=${encodeURIComponent(result.reason ?? "SlowGeo-runden kunne ikke åpnes.")}`);
+  }
+
+  redirect(`/runder/${result.round.id}?status=apnet`);
+}
+
+export async function submitSlowGeoGuessAction(formData: FormData) {
+  const session = await requireSession();
+  const roundId = field(formData, "round_id");
+  const lat = Number(field(formData, "guess_lat").replace(",", "."));
+  const lon = Number(field(formData, "guess_lon").replace(",", "."));
+
+  if (!roundId || !Number.isFinite(lat) || !Number.isFinite(lon)) {
+    redirect(`/runder/${roundId || ""}?error=${encodeURIComponent("Sett en pin på kartet før svaret sendes.")}`);
+  }
+
+  const location: GeoLocation = {
+    lat,
+    lon,
+    label: field(formData, "guess_label") || "Pin-svar",
+    query: "pin",
+    source: "manual",
+  };
+  const result = await submitSlowGeoGuess({
+    roundId,
+    playerId: session.playerId,
+    location,
+  });
+
+  revalidateSlowGeoPaths(roundId);
+
+  if (!result.ok) {
+    redirect(`/runder/${roundId}?error=${encodeURIComponent(result.reason ?? "Svaret ble ikke ført.")}`);
+  }
+
+  redirect(`/runder/${roundId}?status=${result.revealed ? "avslort" : "gjettet"}`);
 }
 
 function gameIdField(value: string): GameId {
