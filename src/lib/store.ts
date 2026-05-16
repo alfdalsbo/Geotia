@@ -10,6 +10,8 @@ import type {
   GameId,
   GameResult,
   GameSession,
+  GeoterIndexAdjustment,
+  GeoterIndexCategory,
   GeotingProposal,
   GeotingProposalStatus,
   GeotingVote,
@@ -69,6 +71,15 @@ type VoteInput = {
   comment: string;
 };
 
+type GeoterIndexAdjustmentInput = {
+  playerId: string;
+  delta: number;
+  category: GeoterIndexCategory;
+  title: string;
+  reason: string;
+  createdBy: string;
+};
+
 type StartVoteInput = {
   proposalId: string;
   playerId: string;
@@ -105,10 +116,22 @@ type DbProposalRow = {
   votes_json: GeotingVote[] | string;
 };
 
+type DbGeoterIndexAdjustmentRow = {
+  id: string;
+  player_id: string;
+  delta: number;
+  category: GeoterIndexCategory;
+  title: string;
+  reason: string;
+  created_at: string;
+  created_by: string;
+};
+
 type FileState = {
   rounds: Round[];
   gameSessions: GameSession[];
   geotingProposals: GeotingProposal[];
+  geoterIndexAdjustments: GeoterIndexAdjustment[];
 };
 
 const dataFile =
@@ -188,7 +211,7 @@ async function ensureFileState() {
     await fs.mkdir(path.dirname(dataFile), { recursive: true });
     await fs.writeFile(
       dataFile,
-      JSON.stringify({ rounds: [], gameSessions: [], geotingProposals: [] }, null, 2),
+      JSON.stringify({ rounds: [], gameSessions: [], geotingProposals: [], geoterIndexAdjustments: [] }, null, 2),
       "utf8",
     );
   }
@@ -202,6 +225,7 @@ async function readFileState(): Promise<FileState> {
     rounds: (parsed.rounds ?? []).map(normalizeRound),
     gameSessions: (parsed.gameSessions ?? []).map(normalizeGameSession),
     geotingProposals: (parsed.geotingProposals ?? []).map(normalizeProposal),
+    geoterIndexAdjustments: parsed.geoterIndexAdjustments ?? [],
   };
 }
 
@@ -289,6 +313,19 @@ async function ensureSchema() {
   await sql`ALTER TABLE geotia_geoting_proposals ADD COLUMN IF NOT EXISTS oath_text text`;
   await sql`ALTER TABLE geotia_geoting_proposals ADD COLUMN IF NOT EXISTS resolved_at text`;
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS geotia_geoter_index_adjustments (
+      id text PRIMARY KEY,
+      player_id text NOT NULL,
+      delta integer NOT NULL,
+      category text NOT NULL,
+      title text NOT NULL,
+      reason text NOT NULL,
+      created_at text NOT NULL,
+      created_by text NOT NULL
+    )
+  `;
+
   const resetKey = "reset_active_scores_multigame_v1";
   const resetRows = (await sql`
     SELECT value FROM geotia_meta WHERE key = ${resetKey}
@@ -371,6 +408,19 @@ function parseDbProposal(row: DbProposalRow): GeotingProposal {
     resolvedAt: row.resolved_at,
     votes,
   });
+}
+
+function parseDbGeoterIndexAdjustment(row: DbGeoterIndexAdjustmentRow): GeoterIndexAdjustment {
+  return {
+    id: row.id,
+    playerId: row.player_id,
+    delta: row.delta,
+    category: row.category,
+    title: row.title,
+    reason: row.reason,
+    createdAt: row.created_at,
+    createdBy: row.created_by,
+  };
 }
 
 async function readDbRounds(): Promise<Round[] | null> {
@@ -548,6 +598,49 @@ async function upsertDbProposal(proposal: GeotingProposal) {
   return true;
 }
 
+async function readDbGeoterIndexAdjustments(): Promise<GeoterIndexAdjustment[] | null> {
+  const sql = await ensureSchema();
+  if (!sql) return null;
+
+  const rows = (await sql`
+    SELECT id, player_id, delta, category, title, reason, created_at, created_by
+    FROM geotia_geoter_index_adjustments
+    ORDER BY created_at ASC
+  `) as DbGeoterIndexAdjustmentRow[];
+
+  return rows.map(parseDbGeoterIndexAdjustment);
+}
+
+async function upsertDbGeoterIndexAdjustment(adjustment: GeoterIndexAdjustment) {
+  const sql = await ensureSchema();
+  if (!sql) return false;
+
+  await sql`
+    INSERT INTO geotia_geoter_index_adjustments (
+      id, player_id, delta, category, title, reason, created_at, created_by
+    )
+    VALUES (
+      ${adjustment.id},
+      ${adjustment.playerId},
+      ${adjustment.delta},
+      ${adjustment.category},
+      ${adjustment.title},
+      ${adjustment.reason},
+      ${adjustment.createdAt},
+      ${adjustment.createdBy}
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      player_id = EXCLUDED.player_id,
+      delta = EXCLUDED.delta,
+      category = EXCLUDED.category,
+      title = EXCLUDED.title,
+      reason = EXCLUDED.reason,
+      created_at = EXCLUDED.created_at,
+      created_by = EXCLUDED.created_by
+  `;
+  return true;
+}
+
 async function readRounds(): Promise<Round[]> {
   const dbRounds = await readDbRounds();
   if (dbRounds) return dbRounds;
@@ -569,6 +662,12 @@ async function readProposals(): Promise<GeotingProposal[]> {
     await saveProposals(finalized);
   }
   return finalized;
+}
+
+async function readGeoterIndexAdjustments(): Promise<GeoterIndexAdjustment[]> {
+  const dbAdjustments = await readDbGeoterIndexAdjustments();
+  if (dbAdjustments) return dbAdjustments;
+  return (await readFileState()).geoterIndexAdjustments;
 }
 
 async function saveRounds(rounds: Round[]) {
@@ -600,11 +699,22 @@ async function saveProposals(geotingProposals: GeotingProposal[]) {
   await writeFileState({ ...state, geotingProposals });
 }
 
+async function saveGeoterIndexAdjustments(geoterIndexAdjustments: GeoterIndexAdjustment[]) {
+  const sql = await ensureSchema();
+  if (sql) {
+    await Promise.all(geoterIndexAdjustments.map(upsertDbGeoterIndexAdjustment));
+    return;
+  }
+  const state = await readFileState();
+  await writeFileState({ ...state, geoterIndexAdjustments });
+}
+
 export async function getAppState(): Promise<AppState> {
-  const [rounds, gameSessions, geotingProposals] = await Promise.all([
+  const [rounds, gameSessions, geotingProposals, geoterIndexAdjustments] = await Promise.all([
     readRounds(),
     readGameSessions(),
     readProposals(),
+    readGeoterIndexAdjustments(),
   ]);
   return {
     ...initialState,
@@ -615,6 +725,7 @@ export async function getAppState(): Promise<AppState> {
     rounds,
     gameSessions,
     geotingProposals,
+    geoterIndexAdjustments,
   };
 }
 
@@ -775,6 +886,23 @@ export async function saveGeotingVote(input: VoteInput) {
     proposals.map((candidate) => (candidate.id === proposal.id ? nextProposal : candidate)),
   );
   return { ok: true, proposal: nextProposal };
+}
+
+export async function addGeoterIndexAdjustment(input: GeoterIndexAdjustmentInput) {
+  const existing = await readGeoterIndexAdjustments();
+  const adjustment: GeoterIndexAdjustment = {
+    id: randomUUID(),
+    playerId: input.playerId,
+    delta: Math.round(input.delta),
+    category: input.category,
+    title: input.title,
+    reason: input.reason,
+    createdAt: nowIso(),
+    createdBy: input.createdBy,
+  };
+
+  await saveGeoterIndexAdjustments([...existing, adjustment]);
+  return adjustment;
 }
 
 export async function lockRound(id: string) {

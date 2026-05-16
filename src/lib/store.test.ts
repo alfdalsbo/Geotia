@@ -49,4 +49,25 @@ describe("Geotia file store", () => {
     expect(state.rounds[0].status).toBe("locked");
     expect(state.rounds[0].number).toBe(1);
   });
+
+  it("persists Geoterindeksen adjustments in the local protocol file", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    vi.resetModules();
+
+    const { addGeoterIndexAdjustment, getAppState } = await import("@/lib/store");
+
+    await addGeoterIndexAdjustment({
+      playerId: "alf",
+      delta: 30,
+      category: "fellesskap",
+      title: "Fellesskapsmobilisering",
+      reason: "Fikk passive geoter inn i samtalen.",
+      createdBy: "vegard",
+    });
+
+    const state = await getAppState();
+    expect(state.geoterIndexAdjustments).toHaveLength(1);
+    expect(state.geoterIndexAdjustments[0].delta).toBe(30);
+  });
 });

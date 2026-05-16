@@ -5,8 +5,11 @@ import { revalidatePath } from "next/cache";
 
 import { createSession, destroySession, isCorrectPasscode, playerIdFromUsername, requireSession } from "@/lib/auth";
 import { GEO_OATH_TEXT } from "@/lib/geoting";
-import { competingPlayers, games, isVotingPlayerId } from "@/lib/seed";
+import { geoterIndexCategories } from "@/lib/geoterindeks";
+import { isThirdCollegeMember } from "@/lib/kollegium";
+import { competingPlayers, games, isVotingPlayerId, players } from "@/lib/seed";
 import {
+  addGeoterIndexAdjustment,
   createGeotingProposal,
   lockRound,
   saveGeotingVote,
@@ -15,7 +18,7 @@ import {
   upsertGameSession,
   upsertRound,
 } from "@/lib/store";
-import type { GameId, GameResult, PlayerResult, ProposalRuleType, ResultStatus, VoteValue } from "@/lib/types";
+import type { GameId, GameResult, GeoterIndexCategory, PlayerResult, ProposalRuleType, ResultStatus, VoteValue } from "@/lib/types";
 
 function field(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -27,6 +30,11 @@ function kmField(formData: FormData, key: string) {
   const parsed = Number(raw);
   if (!Number.isFinite(parsed) || parsed < 0) return null;
   return parsed;
+}
+
+function numberField(formData: FormData, key: string) {
+  const parsed = Number(field(formData, key).replace(",", "."));
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function statusField(value: string): ResultStatus {
@@ -152,6 +160,12 @@ function voteValue(value: string): VoteValue {
   return "blankt";
 }
 
+function geoterIndexCategory(value: string): GeoterIndexCategory {
+  return geoterIndexCategories.some((category) => category.id === value)
+    ? (value as GeoterIndexCategory)
+    : "fellesskap";
+}
+
 export async function submitGeotingProposalAction(formData: FormData) {
   const session = await requireSession();
   await createGeotingProposal({
@@ -217,4 +231,29 @@ export async function voteGeotingProposalAction(formData: FormData) {
       ? "/geotinget?status=avgjort"
       : "/geotinget?status=stemt",
   );
+}
+
+export async function submitGeoterIndexAdjustmentAction(formData: FormData) {
+  const session = await requireSession();
+  if (!isThirdCollegeMember(session.playerId)) {
+    redirect("/");
+  }
+
+  const playerId = field(formData, "playerId");
+  const delta = Math.max(-100, Math.min(100, Math.round(numberField(formData, "delta"))));
+  if (!players.some((player) => player.id === playerId) || delta === 0) {
+    redirect("/tredje-kollegium?error=indeks");
+  }
+
+  await addGeoterIndexAdjustment({
+    playerId,
+    delta,
+    category: geoterIndexCategory(field(formData, "category")),
+    title: field(formData, "title") || (delta > 0 ? "Skjult kreditt" : "Skjult trekk"),
+    reason: field(formData, "reason"),
+    createdBy: session.playerId,
+  });
+
+  revalidatePath("/tredje-kollegium");
+  redirect("/tredje-kollegium?status=geoterindeks");
 }

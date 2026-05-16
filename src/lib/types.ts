@@ -221,6 +221,25 @@ export type GeotingProposal = {
   votes: GeotingVote[];
 };
 
+export type GeoterIndexCategory =
+  | "geografisk"
+  | "hintdeling"
+  | "krangel"
+  | "initiativ"
+  | "fellesskap"
+  | "anti_sabotasje";
+
+export type GeoterIndexAdjustment = {
+  id: string;
+  playerId: string;
+  delta: number;
+  category: GeoterIndexCategory;
+  title: string;
+  reason: string;
+  createdAt: string;
+  createdBy: string;
+};
+
 export type OldSlowGeoRecord = {
   player: string;
   points: number;
@@ -267,4 +286,5 @@ export type AppState = {
   rounds: Round[];
   gameSessions: GameSession[];
   geotingProposals: GeotingProposal[];
+  geoterIndexAdjustments: GeoterIndexAdjustment[];
 };

@@ -1,6 +1,8 @@
 import { BellRing, CheckCircle2, Clock, Gavel, Landmark, ScrollText, Vote, XCircle } from "lucide-react";
 
 import { startGeotingVoteAction, submitGeotingProposalAction, voteGeotingProposalAction } from "@/app/actions";
+import { GeotingCountdown } from "@/components/geoting-countdown";
+import { GeotingVoteAlarm } from "@/components/geoting-vote-alarm";
 import { Section, StatTile } from "@/components/section";
 import { getCurrentGeot } from "@/lib/auth";
 import { GEO_OATH_TEXT, summarizeProposal } from "@/lib/geoting";
@@ -38,7 +40,8 @@ export default async function GeotingPage({
   const currentCanVote = Boolean(currentGeot && currentGeot.canVote !== false);
   const voterIds = new Set(votingPlayers.map((player) => player.id));
   const proposals = state.geotingProposals;
-  const activeVotes = proposals.filter((proposal) => proposal.status === "voting").length;
+  const activeVotingProposals = proposals.filter((proposal) => proposal.status === "voting");
+  const activeVotes = activeVotingProposals.length;
   const awaitingOath = proposals.filter((proposal) => proposal.status === "open").length;
   const resolvedVotes = proposals.filter((proposal) => proposal.status === "passed" || proposal.status === "rejected").length;
   const votesCast = proposals.reduce(
@@ -64,6 +67,8 @@ export default async function GeotingPage({
       </section>
 
       <GeotingStatus status={params.status} error={params.error} />
+
+      <GeotingVoteAlarm proposals={activeVotingProposals} context="geotinget" />
 
       <div className="grid gap-3 md:grid-cols-4">
         <StatTile label="Innlogget embete" value={currentGeot?.shortName ?? "-"} detail={currentGeot?.title} tone="blue" />
@@ -294,6 +299,11 @@ function StatusPanel({
           <p>Åpnet av {voteStarter?.shortName ?? "ukjent parti"}.</p>
           <p>Åpnet: {dateTimeLabel(proposal.voteStartedAt)}</p>
           <p>Frist: {dateTimeLabel(proposal.voteEndsAt)}</p>
+          {!summary.finished ? (
+            <div className="pt-2">
+              <GeotingCountdown endsAt={proposal.voteEndsAt} title="GeoTingets levende ur" />
+            </div>
+          ) : null}
           {summary.finished ? (
             <p>Resultatet er synlig og protokollført i riksarkivet.</p>
           ) : (

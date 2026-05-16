@@ -35,6 +35,7 @@ export function dateLabel(value: string) {
 export function dateTimeLabel(value: string | null | undefined) {
   if (!value) return "-";
   return new Intl.DateTimeFormat("nb-NO", {
+    timeZone: "Europe/Oslo",
     year: "numeric",
     month: "short",
     day: "numeric",

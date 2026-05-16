@@ -14,6 +14,7 @@ import {
 
 import { RotatingGeotiaQuote } from "@/components/rotating-geotia-quote";
 import { ExpandableImage } from "@/components/expandable-image";
+import { GeotingVoteAlarm } from "@/components/geoting-vote-alarm";
 import { SarajevoVideo } from "@/components/sarajevo-video";
 import { Section, StatTile } from "@/components/section";
 import { computeGameStandings, getHallOfFame, computeRound, computeStandings } from "@/lib/scoring";
@@ -38,6 +39,7 @@ export default async function DashboardPage() {
     .sort((a, b) => a.totalKattometer - b.totalKattometer)[0];
   const drafts = state.rounds.length - lockedRounds.length;
   const openGeotingCases = state.geotingProposals.filter((proposal) => proposal.status === "open").length;
+  const activeVotingProposals = state.geotingProposals.filter((proposal) => proposal.status === "voting");
 
   return (
     <div className="space-y-7">
@@ -128,6 +130,8 @@ export default async function DashboardPage() {
           </div>
         </div>
       </section>
+
+      <GeotingVoteAlarm proposals={activeVotingProposals} />
 
       <RotatingGeotiaQuote quotes={knowledgeQuotes} />
 

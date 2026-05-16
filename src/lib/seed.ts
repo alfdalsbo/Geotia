@@ -1007,4 +1007,5 @@ export const initialState: AppState = {
   rounds: [],
   gameSessions: [],
   geotingProposals: [],
+  geoterIndexAdjustments: [],
 };

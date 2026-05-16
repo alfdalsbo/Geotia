@@ -8,24 +8,30 @@ async function login(page: Page, username: string) {
   await expect(page.getByRole("button", { name: "Forlat embetsverket" })).toBeVisible();
 }
 
-test("Tredje Kollegium is visible for a member", async ({ page }) => {
-  await login(page, "SS");
+for (const username of ["SS", "PKK", "IRA"]) {
+  test(`Tredje Kollegium is visible for ${username}`, async ({ page }) => {
+    await login(page, username);
 
-  await expect(page.getByRole("link", { name: "Tredje Kollegium" })).toBeVisible();
-  await page.getByRole("link", { name: "Tredje Kollegium" }).click();
-  await expect(page.getByRole("heading", { name: "Tredje Kollegium" })).toBeVisible();
-  await expect(page.getByText("Kun tre par øyne")).toBeVisible();
-  await page.getByLabel("Vis større bilde: Seglet til Tredje Kollegium").click();
-  await expect(page.getByRole("dialog")).toBeVisible();
-});
+    await expect(page.getByRole("link", { name: "Tredje Kollegium" })).toBeVisible();
+    await page.getByRole("link", { name: "Tredje Kollegium" }).click();
+    await expect(page.getByRole("heading", { name: "Tredje Kollegium" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "GEOTERINDEKSEN" })).toBeVisible();
+    await page.getByLabel("Vis større bilde: Seglet til Tredje Kollegium").click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+  });
+}
 
-test("Tredje Kollegium stays invisible for non-members", async ({ page }) => {
-  await login(page, "Danny");
+test("Tredje Kollegium stays invisible for every non-member", async ({ page }) => {
+  for (const username of ["PLO", "PWP", "CIP", "MOSSAD", "Danny"]) {
+    await page.context().clearCookies();
+    await login(page, username);
 
-  await expect(page.getByRole("link", { name: "Tredje Kollegium" })).toHaveCount(0);
-  const pageResponse = await page.goto("/tredje-kollegium");
-  expect(pageResponse?.status()).toBe(404);
+    await expect(page.getByRole("link", { name: "Tredje Kollegium" })).toHaveCount(0);
+    await expect(page.getByText("GEOTERINDEKSEN")).toHaveCount(0);
+    const pageResponse = await page.goto("/tredje-kollegium");
+    expect(pageResponse?.status()).toBe(404);
 
-  const imageResponse = await page.goto("/tredje-kollegium/segl");
-  expect(imageResponse?.status()).toBe(404);
+    const imageResponse = await page.goto("/tredje-kollegium/segl");
+    expect(imageResponse?.status()).toBe(404);
+  }
 });
