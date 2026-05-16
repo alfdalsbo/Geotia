@@ -28,8 +28,8 @@ export const archiveSections = [
   {
     slug: "geoter",
     title: "Geoterregisteret",
-    eyebrow: "De syv geograter",
-    description: "Personer, partier, styrker, svakheter og offisielle merker.",
+    eyebrow: "Geoter og tingvitner",
+    description: "Personer, partier, benkeplasser, styrker, svakheter og offisielle merker.",
   },
   {
     slug: "partier",

@@ -1,7 +1,7 @@
 import { Gamepad2, Save } from "lucide-react";
 
 import { saveGameSessionAction } from "@/app/actions";
-import { games, players } from "@/lib/seed";
+import { competingPlayers, games } from "@/lib/seed";
 import type { GameSession } from "@/lib/types";
 
 const scoreGames = games.filter((game) => game.id !== "slowgeo");
@@ -72,7 +72,7 @@ export function GameSessionForm({ session }: { session: GameSession }) {
             </tr>
           </thead>
           <tbody>
-            {players.map((player) => {
+            {competingPlayers.map((player) => {
               const result = session.results.find((candidate) => candidate.playerId === player.id);
               return (
                 <tr key={player.id} className="border-b border-[#eef1eb] last:border-b-0">

@@ -53,7 +53,15 @@ export function isKnownPlayer(playerId: string) {
 
 export function playerIdFromUsername(username: string) {
   const normalized = username.trim().toLowerCase();
-  return players.find((player) => player.partyId.toLowerCase() === normalized)?.id ?? null;
+  if (!normalized) return null;
+  return (
+    players.find((player) => {
+      return (
+        player.username?.toLowerCase() === normalized ||
+        (player.partyId ? player.partyId.toLowerCase() === normalized : false)
+      );
+    })?.id ?? null
+  );
 }
 
 export function isCorrectPasscode(value: string) {

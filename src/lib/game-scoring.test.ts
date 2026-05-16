@@ -72,4 +72,30 @@ describe("GeoTinget", () => {
     });
     expect(summarizeProposal(proposal, players).passed).toBe(true);
   });
+
+  it("keeps Tingvitnet outside the voting count until a party exists", () => {
+    const proposal: GeotingProposal = {
+      id: "gt-tingvitne",
+      title: "Tingvitneprøve",
+      body: "Danny skal se uten å telle.",
+      ruleType: "grunnlov",
+      proposedBy: "danny",
+      status: "open",
+      createdAt: "2026-05-16T10:00:00.000Z",
+      updatedAt: "2026-05-16T10:00:00.000Z",
+      votes: players.map((player) => ({
+        playerId: player.id,
+        vote: player.id === "danny" ? "mot" : "for",
+        comment: "",
+        createdAt: "2026-05-16T10:00:00.000Z",
+      })),
+    };
+
+    const summary = summarizeProposal(proposal, players);
+
+    expect(summary.required).toBe(7);
+    expect(summary.forVotes).toBe(7);
+    expect(summary.againstVotes).toBe(0);
+    expect(summary.passed).toBe(true);
+  });
 });

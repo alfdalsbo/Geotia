@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
+import { ExpandableImage } from "@/components/expandable-image";
 import { Section } from "@/components/section";
 import { SarajevoVideo } from "@/components/sarajevo-video";
 import { archiveSources, getArchiveSection } from "@/lib/archive";
@@ -150,14 +150,14 @@ function ArchiveBody({ slug }: { slug: string }) {
                 <span className="mt-1 h-14 w-2 rounded-full" style={{ background: player.color }} />
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8e3030]">
-                    {party?.id.toUpperCase()}
+                    {party?.id.toUpperCase() ?? "TINGVITNE"}
                   </p>
                   <h2 className="mt-1 text-2xl font-semibold text-[#203c62]">{player.shortName}</h2>
                   <p className="text-sm text-[#5b6257]">{player.title}</p>
                 </div>
               </div>
               <dl className="mt-5 grid gap-3 text-sm">
-                <ArchiveFact label="Parti" value={party?.name ?? "-"} />
+                <ArchiveFact label="Parti" value={party?.name ?? "Ikke stiftet ennå"} />
                 <ArchiveFact label="Spesialfelt" value={player.specialty} />
                 <ArchiveFact label="Styrker" value={player.strengths} />
                 <ArchiveFact label="Svakheter" value={player.weaknesses} />
@@ -181,18 +181,19 @@ function ArchiveBody({ slug }: { slug: string }) {
             className="geotia-frame scroll-mt-24 rounded"
           >
             <div className="grid gap-0">
-              <div className="relative aspect-[4/5] bg-[#061d2b]">
-                {party.asset ? (
-                  <Image
-                    src={party.asset}
-                    alt={`Partikort for ${party.name}`}
-                    fill
-                    loading="eager"
-                    sizes="(min-width: 1280px) 50vw, (min-width: 768px) 50vw, 100vw"
-                    className="object-contain"
-                  />
-                ) : null}
-              </div>
+              {party.asset ? (
+                <ExpandableImage
+                  src={party.asset}
+                  alt={`Partikort for ${party.name}`}
+                  loading="eager"
+                  sizes="(min-width: 1280px) 50vw, (min-width: 768px) 50vw, 100vw"
+                  className="relative aspect-[4/5] w-full bg-[#061d2b]"
+                  imageClassName="object-contain"
+                  caption={`Partikort for ${party.name}`}
+                />
+              ) : (
+                <div className="relative aspect-[4/5] bg-[#061d2b]" />
+              )}
               <div className="min-w-0 p-5 sm:p-6">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7c2430]">
                   {party.id.toUpperCase()} · {party.ideology}

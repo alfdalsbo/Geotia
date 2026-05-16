@@ -26,14 +26,21 @@ const voteLabels = {
 export default async function GeotingPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ status?: string }>;
+  searchParams?: Promise<{ status?: string; error?: string }>;
 }) {
   const params = (await searchParams) ?? {};
   const state = await getAppState();
   const currentGeot = await getCurrentGeot();
+  const votingPlayers = state.players.filter((player) => player.canVote !== false);
+  const tingvitner = state.players.filter((player) => player.canVote === false);
+  const currentCanVote = Boolean(currentGeot && currentGeot.canVote !== false);
+  const voterIds = new Set(votingPlayers.map((player) => player.id));
   const proposals = state.geotingProposals;
   const openProposals = proposals.filter((proposal) => proposal.status === "open").length;
-  const votesCast = proposals.reduce((sum, proposal) => sum + proposal.votes.length, 0);
+  const votesCast = proposals.reduce(
+    (sum, proposal) => sum + proposal.votes.filter((vote) => voterIds.has(vote.playerId)).length,
+    0,
+  );
 
   return (
     <div className="space-y-7">
@@ -52,7 +59,11 @@ export default async function GeotingPage({
         </p>
       </section>
 
-      {params.status ? (
+      {params.error === "tingvitne" ? (
+        <div className="rounded border border-[#7c2430]/25 bg-[#7c2430]/10 px-4 py-3 text-sm font-medium text-[#7c2430]">
+          Tingvitnet er notert, men stemmeurnen åpnes først når Danny har stiftet parti.
+        </div>
+      ) : params.status ? (
         <div className="rounded border border-[#285c45]/25 bg-[#285c45]/8 px-4 py-3 text-sm font-medium text-[#285c45]">
           {params.status === "stemt"
             ? "Stemmen er ført. Tingvollen dirrer svakt."
@@ -61,10 +72,18 @@ export default async function GeotingPage({
       ) : null}
 
       <div className="grid gap-3 md:grid-cols-3">
-        <StatTile label="Innlogget geot" value={currentGeot?.shortName ?? "-"} detail={currentGeot?.title} tone="blue" />
+        <StatTile label="Innlogget embete" value={currentGeot?.shortName ?? "-"} detail={currentGeot?.title} tone="blue" />
         <StatTile label="Åpne saker" value={openProposals} detail="Til behandling" tone="gold" />
         <StatTile label="Avgitte stemmer" value={votesCast} detail="Individuell protokoll" tone="green" />
       </div>
+
+      {currentGeot?.role === "tingvitne" ? (
+        <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 text-sm leading-6 text-[#4f412b]">
+          <strong className="text-[#062b40]">Tingvitneprotokoll:</strong> Danny har adgang til
+          tingvollen og kan sende inn saker, men teller ikke i 7/7 og får ikke stemme før et
+          eget parti er stiftet og opptatt i GeoTinget.
+        </div>
+      ) : null}
 
       <Section title="Send inn forslag" eyebrow="Innkomne saker">
         <form action={submitGeotingProposalAction} className="grid gap-4 lg:grid-cols-[1fr_240px]">
@@ -144,7 +163,7 @@ export default async function GeotingPage({
                         Stemmekart
                       </p>
                       <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                        {state.players.map((player) => {
+                        {votingPlayers.map((player) => {
                           const vote = proposal.votes.find((candidate) => candidate.playerId === player.id);
                           return (
                             <div key={player.id} className="flex items-center justify-between rounded border border-[#d8ded0] bg-white px-3 py-2 text-sm">
@@ -159,36 +178,53 @@ export default async function GeotingPage({
                           Mangler: {summary.missingPlayers.map((player) => player.shortName).join(", ")}
                         </p>
                       ) : null}
+                      {tingvitner.length ? (
+                        <p className="mt-2 text-sm text-[#60553f]">
+                          Tingvitne: {tingvitner.map((player) => player.shortName).join(", ")} følger saken fra benken.
+                        </p>
+                      ) : null}
                     </div>
 
-                    <form action={voteGeotingProposalAction} className="rounded border border-[#d8ded0] bg-[#f7f8f5] p-3">
-                      <input type="hidden" name="proposalId" value={proposal.id} />
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
-                        Din stemme {ownVote ? `(${voteLabels[ownVote.vote]})` : ""}
-                      </p>
-                      <select
-                        name="vote"
-                        defaultValue={ownVote?.vote ?? "for"}
-                        className="mt-3 h-10 w-full rounded border border-[#d8ded0] bg-white px-2 outline-none focus:border-[#203c62]"
-                      >
-                        <option value="for">For</option>
-                        <option value="mot">Mot</option>
-                        <option value="avhold">Avhold</option>
-                      </select>
-                      <input
-                        name="comment"
-                        defaultValue={ownVote?.comment ?? ""}
-                        className="mt-3 h-10 w-full rounded border border-[#d8ded0] bg-white px-2 outline-none focus:border-[#203c62]"
-                        placeholder="Kort stikk, om nødvendig"
-                      />
-                      <button
-                        type="submit"
-                        className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white"
-                      >
-                        <Vote className="h-4 w-4" aria-hidden="true" />
-                        Avgi stemme
-                      </button>
-                    </form>
+                    {currentCanVote ? (
+                      <form action={voteGeotingProposalAction} className="rounded border border-[#d8ded0] bg-[#f7f8f5] p-3">
+                        <input type="hidden" name="proposalId" value={proposal.id} />
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
+                          Din stemme {ownVote ? `(${voteLabels[ownVote.vote]})` : ""}
+                        </p>
+                        <select
+                          name="vote"
+                          defaultValue={ownVote?.vote ?? "for"}
+                          className="mt-3 h-10 w-full rounded border border-[#d8ded0] bg-white px-2 outline-none focus:border-[#203c62]"
+                        >
+                          <option value="for">For</option>
+                          <option value="mot">Mot</option>
+                          <option value="avhold">Avhold</option>
+                        </select>
+                        <input
+                          name="comment"
+                          defaultValue={ownVote?.comment ?? ""}
+                          className="mt-3 h-10 w-full rounded border border-[#d8ded0] bg-white px-2 outline-none focus:border-[#203c62]"
+                          placeholder="Kort stikk, om nødvendig"
+                        />
+                        <button
+                          type="submit"
+                          className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white"
+                        >
+                          <Vote className="h-4 w-4" aria-hidden="true" />
+                          Avgi stemme
+                        </button>
+                      </form>
+                    ) : (
+                      <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-3 text-sm leading-6 text-[#4f412b]">
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
+                          Tingvitnebenken
+                        </p>
+                        <p className="mt-2">
+                          Du kan lese, mumle og sende inn forslag, men stemmeurnen er reservert
+                          for partiene.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </article>
               );

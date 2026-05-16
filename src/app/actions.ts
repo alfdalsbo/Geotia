@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { createSession, destroySession, isCorrectPasscode, playerIdFromUsername, requireSession } from "@/lib/auth";
-import { games, players } from "@/lib/seed";
+import { competingPlayers, games, isVotingPlayerId } from "@/lib/seed";
 import {
   createGeotingProposal,
   lockRound,
@@ -52,7 +52,7 @@ export async function logoutAction() {
 export async function saveRoundAction(formData: FormData) {
   await requireSession();
 
-  const results: PlayerResult[] = players.map((player) => {
+  const results: PlayerResult[] = competingPlayers.map((player) => {
     const status = statusField(field(formData, `status_${player.id}`));
     const actualKm = status === "deltatt" ? kmField(formData, `km_${player.id}`) : null;
     return {
@@ -90,7 +90,7 @@ export async function saveGameSessionAction(formData: FormData) {
   await requireSession();
   const gameId = gameIdField(field(formData, "gameId"));
 
-  const results: GameResult[] = players.map((player) => {
+  const results: GameResult[] = competingPlayers.map((player) => {
     const status = statusField(field(formData, `status_${player.id}`));
     const rawScore = kmField(formData, `score_${player.id}`);
     return {
@@ -166,6 +166,10 @@ export async function submitGeotingProposalAction(formData: FormData) {
 
 export async function voteGeotingProposalAction(formData: FormData) {
   const session = await requireSession();
+  if (!isVotingPlayerId(session.playerId)) {
+    redirect("/geotinget?error=tingvitne");
+  }
+
   await saveGeotingVote({
     proposalId: field(formData, "proposalId"),
     playerId: session.playerId,

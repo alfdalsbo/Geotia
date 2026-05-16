@@ -2,7 +2,7 @@ import { Save, ShieldCheck } from "lucide-react";
 
 import { saveRoundAction } from "@/app/actions";
 import { computeRound } from "@/lib/scoring";
-import { players } from "@/lib/seed";
+import { competingPlayers } from "@/lib/seed";
 import type { Round } from "@/lib/types";
 import { formatKm } from "@/lib/utils";
 
@@ -13,7 +13,7 @@ const statusOptions = [
 ];
 
 export function RoundForm({ round }: { round: Round }) {
-  const computed = computeRound(round, players);
+  const computed = computeRound(round, competingPlayers);
 
   return (
     <form action={saveRoundAction} className="space-y-5">
@@ -88,7 +88,7 @@ export function RoundForm({ round }: { round: Round }) {
             </tr>
           </thead>
           <tbody>
-            {players.map((player) => {
+            {competingPlayers.map((player) => {
               const result =
                 round.results.find((candidate) => candidate.playerId === player.id) ??
                 computed.results.find((candidate) => candidate.player.id === player.id);

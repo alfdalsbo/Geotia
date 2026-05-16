@@ -46,14 +46,14 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#e1c06c]">
-                Statsarkivet · est. 2024
+                Statsarkivet · rikets embetsverk
               </p>
               <p className="font-display text-3xl font-semibold tracking-normal text-[#fff7e6]">
                 Geotia
               </p>
               {currentGeot ? (
                 <p className="text-xs text-[#eadcbd]">
-                  Innlogget som {currentGeot.shortName}
+                  Innlogget som {currentGeot.shortName} · {currentGeot.title}
                 </p>
               ) : null}
             </div>

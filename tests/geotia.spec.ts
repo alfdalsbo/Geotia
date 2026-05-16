@@ -8,6 +8,9 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await page.getByRole("button", { name: "Åpne Geotia" }).click();
 
   await expect(page.getByRole("heading", { name: "Geotia" })).toBeVisible();
+  await page.getByLabel("Vis større bilde: Partioversikt for Geotia").click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.getByRole("button", { name: "Lukk større bilde" }).click();
   await page.getByRole("link", { name: "SlowGeo", exact: true }).click();
 
   await page.getByLabel("Rundenavn").fill("Playwright-protokollen");
@@ -55,4 +58,17 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await expect(page.getByText("Forslaget er mottatt.")).toBeVisible();
   await page.getByRole("button", { name: "Avgi stemme" }).first().click();
   await expect(page.getByText("Stemmen er ført.")).toBeVisible();
+});
+
+test("Danny logs in as Tingvitne without voting power", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Brukernavn").fill("Danny");
+  await page.getByLabel("Passord").fill("geotia");
+  await page.getByRole("button", { name: "Åpne Geotia" }).click();
+
+  await expect(page.getByText("Innlogget som Danny · Tingvitne")).toBeVisible();
+  await page.getByRole("link", { name: "GeoTinget" }).click();
+  await expect(page.getByText("Tingvitneprotokoll:")).toBeVisible();
+  await expect(page.getByText("teller ikke i 7/7")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Avgi stemme" })).toHaveCount(0);
 });

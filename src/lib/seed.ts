@@ -169,7 +169,32 @@ export const players: Player[] = [
     moment: "Grunnla PWP og satte pølser og whiskey inn i statsapparatet.",
     mark: "JA til nei, og BORT med vekk.",
   },
+  {
+    id: "danny",
+    name: "Danny",
+    shortName: "Danny",
+    partyId: "",
+    username: "danny",
+    role: "tingvitne",
+    canCompete: false,
+    canVote: false,
+    color: "#5b4a7d",
+    title: "Tingvitne",
+    specialty: "Tribunenærvær, parti under oppføring og kontrollert ikke-stemmegivning",
+    strengths: "Kan overvære krangling uten å bli tildelt komiteansvar.",
+    weaknesses: "Mangler foreløpig parti og må derfor sitte på benken mens riket stemmer.",
+    moment: "Tok plass som Geotias første offisielle Tingvitne.",
+    mark: "Har adgang til tingvollen, men ikke til stemmeurnen før partiet er stiftet.",
+  },
 ];
+
+export const competingPlayers = players.filter((player) => player.canCompete !== false);
+export const geotingVoters = players.filter((player) => player.canVote !== false);
+export const tingvitner = players.filter((player) => player.role === "tingvitne");
+
+export function isVotingPlayerId(playerId: string) {
+  return geotingVoters.some((player) => player.id === playerId);
+}
 
 export const parties: Party[] = [
   {

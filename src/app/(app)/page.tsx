@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -14,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { RotatingGeotiaQuote } from "@/components/rotating-geotia-quote";
+import { ExpandableImage } from "@/components/expandable-image";
 import { SarajevoVideo } from "@/components/sarajevo-video";
 import { Section, StatTile } from "@/components/section";
 import { computeGameStandings, getHallOfFame, computeRound, computeStandings } from "@/lib/scoring";
@@ -108,16 +108,15 @@ export default async function DashboardPage() {
           </div>
 
           <div className="border-t border-[#c49a3c]/35 bg-[#061d2b] xl:border-l xl:border-t-0">
-            <div className="relative min-h-[440px] sm:min-h-[560px] xl:min-h-[620px]">
-              <Image
-                src="/geotia-assets/party-overview.png"
-                alt="Partioversikt for Geotia"
-                fill
-                sizes="(min-width: 1280px) 580px, 100vw"
-                className="object-contain p-4"
-                priority
-              />
-            </div>
+            <ExpandableImage
+              src="/geotia-assets/party-overview.png"
+              alt="Partioversikt for Geotia"
+              sizes="(min-width: 1280px) 580px, 100vw"
+              className="relative min-h-[440px] w-full sm:min-h-[560px] xl:min-h-[620px]"
+              imageClassName="object-contain p-4"
+              caption="Partioversikt for Geotia"
+              priority
+            />
             <div className="border-t border-[#c49a3c]/35 bg-[#061d2b] p-5 text-[#fff7e6]">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#e1c06c]">
                 Siste SlowGeo-vinner
@@ -194,23 +193,23 @@ export default async function DashboardPage() {
           {state.parties.map((party) => {
             const partyLeader = state.players.find((player) => player.partyId === party.id);
             return (
-              <Link
+              <article
                 key={party.id}
-                href={`/arkiv/partier#${party.id}`}
                 className="group overflow-hidden rounded border border-[#c49a3c]/45 bg-[#fff7e6] shadow-[0_16px_28px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-[#e1c06c]"
               >
-                <div className="relative aspect-[4/5] bg-[#061d2b]">
-                  {party.asset ? (
-                    <Image
-                      src={party.asset}
-                      alt={`Partikort for ${party.name}`}
-                      fill
-                      loading="eager"
-                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                      className="object-cover transition duration-300 group-hover:scale-[1.02]"
-                    />
-                  ) : null}
-                </div>
+                {party.asset ? (
+                  <ExpandableImage
+                    src={party.asset}
+                    alt={`Partikort for ${party.name}`}
+                    loading="eager"
+                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                    className="relative aspect-[4/5] w-full bg-[#061d2b]"
+                    imageClassName="object-cover transition duration-300 group-hover:scale-[1.02]"
+                    caption={`Partikort for ${party.name}`}
+                  />
+                ) : (
+                  <div className="relative aspect-[4/5] bg-[#061d2b]" />
+                )}
                 <div className="border-t border-[#c49a3c]/35 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7c2430]">
                     {party.id.toUpperCase()} · {party.ideology}
@@ -221,8 +220,15 @@ export default async function DashboardPage() {
                   <p className="mt-2 text-sm leading-6 text-[#55452f]">
                     {party.motto}. Leder: {partyLeader?.shortName ?? party.leader}.
                   </p>
+                  <Link
+                    href={`/arkiv/partier#${party.id}`}
+                    className="mt-4 inline-flex h-9 items-center gap-2 rounded border border-[#062b40]/25 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40] transition hover:border-[#c49a3c]"
+                  >
+                    Åpne partiarkiv
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
                 </div>
-              </Link>
+              </article>
             );
           })}
         </div>

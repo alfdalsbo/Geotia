@@ -63,12 +63,13 @@ export default async function LoginPage({
                 id="username"
                 name="username"
                 autoComplete="username"
-                className="mt-2 h-12 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 text-base uppercase outline-none focus:border-[#062b40]"
-                placeholder="SS, IRA, PLO, PKK, PWP, CIP eller MOSSAD"
+                className="mt-2 h-12 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 text-base outline-none focus:border-[#062b40]"
+                placeholder="SS, IRA, PLO, PKK, PWP, CIP, MOSSAD eller Danny"
                 required
               />
               <p className="mt-2 text-xs leading-5 text-[#5b6257]">
                 Bruk partiforkortelsen: {parties.map((party) => party.id.toUpperCase()).join(" · ")}.
+                Danny logger inn som Tingvitne.
               </p>
 
               <label htmlFor="passcode" className="mt-4 block text-sm font-semibold text-[#273125]">
@@ -100,8 +101,8 @@ export default async function LoginPage({
             </form>
 
             <p className="mt-5 text-sm leading-6 text-[#5b6257]">
-              Hver geot logger inn med sitt parti. Passordet er felles: geotia.
-              Dermed vet GeoTinget hvem som stemmer, uten at staten drukner i ID-papirer.
+              Hver geot logger inn med sitt parti. Danny logger inn med navnet sitt og får
+              Tingvitnebenken til partiet er stiftet. Passordet er felles: geotia.
             </p>
           </div>
         </section>

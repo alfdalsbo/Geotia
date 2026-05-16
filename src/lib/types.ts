@@ -23,6 +23,10 @@ export type Player = {
   name: string;
   shortName: string;
   partyId: string;
+  username?: string;
+  role?: "geot" | "tingvitne";
+  canCompete?: boolean;
+  canVote?: boolean;
   color: string;
   title: string;
   specialty: string;

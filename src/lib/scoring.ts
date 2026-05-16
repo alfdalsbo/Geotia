@@ -13,6 +13,10 @@ import type {
 
 const MAX_POINTS = 7;
 
+function competingPlayers(players: Player[]) {
+  return players.filter((player) => player.canCompete !== false);
+}
+
 export function roundNumber(value: number, digits = 1) {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor;
@@ -95,11 +99,12 @@ export function canLockRound(round: Round) {
 }
 
 export function computeStandings(players: Player[], rounds: Round[]): Standing[] {
+  const playersInTable = competingPlayers(players);
   const lockedRounds = rounds
     .filter((round) => round.status === "locked")
     .map((round) => computeRound(round, players));
 
-  const rows = players.map((player) => {
+  const rows = playersInTable.map((player) => {
     let totalPoints = 0;
     let totalKattometer = 0;
     let roundsPlayed = 0;
@@ -267,11 +272,12 @@ export function computeGameStandings(
   sessions: GameSession[],
   game: GameDefinition,
 ): GameStanding[] {
+  const playersInTable = competingPlayers(players);
   const computedSessions = sessions
     .filter((session) => session.gameId === game.id && session.status === "locked")
     .map((session) => computeGameSession(session, players, game));
 
-  const rows = players.map((player) => {
+  const rows = playersInTable.map((player) => {
     let totalPoints = 0;
     let totalScore = 0;
     let sessionsPlayed = 0;

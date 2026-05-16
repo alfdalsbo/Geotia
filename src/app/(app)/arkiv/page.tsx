@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -12,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { ExpandableImage } from "@/components/expandable-image";
 import { Section } from "@/components/section";
 import { archiveSections } from "@/lib/archive";
 import { archive } from "@/lib/seed";
@@ -53,16 +53,16 @@ export default function ArchivePage() {
               <span>Sannhet · orden · forvirrelse</span>
             </div>
           </div>
-          <div className="relative min-h-[330px] border-t border-[#c49a3c]/35 bg-[#061d2b] lg:border-l lg:border-t-0">
-            <Image
+          <div className="border-t border-[#c49a3c]/35 bg-[#061d2b] lg:border-l lg:border-t-0">
+            <ExpandableImage
               src="/geotia-assets/party-overview.png"
               alt="Geotia partioversikt"
-              fill
               sizes="(min-width: 1024px) 420px, 100vw"
-              className="object-cover object-top"
+              className="relative min-h-[330px] w-full"
+              imageClassName="object-cover object-top"
+              caption="Geotia partioversikt"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#061d2b]/80 via-transparent to-transparent" />
           </div>
         </div>
       </section>

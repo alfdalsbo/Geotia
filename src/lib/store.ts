@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
-import { initialState, players, parties, archive, games } from "@/lib/seed";
+import { archive, competingPlayers, games, initialState, parties, players } from "@/lib/seed";
 import { canLockRound, emptyResults } from "@/lib/scoring";
 import type {
   AppState,
@@ -120,7 +120,7 @@ function normalizeRound(round: Round): Round {
   const existing = new Map(round.results.map((result) => [result.playerId, result]));
   return {
     ...round,
-    results: players.map((player) => {
+    results: competingPlayers.map((player) => {
       return (
         existing.get(player.id) ?? {
           playerId: player.id,
@@ -137,7 +137,7 @@ function normalizeGameSession(session: GameSession): GameSession {
   const existing = new Map(session.results.map((result) => [result.playerId, result]));
   return {
     ...session,
-    results: players.map((player) => {
+    results: competingPlayers.map((player) => {
       return (
         existing.get(player.id) ?? {
           playerId: player.id,
@@ -693,12 +693,12 @@ export function makeEmptyRound(): Round {
     status: "draft",
     createdAt: timestamp,
     updatedAt: timestamp,
-    results: emptyResults(players),
+    results: emptyResults(competingPlayers),
   };
 }
 
 export function emptyGameResults(): GameResult[] {
-  return players.map((player) => ({
+  return competingPlayers.map((player) => ({
     playerId: player.id,
     status: "ikke_deltatt",
     score: null,
