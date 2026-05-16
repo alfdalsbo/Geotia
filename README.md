@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Geotia
 
-## Getting Started
+Privat Vercel-app for SlowGeo, kattometeret, GeoTinget og Geotias riksarkiv.
 
-First, run the development server:
+## Lokal kjøring
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Standard lokal adgangsfrase er `geotia`. Sett `GEOTIA_PASSCODE` og `AUTH_SECRET`
+i miljøet for reell bruk.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Lagring
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Appen støtter Neon/Postgres via `DATABASE_URL`. Uten `DATABASE_URL` bruker den
+lokal filprotokoll under `.data/`, og på Vercel faller den tilbake til midlertidig
+lager. For varig delt lagring på Vercel må `DATABASE_URL` settes.
 
-## Learn More
+## Kontroll
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run lint
+npm run test
+npm run build
+npm run test:e2e
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Geotisk lov
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Poeng: 7, 6, 5, 4, 3, 2, 1 etter avstand fra fasit.
+- Delt plassering får poengsummen til den delte plasseringen.
+- Ikke deltatt og ugyldig svar gir 0 poeng.
+- Kattometerstraff for ikke-deltakelse/ugyldig svar er snittet av de tre
+  dårligste gyldige km-resultatene i runden.
+- Minst fem gyldige deltakere må føres før protokollen kan låses.
