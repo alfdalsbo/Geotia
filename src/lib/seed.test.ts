@@ -34,8 +34,6 @@ describe("Geotia canon seed", () => {
       "KONESPILLET",
       "sexnekt",
       "PLO | IRA | SS | PKK | PWP | CIP | MOSSAD",
-      "GEOTIA · HALL OF FAME · DE ÆRVERDIGE ANNALER",
-      "Tom celle i km = ikke deltatt",
     ];
 
     for (const phrase of requiredPhrases) {

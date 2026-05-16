@@ -16,6 +16,7 @@ export default defineConfig({
       GEOTIA_PASSCODE: "geotia",
       AUTH_SECRET: "playwright-geotia-secret",
       GEOTIA_DATA_FILE: ".data/playwright-geotia.json",
+      GEOTIA_FORCE_FILE_STORAGE: "1",
     },
   },
   projects: [

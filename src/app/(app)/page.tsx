@@ -4,6 +4,7 @@ import {
   ArrowRight,
   BookOpen,
   Crown,
+  Gamepad2,
   Gavel,
   Landmark,
   ScrollText,
@@ -12,8 +13,9 @@ import {
   UsersRound,
 } from "lucide-react";
 
+import { RotatingGeotiaQuote } from "@/components/rotating-geotia-quote";
 import { Section, StatTile } from "@/components/section";
-import { getHallOfFame, computeRound, computeStandings } from "@/lib/scoring";
+import { computeGameStandings, getHallOfFame, computeRound, computeStandings } from "@/lib/scoring";
 import { getAppState } from "@/lib/store";
 import { dateLabel, formatKm, formatNumber } from "@/lib/utils";
 
@@ -28,14 +30,13 @@ export default async function DashboardPage() {
   const latestRound = lockedRounds.at(-1);
   const computedLatest = latestRound ? computeRound(latestRound, state.players) : null;
   const hall = getHallOfFame(standings, state.rounds, state.players);
-  const geosophy =
-    state.archive.geosophy[new Date().getDate() % state.archive.geosophy.length] ??
-    state.archive.geosophy[0];
+  const knowledgeQuotes = state.archive.knowledgeGroups.flatMap((group) => group.items);
   const leader = standings[0];
   const kattometerLeader = standings
     .filter((standing) => standing.lockedRounds > 0)
     .sort((a, b) => a.totalKattometer - b.totalKattometer)[0];
   const drafts = state.rounds.length - lockedRounds.length;
+  const openGeotingCases = state.geotingProposals.filter((proposal) => proposal.status === "open").length;
 
   return (
     <div className="space-y-7">
@@ -53,8 +54,7 @@ export default async function DashboardPage() {
               Et geotisk mikrounivers bygget på geografispill, brutal
               sannhetssøken og et statsapparat som nekter å være en
               kommuneportal. Her føres kilometer, ære, desertering og
-              partipropaganda med høytidelig hånd i det offisielle
-              statistikkregister for den ærverdige spillnasjon Geotia.
+              partipropaganda med høytidelig hånd i Geotias statsarkiv.
             </p>
 
             <div className="geotia-ornament mt-6 text-center text-sm font-semibold uppercase tracking-[0.18em] text-[#7c2430]">
@@ -73,7 +73,7 @@ export default async function DashboardPage() {
                 href="/arkiv"
                 className="inline-flex h-11 items-center gap-2 rounded border border-[#062b40]/30 bg-[#fff7e6] px-4 text-sm font-semibold text-[#062b40] shadow-sm transition hover:border-[#c49a3c]"
               >
-                Åpne riksarkivet
+                Åpne statsarkivet
                 <BookOpen className="h-4 w-4" aria-hidden="true" />
               </Link>
             </div>
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
               <StatTile
                 label="Tellende runder"
                 value={lockedRounds.length}
-                detail={drafts ? "Utkast i protokollen" : "Alt er låst"}
+                detail={drafts ? "Utkast i protokollen" : "Alle starter rent"}
                 tone="blue"
               />
               <StatTile
@@ -98,9 +98,9 @@ export default async function DashboardPage() {
                 tone="gold"
               />
               <StatTile
-                label="Siste vinner"
-                value={computedLatest?.winnerNames.join(", ") || "-"}
-                detail={computedLatest ? computedLatest.name : "Ingen låst runde"}
+                label="Åpne ting-saker"
+                value={openGeotingCases}
+                detail="GeoTinget venter"
                 tone="red"
               />
             </div>
@@ -119,12 +119,53 @@ export default async function DashboardPage() {
             </div>
             <div className="border-t border-[#c49a3c]/35 bg-[#061d2b] p-5 text-[#fff7e6]">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#e1c06c]">
-                Dagens geosofi
+                Siste SlowGeo-vinner
               </p>
-              <p className="font-display mt-2 text-xl font-semibold leading-7">{geosophy}</p>
+              <p className="font-display mt-2 text-xl font-semibold leading-7">
+                {computedLatest?.winnerNames.join(", ") || "Ingen låst runde ennå"}
+              </p>
             </div>
           </div>
         </div>
+      </section>
+
+      <RotatingGeotiaQuote quotes={knowledgeQuotes} />
+
+      <section className="grid gap-4 lg:grid-cols-5">
+        {state.games.map((game) => {
+          const standingsForGame =
+            game.id === "slowgeo"
+              ? standings
+              : computeGameStandings(state.players, state.gameSessions, game);
+          const gameLeader = standingsForGame[0];
+          const count =
+            game.id === "slowgeo"
+              ? lockedRounds.length
+              : state.gameSessions.filter((session) => session.gameId === game.id).length;
+          return (
+            <Link
+              key={game.id}
+              href={game.id === "slowgeo" ? "/runder" : "/spill"}
+              className="geotia-panel group rounded p-4 transition hover:-translate-y-0.5 hover:border-[#c49a3c]"
+            >
+              <div className="relative z-10 flex items-center justify-between">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded border border-[#c49a3c]/45 text-white"
+                  style={{ background: game.color }}
+                >
+                  <Gamepad2 className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <ArrowRight className="h-4 w-4 text-[#7c2430] transition group-hover:translate-x-1" aria-hidden="true" />
+              </div>
+              <h2 className="font-display relative z-10 mt-4 text-2xl font-semibold text-[#062b40]">
+                {game.shortName}
+              </h2>
+              <p className="relative z-10 mt-2 text-sm leading-6 text-[#60553f]">
+                {count} økter · leder {gameLeader?.player.shortName ?? "-"}
+              </p>
+            </Link>
+          );
+        })}
       </section>
 
       <section className="space-y-4">
@@ -326,7 +367,7 @@ export default async function DashboardPage() {
           <div className="space-y-3 text-sm">
             <p className="flex items-center gap-2 font-semibold text-[#062b40]">
               <UsersRound className="h-4 w-4" aria-hidden="true" />
-              Uttrykk i riksregisteret
+              Uttrykk i statsarkivet
             </p>
             <p>{formatNumber(state.archive.lexicon.length)} oppføringer</p>
             <p className="flex items-center gap-2 font-semibold text-[#7c2430]">

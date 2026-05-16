@@ -2,6 +2,7 @@ import Image from "next/image";
 import { KeyRound, Landmark } from "lucide-react";
 
 import { loginAction } from "@/app/actions";
+import { players } from "@/lib/seed";
 
 export const metadata = {
   title: "Innlogging",
@@ -30,7 +31,7 @@ export default async function LoginPage({
           <div className="absolute inset-0 bg-gradient-to-t from-[#061d2b] via-[#061d2b]/40 to-transparent" />
           <div className="relative max-w-3xl">
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#e2c479]">
-              Riksregisteret · sannhet orden forvirrelse
+              Statsarkivet · sannhet orden forvirrelse
             </p>
             <h1 className="font-display mt-3 text-5xl font-semibold tracking-normal sm:text-7xl">Geotia</h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-white/82">
@@ -55,7 +56,23 @@ export default async function LoginPage({
             </div>
 
             <form action={loginAction} className="geotia-frame rounded p-5">
-              <label htmlFor="passcode" className="text-sm font-semibold text-[#273125]">
+              <label htmlFor="playerId" className="text-sm font-semibold text-[#273125]">
+                Geot
+              </label>
+              <select
+                id="playerId"
+                name="playerId"
+                defaultValue="alf"
+                className="mt-2 h-12 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 text-base outline-none focus:border-[#062b40]"
+              >
+                {players.map((player) => (
+                  <option key={player.id} value={player.id}>
+                    {player.shortName} · {player.title}
+                  </option>
+                ))}
+              </select>
+
+              <label htmlFor="passcode" className="mt-4 block text-sm font-semibold text-[#273125]">
                 Geotisk adgangsfrase
               </label>
               <div className="mt-2 flex items-center gap-2 rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3">
@@ -84,8 +101,9 @@ export default async function LoginPage({
             </form>
 
             <p className="mt-5 text-sm leading-6 text-[#5b6257]">
-              Staten krever ikke personlige kontoer i v1. Felles passord er nok til
-              at riket kan føre kilometer uten å drukne i skjemaets sump.
+              Velg geot før adgang. Felles passord virker fortsatt, men Vercel kan
+              også få egne passord per geot via GEOTIA_USER_PASSCODES når riket
+              krever strengere protokoll.
             </p>
           </div>
         </section>

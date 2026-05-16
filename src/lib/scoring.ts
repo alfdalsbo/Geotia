@@ -1,6 +1,10 @@
 import type {
   ComputedPlayerResult,
+  ComputedGameSession,
   ComputedRound,
+  GameDefinition,
+  GameSession,
+  GameStanding,
   Player,
   PlayerResult,
   Round,
@@ -211,6 +215,123 @@ export function getHallOfFame(standings: Standing[], rounds: Round[], players: P
     bestSingle,
     worstSingle,
   };
+}
+
+export function computeGameSession(
+  session: GameSession,
+  players: Player[],
+  game: GameDefinition,
+): ComputedGameSession {
+  const playerById = new Map(players.map((player) => [player.id, player]));
+  const validResults = session.results.filter(
+    (result) => result.status === "deltatt" && typeof result.score === "number",
+  );
+
+  const computedResults = session.results.map((result) => {
+    const player = playerById.get(result.playerId);
+    if (!player) {
+      throw new Error(`Ukjent geot i spillprotokollen: ${result.playerId}`);
+    }
+
+    if (result.status === "deltatt" && typeof result.score === "number") {
+      const rank =
+        1 +
+        validResults.filter((candidate) => {
+          if (typeof candidate.score !== "number") return false;
+          return game.scoreDirection === "higher"
+            ? candidate.score > result.score!
+            : candidate.score < result.score!;
+        }).length;
+      const points = Math.max(MAX_POINTS - rank + 1, 0);
+      return { ...result, player, rank, points };
+    }
+
+    return { ...result, player, rank: null, points: 0 };
+  });
+
+  const winnerNames = computedResults
+    .filter((result) => result.points === MAX_POINTS)
+    .map((result) => result.player.shortName);
+
+  return {
+    ...session,
+    game,
+    participantCount: validResults.length,
+    winnerNames,
+    results: computedResults,
+  };
+}
+
+export function computeGameStandings(
+  players: Player[],
+  sessions: GameSession[],
+  game: GameDefinition,
+): GameStanding[] {
+  const computedSessions = sessions
+    .filter((session) => session.gameId === game.id && session.status === "locked")
+    .map((session) => computeGameSession(session, players, game));
+
+  const rows = players.map((player) => {
+    let totalPoints = 0;
+    let totalScore = 0;
+    let sessionsPlayed = 0;
+    let wins = 0;
+    let absences = 0;
+    let invalids = 0;
+    let bestScore: number | null = null;
+
+    for (const session of computedSessions) {
+      const result = session.results.find((candidate) => candidate.player.id === player.id);
+      if (!result) continue;
+
+      totalPoints += result.points;
+
+      if (result.status === "deltatt" && typeof result.score === "number") {
+        totalScore += result.score;
+        sessionsPlayed += 1;
+        if (result.points === MAX_POINTS) wins += 1;
+        bestScore =
+          bestScore === null
+            ? result.score
+            : game.scoreDirection === "higher"
+              ? Math.max(bestScore, result.score)
+              : Math.min(bestScore, result.score);
+      } else if (result.status === "ikke_deltatt") {
+        absences += 1;
+      } else {
+        invalids += 1;
+      }
+    }
+
+    return {
+      rank: 0,
+      player,
+      game,
+      totalPoints,
+      totalScore: roundNumber(totalScore, 1),
+      sessionsPlayed,
+      wins,
+      absences,
+      invalids,
+      averageScore: sessionsPlayed > 0 ? roundNumber(totalScore / sessionsPlayed, 2) : 0,
+      bestScore,
+    };
+  });
+
+  rows.sort((a, b) => {
+    const averageTie =
+      game.scoreDirection === "higher"
+        ? b.averageScore - a.averageScore
+        : a.averageScore - b.averageScore;
+    return (
+      b.totalPoints - a.totalPoints ||
+      b.wins - a.wins ||
+      averageTie ||
+      a.player.shortName.localeCompare(b.player.shortName, "nb")
+    );
+  });
+
+  return rows.map((row, index) => ({ ...row, rank: index + 1 }));
 }
 
 export function emptyResults(players: Player[]): PlayerResult[] {

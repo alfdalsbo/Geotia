@@ -5,7 +5,6 @@ import { ArrowLeft } from "lucide-react";
 
 import { Section } from "@/components/section";
 import { archiveSources, getArchiveSection } from "@/lib/archive";
-import { formatKm, formatNumber } from "@/lib/utils";
 
 export const metadata = {
   title: "Arkiv",
@@ -316,59 +315,6 @@ function ArchiveBody({ slug }: { slug: string }) {
           Konespillet er et paraspill som registrerer konenes reaksjoner på geotisk
           aktivitet. Det reguleres ikke av GeoGrunnloven, men protokollføres med
           den alvor situasjonen fortjener.
-        </p>
-      </Section>
-    );
-  }
-
-  if (slug === "riksregisteret") {
-    return (
-      <div className="space-y-4">
-        {archive.excelNotes.map((item) => (
-          <Section key={item.title} title={item.title} eyebrow={item.eyebrow}>
-            <ul className="space-y-2 text-sm leading-6 text-[#273125]">
-              {item.body.map((line) => (
-                <li key={line} className="rounded border border-[#eef1eb] bg-[#f7f8f5] px-3 py-2">
-                  {line}
-                </li>
-              ))}
-            </ul>
-          </Section>
-        ))}
-      </div>
-    );
-  }
-
-  if (slug === "gammel-slowgeo") {
-    return (
-      <Section title="Gammel SlowGeo" eyebrow="Historisk arkiv">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left text-sm">
-            <thead className="bg-[#203c62] text-xs uppercase tracking-[0.12em] text-white">
-              <tr>
-                <th className="px-3 py-3">Geot</th>
-                <th className="px-3 py-3 text-right">Poeng</th>
-                <th className="px-3 py-3 text-right">Poengrunder</th>
-                <th className="px-3 py-3 text-right">Kattometer</th>
-                <th className="px-3 py-3 text-right">Km-runder</th>
-              </tr>
-            </thead>
-            <tbody>
-              {archive.oldSlowGeo.map((record) => (
-                <tr key={record.player} className="border-b border-[#eef1eb] last:border-b-0">
-                  <td className="px-3 py-3 font-semibold text-[#203c62]">{record.player}</td>
-                  <td className="px-3 py-3 text-right">{record.points}</td>
-                  <td className="px-3 py-3 text-right">{record.pointRounds}</td>
-                  <td className="px-3 py-3 text-right">{formatKm(record.kattometer)}</td>
-                  <td className="px-3 py-3 text-right">{formatNumber(record.kattometerRounds)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="mt-4 rounded border border-[#b8892f]/30 bg-[#b8892f]/10 p-4 text-sm text-[#7b591d]">
-          Historikken vises for minne og ære, men blandes ikke inn i aktiv sesong.
-          Riksregisteret har lært av fortiden uten å la den overstyre dagens lov.
         </p>
       </Section>
     );

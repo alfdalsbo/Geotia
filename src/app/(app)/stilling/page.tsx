@@ -6,7 +6,7 @@ import { getAppState } from "@/lib/store";
 import { formatKm, formatNumber } from "@/lib/utils";
 
 export const metadata = {
-  title: "Samlet stilling",
+  title: "SlowGeo-tabell",
 };
 
 export default async function StandingsPage() {
@@ -22,13 +22,13 @@ export default async function StandingsPage() {
     <div className="space-y-6">
       <div className="geotia-frame rounded p-5 sm:p-7">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
-          Sesongregister
+          SlowGeo-register
         </p>
         <h1 className="font-display mt-2 text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
-          Samlet stilling
+          SlowGeo-tabell
         </h1>
         <p className="mt-3 max-w-3xl text-[#60553f]">
-          Hovedtabellen sorteres etter poeng, deretter lavest kattometer og flest seire.
+          SlowGeo-tabellen sorteres etter poeng, deretter lavest kattometer og flest seire.
           Slik holdes både ære og avstand i samme statlige hånd.
         </p>
       </div>

@@ -55,18 +55,6 @@ export const archiveSections = [
     eyebrow: "Paraspill",
     description: "Et inoffisielt reaksjonsregister ført med altfor stor alvor.",
   },
-  {
-    slug: "riksregisteret",
-    title: "Riksregisteret",
-    eyebrow: "Excel-arbeidsboken",
-    description: "Arbeidsbokens egne overskrifter, advarsler og embetsverksfraser.",
-  },
-  {
-    slug: "gammel-slowgeo",
-    title: "Gammel SlowGeo",
-    eyebrow: "Historisk arkiv",
-    description: "Tidligere data vist som arkiv, ikke blandet inn i aktiv sesong.",
-  },
 ] as const;
 
 export type ArchiveSectionSlug = (typeof archiveSections)[number]["slug"];

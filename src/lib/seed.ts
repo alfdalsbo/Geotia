@@ -4,6 +4,7 @@ import type {
   CalendarEvent,
   CanonSection,
   ConstitutionSection,
+  GameDefinition,
   GeotingCase,
   KnowledgeGroup,
   KonespillRule,
@@ -12,6 +13,69 @@ import type {
   Party,
   Player,
 } from "@/lib/types";
+
+export const games: GameDefinition[] = [
+  {
+    id: "slowgeo",
+    name: "SlowGeo",
+    shortName: "SlowGeo",
+    description:
+      "Bilde sendes i egen samtaletråd, geotene gjetter sted, og kilometeren blir ført med full tyngde.",
+    scoreLabel: "Km fra fasit",
+    scoreHelp: "Lavest km er best. Appen bruker egen kattometerlov for SlowGeo.",
+    scoreDirection: "lower",
+    ritual: "Samtaletråd, frist, bilde, fasit og skammens avstand.",
+    color: "#062b40",
+  },
+  {
+    id: "geo",
+    name: "Geo",
+    shortName: "Geo",
+    description:
+      "Geotene møtes fysisk eller digitalt og spiller GeoGuessr sammen i sanntid.",
+    scoreLabel: "GeoGuessr-score",
+    scoreHelp: "Høyest score er best. Før totalscore eller avtalt rundescore.",
+    scoreDirection: "higher",
+    ritual: "Felles rom, felles rop, individuell ære.",
+    color: "#194832",
+  },
+  {
+    id: "maptap",
+    name: "MapTap",
+    shortName: "MapTap",
+    description:
+      "Ny daglig kartlek der geotene tapper seg mot riktig sted og må leve med avstanden.",
+    scoreLabel: "MapTap-score",
+    scoreHelp: "Høyest score er best. Før dagens poengscore slik spillet viser den.",
+    scoreDirection: "higher",
+    ritual: "Trykk på kloden, lat som hånden visste mer enn hodet.",
+    color: "#7c2430",
+  },
+  {
+    id: "satle",
+    name: "Satle",
+    shortName: "Satle",
+    description:
+      "Satellitt- og landgjetting i daglig format. Færrest forsøk gir mest verdighet.",
+    scoreLabel: "Antall forsøk",
+    scoreHelp: "Lavest antall forsøk er best. Bruk 0/ugyldig om riket kollapset.",
+    scoreDirection: "lower",
+    ritual: "Se, gjett, benekt, gjett igjen.",
+    color: "#5C3E1A",
+  },
+  {
+    id: "globle",
+    name: "Globle",
+    shortName: "Globle",
+    description:
+      "Dagens landjakt der varme og kalde hint sakte avslører hvor verden egentlig lå.",
+    scoreLabel: "Antall forsøk",
+    scoreHelp: "Lavest antall forsøk er best.",
+    scoreDirection: "lower",
+    ritual: "Fargekartet hvisker, geoten overvurderer seg selv.",
+    color: "#2E4E7E",
+  },
+];
 
 export const players: Player[] = [
   {
@@ -24,7 +88,7 @@ export const players: Player[] = [
     specialty: "Sannhetssøk, sentrumsstrategier og embetsverk",
     strengths: "Strategisk, sannhetsdrevet og farlig glad i struktur.",
     weaknesses: "Kan bli for opptatt av å kontrollere før han fornyer.",
-    moment: "Grunnla SS og gjorde riksregisteret til et politisk våpen.",
+    moment: "Grunnla SS og gjorde statsarkivet til et politisk våpen.",
     mark: "Sannheten er viktigere enn makt, men makt kan brukes administrativt.",
   },
   {
@@ -349,9 +413,9 @@ const constitution: ConstitutionSection[] = [
   },
   {
     paragraph: "§ 8",
-    title: "Arkivplikten og Riksregisteret",
+    title: "Arkivplikten og Statsarkivet",
     body: [
-      "Alle runder, resultater og merkbare hendelser skal registreres i det offisielle Riksregisteret.",
+      "Alle runder, resultater og merkbare hendelser skal registreres i det offisielle Statsarkivet.",
       "Historikken er hellig. Det som ikke er protokollført har ikke funnet sted.",
     ],
   },
@@ -386,7 +450,7 @@ const lex = (
   term: string,
   definition: string,
   category: string,
-  origin = "Riksregisteret",
+  origin = "Statsarkivet",
   example = "Føres i protokollen ved behov.",
   comment = "Geotisk presisjon med passende høytid.",
 ): LexiconEntry => ({ term, definition, origin, example, comment, category });
@@ -410,7 +474,7 @@ const lexicon: LexiconEntry[] = [
   lex("GeoVAR", "Kontrollorganet som etterprøver tvilstilfeller, ære og mulige lovbrudd.", "Institusjon", "2. februar", "Send den til GeoVAR før stemningen kollapser.", "Høy symbolverdi, varierende saksbehandlingstid."),
   lex("GeoKodeksen", "Geotias moralske og sosiale normverk for deling, stikk og kollektiv sannhetssøk.", "Institusjon", "Tradisjonen", "GeoKodeksen sier at hintet skal deles.", "Rikets uskrevne lov som selvsagt er skrevet ned."),
   lex("GeoGrunnloven", "Konstitusjonen for SlowGeo og Geotia.", "Institusjon", "14. januar", "Endringer krever konsensus på GeoTinget.", "Lovtekst med både alvor og intern brodd."),
-  lex("Riksregisteret", "Det offisielle statistikkregister for den ærverdige spillnasjon Geotia.", "Institusjon", "Excel-arbeidsboken", "Alle runder skal inn i Riksregisteret.", "Historikken er hellig."),
+  lex("Statsarkivet", "Det nåværende registeret for Geotias spill, forslag, stemmer og annaler.", "Institusjon", "Appen", "Alle nye spilløkter føres i Statsarkivet.", "Historien finnes som inspirasjon, men aktive tabeller starter rent."),
   lex("Geosofi", "Høylytt tenkning om sted, tegn og mening.", "Riket", "Geopagos", "Geosofene la ut sin Geosofi hele dagen.", "Filosofi med mer kart og mer mistenksomhet."),
   lex("Geopagos", "Stedet der geosofene i det gamle Geotia stod og la ut sin Geosofi hele dagen.", "Riket", "Forhistorien", "Som i de gamle dager på Geopagos.", "Halvmytisk, helnyttig."),
   lex("Geotia City", "Geotias hovedstad og maktsentrum.", "Riket", "15. januar", "Geotia City ble grunnlagt samme dag som institusjonsiveren tok form.", "Symbolsk sentrum for all protokollføring."),
@@ -633,7 +697,7 @@ const geotingCases: GeotingCase[] = [
     caseName: "Kattometerets integritet",
     proposal:
       "Ikke-deltakelse skal gi tellende km lik snittet av de tre dårligste gyldige resultatene.",
-    proposedBy: "Riksregisteret",
+    proposedBy: "Statsarkivet",
     decision: "Innført i appen",
     votes: "Embetsvedtak",
     status: "Iverksatt",
@@ -890,76 +954,6 @@ const canon: CanonSection[] = [
   },
 ];
 
-const excelNotes: CanonSection[] = [
-  {
-    title: "Dashboard",
-    eyebrow: "Arbeidsboken",
-    body: [
-      "GEOTIA · SLOWGEO · RIKSREGISTERET",
-      "§ Det offisielle statistikkregister for den ærverdige spillnasjon Geotia §",
-      "Antall runder",
-      "Siste vinner",
-      "Flest seire",
-      "Lavest snitt-km",
-      "Høyeste enkeltpoeng",
-      "POENGSTILLING",
-      "KATTOMETERSTILLING",
-      "REKORDER & STATISTIKK",
-      "Mest aktive deltaker",
-      "Lavest snitt-km (presisjon)",
-      "Verste enkeltbom (km)",
-      "Dagens geosofi: \"Den som vet hvor han er, vet ikke nødvendigvis hvor andre er.\"",
-    ],
-  },
-  {
-    title: "Runder",
-    eyebrow: "Spillregisteret",
-    body: [
-      "⚑ GEOTIA · SPILLREGISTER · RUNDER · IN NOMINE KARTOGRAPHIAE ⚑",
-      "Alf Kåre · Vegard · Jørgen · Steinar · Sverre · Fredrik · Glenn Ruben",
-      "🐾 km",
-      "⭐ Poeng",
-      "⚠ Tom celle i km = ikke deltatt · Kattometeret beregner automatisk snitt av 3 dårligste · Poeng: 7=🥇 6=🥈 5=🥉 4=4 3=3 2=2 1=💀 0=Desertering",
-    ],
-  },
-  {
-    title: "Samlet stilling og Hall of Fame",
-    eyebrow: "Annaler",
-    body: [
-      "GEOTIA · SAMLET STILLING · SESONGREGISTER",
-      "RANGERT STILLING",
-      "# · Spiller · Poeng · Kattometer · Runder · Seire · Topp 3 · Sist · Snitt poeng · Snitt km · Beste poeng · Dårligste km",
-      "GEOTIA · HALL OF FAME · DE ÆRVERDIGE ANNALER",
-      "§ Til ære og evigvarende minne — de som har utmerket seg i Geotias annaler §",
-      "FLEST POENG",
-      "LAVEST KATTOMETER",
-      "FLEST RUNDESEIRE",
-      "BESTE SNITTPOENG",
-      "BESTE ENKELTPRESTASJON",
-      "VERSTE BOM — Geotisk skam og evig mémoire",
-    ],
-  },
-  {
-    title: "Innstillinger",
-    eyebrow: "Konfigurasjonsregister",
-    body: [
-      "GEOTIA · INNSTILLINGER · KONFIGURASJONSREGISTER",
-      "Sesongnavn: SlowGeo · Sesong 2025",
-      "Maks runder (kapasitet): 200",
-      "Maks poeng per runde: 7",
-      "Min deltakere per runde: 5",
-      "Alf Kåre / SS / #1C2E4A",
-      "Vegard / IRA / #2E4E7E",
-      "Jørgen / PLO / #4A7C2E",
-      "Steinar / PKK / #7C2E2E",
-      "Sverre / CIP / #5C3E1A",
-      "Fredrik / MOSSAD / #2E2E2E",
-      "Glenn Ruben / PWP / #7C5E1A",
-      "NB: Dette arket styrer sentrale referanser. Ikke endre uten grunn.",
-    ],
-  },
-];
-
 export const archive: ArchiveData = {
   constitution,
   code,
@@ -972,18 +966,20 @@ export const archive: ArchiveData = {
     "Motoren enkel. Overbygningen rik.",
     "Staten må ikke bli så byråkratisk at ingen møter opp til embetsverket.",
     "En geot får aldri dra til India uten å få klar beskjed.",
-    "Når veien er uklar, følger vi kompasset i hjertet og tabellen i riksregisteret.",
+    "Når veien er uklar, følger vi kompasset i hjertet og tabellen i statsarkivet.",
     "Kattometeret glemmer ikke, men det fører protokoll med verdighet.",
   ],
   canon,
   knowledgeGroups,
   konespillet,
-  excelNotes,
 };
 
 export const initialState: AppState = {
   players,
   parties,
+  games,
   archive,
   rounds: [],
+  gameSessions: [],
+  geotingProposals: [],
 };

@@ -3,10 +3,17 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-import { createSession, destroySession, isCorrectPasscode, requireSession } from "@/lib/auth";
-import { players } from "@/lib/seed";
-import { lockRound, unlockRound, upsertRound } from "@/lib/store";
-import type { PlayerResult, ResultStatus } from "@/lib/types";
+import { createSession, destroySession, isCorrectPasscode, isKnownPlayer, requireSession } from "@/lib/auth";
+import { games, players } from "@/lib/seed";
+import {
+  createGeotingProposal,
+  lockRound,
+  saveGeotingVote,
+  unlockRound,
+  upsertGameSession,
+  upsertRound,
+} from "@/lib/store";
+import type { GameId, GameResult, PlayerResult, ProposalRuleType, ResultStatus, VoteValue } from "@/lib/types";
 
 function field(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -26,12 +33,13 @@ function statusField(value: string): ResultStatus {
 }
 
 export async function loginAction(formData: FormData) {
+  const playerId = field(formData, "playerId");
   const passcode = field(formData, "passcode");
-  if (!isCorrectPasscode(passcode)) {
+  if (!isKnownPlayer(playerId) || !isCorrectPasscode(passcode, playerId)) {
     redirect("/login?error=avvist");
   }
 
-  await createSession();
+  await createSession(playerId);
   redirect("/");
 }
 
@@ -72,6 +80,39 @@ export async function saveRoundAction(formData: FormData) {
   redirect("/runder?status=lagret");
 }
 
+function gameIdField(value: string): GameId {
+  const game = games.find((candidate) => candidate.id === value);
+  return game?.id === "slowgeo" ? "geo" : game?.id ?? "geo";
+}
+
+export async function saveGameSessionAction(formData: FormData) {
+  await requireSession();
+  const gameId = gameIdField(field(formData, "gameId"));
+
+  const results: GameResult[] = players.map((player) => {
+    const status = statusField(field(formData, `status_${player.id}`));
+    const rawScore = kmField(formData, `score_${player.id}`);
+    return {
+      playerId: player.id,
+      status,
+      score: status === "deltatt" ? rawScore : null,
+      note: field(formData, `note_${player.id}`),
+    };
+  });
+
+  await upsertGameSession({
+    gameId,
+    date: field(formData, "date") || new Date().toISOString().slice(0, 10),
+    title: field(formData, "title") || "Navnløs spilløkt",
+    context: field(formData, "context"),
+    results,
+  });
+
+  revalidatePath("/");
+  revalidatePath("/spill");
+  redirect("/spill?status=lagret");
+}
+
 export async function lockRoundAction(formData: FormData) {
   await requireSession();
   const id = field(formData, "id");
@@ -96,4 +137,42 @@ export async function unlockRoundAction(formData: FormData) {
   revalidatePath("/stilling");
   revalidatePath("/hall-of-fame");
   redirect(`/runder/${id}?status=geovar`);
+}
+
+function proposalRuleType(value: string): ProposalRuleType {
+  if (value === "grunnlov" || value === "mindre" || value === "annet") return value;
+  return "annet";
+}
+
+function voteValue(value: string): VoteValue {
+  if (value === "for" || value === "mot" || value === "avhold") return value;
+  return "avhold";
+}
+
+export async function submitGeotingProposalAction(formData: FormData) {
+  const session = await requireSession();
+  await createGeotingProposal({
+    title: field(formData, "title") || "Navnløst forslag",
+    body: field(formData, "body"),
+    ruleType: proposalRuleType(field(formData, "ruleType")),
+    proposedBy: session.playerId,
+  });
+
+  revalidatePath("/geotinget");
+  revalidatePath("/");
+  redirect("/geotinget?status=forslag");
+}
+
+export async function voteGeotingProposalAction(formData: FormData) {
+  const session = await requireSession();
+  await saveGeotingVote({
+    proposalId: field(formData, "proposalId"),
+    playerId: session.playerId,
+    vote: voteValue(field(formData, "vote")),
+    comment: field(formData, "comment"),
+  });
+
+  revalidatePath("/geotinget");
+  revalidatePath("/");
+  redirect("/geotinget?status=stemt");
 }

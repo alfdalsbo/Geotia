@@ -2,6 +2,22 @@ export type ResultStatus = "deltatt" | "ikke_deltatt" | "ugyldig";
 
 export type RoundStatus = "draft" | "locked";
 
+export type GameId = "slowgeo" | "geo" | "maptap" | "satle" | "globle";
+
+export type ScoreDirection = "higher" | "lower";
+
+export type GameDefinition = {
+  id: GameId;
+  name: string;
+  shortName: string;
+  description: string;
+  scoreLabel: string;
+  scoreHelp: string;
+  scoreDirection: ScoreDirection;
+  ritual: string;
+  color: string;
+};
+
 export type Player = {
   id: string;
   name: string;
@@ -39,6 +55,13 @@ export type PlayerResult = {
   note?: string;
 };
 
+export type GameResult = {
+  playerId: string;
+  status: ResultStatus;
+  score: number | null;
+  note?: string;
+};
+
 export type Round = {
   id: string;
   number: number;
@@ -60,6 +83,32 @@ export type ComputedPlayerResult = PlayerResult & {
   points: number;
   chargedKm: number | null;
   chargedReason: "actual" | "kattometerstraff" | "pending";
+};
+
+export type GameSession = {
+  id: string;
+  gameId: GameId;
+  number: number;
+  date: string;
+  title: string;
+  context: string;
+  status: RoundStatus;
+  createdAt: string;
+  updatedAt: string;
+  results: GameResult[];
+};
+
+export type ComputedGameResult = GameResult & {
+  player: Player;
+  rank: number | null;
+  points: number;
+};
+
+export type ComputedGameSession = Omit<GameSession, "results"> & {
+  game: GameDefinition;
+  participantCount: number;
+  winnerNames: string[];
+  results: ComputedGameResult[];
 };
 
 export type ComputedRound = Omit<Round, "results"> & {
@@ -86,6 +135,20 @@ export type Standing = {
   bestKm: number | null;
   worstKm: number | null;
   bestSinglePoints: number;
+};
+
+export type GameStanding = {
+  rank: number;
+  player: Player;
+  game: GameDefinition;
+  totalPoints: number;
+  totalScore: number;
+  sessionsPlayed: number;
+  wins: number;
+  absences: number;
+  invalids: number;
+  averageScore: number;
+  bestScore: number | null;
 };
 
 export type LexiconEntry = {
@@ -121,6 +184,29 @@ export type GeotingCase = {
   votes: string;
   status: string;
   comment: string;
+};
+
+export type ProposalRuleType = "grunnlov" | "mindre" | "annet";
+
+export type VoteValue = "for" | "mot" | "avhold";
+
+export type GeotingVote = {
+  playerId: string;
+  vote: VoteValue;
+  comment: string;
+  createdAt: string;
+};
+
+export type GeotingProposal = {
+  id: string;
+  title: string;
+  body: string;
+  ruleType: ProposalRuleType;
+  proposedBy: string;
+  status: "open" | "passed" | "rejected" | "archived";
+  createdAt: string;
+  updatedAt: string;
+  votes: GeotingVote[];
 };
 
 export type OldSlowGeoRecord = {
@@ -159,12 +245,14 @@ export type ArchiveData = {
   canon: CanonSection[];
   knowledgeGroups: KnowledgeGroup[];
   konespillet: KonespillRule[];
-  excelNotes: CanonSection[];
 };
 
 export type AppState = {
   players: Player[];
   parties: Party[];
+  games: GameDefinition[];
   archive: ArchiveData;
   rounds: Round[];
+  gameSessions: GameSession[];
+  geotingProposals: GeotingProposal[];
 };

@@ -9,7 +9,6 @@ import {
   Landmark,
   MapPinned,
   ScrollText,
-  TableProperties,
   Users,
 } from "lucide-react";
 
@@ -31,8 +30,6 @@ const iconBySlug = {
   merkedager: CalendarDays,
   geotinget: Gavel,
   konespillet: Gavel,
-  riksregisteret: TableProperties,
-  "gammel-slowgeo": ScrollText,
 };
 
 export default function ArchivePage() {
