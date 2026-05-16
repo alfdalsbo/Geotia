@@ -15,6 +15,7 @@ type ExpandableImageProps = {
   caption?: string;
   priority?: boolean;
   loading?: "eager" | "lazy";
+  unoptimized?: boolean;
 };
 
 export function ExpandableImage({
@@ -26,6 +27,7 @@ export function ExpandableImage({
   caption,
   priority,
   loading,
+  unoptimized,
 }: ExpandableImageProps) {
   const [open, setOpen] = useState(false);
   const titleId = useId();
@@ -61,6 +63,7 @@ export function ExpandableImage({
           sizes={sizes}
           priority={priority}
           loading={loading}
+          unoptimized={unoptimized}
           className={imageClassName}
         />
         <span className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded border border-[#c49a3c]/60 bg-[#061d2b]/82 text-[#fff7e6] opacity-0 shadow-sm transition group-hover:opacity-100 group-focus-visible:opacity-100">
@@ -97,6 +100,7 @@ export function ExpandableImage({
                 alt={alt}
                 fill
                 sizes="96vw"
+                unoptimized={unoptimized}
                 className="object-contain"
                 priority
               />

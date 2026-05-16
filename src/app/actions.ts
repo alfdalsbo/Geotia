@@ -4,11 +4,13 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { createSession, destroySession, isCorrectPasscode, playerIdFromUsername, requireSession } from "@/lib/auth";
+import { GEO_OATH_TEXT } from "@/lib/geoting";
 import { competingPlayers, games, isVotingPlayerId } from "@/lib/seed";
 import {
   createGeotingProposal,
   lockRound,
   saveGeotingVote,
+  startGeotingVote,
   unlockRound,
   upsertGameSession,
   upsertRound,
@@ -146,8 +148,8 @@ function proposalRuleType(value: string): ProposalRuleType {
 }
 
 function voteValue(value: string): VoteValue {
-  if (value === "for" || value === "mot" || value === "avhold") return value;
-  return "avhold";
+  if (value === "for" || value === "mot" || value === "blankt") return value;
+  return "blankt";
 }
 
 export async function submitGeotingProposalAction(formData: FormData) {
@@ -164,13 +166,38 @@ export async function submitGeotingProposalAction(formData: FormData) {
   redirect("/geotinget?status=forslag");
 }
 
+export async function startGeotingVoteAction(formData: FormData) {
+  const session = await requireSession();
+  if (!isVotingPlayerId(session.playerId)) {
+    redirect("/geotinget?error=tingvitne");
+  }
+  if (field(formData, "geoOath") !== "on") {
+    redirect("/geotinget?error=geoed");
+  }
+
+  const result = await startGeotingVote({
+    proposalId: field(formData, "proposalId"),
+    playerId: session.playerId,
+    oathText: field(formData, "oathText") || GEO_OATH_TEXT,
+  });
+
+  revalidatePath("/geotinget");
+  revalidatePath("/arkiv/geotinget");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    redirect(`/geotinget?error=${encodeURIComponent(result.reason ?? "Geo-eden sprakk i pergamentet.")}`);
+  }
+  redirect("/geotinget?status=avstemning");
+}
+
 export async function voteGeotingProposalAction(formData: FormData) {
   const session = await requireSession();
   if (!isVotingPlayerId(session.playerId)) {
     redirect("/geotinget?error=tingvitne");
   }
 
-  await saveGeotingVote({
+  const result = await saveGeotingVote({
     proposalId: field(formData, "proposalId"),
     playerId: session.playerId,
     vote: voteValue(field(formData, "vote")),
@@ -178,6 +205,16 @@ export async function voteGeotingProposalAction(formData: FormData) {
   });
 
   revalidatePath("/geotinget");
+  revalidatePath("/arkiv/geotinget");
   revalidatePath("/");
-  redirect("/geotinget?status=stemt");
+
+  if (!result.ok || !result.proposal) {
+    redirect(`/geotinget?error=${encodeURIComponent(result.reason ?? "Stemmen ble stoppet av embetsverket.")}`);
+  }
+  const proposal = result.proposal;
+  redirect(
+    proposal.status === "passed" || proposal.status === "rejected"
+      ? "/geotinget?status=avgjort"
+      : "/geotinget?status=stemt",
+  );
 }

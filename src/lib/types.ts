@@ -192,13 +192,16 @@ export type GeotingCase = {
 
 export type ProposalRuleType = "grunnlov" | "mindre" | "annet";
 
-export type VoteValue = "for" | "mot" | "avhold";
+export type VoteValue = "for" | "mot" | "blankt" | "avhold";
+
+export type GeotingProposalStatus = "open" | "voting" | "passed" | "rejected" | "archived";
 
 export type GeotingVote = {
   playerId: string;
   vote: VoteValue;
   comment: string;
   createdAt: string;
+  automatic?: boolean;
 };
 
 export type GeotingProposal = {
@@ -207,9 +210,14 @@ export type GeotingProposal = {
   body: string;
   ruleType: ProposalRuleType;
   proposedBy: string;
-  status: "open" | "passed" | "rejected" | "archived";
+  status: GeotingProposalStatus;
   createdAt: string;
   updatedAt: string;
+  voteStartedAt?: string | null;
+  voteEndsAt?: string | null;
+  voteStartedBy?: string | null;
+  oathText?: string;
+  resolvedAt?: string | null;
   votes: GeotingVote[];
 };
 

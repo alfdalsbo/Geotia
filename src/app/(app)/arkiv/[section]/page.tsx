@@ -6,6 +6,10 @@ import { ExpandableImage } from "@/components/expandable-image";
 import { Section } from "@/components/section";
 import { SarajevoVideo } from "@/components/sarajevo-video";
 import { archiveSources, getArchiveSection } from "@/lib/archive";
+import { summarizeProposal } from "@/lib/geoting";
+import { getAppState } from "@/lib/store";
+import type { GeotingProposal, Player } from "@/lib/types";
+import { dateTimeLabel } from "@/lib/utils";
 
 export const metadata = {
   title: "Arkiv",
@@ -15,6 +19,7 @@ export default async function ArchiveSectionPage({ params }: { params: Promise<{
   const { section: slug } = await params;
   const section = getArchiveSection(slug);
   if (!section) notFound();
+  const state = slug === "geotinget" ? await getAppState() : null;
 
   return (
     <div className="space-y-6">
@@ -37,12 +42,24 @@ export default async function ArchiveSectionPage({ params }: { params: Promise<{
         </Link>
       </div>
 
-      <ArchiveBody slug={slug} />
+      <ArchiveBody
+        dynamicGeotingProposals={state?.geotingProposals ?? []}
+        livePlayers={state?.players}
+        slug={slug}
+      />
     </div>
   );
 }
 
-function ArchiveBody({ slug }: { slug: string }) {
+function ArchiveBody({
+  dynamicGeotingProposals,
+  livePlayers,
+  slug,
+}: {
+  dynamicGeotingProposals: GeotingProposal[];
+  livePlayers?: Player[];
+  slug: string;
+}) {
   const { archive, players, parties } = archiveSources;
 
   if (slug === "kanon") {
@@ -267,41 +284,86 @@ function ArchiveBody({ slug }: { slug: string }) {
   }
 
   if (slug === "geotinget") {
+    const geotingPlayers = livePlayers ?? players;
     return (
-      <Section title="Saker for GeoTinget" eyebrow="Protokollark">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1240px] text-left text-sm">
-            <thead className="bg-[#203c62] text-xs uppercase tracking-[0.12em] text-white">
-              <tr>
-                <th className="px-3 py-3">Dato</th>
-                <th className="px-3 py-3">Saksnr.</th>
-                <th className="px-3 py-3">Sak</th>
-                <th className="px-3 py-3">Forslag</th>
-                <th className="px-3 py-3">Fremmet av</th>
-                <th className="px-3 py-3">Vedtak</th>
-                <th className="px-3 py-3">Stemmer</th>
-                <th className="px-3 py-3">Status</th>
-                <th className="px-3 py-3">Kommentar</th>
-              </tr>
-            </thead>
-            <tbody>
-              {archive.geotingCases.map((item) => (
-                <tr key={item.caseName} className="border-b border-[#eef1eb] last:border-b-0">
-                  <td className="px-3 py-3">{item.date}</td>
-                  <td className="px-3 py-3 font-mono text-[#8e3030]">{item.caseNumber ?? "-"}</td>
-                  <td className="px-3 py-3 font-semibold text-[#203c62]">{item.caseName}</td>
-                  <td className="px-3 py-3">{item.proposal}</td>
-                  <td className="px-3 py-3">{item.proposedBy}</td>
-                  <td className="px-3 py-3">{item.decision}</td>
-                  <td className="px-3 py-3">{item.votes}</td>
-                  <td className="px-3 py-3">{item.status}</td>
-                  <td className="px-3 py-3 text-[#5b6257]">{item.comment}</td>
+      <div className="space-y-6">
+        <Section title="Saker for GeoTinget" eyebrow="Historisk protokollark">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1240px] text-left text-sm">
+              <thead className="bg-[#203c62] text-xs uppercase tracking-[0.12em] text-white">
+                <tr>
+                  <th className="px-3 py-3">Dato</th>
+                  <th className="px-3 py-3">Saksnr.</th>
+                  <th className="px-3 py-3">Sak</th>
+                  <th className="px-3 py-3">Forslag</th>
+                  <th className="px-3 py-3">Fremmet av</th>
+                  <th className="px-3 py-3">Vedtak</th>
+                  <th className="px-3 py-3">Stemmer</th>
+                  <th className="px-3 py-3">Status</th>
+                  <th className="px-3 py-3">Kommentar</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Section>
+              </thead>
+              <tbody>
+                {archive.geotingCases.map((item) => (
+                  <tr key={item.caseName} className="border-b border-[#eef1eb] last:border-b-0">
+                    <td className="px-3 py-3">{item.date}</td>
+                    <td className="px-3 py-3 font-mono text-[#8e3030]">{item.caseNumber ?? "-"}</td>
+                    <td className="px-3 py-3 font-semibold text-[#203c62]">{item.caseName}</td>
+                    <td className="px-3 py-3">{item.proposal}</td>
+                    <td className="px-3 py-3">{item.proposedBy}</td>
+                    <td className="px-3 py-3">{item.decision}</td>
+                    <td className="px-3 py-3">{item.votes}</td>
+                    <td className="px-3 py-3">{item.status}</td>
+                    <td className="px-3 py-3 text-[#5b6257]">{item.comment}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+
+        <Section title="Automatisk avstemningsprotokoll" eyebrow="Riksarkivet fører selv">
+          {dynamicGeotingProposals.length ? (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {dynamicGeotingProposals.map((proposal) => {
+                const summary = summarizeProposal(proposal, geotingPlayers);
+                const proposer = geotingPlayers.find((player) => player.id === proposal.proposedBy);
+                const starter = geotingPlayers.find((player) => player.id === proposal.voteStartedBy);
+                return (
+                  <article key={proposal.id} className="rounded border border-[#d8ded0] bg-[#f7f8f5] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8e3030]">
+                      {proposal.status === "open" ? "Venter på geo-ed" : summary.resultText} · {dateTimeLabel(proposal.createdAt)}
+                    </p>
+                    <h2 className="mt-2 font-display text-2xl font-semibold text-[#203c62]">
+                      {proposal.title}
+                    </h2>
+                    <p className="mt-2 text-sm leading-6 text-[#273125]">{proposal.body}</p>
+                    <dl className="mt-4 grid gap-2 text-sm">
+                      <ArchiveFact label="Fremmet av" value={proposer?.shortName ?? "Ukjent geot"} />
+                      <ArchiveFact label="Avstemning åpnet av" value={starter?.shortName ?? "Ikke åpnet"} />
+                      <ArchiveFact label="Tingfrist" value={dateTimeLabel(proposal.voteEndsAt)} />
+                      <ArchiveFact
+                        label="Stemmer"
+                        value={`For ${summary.forVotes} · Mot ${summary.againstVotes} · Blankt ${summary.blankVotes}`}
+                      />
+                      <ArchiveFact label="Vedtak" value={summary.label} />
+                    </dl>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="rounded border border-dashed border-[#c49a3c] bg-[#c49a3c]/10 p-5">
+              <p className="font-display text-2xl font-semibold text-[#654517]">
+                Ingen nye avstemninger er ført av embetsverket ennå.
+              </p>
+              <p className="mt-2 text-sm text-[#60553f]">
+                Når stemmeurnen åpnes i GeoTinget, havner saken her automatisk.
+              </p>
+            </div>
+          )}
+        </Section>
+      </div>
     );
   }
 

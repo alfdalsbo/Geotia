@@ -55,6 +55,9 @@ describe("GeoTinget", () => {
       status: "open",
       createdAt: "2026-05-16T10:00:00.000Z",
       updatedAt: "2026-05-16T10:00:00.000Z",
+      voteStartedAt: "2026-05-16T10:00:00.000Z",
+      voteEndsAt: "2026-05-17T10:00:00.000Z",
+      voteStartedBy: "alf",
       votes: players.slice(0, 6).map((player) => ({
         playerId: player.id,
         vote: "for",
@@ -83,6 +86,9 @@ describe("GeoTinget", () => {
       status: "open",
       createdAt: "2026-05-16T10:00:00.000Z",
       updatedAt: "2026-05-16T10:00:00.000Z",
+      voteStartedAt: "2026-05-16T10:00:00.000Z",
+      voteEndsAt: "2026-05-17T10:00:00.000Z",
+      voteStartedBy: "alf",
       votes: players.map((player) => ({
         playerId: player.id,
         vote: player.id === "danny" ? "mot" : "for",
@@ -97,5 +103,37 @@ describe("GeoTinget", () => {
     expect(summary.forVotes).toBe(7);
     expect(summary.againstVotes).toBe(0);
     expect(summary.passed).toBe(true);
+  });
+
+  it("turns missing votes blank after the 24 hour tingfrist", () => {
+    const proposal: GeotingProposal = {
+      id: "gt-frist",
+      title: "Tingfristprøve",
+      body: "Taushet skal bli blankt.",
+      ruleType: "mindre",
+      proposedBy: "alf",
+      status: "voting",
+      createdAt: "2026-05-16T10:00:00.000Z",
+      updatedAt: "2026-05-16T10:00:00.000Z",
+      voteStartedAt: "2026-05-16T10:00:00.000Z",
+      voteEndsAt: "2026-05-17T10:00:00.000Z",
+      voteStartedBy: "alf",
+      votes: [
+        {
+          playerId: "alf",
+          vote: "for",
+          comment: "",
+          createdAt: "2026-05-16T10:05:00.000Z",
+        },
+      ],
+    };
+
+    const summary = summarizeProposal(proposal, players, new Date("2026-05-17T10:01:00.000Z"));
+
+    expect(summary.finished).toBe(true);
+    expect(summary.forVotes).toBe(1);
+    expect(summary.blankVotes).toBe(6);
+    expect(summary.automaticBlankPlayers).toHaveLength(6);
+    expect(summary.passed).toBe(false);
   });
 });

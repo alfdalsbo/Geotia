@@ -31,3 +31,14 @@ export function dateLabel(value: string) {
     day: "numeric",
   }).format(new Date(`${value}T12:00:00`));
 }
+
+export function dateTimeLabel(value: string | null | undefined) {
+  if (!value) return "-";
+  return new Intl.DateTimeFormat("nb-NO", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}

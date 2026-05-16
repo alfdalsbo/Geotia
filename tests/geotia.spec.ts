@@ -52,11 +52,16 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Geo-tabell", exact: true })).toBeVisible();
 
   await page.getByRole("link", { name: "GeoTinget" }).click();
-  await page.getByLabel("Tittel").fill("Lov om Playwright-ro");
+  const proposalTitle = `Lov om Playwright-ro ${Date.now()}`;
+  await page.getByLabel("Tittel").fill(proposalTitle);
   await page.getByLabel("Forslag / innhold").fill("Alle testgeoter skal få stemme uten parlamentarisk støy.");
   await page.getByRole("button", { name: "Send til GeoTinget" }).click();
   await expect(page.getByText("Forslaget er mottatt.")).toBeVisible();
-  await page.getByRole("button", { name: "Avgi stemme" }).first().click();
+  const proposalCard = page.locator("article").filter({ hasText: proposalTitle });
+  await proposalCard.getByLabel("Jeg sverger geo-eden og varsler alle geoter umiddelbart.").check();
+  await proposalCard.getByRole("button", { name: "Åpne stemmeurnen" }).click();
+  await expect(page.getByText("Geo-eden er avlagt.")).toBeVisible();
+  await proposalCard.getByRole("button", { name: "Avgi stemme" }).click();
   await expect(page.getByText("Stemmen er ført.")).toBeVisible();
 });
 
@@ -69,6 +74,7 @@ test("Danny logs in as Tingvitne without voting power", async ({ page }) => {
   await expect(page.getByText("Innlogget som Danny · Tingvitne")).toBeVisible();
   await page.getByRole("link", { name: "GeoTinget" }).click();
   await expect(page.getByText("Tingvitneprotokoll:")).toBeVisible();
-  await expect(page.getByText("teller ikke i 7/7")).toBeVisible();
+  await expect(page.getByText("har ikke stemmerett")).toBeVisible();
   await expect(page.getByRole("button", { name: "Avgi stemme" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Åpne stemmeurnen" })).toHaveCount(0);
 });

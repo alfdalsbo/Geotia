@@ -4,12 +4,14 @@ import { randomUUID } from "node:crypto";
 
 import { archive, competingPlayers, games, initialState, parties, players } from "@/lib/seed";
 import { canLockRound, emptyResults } from "@/lib/scoring";
+import { addVotingWindow, GEO_OATH_TEXT, normalizeVoteValue, resolveProposalIfReady } from "@/lib/geoting";
 import type {
   AppState,
   GameId,
   GameResult,
   GameSession,
   GeotingProposal,
+  GeotingProposalStatus,
   GeotingVote,
   PlayerResult,
   ProposalRuleType,
@@ -67,6 +69,12 @@ type VoteInput = {
   comment: string;
 };
 
+type StartVoteInput = {
+  proposalId: string;
+  playerId: string;
+  oathText: string;
+};
+
 type DbGameSessionRow = {
   id: string;
   game_id: GameId;
@@ -86,9 +94,14 @@ type DbProposalRow = {
   body: string;
   rule_type: ProposalRuleType;
   proposed_by: string;
-  status: "open" | "passed" | "rejected" | "archived";
+  status: GeotingProposalStatus;
   created_at: string;
   updated_at: string;
+  vote_started_at: string | null;
+  vote_ends_at: string | null;
+  vote_started_by: string | null;
+  oath_text: string | null;
+  resolved_at: string | null;
   votes_json: GeotingVote[] | string;
 };
 
@@ -107,6 +120,7 @@ const dataFile =
 let schemaReady = false;
 
 export function getStorageMode() {
+  if (process.env.GEOTIA_FORCE_FILE_STORAGE === "1") return "Lokal filprotokoll";
   if (process.env.DATABASE_URL) return "Neon/Postgres";
   if (process.env.VERCEL) return "Midlertidig Vercel-lager";
   return "Lokal filprotokoll";
@@ -154,7 +168,16 @@ function normalizeProposal(proposal: GeotingProposal): GeotingProposal {
   return {
     ...proposal,
     status: proposal.status ?? "open",
-    votes: proposal.votes ?? [],
+    voteStartedAt: proposal.voteStartedAt ?? null,
+    voteEndsAt: proposal.voteEndsAt ?? null,
+    voteStartedBy: proposal.voteStartedBy ?? null,
+    oathText: proposal.oathText ?? "",
+    resolvedAt: proposal.resolvedAt ?? null,
+    votes: (proposal.votes ?? []).map((vote) => ({
+      ...vote,
+      vote: normalizeVoteValue(vote.vote),
+      automatic: vote.automatic ?? false,
+    })),
   };
 }
 
@@ -260,6 +283,11 @@ async function ensureSchema() {
       votes_json jsonb NOT NULL DEFAULT '[]'::jsonb
     )
   `;
+  await sql`ALTER TABLE geotia_geoting_proposals ADD COLUMN IF NOT EXISTS vote_started_at text`;
+  await sql`ALTER TABLE geotia_geoting_proposals ADD COLUMN IF NOT EXISTS vote_ends_at text`;
+  await sql`ALTER TABLE geotia_geoting_proposals ADD COLUMN IF NOT EXISTS vote_started_by text`;
+  await sql`ALTER TABLE geotia_geoting_proposals ADD COLUMN IF NOT EXISTS oath_text text`;
+  await sql`ALTER TABLE geotia_geoting_proposals ADD COLUMN IF NOT EXISTS resolved_at text`;
 
   const resetKey = "reset_active_scores_multigame_v1";
   const resetRows = (await sql`
@@ -336,6 +364,11 @@ function parseDbProposal(row: DbProposalRow): GeotingProposal {
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    voteStartedAt: row.vote_started_at,
+    voteEndsAt: row.vote_ends_at,
+    voteStartedBy: row.vote_started_by,
+    oathText: row.oath_text ?? "",
+    resolvedAt: row.resolved_at,
     votes,
   });
 }
@@ -439,7 +472,21 @@ async function readDbProposals(): Promise<GeotingProposal[] | null> {
   if (!sql) return null;
 
   const rows = (await sql`
-    SELECT id, title, body, rule_type, proposed_by, status, created_at, updated_at, votes_json
+    SELECT
+      id,
+      title,
+      body,
+      rule_type,
+      proposed_by,
+      status,
+      created_at,
+      updated_at,
+      vote_started_at,
+      vote_ends_at,
+      vote_started_by,
+      oath_text,
+      resolved_at,
+      votes_json
     FROM geotia_geoting_proposals
     ORDER BY created_at DESC
   `) as DbProposalRow[];
@@ -453,7 +500,20 @@ async function upsertDbProposal(proposal: GeotingProposal) {
 
   await sql`
     INSERT INTO geotia_geoting_proposals (
-      id, title, body, rule_type, proposed_by, status, created_at, updated_at, votes_json
+      id,
+      title,
+      body,
+      rule_type,
+      proposed_by,
+      status,
+      created_at,
+      updated_at,
+      vote_started_at,
+      vote_ends_at,
+      vote_started_by,
+      oath_text,
+      resolved_at,
+      votes_json
     )
     VALUES (
       ${proposal.id},
@@ -464,6 +524,11 @@ async function upsertDbProposal(proposal: GeotingProposal) {
       ${proposal.status},
       ${proposal.createdAt},
       ${proposal.updatedAt},
+      ${proposal.voteStartedAt ?? null},
+      ${proposal.voteEndsAt ?? null},
+      ${proposal.voteStartedBy ?? null},
+      ${proposal.oathText ?? ""},
+      ${proposal.resolvedAt ?? null},
       ${JSON.stringify(proposal.votes)}::jsonb
     )
     ON CONFLICT (id) DO UPDATE SET
@@ -473,6 +538,11 @@ async function upsertDbProposal(proposal: GeotingProposal) {
       proposed_by = EXCLUDED.proposed_by,
       status = EXCLUDED.status,
       updated_at = EXCLUDED.updated_at,
+      vote_started_at = EXCLUDED.vote_started_at,
+      vote_ends_at = EXCLUDED.vote_ends_at,
+      vote_started_by = EXCLUDED.vote_started_by,
+      oath_text = EXCLUDED.oath_text,
+      resolved_at = EXCLUDED.resolved_at,
       votes_json = EXCLUDED.votes_json
   `;
   return true;
@@ -492,8 +562,13 @@ async function readGameSessions(): Promise<GameSession[]> {
 
 async function readProposals(): Promise<GeotingProposal[]> {
   const dbProposals = await readDbProposals();
-  if (dbProposals) return dbProposals;
-  return (await readFileState()).geotingProposals;
+  const proposals = dbProposals ?? (await readFileState()).geotingProposals;
+  const finalized = proposals.map((proposal) => resolveProposalIfReady(proposal, players));
+  const changed = finalized.some((proposal, index) => JSON.stringify(proposal) !== JSON.stringify(proposals[index]));
+  if (changed) {
+    await saveProposals(finalized);
+  }
+  return finalized;
 }
 
 async function saveRounds(rounds: Round[]) {
@@ -618,11 +693,49 @@ export async function createGeotingProposal(input: ProposalInput) {
     status: "open",
     createdAt: timestamp,
     updatedAt: timestamp,
+    voteStartedAt: null,
+    voteEndsAt: null,
+    voteStartedBy: null,
+    oathText: "",
+    resolvedAt: null,
     votes: [],
   };
 
   await saveProposals([proposal, ...proposals]);
   return proposal;
+}
+
+export async function startGeotingVote(input: StartVoteInput) {
+  const proposals = await readProposals();
+  const proposal = proposals.find((candidate) => candidate.id === input.proposalId);
+  if (!proposal) {
+    return { ok: false, reason: "Saken finnes ikke i GeoTingets protokoll." };
+  }
+  if (proposal.voteStartedAt || proposal.status === "voting") {
+    return { ok: false, reason: "Avstemningen er allerede startet." };
+  }
+  if (proposal.status === "passed" || proposal.status === "rejected" || proposal.status === "archived") {
+    return { ok: false, reason: "Saken er allerede protokollført." };
+  }
+  if (!input.oathText.trim()) {
+    return { ok: false, reason: "Geo-eden må sverges før stemmeurnen åpnes." };
+  }
+
+  const timestamp = nowIso();
+  const nextProposal: GeotingProposal = {
+    ...proposal,
+    status: "voting",
+    updatedAt: timestamp,
+    voteStartedAt: timestamp,
+    voteEndsAt: addVotingWindow(timestamp),
+    voteStartedBy: input.playerId,
+    oathText: input.oathText || GEO_OATH_TEXT,
+  };
+
+  await saveProposals(
+    proposals.map((candidate) => (candidate.id === proposal.id ? nextProposal : candidate)),
+  );
+  return { ok: true, proposal: nextProposal };
 }
 
 export async function saveGeotingVote(input: VoteInput) {
@@ -631,18 +744,32 @@ export async function saveGeotingVote(input: VoteInput) {
   if (!proposal) {
     return { ok: false, reason: "Saken finnes ikke i GeoTingets protokoll." };
   }
+  if (!proposal.voteStartedAt || proposal.status === "open") {
+    return { ok: false, reason: "Avstemningen er ikke åpnet. Først må en geo-ed avlegges." };
+  }
+  if (proposal.status === "passed" || proposal.status === "rejected" || proposal.status === "archived") {
+    return { ok: false, reason: "Avstemningen er avsluttet og protokollført." };
+  }
+  if (proposal.voteEndsAt && Date.now() >= new Date(proposal.voteEndsAt).getTime()) {
+    const resolved = resolveProposalIfReady(proposal, players);
+    await saveProposals(
+      proposals.map((candidate) => (candidate.id === proposal.id ? resolved : candidate)),
+    );
+    return { ok: false, reason: "Tingfristen er ute. Resultatet er protokollført." };
+  }
 
   const vote: GeotingVote = {
     playerId: input.playerId,
-    vote: input.vote,
+    vote: normalizeVoteValue(input.vote),
     comment: input.comment,
     createdAt: nowIso(),
   };
-  const nextProposal: GeotingProposal = {
+  const votedProposal: GeotingProposal = {
     ...proposal,
     updatedAt: vote.createdAt,
     votes: [...proposal.votes.filter((candidate) => candidate.playerId !== input.playerId), vote],
   };
+  const nextProposal = resolveProposalIfReady(votedProposal, players);
 
   await saveProposals(
     proposals.map((candidate) => (candidate.id === proposal.id ? nextProposal : candidate)),

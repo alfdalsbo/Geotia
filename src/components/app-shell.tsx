@@ -5,6 +5,7 @@ import {
   Crown,
   DoorOpen,
   Gavel,
+  Eye,
   Landmark,
   Map,
   ScrollText,
@@ -15,6 +16,7 @@ import {
 
 import { logoutAction } from "@/app/actions";
 import { getCurrentGeot } from "@/lib/auth";
+import { isThirdCollegeMember } from "@/lib/kollegium";
 import { getStorageMode } from "@/lib/store";
 
 const navItems = [
@@ -29,6 +31,12 @@ const navItems = [
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const currentGeot = await getCurrentGeot();
+  const visibleNavItems = currentGeot && isThirdCollegeMember(currentGeot.id)
+    ? [
+        ...navItems,
+        { href: "/tredje-kollegium", label: "Tredje Kollegium", icon: Eye },
+      ]
+    : navItems;
 
   return (
     <div className="geotia-civic-bg min-h-screen text-[#161713]">
@@ -60,7 +68,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
 
           <nav className="flex flex-wrap items-center gap-2">
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const Icon = item.icon;
               return (
                 <Link
