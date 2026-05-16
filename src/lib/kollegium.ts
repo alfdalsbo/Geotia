@@ -14,13 +14,13 @@ export type ThirdCollegeSeat = {
   oversight: string;
 };
 
-export const thirdCollegeMotto = "Dypt ned. Langt borte. Alltid først.";
+export const thirdCollegeMotto = "Dypt ned. Langt borte. Likeverdig lukket.";
 
 export const thirdCollegeSeats: ThirdCollegeSeat[] = [
   {
     playerId: "alf",
     partyId: "ss",
-    seal: "Første segl",
+    seal: "Arkivseglet",
     office: "Statsarkivar for usynlige sammenhenger",
     codename: "Sentrumsnøkkelen",
     expandedRight: "Kan åpne skjulte oversikter og lese rikets mellomlinjer.",
@@ -29,7 +29,7 @@ export const thirdCollegeSeats: ThirdCollegeSeat[] = [
   {
     playerId: "steinar",
     partyId: "pkk",
-    seal: "Andre segl",
+    seal: "Uroseglet",
     office: "Urokommissær for kontrollerte kriser",
     codename: "Krangleflammen",
     expandedRight: "Kan merke saker som krever umiddelbar, høytidelig uro.",
@@ -38,7 +38,7 @@ export const thirdCollegeSeats: ThirdCollegeSeat[] = [
   {
     playerId: "vegard",
     partyId: "ira",
-    seal: "Tredje segl",
+    seal: "Paragrafseglet",
     office: "Grunnlovsvokter i lukket sal",
     codename: "Paragrafskyggen",
     expandedRight: "Kan se konstitusjonell risiko før andre ser et forslag.",
