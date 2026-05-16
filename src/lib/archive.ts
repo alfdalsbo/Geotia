@@ -2,6 +2,12 @@ import { archive, parties, players } from "@/lib/seed";
 
 export const archiveSections = [
   {
+    slug: "kanon",
+    title: "Rikets fulltekst",
+    eyebrow: "Kanon",
+    description: "Alt innsendt grunnstoff fra Geotia samlet som lesbar fulltekst.",
+  },
+  {
     slug: "grunnloven",
     title: "GeoGrunnloven",
     eyebrow: "Konstitusjonen",
@@ -12,6 +18,12 @@ export const archiveSections = [
     title: "GeoLeksikon",
     eyebrow: "Ord og uttrykk",
     description: "Kjennetegn, begreper, fadesevarsler og språk fra riket.",
+  },
+  {
+    slug: "kjennelaere",
+    title: "Kjennelæren",
+    eyebrow: "GeoHeuristikk",
+    description: "Skilt, stolper, veier, magefølelse og andre nesten-sannheter.",
   },
   {
     slug: "geoter",
@@ -36,6 +48,18 @@ export const archiveSections = [
     title: "GeoTinget",
     eyebrow: "Saker og vedtak",
     description: "Forslag, vedtak og saksbehandling i rikets kranglende kammer.",
+  },
+  {
+    slug: "konespillet",
+    title: "Konespillet",
+    eyebrow: "Paraspill",
+    description: "Et inoffisielt reaksjonsregister ført med altfor stor alvor.",
+  },
+  {
+    slug: "riksregisteret",
+    title: "Riksregisteret",
+    eyebrow: "Excel-arbeidsboken",
+    description: "Arbeidsbokens egne overskrifter, advarsler og embetsverksfraser.",
   },
   {
     slug: "gammel-slowgeo",

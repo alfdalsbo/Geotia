@@ -28,6 +28,8 @@ export type Party = {
   comment: string;
   color: string;
   asset?: string;
+  manifesto?: string[];
+  doctrine?: string[];
 };
 
 export type PlayerResult = {
@@ -111,6 +113,7 @@ export type ConstitutionSection = {
 
 export type GeotingCase = {
   date: string;
+  caseNumber?: string;
   caseName: string;
   proposal: string;
   proposedBy: string;
@@ -128,6 +131,23 @@ export type OldSlowGeoRecord = {
   kattometerRounds: number;
 };
 
+export type CanonSection = {
+  title: string;
+  eyebrow: string;
+  body: string[];
+};
+
+export type KnowledgeGroup = {
+  title: string;
+  description: string;
+  items: string[];
+};
+
+export type KonespillRule = {
+  points: number;
+  reaction: string;
+};
+
 export type ArchiveData = {
   constitution: ConstitutionSection[];
   code: string[];
@@ -136,6 +156,10 @@ export type ArchiveData = {
   geotingCases: GeotingCase[];
   oldSlowGeo: OldSlowGeoRecord[];
   geosophy: string[];
+  canon: CanonSection[];
+  knowledgeGroups: KnowledgeGroup[];
+  konespillet: KonespillRule[];
+  excelNotes: CanonSection[];
 };
 
 export type AppState = {

@@ -53,7 +53,8 @@ export default async function DashboardPage() {
               Et geotisk mikrounivers bygget på geografispill, brutal
               sannhetssøken og et statsapparat som nekter å være en
               kommuneportal. Her føres kilometer, ære, desertering og
-              partipropaganda med høytidelig hånd.
+              partipropaganda med høytidelig hånd i det offisielle
+              statistikkregister for den ærverdige spillnasjon Geotia.
             </p>
 
             <div className="geotia-ornament mt-6 text-center text-sm font-semibold uppercase tracking-[0.18em] text-[#7c2430]">

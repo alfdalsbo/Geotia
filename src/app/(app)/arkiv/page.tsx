@@ -1,6 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BookOpen, CalendarDays, Gavel, Landmark, ScrollText, Users } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  CalendarDays,
+  FileText,
+  Gavel,
+  Landmark,
+  MapPinned,
+  ScrollText,
+  TableProperties,
+  Users,
+} from "lucide-react";
 
 import { Section } from "@/components/section";
 import { archiveSections } from "@/lib/archive";
@@ -11,12 +22,16 @@ export const metadata = {
 };
 
 const iconBySlug = {
+  kanon: FileText,
   grunnloven: ScrollText,
   leksikon: BookOpen,
+  kjennelaere: MapPinned,
   geoter: Users,
   partier: Landmark,
   merkedager: CalendarDays,
   geotinget: Gavel,
+  konespillet: Gavel,
+  riksregisteret: TableProperties,
   "gammel-slowgeo": ScrollText,
 };
 

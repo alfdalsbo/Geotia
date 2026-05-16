@@ -45,6 +45,24 @@ export default async function ArchiveSectionPage({ params }: { params: Promise<{
 function ArchiveBody({ slug }: { slug: string }) {
   const { archive, players, parties } = archiveSources;
 
+  if (slug === "kanon") {
+    return (
+      <div className="space-y-4">
+        {archive.canon.map((item) => (
+          <Section key={item.title} title={item.title} eyebrow={item.eyebrow}>
+            <div className="space-y-2 text-sm leading-6 text-[#273125]">
+              {item.body.map((line) => (
+                <p key={line} className="rounded border border-[#eef1eb] bg-[#f7f8f5] px-3 py-2">
+                  {line}
+                </p>
+              ))}
+            </div>
+          </Section>
+        ))}
+      </div>
+    );
+  }
+
   if (slug === "grunnloven") {
     return (
       <div className="space-y-4">
@@ -94,6 +112,25 @@ function ArchiveBody({ slug }: { slug: string }) {
                   <p className="mt-1 text-sm italic text-[#5b6257]">{entry.example}</p>
                   <p className="mt-2 text-sm text-[#5b6257]">{entry.comment}</p>
                 </article>
+              ))}
+            </div>
+          </Section>
+        ))}
+      </div>
+    );
+  }
+
+  if (slug === "kjennelaere") {
+    return (
+      <div className="space-y-6">
+        {archive.knowledgeGroups.map((group) => (
+          <Section key={group.title} title={group.title} eyebrow="GeoHeuristikk">
+            <p className="mb-4 text-sm leading-6 text-[#60553f]">{group.description}</p>
+            <div className="grid gap-3 md:grid-cols-2">
+              {group.items.map((item) => (
+                <div key={item} className="rounded border border-[#d8ded0] bg-[#f7f8f5] p-4 text-sm leading-6 text-[#273125]">
+                  {item}
+                </div>
               ))}
             </div>
           </Section>
@@ -168,11 +205,36 @@ function ArchiveBody({ slug }: { slug: string }) {
                 </p>
                 <dl className="mt-5 grid gap-3 text-sm">
                   <ArchiveFact label="Leder" value={party.leader} />
+                  <ArchiveFact label="Ideologi" value={party.ideology} />
                   <ArchiveFact label="Hovedsak" value={party.agenda} />
                   <ArchiveFact label="Allianser" value={party.allies} />
                   <ArchiveFact label="Motstandere" value={party.rivals} />
                   <ArchiveFact label="Kommentar" value={party.comment} />
                 </dl>
+                {party.manifesto?.length ? (
+                  <div className="mt-5 rounded border border-[#d8ded0] bg-[#f7f8f5] p-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
+                      Manifest
+                    </h3>
+                    <div className="mt-3 space-y-3 text-sm leading-6 text-[#273125]">
+                      {party.manifesto.map((line) => (
+                        <p key={line}>{line}</p>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                {party.doctrine?.length ? (
+                  <div className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
+                      Doktrine
+                    </h3>
+                    <div className="mt-3 space-y-3 text-sm leading-6 text-[#4f412b]">
+                      {party.doctrine.map((line) => (
+                        <p key={line}>{line}</p>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           </article>
@@ -204,13 +266,16 @@ function ArchiveBody({ slug }: { slug: string }) {
     return (
       <Section title="Saker for GeoTinget" eyebrow="Protokollark">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[960px] text-left text-sm">
+          <table className="w-full min-w-[1240px] text-left text-sm">
             <thead className="bg-[#203c62] text-xs uppercase tracking-[0.12em] text-white">
               <tr>
                 <th className="px-3 py-3">Dato</th>
+                <th className="px-3 py-3">Saksnr.</th>
                 <th className="px-3 py-3">Sak</th>
                 <th className="px-3 py-3">Forslag</th>
+                <th className="px-3 py-3">Fremmet av</th>
                 <th className="px-3 py-3">Vedtak</th>
+                <th className="px-3 py-3">Stemmer</th>
                 <th className="px-3 py-3">Status</th>
                 <th className="px-3 py-3">Kommentar</th>
               </tr>
@@ -219,9 +284,12 @@ function ArchiveBody({ slug }: { slug: string }) {
               {archive.geotingCases.map((item) => (
                 <tr key={item.caseName} className="border-b border-[#eef1eb] last:border-b-0">
                   <td className="px-3 py-3">{item.date}</td>
+                  <td className="px-3 py-3 font-mono text-[#8e3030]">{item.caseNumber ?? "-"}</td>
                   <td className="px-3 py-3 font-semibold text-[#203c62]">{item.caseName}</td>
                   <td className="px-3 py-3">{item.proposal}</td>
+                  <td className="px-3 py-3">{item.proposedBy}</td>
                   <td className="px-3 py-3">{item.decision}</td>
+                  <td className="px-3 py-3">{item.votes}</td>
                   <td className="px-3 py-3">{item.status}</td>
                   <td className="px-3 py-3 text-[#5b6257]">{item.comment}</td>
                 </tr>
@@ -230,6 +298,44 @@ function ArchiveBody({ slug }: { slug: string }) {
           </table>
         </div>
       </Section>
+    );
+  }
+
+  if (slug === "konespillet") {
+    return (
+      <Section title="Konespillet" eyebrow="Inoffisiell protokoll">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {archive.konespillet.map((rule) => (
+            <article key={rule.points} className="rounded border border-[#d8ded0] bg-[#f7f8f5] p-4">
+              <p className="font-display text-4xl font-semibold text-[#7c2430]">{rule.points}p</p>
+              <h2 className="mt-2 text-lg font-semibold text-[#203c62]">{rule.reaction}</h2>
+            </article>
+          ))}
+        </div>
+        <p className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-4 text-sm leading-6 text-[#4f412b]">
+          Konespillet er et paraspill som registrerer konenes reaksjoner på geotisk
+          aktivitet. Det reguleres ikke av GeoGrunnloven, men protokollføres med
+          den alvor situasjonen fortjener.
+        </p>
+      </Section>
+    );
+  }
+
+  if (slug === "riksregisteret") {
+    return (
+      <div className="space-y-4">
+        {archive.excelNotes.map((item) => (
+          <Section key={item.title} title={item.title} eyebrow={item.eyebrow}>
+            <ul className="space-y-2 text-sm leading-6 text-[#273125]">
+              {item.body.map((line) => (
+                <li key={line} className="rounded border border-[#eef1eb] bg-[#f7f8f5] px-3 py-2">
+                  {line}
+                </li>
+              ))}
+            </ul>
+          </Section>
+        ))}
+      </div>
     );
   }
 

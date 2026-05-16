@@ -200,6 +200,14 @@ export function getHallOfFame(standings: Standing[], rounds: Round[], players: P
       .slice(0, 3),
     mostWins: [...standings].sort((a, b) => b.wins - a.wins || b.totalPoints - a.totalPoints).slice(0, 3),
     mostTop3: [...standings].sort((a, b) => b.top3 - a.top3 || b.totalPoints - a.totalPoints).slice(0, 3),
+    bestAveragePoints: [...standings]
+      .filter((standing) => standing.roundsPlayed > 0)
+      .sort((a, b) => b.averagePoints - a.averagePoints || b.totalPoints - a.totalPoints)
+      .slice(0, 3),
+    lowestAverageKattometer: [...standings]
+      .filter((standing) => standing.lockedRounds > 0)
+      .sort((a, b) => a.averageKattometer - b.averageKattometer || a.totalKattometer - b.totalKattometer)
+      .slice(0, 3),
     bestSingle,
     worstSingle,
   };

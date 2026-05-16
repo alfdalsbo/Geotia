@@ -34,6 +34,10 @@ export default async function RoundsPage({
           Før km, deltakelse og hendelser. Ikke skriv faktiske svarsteder; staten har valgt
           lavere byråkrati og høyere overlevelse.
         </p>
+        <p className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm leading-6 text-[#4f412b]">
+          Tom km-celle betyr ikke deltatt. Kattometeret beregner snittet av de tre
+          dårligste, og poengrekken står fast: 7, 6, 5, 4, 3, 2, 1 og 0 for desertering.
+        </p>
       </div>
 
       {params.status ? (

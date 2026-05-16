@@ -61,13 +61,23 @@ export default async function HallOfFamePage() {
           }))}
         />
         <Podium
-          title="Flest topp 3"
-          eyebrow="Stabil propaganda"
+          title="Beste snittpoeng"
+          eyebrow="Jevn overmakt"
           icon={<Sparkles className="h-5 w-5" aria-hidden="true" />}
-          rows={hall.mostTop3.map((standing) => ({
+          rows={hall.bestAveragePoints.map((standing) => ({
             name: standing.player.shortName,
-            value: `${standing.top3} topp 3`,
-            detail: `${formatNumber(standing.averagePoints)} snittpoeng`,
+            value: formatNumber(standing.averagePoints),
+            detail: `${standing.roundsPlayed} runder spilt`,
+          }))}
+        />
+        <Podium
+          title="Lavest snitt-km"
+          eyebrow="Presisjon over tid"
+          icon={<Shield className="h-5 w-5" aria-hidden="true" />}
+          rows={hall.lowestAverageKattometer.map((standing) => ({
+            name: standing.player.shortName,
+            value: formatKm(standing.averageKattometer),
+            detail: `${formatKm(standing.totalKattometer)} totalt`,
           }))}
         />
       </div>
