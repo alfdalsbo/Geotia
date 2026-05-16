@@ -2,7 +2,7 @@ import Image from "next/image";
 import { KeyRound, Landmark } from "lucide-react";
 
 import { loginAction } from "@/app/actions";
-import { players } from "@/lib/seed";
+import { parties } from "@/lib/seed";
 
 export const metadata = {
   title: "Innlogging",
@@ -56,24 +56,23 @@ export default async function LoginPage({
             </div>
 
             <form action={loginAction} className="geotia-frame rounded p-5">
-              <label htmlFor="playerId" className="text-sm font-semibold text-[#273125]">
-                Geot
+              <label htmlFor="username" className="text-sm font-semibold text-[#273125]">
+                Brukernavn
               </label>
-              <select
-                id="playerId"
-                name="playerId"
-                defaultValue="alf"
-                className="mt-2 h-12 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 text-base outline-none focus:border-[#062b40]"
-              >
-                {players.map((player) => (
-                  <option key={player.id} value={player.id}>
-                    {player.shortName} · {player.title}
-                  </option>
-                ))}
-              </select>
+              <input
+                id="username"
+                name="username"
+                autoComplete="username"
+                className="mt-2 h-12 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 text-base uppercase outline-none focus:border-[#062b40]"
+                placeholder="SS, IRA, PLO, PKK, PWP, CIP eller MOSSAD"
+                required
+              />
+              <p className="mt-2 text-xs leading-5 text-[#5b6257]">
+                Bruk partiforkortelsen: {parties.map((party) => party.id.toUpperCase()).join(" · ")}.
+              </p>
 
               <label htmlFor="passcode" className="mt-4 block text-sm font-semibold text-[#273125]">
-                Geotisk adgangsfrase
+                Passord
               </label>
               <div className="mt-2 flex items-center gap-2 rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3">
                 <KeyRound className="h-4 w-4 text-[#7c2430]" aria-hidden="true" />
@@ -83,7 +82,7 @@ export default async function LoginPage({
                   type="password"
                   autoComplete="current-password"
                   className="h-12 min-w-0 flex-1 bg-transparent text-base outline-none"
-                  placeholder="Skriv rikets nøkkel"
+                  placeholder="geotia"
                   required
                 />
               </div>
@@ -101,9 +100,8 @@ export default async function LoginPage({
             </form>
 
             <p className="mt-5 text-sm leading-6 text-[#5b6257]">
-              Velg geot før adgang. Felles passord virker fortsatt, men Vercel kan
-              også få egne passord per geot via GEOTIA_USER_PASSCODES når riket
-              krever strengere protokoll.
+              Hver geot logger inn med sitt parti. Passordet er felles: geotia.
+              Dermed vet GeoTinget hvem som stemmer, uten at staten drukner i ID-papirer.
             </p>
           </div>
         </section>

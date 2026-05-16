@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { RotatingGeotiaQuote } from "@/components/rotating-geotia-quote";
+import { SarajevoVideo } from "@/components/sarajevo-video";
 import { Section, StatTile } from "@/components/section";
 import { computeGameStandings, getHallOfFame, computeRound, computeStandings } from "@/lib/scoring";
 import { getAppState } from "@/lib/store";
@@ -130,6 +131,8 @@ export default async function DashboardPage() {
       </section>
 
       <RotatingGeotiaQuote quotes={knowledgeQuotes} />
+
+      <SarajevoVideo />
 
       <section className="grid gap-4 lg:grid-cols-5">
         {state.games.map((game) => {

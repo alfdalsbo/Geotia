@@ -3,8 +3,8 @@ import { expect, test } from "@playwright/test";
 test("login, register a round, and lock the protocol", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Geotia" })).toBeVisible();
-  await page.getByLabel("Geot", { exact: true }).selectOption("alf");
-  await page.getByLabel("Geotisk adgangsfrase").fill("geotia");
+  await page.getByLabel("Brukernavn").fill("SS");
+  await page.getByLabel("Passord").fill("geotia");
   await page.getByRole("button", { name: "Åpne Geotia" }).click();
 
   await expect(page.getByRole("heading", { name: "Geotia" })).toBeVisible();

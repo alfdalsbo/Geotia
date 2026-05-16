@@ -22,16 +22,6 @@ function passcode() {
   return process.env.GEOTIA_PASSCODE || "geotia";
 }
 
-function userPasscodes() {
-  const raw = process.env.GEOTIA_USER_PASSCODES;
-  if (!raw) return {};
-  try {
-    return JSON.parse(raw) as Record<string, string>;
-  } catch {
-    return {};
-  }
-}
-
 function base64Url(input: string) {
   return Buffer.from(input).toString("base64url");
 }
@@ -61,9 +51,13 @@ export function isKnownPlayer(playerId: string) {
   return players.some((player) => player.id === playerId);
 }
 
-export function isCorrectPasscode(value: string, playerId: string) {
-  const perUserPasscode = userPasscodes()[playerId];
-  return safeEqual(value.trim(), perUserPasscode ?? passcode());
+export function playerIdFromUsername(username: string) {
+  const normalized = username.trim().toLowerCase();
+  return players.find((player) => player.partyId.toLowerCase() === normalized)?.id ?? null;
+}
+
+export function isCorrectPasscode(value: string) {
+  return safeEqual(value.trim(), passcode());
 }
 
 export function verifyToken(token: string | undefined): SessionPayload | null {

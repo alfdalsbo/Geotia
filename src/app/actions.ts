@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-import { createSession, destroySession, isCorrectPasscode, isKnownPlayer, requireSession } from "@/lib/auth";
+import { createSession, destroySession, isCorrectPasscode, playerIdFromUsername, requireSession } from "@/lib/auth";
 import { games, players } from "@/lib/seed";
 import {
   createGeotingProposal,
@@ -33,9 +33,10 @@ function statusField(value: string): ResultStatus {
 }
 
 export async function loginAction(formData: FormData) {
-  const playerId = field(formData, "playerId");
+  const username = field(formData, "username");
+  const playerId = playerIdFromUsername(username);
   const passcode = field(formData, "passcode");
-  if (!isKnownPlayer(playerId) || !isCorrectPasscode(passcode, playerId)) {
+  if (!playerId || !isCorrectPasscode(passcode)) {
     redirect("/login?error=avvist");
   }
 

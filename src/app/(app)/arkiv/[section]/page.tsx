@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { Section } from "@/components/section";
+import { SarajevoVideo } from "@/components/sarajevo-video";
 import { archiveSources, getArchiveSection } from "@/lib/archive";
 
 export const metadata = {
@@ -244,20 +245,23 @@ function ArchiveBody({ slug }: { slug: string }) {
 
   if (slug === "merkedager") {
     return (
-      <Section title="Geotisk kalender" eyebrow="Faste merkedager">
-        <div className="grid gap-3 md:grid-cols-2">
-          {archive.calendar.map((event) => (
-            <article key={`${event.date}-${event.name}`} className="rounded border border-[#d8ded0] bg-[#f7f8f5] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8e3030]">
-                {event.date} · {event.category}
-              </p>
-              <h2 className="mt-2 text-xl font-semibold text-[#203c62]">{event.name}</h2>
-              <p className="mt-2 text-sm leading-6 text-[#273125]">{event.description}</p>
-              <p className="mt-2 text-sm text-[#5b6257]">{event.significance}</p>
-            </article>
-          ))}
-        </div>
-      </Section>
+      <div className="space-y-6">
+        <SarajevoVideo />
+        <Section title="Geotisk kalender" eyebrow="Faste merkedager">
+          <div className="grid gap-3 md:grid-cols-2">
+            {archive.calendar.map((event) => (
+              <article key={`${event.date}-${event.name}`} className="rounded border border-[#d8ded0] bg-[#f7f8f5] p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8e3030]">
+                  {event.date} · {event.category}
+                </p>
+                <h2 className="mt-2 text-xl font-semibold text-[#203c62]">{event.name}</h2>
+                <p className="mt-2 text-sm leading-6 text-[#273125]">{event.description}</p>
+                <p className="mt-2 text-sm text-[#5b6257]">{event.significance}</p>
+              </article>
+            ))}
+          </div>
+        </Section>
+      </div>
     );
   }
 
