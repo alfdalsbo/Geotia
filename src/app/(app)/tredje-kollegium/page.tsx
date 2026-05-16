@@ -90,12 +90,12 @@ export default async function ThirdCollegePage() {
               <span>{thirdCollegeMotto}</span>
             </div>
 
-            <div className="mt-7 grid gap-3 sm:grid-cols-3">
+            <div className="mt-7 grid gap-3 md:grid-cols-3 lg:grid-cols-1 2xl:grid-cols-3">
               <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
                   Din stol
                 </p>
-                <p className="font-display mt-2 text-2xl font-semibold">
+                <p className="font-display mt-2 text-xl font-semibold leading-7 break-words 2xl:text-2xl">
                   {currentSeat?.seal ?? "Skjult segl"}
                 </p>
                 <p className="mt-2 text-sm text-[#eadcbd]">{currentSeat?.office}</p>
@@ -104,7 +104,7 @@ export default async function ThirdCollegePage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
                   Dekknavn
                 </p>
-                <p className="font-display mt-2 text-2xl font-semibold">
+                <p className="font-display mt-2 text-xl font-semibold leading-7 break-words 2xl:text-2xl">
                   {currentSeat?.codename ?? "Ingen spor"}
                 </p>
                 <p className="mt-2 text-sm text-[#eadcbd]">Innlogget som {currentGeot.shortName}</p>
@@ -113,7 +113,7 @@ export default async function ThirdCollegePage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
                   Synlighet
                 </p>
-                <p className="font-display mt-2 text-2xl font-semibold">Null</p>
+                <p className="font-display mt-2 text-xl font-semibold leading-7 break-words 2xl:text-2xl">Null</p>
                 <p className="mt-2 text-sm text-[#eadcbd]">For resten av riket finnes ikke fanen.</p>
               </div>
             </div>
