@@ -181,11 +181,11 @@ export const players: Player[] = [
     canVote: false,
     color: "#5b4a7d",
     title: "Tingvitne",
-    specialty: "Tribunenærvær, parti under oppføring og kontrollert ikke-stemmegivning",
+    specialty: "Tribunenærvær, ordensvei under oppføring og kontrollert ikke-stemmegivning",
     strengths: "Kan overvære krangling uten å bli tildelt komiteansvar.",
     weaknesses: "Mangler foreløpig parti og må derfor sitte på benken mens riket stemmer.",
     moment: "Tok plass som Geotias første offisielle Tingvitne.",
-    mark: "Har adgang til tingvollen, men ikke til stemmeurnen før partiet er stiftet.",
+    mark: "Har adgang til tingvollen, men ikke til stemmeurnen eller partistiftelse før nivå 7 er fortjent.",
   },
 ];
 

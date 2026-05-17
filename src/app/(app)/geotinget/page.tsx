@@ -4,6 +4,7 @@ import { submitGeotingProposalAction } from "@/app/actions";
 import { GeotingSubnav } from "@/components/geoting-subnav";
 import { Section, StatTile } from "@/components/section";
 import { getCurrentGeot } from "@/lib/auth";
+import { geotiaGeotingLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { getAppState } from "@/lib/store";
 
 export const metadata = {
@@ -24,6 +25,7 @@ export default async function GeotingPage({
   const awaitingOath = proposals.filter((proposal) => proposal.status === "open").length;
   const resolvedVotes = proposals.filter((proposal) => proposal.status === "passed" || proposal.status === "rejected").length;
   const votesCast = proposals.reduce((sum, proposal) => sum + proposal.votes.length, 0);
+  const geotingLine = pickGeoticLine(geotiaGeotingLines, `${currentGeot?.id ?? "tingvollen"}:${proposals.length}`);
 
   return (
     <div className="space-y-6">
@@ -56,9 +58,14 @@ export default async function GeotingPage({
         <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 text-sm leading-6 text-[#4f412b]">
           <strong className="text-[#062b40]">Tingvitneprotokoll:</strong> Danny har
           forslagsrett og kan sende saker til tingvollen, men har ikke stemmerett
-          og kan ikke åpne avstemning før eget parti er stiftet.
+          og kan ikke åpne avstemning eller søke partistiftelse før ordensveien
+          har ført ham til nivå 7: Partigründer.
         </div>
       ) : null}
+
+      <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-4 py-3 text-sm font-semibold text-[#654517]">
+        {geotingLine}
+      </div>
 
       <Section title="Send inn forslag" eyebrow="Innkomne saker">
         <form action={submitGeotingProposalAction} className="grid gap-4 lg:grid-cols-[1fr_240px]">
@@ -109,7 +116,7 @@ function GeotingStatus({ status, error }: { status?: string; error?: string }) {
   if (error === "tingvitne") {
     return (
       <div className="rounded border border-[#7c2430]/25 bg-[#7c2430]/10 px-4 py-3 text-sm font-medium text-[#7c2430]">
-        Tingvitnet er notert, men stemmeurnen åpnes først når Danny har stiftet parti.
+        Tingvitnet er notert, men stemmeurnen åpnes først etter ordensvei til nivå 7 og godkjent partistiftelse.
       </div>
     );
   }

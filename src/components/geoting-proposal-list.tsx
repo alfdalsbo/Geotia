@@ -425,7 +425,7 @@ function ActionPanel({
           Tingvitnebenken
         </p>
         <p className="mt-2">
-          Du kan lese, mumle og sende inn forslag. Geo-ed og stemmeurne er reservert for partiene.
+          Du kan lese, mumle og sende inn forslag. Geo-ed, stemmeurne og partistiftelse venter til ordensveien har gjort deg farlig nok.
         </p>
       </div>
     );

@@ -6,6 +6,7 @@ import {
   getGeoticOrderRows,
   getOrderProgressToRank,
   getServiceWeeksSince,
+  geoticOrderFoundingGate,
   geoticOrderRanks,
 } from "@/lib/geotisk-orden";
 import { players } from "@/lib/seed";
@@ -87,5 +88,15 @@ describe("Den Geotiske Orden", () => {
     expect(rows[0].rank.id).toBe("anerkjent_borger");
     expect(rows[0].trustScore).toBe(700);
     expect(rows[0].status.publicLabel).toBe("På prøve");
+  });
+
+  it("keeps Danny on the order path before any party founding rights", () => {
+    const danny = players.find((player) => player.id === "danny")!;
+    const rows = getGeoticOrderRows([danny], [], [], []);
+
+    expect(rows[0].rank.id).toBe("borger");
+    expect(rows[0].player.canVote).toBe(false);
+    expect(geoticOrderFoundingGate.title).toBe("Partistiftelse er nivå 7");
+    expect(geoticOrderFoundingGate.requirements.join(" ")).toContain("Partigründer");
   });
 });

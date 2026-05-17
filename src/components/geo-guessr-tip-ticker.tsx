@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, RotateCcw } from "lucide-react";
 
 import { GeoGuessrTipCard } from "@/components/geo-guessr-tip-card";
+import { geotiaTipLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import type { GeoGuessrTip } from "@/lib/geoguessr-tips";
 
 export function GeoGuessrTipTicker({
@@ -31,6 +32,7 @@ export function GeoGuessrTipTicker({
   }, [intervalMs, safeTips.length]);
 
   if (!activeTip) return null;
+  const tipLine = pickGeoticLine(geotiaTipLines, activeTip.id);
 
   return (
     <section className="geotia-panel rounded p-4 sm:p-5">
@@ -60,6 +62,9 @@ export function GeoGuessrTipTicker({
         </div>
       </div>
       <GeoGuessrTipCard tip={activeTip} />
+      <p className="mt-3 rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm font-semibold text-[#654517]">
+        {tipLine}
+      </p>
       {safeTips.length > 1 ? (
         <div className="mt-3 flex gap-1.5" aria-hidden="true">
           {safeTips.map((tip, tipIndex) => (

@@ -19,6 +19,7 @@ import { ExpandableImage } from "@/components/expandable-image";
 import { SarajevoVideo } from "@/components/sarajevo-video";
 import { Section, StatTile } from "@/components/section";
 import { getGeoGuessrTipDaySeed, selectGeoGuessrTips } from "@/lib/geoguessr-tips";
+import { geotiaDashboardLines, geotiaTipLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { computeGameStandings, getHallOfFame, computeRound, computeStandings } from "@/lib/scoring";
 import { getAppState } from "@/lib/store";
 import { dateLabel, formatKm, formatNumber } from "@/lib/utils";
@@ -30,14 +31,16 @@ export const metadata = {
 export default async function DashboardPage() {
   const state = await getAppState();
   const standings = computeStandings(state.players, state.rounds);
+  const daySeed = getGeoGuessrTipDaySeed();
   const lockedRounds = state.rounds.filter((round) => round.status === "locked");
   const latestRound = lockedRounds.at(-1);
   const computedLatest = latestRound ? computeRound(latestRound, state.players) : null;
   const hall = getHallOfFame(standings, state.rounds, state.players);
-  const knowledgeQuotes = state.archive.knowledgeGroups.flatMap((group) => group.items);
+  const knowledgeQuotes = [...state.archive.knowledgeGroups.flatMap((group) => group.items), ...geotiaTipLines];
+  const dashboardLine = pickGeoticLine(geotiaDashboardLines, daySeed);
   const dailyTips = selectGeoGuessrTips({
     placement: "dashboard",
-    seed: getGeoGuessrTipDaySeed(),
+    seed: daySeed,
     count: 5,
   });
   const leader = standings[0];
@@ -87,7 +90,7 @@ export default async function DashboardPage() {
             </p>
 
             <div className="geotia-ornament mt-6 text-center text-sm font-semibold uppercase tracking-[0.18em] text-[#7c2430]">
-              <span>Verdensnær · sannhetsnær · geotisk</span>
+              <span>{dashboardLine}</span>
             </div>
 
             <div className="mt-7 flex flex-wrap gap-3">

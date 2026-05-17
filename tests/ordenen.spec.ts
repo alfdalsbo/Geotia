@@ -16,6 +16,10 @@ test("Den Geotiske Orden is public without revealing the Third College", async (
   await expect(page.getByRole("heading", { name: "Den Geotiske Orden" })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("heading", { name: "Veien opp gjennom Geotia" })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("heading", { name: "Borger av Geotia" }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Partistiftelse er nivå 7" })).toBeVisible();
+  await expect(page.getByText("Nytt parti er en søknad om opprettelse")).toBeVisible();
+  await expect(page.getByText("Danny").first()).toBeVisible();
+  await expect(page.getByText("Tingvitne").first()).toBeVisible();
   await expect(page.getByText("GEOTERINDEKSEN")).toHaveCount(0);
   await expect(page.getByText("Tredje Kollegium")).toHaveCount(0);
   await expect(page.getByText("Ordensforvaltningen")).toHaveCount(0);

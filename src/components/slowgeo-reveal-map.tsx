@@ -11,8 +11,12 @@ import {
   type GooglePolyline,
 } from "@/components/google-maps-loader";
 import { SlowGeoImageViewer } from "@/components/slowgeo-image-viewer";
-import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
-import { buildRevealedSlowGeoShareText } from "@/lib/slowgeo-share";
+import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
+import type { SlowGeoStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
+import {
+  buildPersonalRevealedSlowGeoShareTextOptions,
+  buildRevealedSlowGeoShareTextOptions,
+} from "@/lib/slowgeo-share";
 import { formatKm } from "@/lib/utils";
 
 type RevealMarker = {
@@ -28,6 +32,7 @@ type RevealMarker = {
 export function SlowGeoRevealMap({
   roundName,
   streetViewUrl,
+  streetViewPanorama,
   googleMapsApiKey,
   markers,
   shareUrl,
@@ -40,6 +45,7 @@ export function SlowGeoRevealMap({
 }: {
   roundName: string;
   streetViewUrl: string | null;
+  streetViewPanorama: SlowGeoStreetViewPanoramaConfig | null;
   googleMapsApiKey: string;
   markers: RevealMarker[];
   shareUrl: string;
@@ -56,11 +62,22 @@ export function SlowGeoRevealMap({
   const polylineRefs = useRef<GooglePolyline[]>([]);
   const [loadingMap, setLoadingMap] = useState(Boolean(googleMapsApiKey));
   const [mapError, setMapError] = useState("");
-  const revealSummaryText = buildRevealedSlowGeoShareText({ roundName, answerLabel, winnerNames });
-  const shareText =
+  const shareTexts =
     currentPlayerName && typeof currentDistanceKm === "number"
-      ? `${currentPlayerName} landet ${formatKm(currentDistanceKm)} fra fasit i ${roundName}. Fasit: ${answerLabel}.${winnerNames.length ? ` Vinner: ${winnerNames.join(", ")}.` : ""}`
-      : revealSummaryText;
+      ? buildPersonalRevealedSlowGeoShareTextOptions({
+          roundName,
+          answerLabel,
+          playerName: currentPlayerName,
+          distance: formatKm(currentDistanceKm),
+          winnerNames,
+          seed: `${shareUrl}:${currentPlayerName}`,
+        })
+      : buildRevealedSlowGeoShareTextOptions({
+          roundName,
+          answerLabel,
+          winnerNames,
+          seed: shareUrl,
+        });
 
   useEffect(() => {
     if (!googleMapsApiKey || !mapElementRef.current || markers.length === 0) {
@@ -145,6 +162,7 @@ export function SlowGeoRevealMap({
               alt="SlowGeo-fasitbilde"
               sizes="(min-width: 1280px) 55vw, 100vw"
               className="aspect-[4/3] min-h-[320px] sm:aspect-video sm:min-h-[300px]"
+              streetViewPanorama={streetViewPanorama}
               title={roundName}
             />
           ) : (
@@ -157,13 +175,14 @@ export function SlowGeoRevealMap({
               <span>{imageDate ? `Street View ${imageDate}` : "Google Street View"}</span>
               <span>{copyright ?? "© Google"}</span>
             </div>
-            <SlowGeoShareButton
+            <SlowGeoThreadShareButton
               title={`SlowGeo-fasit: ${roundName}`}
-              text={shareText}
+              texts={shareTexts}
               url={shareUrl}
               label="Del fasit"
               copiedLabel="Fasitlenke kopiert"
               tone="dark"
+              className="min-w-[260px]"
             />
           </div>
         </div>

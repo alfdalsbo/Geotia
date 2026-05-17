@@ -1,10 +1,12 @@
 import type { SlowGeoChallenge } from "@/lib/types";
 
+export const STREET_VIEW_STATIC_IMAGE_SIZE = "640x640";
+
 export function buildStreetViewImageUrl({
   challenge,
   apiKey,
   allowLocationFallback = false,
-  size = "960x540",
+  size = STREET_VIEW_STATIC_IMAGE_SIZE,
 }: {
   challenge: SlowGeoChallenge;
   apiKey: string;

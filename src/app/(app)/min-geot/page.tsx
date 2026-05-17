@@ -13,6 +13,7 @@ import {
 
 import { Section, StatTile } from "@/components/section";
 import { getCurrentGeot } from "@/lib/auth";
+import { geotiaMyGeotLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { getEarnedPlayerBadges, type GeotiaBadgeTone } from "@/lib/geotia-badges";
 import { getGeoticOrderRows } from "@/lib/geotisk-orden";
 import { getThirdCollegeSeat, isThirdCollegeMember } from "@/lib/kollegium";
@@ -55,6 +56,7 @@ export default async function MyGeotPage() {
     rounds: state.rounds,
     standing,
   });
+  const dossierLine = pickGeoticLine(geotiaMyGeotLines, player.id);
   const partyMechanic = getPartyMechanic(player.partyId);
   const dossier = getPlayerDossier(player, state.players, state.rounds, standing);
 
@@ -108,7 +110,7 @@ export default async function MyGeotPage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">Rolle</p>
                 <h2 className="font-display mt-2 text-3xl font-semibold">{party?.name.split(" - ")[0] ?? player.title}</h2>
                 <p className="mt-3 text-sm leading-6 text-[#eadcbd]">
-                  {party?.motto ?? "Tingvitne uten stemmerett, men med protokollført nærvær."}
+                  {party?.motto ?? "Tingvitne uten stemmerett. Partistiftelse krever ordensvei helt til Partigründer."}
                 </p>
               </div>
               <div className="mt-6 grid gap-2 text-sm text-[#eadcbd]">
@@ -135,6 +137,10 @@ export default async function MyGeotPage() {
         <StatTile label="Kattometer" value={formatKm(standing?.totalKattometer)} detail={`${standing?.roundsPlayed ?? 0} runder spilt`} tone="red" />
         <StatTile label="Seire" value={standing?.wins ?? 0} detail={`${standing?.top3 ?? 0} topp 3`} tone="gold" />
         <StatTile label="Ordensrang" value={orderRow?.rank.name ?? "-"} detail={orderRow ? `${orderRow.progressToNext}% mot neste` : "Ikke ført"} tone="green" />
+      </div>
+
+      <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-4 py-3 text-sm font-semibold text-[#654517]">
+        {dossierLine}
       </div>
 
       <Section title="Riksmappe" eyebrow="Egne trender">
@@ -239,6 +245,11 @@ export default async function MyGeotPage() {
               <p className="mt-2 text-sm italic leading-6 text-[#4f412b]">
                 {party?.motto ?? "Uten parti, men ikke uten observasjonsverdi."}
               </p>
+              {!party ? (
+                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
+                  Partistiftelse kan først søkes på nivå 7: Partigründer.
+                </p>
+              ) : null}
             </div>
             {partyMechanic ? (
               <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-4">

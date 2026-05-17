@@ -6,10 +6,11 @@ import { Loader2, LockKeyhole, MapPin, Maximize2, RotateCcw, Send, X } from "luc
 import { submitSlowGeoGuessAction } from "@/app/actions";
 import { loadGoogleMaps, type GoogleMap, type GoogleMapsApi, type GoogleMarker } from "@/components/google-maps-loader";
 import { SlowGeoImageViewer } from "@/components/slowgeo-image-viewer";
-import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
+import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
 import { SlowGeoTipPanel } from "@/components/slowgeo-tip-panel";
 import type { GeoGuessrTip } from "@/lib/geoguessr-tips";
-import { buildOpenSlowGeoShareText } from "@/lib/slowgeo-share";
+import type { SlowGeoStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
+import { buildOpenSlowGeoShareTextOptions } from "@/lib/slowgeo-share";
 import { dateTimeLabel } from "@/lib/utils";
 
 type Guess = {
@@ -23,6 +24,7 @@ type SlowGeoPlayProps = {
   roundName: string;
   deadlineAt: string | null;
   streetViewUrl: string | null;
+  streetViewPanorama: SlowGeoStreetViewPanoramaConfig | null;
   googleMapsApiKey: string;
   existingGuess: (Guess & { updatedAt?: string | null }) | null;
   existingNote?: string | null;
@@ -39,6 +41,7 @@ export function SlowGeoPlay({
   roundName,
   deadlineAt,
   streetViewUrl,
+  streetViewPanorama,
   googleMapsApiKey,
   existingGuess,
   existingNote,
@@ -54,7 +57,7 @@ export function SlowGeoPlay({
   const [loadingMap, setLoadingMap] = useState(Boolean(googleMapsApiKey));
   const [mapOpen, setMapOpen] = useState(false);
   const answerLocked = Boolean(existingGuess);
-  const openShareText = buildOpenSlowGeoShareText(roundName);
+  const openShareTexts = buildOpenSlowGeoShareTextOptions(roundName, roundId);
 
   const placeMarker = useCallback((nextGuess: Guess, center = true) => {
     const mapsApi = mapsApiRef.current;
@@ -187,6 +190,7 @@ export function SlowGeoPlay({
               alt="SlowGeo-bilde"
               sizes="(min-width: 1280px) 58vw, 100vw"
               className="aspect-[4/3] min-h-[320px] sm:aspect-video sm:min-h-[300px]"
+              streetViewPanorama={streetViewPanorama}
               title={roundName}
             />
           ) : (
@@ -196,13 +200,14 @@ export function SlowGeoPlay({
           )}
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3 text-xs text-[#eadcbd]">
             <span>Google Street View</span>
-            <SlowGeoShareButton
+            <SlowGeoThreadShareButton
               title={`SlowGeo: ${roundName}`}
-              text={openShareText}
+              texts={openShareTexts}
               url={shareUrl}
               label="Del iMessage-tråden"
               copiedLabel="Trådtekst kopiert"
               tone="dark"
+              className="min-w-[260px]"
             />
           </div>
         </div>

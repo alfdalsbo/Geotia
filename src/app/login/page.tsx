@@ -104,7 +104,8 @@ export default async function LoginPage({
 
             <p className="mt-5 text-sm leading-6 text-[#5b6257]">
               Hver geot logger inn med sitt parti. Danny logger inn med navnet sitt og får
-              Tingvitnebenken til partiet er stiftet. Passordet er felles: geotia.
+              Tingvitnebenken til ordensveien eventuelt gjør ham til Partigründer.
+              Passordet er felles: geotia.
             </p>
           </div>
         </section>

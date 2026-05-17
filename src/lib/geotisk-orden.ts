@@ -22,11 +22,23 @@ export type GeoticOrderRank = {
   publicRequirements: string[];
   rights: string[];
   duties: string[];
+  limitations?: string[];
   ritual: string;
 };
 
 export const geoticOrderMotto =
   "Du får være med som Borger. Du blir geot gjennom innsats. Du får makt gjennom tillit.";
+
+export const geoticOrderFoundingGate = {
+  title: "Partistiftelse er nivå 7",
+  body:
+    "Eget parti er ikke en snarvei ut av Tingvitnebenken. Det er siste synlige port i ordensstigen: først Borger, så herding, parti, representasjon, ledelse og til slutt søknadsrett som Partigründer.",
+  requirements: [
+    "Kandidaten må ha nådd Partigründer i Den Geotiske Orden.",
+    "Nytt parti er en søknad om opprettelse, ikke en automatisk rett.",
+    "Partiet må ha navn, forkortelse, motto, ideologi, fiende, syn på India og nok særpreg til at riket ikke bare får en kopi med ny hatt.",
+  ],
+};
 
 export const geoticOrderRanks: GeoticOrderRank[] = [
   {
@@ -51,6 +63,11 @@ export const geoticOrderRanks: GeoticOrderRank[] = [
       "Kan begynne å lære forskjellen på magefølelse og kartforståelse",
     ],
     duties: ["Dele hint", "Tåle ydmykelse", "Ikke bruke 'vi i Geotia' for selvsikkert"],
+    limitations: [
+      "Kan ikke bli partimedlem ennå",
+      "Kan ikke åpne stemmeurne eller representere parti",
+      "Kan ikke søke partistiftelse før hele ordensveien er gått",
+    ],
     ritual:
       "Jeg lover å dele mine hint, tåle min ydmykelse, unngå frukt som geografi, og aldri dra til India uten at flokken har fått rope først.",
   },
@@ -76,6 +93,11 @@ export const geoticOrderRanks: GeoticOrderRank[] = [
       "Kan si 'dette føles som Balkan' én gang per måned",
     ],
     duties: ["Vise initiativ", "Bidra med analyse, humor, organisering eller ydmykende feil"],
+    limitations: [
+      "Kan nomineres, men ikke bære parti alene",
+      "Kan uttale seg om regler, men ikke med endelig autoritet",
+      "Kan ikke stifte parti, bare begynne å forstå hvorfor det er farlig",
+    ],
     ritual:
       "Borgeren viser gryende geotisk substans, men har fortsatt ustabil kontinentforståelse.",
   },
@@ -101,6 +123,11 @@ export const geoticOrderRanks: GeoticOrderRank[] = [
       "Kan observere GeoTinget med mistenkelig iver",
     ],
     duties: ["Utvikle egen ideologi", "Ikke starte fraksjon, bare bli mistenkt for det"],
+    limitations: [
+      "Har ikke full stemmerett i partiet",
+      "Kan ikke representere partiet alene",
+      "Kan ikke starte fraksjon, og slett ikke eget parti",
+    ],
     ritual:
       "Aspiranten må prøves i partiets særlige svakhet og komme ut med nok verdighet til å fortsette.",
   },

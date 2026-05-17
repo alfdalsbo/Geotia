@@ -86,10 +86,35 @@ async function mockGoogleMaps(page: Page) {
             constructor(options) { this.map = options.map; }
             setMap(map) { this.map = map; }
           }
+          class StreetViewPanorama {
+            constructor(element, options) {
+              this.element = element;
+              this.options = options;
+              this.zoom = options.zoom ?? 1;
+              this.pov = options.pov;
+              this.status = "OK";
+              element.dataset.streetViewPanorama = "ready";
+              element.dataset.zoom = String(this.zoom);
+              element.textContent = "Panorama mock";
+            }
+            addListener(eventName, handler) {
+              return { remove() {} };
+            }
+            getStatus() { return this.status; }
+            getZoom() { return this.zoom; }
+            setPov(pov) {
+              this.pov = pov;
+              this.element.dataset.heading = String(pov.heading);
+            }
+            setZoom(zoom) {
+              this.zoom = zoom;
+              this.element.dataset.zoom = String(zoom);
+            }
+          }
           class LatLngBounds {
             extend() {}
           }
-          window.google = { maps: { Map, Marker, Polyline, LatLngBounds, event: { trigger() {} } } };
+          window.google = { maps: { Map, Marker, Polyline, StreetViewPanorama, LatLngBounds, event: { trigger() {} } } };
         })();
       `,
     });
@@ -216,8 +241,13 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
   await page.getByRole("button", { name: "Åpne SlowGeo-bildet i fullskjerm" }).click();
   const imageDialog = page.getByRole("dialog", { name: "SlowGeo-bilde i fullskjerm" });
   await expect(imageDialog).toBeVisible();
+  const panorama = imageDialog.getByTestId("slowgeo-panorama-viewport");
+  await expect(panorama).toBeVisible();
+  await expect(panorama).toContainText("Panorama mock");
+  await expect(panorama).toHaveAttribute("data-zoom", "1");
   await imageDialog.getByRole("button", { name: "Zoom inn" }).click();
   await expect(imageDialog.getByText("150%")).toBeVisible();
+  await expect(panorama).toHaveAttribute("data-zoom", "1.5");
   await expectNoHorizontalOverflow(page);
   await imageDialog.getByRole("button", { name: "Lukk bilde" }).click();
   await expect(imageDialog).toBeHidden();

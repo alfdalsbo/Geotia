@@ -1,18 +1,87 @@
+import {
+  pickGeoticLines,
+  renderGeoticTemplate,
+  slowGeoOpenShareTemplates,
+  slowGeoPersonalRevealShareTemplates,
+  slowGeoRevealShareTemplates,
+} from "@/lib/geotia-jargon";
+
+function winnerSentence(winnerNames: string[]) {
+  return winnerNames.length ? ` Vinner: ${winnerNames.join(", ")}.` : "";
+}
+
 export function buildOpenSlowGeoShareText(roundName: string) {
-  return `Nytt SlowGeo-bilde er oppe: ${roundName}. Krangle først, sett pinnen etterpå.`;
+  return buildOpenSlowGeoShareTextOptions(roundName, roundName, 1)[0] ?? "";
+}
+
+export function buildOpenSlowGeoShareTextOptions(roundName: string, seed = roundName, count = 4) {
+  return pickGeoticLines(slowGeoOpenShareTemplates, `${seed}:open`, count).map((template) =>
+    renderGeoticTemplate(template, { roundName }),
+  );
 }
 
 export function buildRevealedSlowGeoShareText({
   roundName,
   answerLabel,
   winnerNames = [],
+  seed,
 }: {
   roundName: string;
   answerLabel: string;
   winnerNames?: string[];
+  seed?: string;
 }) {
-  const winnerText = winnerNames.length ? ` Vinner: ${winnerNames.join(", ")}.` : "";
-  return `Fasit er avslørt i ${roundName}: ${answerLabel}.${winnerText}`;
+  return buildRevealedSlowGeoShareTextOptions({ roundName, answerLabel, winnerNames, seed, count: 1 })[0] ?? "";
+}
+
+export function buildRevealedSlowGeoShareTextOptions({
+  roundName,
+  answerLabel,
+  winnerNames = [],
+  seed = roundName,
+  count = 4,
+}: {
+  roundName: string;
+  answerLabel: string;
+  winnerNames?: string[];
+  seed?: string;
+  count?: number;
+}) {
+  return pickGeoticLines(slowGeoRevealShareTemplates, `${seed}:reveal`, count).map((template) =>
+    renderGeoticTemplate(template, {
+      roundName,
+      answerLabel,
+      winnerSentence: winnerSentence(winnerNames),
+    }),
+  );
+}
+
+export function buildPersonalRevealedSlowGeoShareTextOptions({
+  roundName,
+  answerLabel,
+  playerName,
+  distance,
+  winnerNames = [],
+  seed = `${roundName}:${playerName}`,
+  count = 4,
+}: {
+  roundName: string;
+  answerLabel: string;
+  playerName: string;
+  distance: string;
+  winnerNames?: string[];
+  seed?: string;
+  count?: number;
+}) {
+  return pickGeoticLines(slowGeoPersonalRevealShareTemplates, `${seed}:personal-reveal`, count).map((template) =>
+    renderGeoticTemplate(template, {
+      roundName,
+      answerLabel,
+      playerName,
+      distance,
+      winnerSentence: winnerSentence(winnerNames),
+    }),
+  );
 }
 
 const genericAttributionTokens = new Set([

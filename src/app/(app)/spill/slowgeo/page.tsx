@@ -3,9 +3,10 @@ import { ArrowRight, CheckCircle2, Clock, ExternalLink, MapPinned, Trophy } from
 
 import { Section, StatTile } from "@/components/section";
 import { SlowGeoRoundLauncher } from "@/components/slowgeo-round-launcher";
-import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
+import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
 import { computeRound, computeStandings } from "@/lib/scoring";
-import { buildOpenSlowGeoShareText } from "@/lib/slowgeo-share";
+import { pickGeoticLine, slowGeoEmptyStateLines } from "@/lib/geotia-jargon";
+import { buildOpenSlowGeoShareTextOptions } from "@/lib/slowgeo-share";
 import { getSlowGeoProgress, getSlowGeoRoundInsights, slowGeoDifficultyLabels } from "@/lib/slowgeo-insights";
 import { getAppState } from "@/lib/store";
 import { dateLabel, dateTimeLabel, formatKm } from "@/lib/utils";
@@ -38,6 +39,7 @@ export default async function SlowGeoGamePage({
   const kattometerLeader = standings
     .filter((standing) => standing.lockedRounds > 0)
     .sort((a, b) => a.totalKattometer - b.totalKattometer)[0];
+  const emptyLine = pickGeoticLine(slowGeoEmptyStateLines, "slowgeo-empty");
 
   return (
     <div className="space-y-7">
@@ -172,9 +174,9 @@ export default async function SlowGeoGamePage({
                       Åpne spill
                       <ArrowRight className="h-4 w-4" aria-hidden="true" />
                     </Link>
-                    <SlowGeoShareButton
+                    <SlowGeoThreadShareButton
                       title={`SlowGeo: ${round.name}`}
-                      text={buildOpenSlowGeoShareText(round.name)}
+                      texts={buildOpenSlowGeoShareTextOptions(round.name, round.id)}
                       url={shareUrl}
                       label="Del iMessage-tråden"
                       copiedLabel="Trådtekst kopiert"
@@ -190,7 +192,7 @@ export default async function SlowGeoGamePage({
               <MapPinned className="h-5 w-5" aria-hidden="true" />
               Ingen åpne SlowGeo-runder.
             </p>
-            <p className="mt-2 text-sm text-[#5b6257]">Start et nytt bilde øverst når tråden trenger brensel.</p>
+            <p className="mt-2 text-sm text-[#5b6257]">{emptyLine}</p>
           </div>
         )}
       </Section>

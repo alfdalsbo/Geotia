@@ -5,10 +5,14 @@ import { ArrowRight, CheckCircle2, MessageCircle, Trophy } from "lucide-react";
 
 import { SlowGeoAftermath } from "@/components/slowgeo-aftermath";
 import { SlowGeoImageViewer } from "@/components/slowgeo-image-viewer";
-import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
+import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
 import { computeRound } from "@/lib/scoring";
-import { buildOpenSlowGeoShareText, buildRevealedSlowGeoShareText } from "@/lib/slowgeo-share";
+import {
+  buildOpenSlowGeoShareTextOptions,
+  buildRevealedSlowGeoShareTextOptions,
+} from "@/lib/slowgeo-share";
 import { getAppState, maybeRevealRound } from "@/lib/store";
+import { buildStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
 import { buildStreetViewImageUrl } from "@/lib/streetview-url";
 import { dateTimeLabel, formatKm } from "@/lib/utils";
 
@@ -57,8 +61,8 @@ export async function generateMetadata({
         ? [
             {
               url: streetViewUrl,
-              width: 960,
-              height: 540,
+              width: 640,
+              height: 640,
               alt: `SlowGeo-bilde for ${round.name}`,
             },
           ]
@@ -96,18 +100,25 @@ export default async function SlowGeoSharePage({
     apiKey: publicGoogleKey,
     allowLocationFallback: round.status !== "open",
   });
+  const streetViewPanorama = buildStreetViewPanoramaConfig({
+    challenge: round.challenge,
+    apiKey: publicGoogleKey,
+    allowLocationFallback: round.status !== "open",
+  });
   const isOpen = round.status === "open";
   const answerLabel = round.answer || round.challenge.label;
   const submittedCount = round.results.filter((result) => result.guessLocation).length;
   const participantCount = round.results.length;
   const shareUrl = `/slowgeo/${round.id}`;
-  const shareText = isOpen
-    ? buildOpenSlowGeoShareText(round.name)
-    : buildRevealedSlowGeoShareText({
+  const shareTexts = isOpen
+    ? buildOpenSlowGeoShareTextOptions(round.name, round.id)
+    : buildRevealedSlowGeoShareTextOptions({
         roundName: round.name,
         answerLabel,
         winnerNames: computed.winnerNames,
+        seed: round.id,
       });
+  const shareText = shareTexts[0] ?? "";
   const highlightThreadShare = isOpen && query.created === "1";
 
   return (
@@ -127,13 +138,14 @@ export default async function SlowGeoSharePage({
                 : `Fasit: ${answerLabel}`}
             </p>
           </div>
-          <SlowGeoShareButton
+          <SlowGeoThreadShareButton
             title={`SlowGeo: ${round.name}`}
-            text={shareText}
+            texts={shareTexts}
             url={shareUrl}
             label={isOpen ? "Del iMessage-tråden" : "Del fasit"}
             copiedLabel={isOpen ? "Trådtekst kopiert" : "Fasitlenke kopiert"}
             showCopyFallback={highlightThreadShare}
+            showPreview={false}
           />
         </header>
 
@@ -147,15 +159,15 @@ export default async function SlowGeoSharePage({
               <h2 className="font-display mt-2 text-2xl font-semibold">Del SlowGeo før pin-svarene kommer</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-[#f5ead3]">{shareText}</p>
             </div>
-            <SlowGeoShareButton
+            <SlowGeoThreadShareButton
               title={`SlowGeo: ${round.name}`}
-              text={shareText}
+              texts={shareTexts}
               url={shareUrl}
               label="Del iMessage-tråden"
               copiedLabel="Trådtekst kopiert"
               showCopyFallback
               tone="dark"
-              className="bg-white text-[#203c62] hover:bg-[#f7f8f5]"
+              shareButtonClassName="bg-white text-[#203c62] hover:bg-[#f7f8f5]"
             />
           </section>
         ) : null}
@@ -167,6 +179,7 @@ export default async function SlowGeoSharePage({
               alt={`SlowGeo-bilde for ${round.name}`}
               sizes="100vw"
               className="aspect-[4/3] min-h-[320px] sm:aspect-video sm:min-h-[420px]"
+              streetViewPanorama={streetViewPanorama}
               priority
               title={round.name}
             />

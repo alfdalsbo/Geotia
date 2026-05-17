@@ -13,6 +13,7 @@ import { getCurrentGeot } from "@/lib/auth";
 import { selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { computeRound } from "@/lib/scoring";
 import { getAppState, maybeRevealRound } from "@/lib/store";
+import { buildStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
 import { buildStreetViewImageUrl } from "@/lib/streetview-url";
 import type { Round, RoundStatus } from "@/lib/types";
 import { dateLabel, formatKm } from "@/lib/utils";
@@ -85,6 +86,13 @@ export default async function RoundDetailPage({
   const publicGoogleKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
   const streetViewUrl = round.challenge
     ? buildStreetViewImageUrl({
+        challenge: round.challenge,
+        apiKey: publicGoogleKey,
+        allowLocationFallback: round.status !== "open",
+      })
+    : null;
+  const streetViewPanorama = round.challenge
+    ? buildStreetViewPanoramaConfig({
         challenge: round.challenge,
         apiKey: publicGoogleKey,
         allowLocationFallback: round.status !== "open",
@@ -196,6 +204,7 @@ export default async function RoundDetailPage({
           roundName={round.name}
           deadlineAt={round.deadlineAt ?? null}
           streetViewUrl={streetViewUrl}
+          streetViewPanorama={streetViewPanorama}
           googleMapsApiKey={publicGoogleKey}
           existingGuess={existingGuess}
           existingNote={currentResult?.note ?? ""}
@@ -208,6 +217,7 @@ export default async function RoundDetailPage({
         <SlowGeoRevealMap
           roundName={round.name}
           streetViewUrl={streetViewUrl}
+          streetViewPanorama={streetViewPanorama}
           googleMapsApiKey={publicGoogleKey}
           markers={revealMarkers}
           shareUrl={slowGeoShareUrl}

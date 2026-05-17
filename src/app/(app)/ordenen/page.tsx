@@ -17,11 +17,13 @@ import {
 import { Section, StatTile } from "@/components/section";
 import { getCurrentGeot } from "@/lib/auth";
 import {
+  geoticOrderFoundingGate,
   geoticOrderMotto,
   geoticOrderRanks,
   getGeoticOrderRows,
   partyTrials,
 } from "@/lib/geotisk-orden";
+import { geotiaOrderLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { getGeoticOnboardingPath, type OnboardingStep } from "@/lib/geotic-onboarding";
 import { computeStandings } from "@/lib/scoring";
 import { getAppState } from "@/lib/store";
@@ -48,6 +50,7 @@ export default async function GeoticOrderPage() {
   const topRanks = rows.filter((row) => row.rank.id === "partigrunder").length;
   const candidates = rows.filter((row) => row.rank.number < 4).length;
   const currentPath = currentRow ? getGeoticOnboardingPath(currentRow) : null;
+  const orderLine = pickGeoticLine(geotiaOrderLines, currentRow?.player.id ?? "ordenen");
   const candidatePaths = rows
     .filter((row) => row.rank.number < 4)
     .map((row) => ({ row, path: getGeoticOnboardingPath(row) }));
@@ -132,6 +135,24 @@ export default async function GeoticOrderPage() {
           tone="red"
         />
       </div>
+
+      <Section title={geoticOrderFoundingGate.title} eyebrow="Ingen snarvei til eget parti">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div>
+            <p className="text-lg leading-8 text-[#eadcbd]">{geoticOrderFoundingGate.body}</p>
+            <p className="mt-4 rounded border border-[#c49a3c]/40 bg-[#fff7e6]/10 px-4 py-3 text-sm font-semibold text-[#e1c06c]">
+              {orderLine}
+            </p>
+          </div>
+          <div className="grid gap-3">
+            {geoticOrderFoundingGate.requirements.map((requirement) => (
+              <p key={requirement} className="rounded border border-[#c49a3c]/35 bg-[#020b11]/35 p-3 text-sm leading-6 text-[#eadcbd]">
+                {requirement}
+              </p>
+            ))}
+          </div>
+        </div>
+      </Section>
 
       {currentPath ? (
         <Section title="Prøvestien" eyebrow="Onboarding uten skjema">
@@ -367,6 +388,9 @@ function RankCard({ rank, current }: { rank: GeoticOrderRank; current: boolean }
         <div className="grid gap-3">
           <MiniList icon={<BadgeCheck className="h-4 w-4" aria-hidden="true" />} title="Rettigheter" items={rank.rights} />
           <MiniList icon={<ScrollText className="h-4 w-4" aria-hidden="true" />} title="Plikter" items={rank.duties} />
+          {rank.limitations?.length ? (
+            <MiniList icon={<LockKeyhole className="h-4 w-4" aria-hidden="true" />} title="Begrensninger" items={rank.limitations} />
+          ) : null}
         </div>
       </div>
     </article>

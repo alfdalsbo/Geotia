@@ -5,6 +5,7 @@ import { GeotingSubnav } from "@/components/geoting-subnav";
 import { GeotingVoteAlarm } from "@/components/geoting-vote-alarm";
 import { Section, StatTile } from "@/components/section";
 import { getCurrentGeot } from "@/lib/auth";
+import { geotiaGeotingLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { getAppState } from "@/lib/store";
 
 export const metadata = {
@@ -32,6 +33,7 @@ export default async function GeotingVotesPage({
     (sum, proposal) => sum + proposal.votes.filter((vote) => voterIds.has(vote.playerId)).length,
     0,
   );
+  const geotingLine = pickGeoticLine(geotiaGeotingLines, `urnen:${currentGeot?.id ?? "ukjent"}:${activeVotes}`);
 
   return (
     <div className="space-y-6">
@@ -55,6 +57,10 @@ export default async function GeotingVotesPage({
       <GeotingVoteStatus status={params.status} error={params.error} />
 
       <GeotingVoteAlarm proposals={activeVotingProposals} context="geotinget" />
+
+      <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-4 py-3 text-sm font-semibold text-[#654517]">
+        {geotingLine}
+      </div>
 
       <div className="grid gap-3 md:grid-cols-4">
         <StatTile label="Innlogget embete" value={currentGeot?.shortName ?? "-"} detail={currentGeot?.title} tone="blue" />
@@ -81,7 +87,7 @@ function GeotingVoteStatus({ status, error }: { status?: string; error?: string 
   if (error === "tingvitne") {
     return (
       <div className="rounded border border-[#7c2430]/25 bg-[#7c2430]/10 px-4 py-3 text-sm font-medium text-[#7c2430]">
-        Tingvitnet er notert, men stemmeurnen åpnes først når Danny har stiftet parti.
+        Tingvitnet er notert, men stemmeurnen åpnes først etter ordensvei til nivå 7 og godkjent partistiftelse.
       </div>
     );
   }

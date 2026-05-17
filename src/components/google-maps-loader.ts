@@ -32,10 +32,28 @@ export type GooglePolyline = {
   setMap(map: GoogleMap | null): void;
 };
 
+export type GoogleStreetViewPov = {
+  heading: number;
+  pitch: number;
+};
+
+export type GoogleMapsListener = {
+  remove(): void;
+};
+
+export type GoogleStreetViewPanorama = {
+  addListener?(eventName: string, handler: () => void): GoogleMapsListener | void;
+  getStatus?(): string;
+  getZoom(): number;
+  setPov(pov: GoogleStreetViewPov): void;
+  setZoom(zoom: number): void;
+};
+
 export type GoogleMapsApi = {
   Map: new (element: HTMLElement, options: Record<string, unknown>) => GoogleMap;
   Marker: new (options: Record<string, unknown>) => GoogleMarker;
   Polyline: new (options: Record<string, unknown>) => GooglePolyline;
+  StreetViewPanorama?: new (element: HTMLElement, options: Record<string, unknown>) => GoogleStreetViewPanorama;
   LatLngBounds: new () => GoogleLatLngBounds;
   event?: {
     trigger(instance: unknown, eventName: string): void;
