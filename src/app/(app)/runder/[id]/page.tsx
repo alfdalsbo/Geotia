@@ -10,6 +10,7 @@ import { SlowGeoAftermath } from "@/components/slowgeo-aftermath";
 import { SlowGeoPlay } from "@/components/slowgeo-play";
 import { SlowGeoRevealMap } from "@/components/slowgeo-reveal-map";
 import { getCurrentGeot } from "@/lib/auth";
+import { selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { computeRound } from "@/lib/scoring";
 import { getAppState, maybeRevealRound } from "@/lib/store";
 import { buildStreetViewImageUrl } from "@/lib/streetview-url";
@@ -103,6 +104,13 @@ export default async function RoundDetailPage({
         updatedAt: currentResult.guessUpdatedAt,
       }
     : null;
+  const openSlowGeoTips = isOpenStreetViewRound
+    ? selectGeoGuessrTips({
+        placement: "slowgeo-open",
+        seed: round.id,
+        count: 3,
+      })
+    : [];
   const revealMarkers =
     round.mapSnapshot?.markers.map((marker) => ({
       id: marker.id,
@@ -192,6 +200,7 @@ export default async function RoundDetailPage({
           existingGuess={existingGuess}
           existingNote={currentResult?.note ?? ""}
           shareUrl={slowGeoShareUrl}
+          tips={openSlowGeoTips}
         />
       ) : null}
 

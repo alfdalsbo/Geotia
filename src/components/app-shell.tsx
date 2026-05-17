@@ -13,9 +13,11 @@ import {
 } from "lucide-react";
 
 import { logoutAction } from "@/app/actions";
+import { GeoGuessrTipToast } from "@/components/geo-guessr-tip-toast";
 import { GeotingGlobalAlert } from "@/components/geoting-global-alert";
 import { SlowGeoGlobalAlert } from "@/components/slowgeo-global-alert";
 import { getCurrentGeot } from "@/lib/auth";
+import { getGeoGuessrTipDaySeed, selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { getActiveGeotingProposals, getActiveSlowGeoRounds, getStorageMode } from "@/lib/store";
 
 const navItems = [
@@ -33,6 +35,11 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
     getActiveGeotingProposals(),
     getActiveSlowGeoRounds(),
   ]);
+  const toastTips = selectGeoGuessrTips({
+    placement: "global-toast",
+    seed: getGeoGuessrTipDaySeed(),
+    count: 12,
+  });
 
   return (
     <div className="geotia-civic-bg min-h-screen text-[#161713]">
@@ -92,6 +99,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
       <GeotingGlobalAlert proposals={activeGeotingProposals} />
       <SlowGeoGlobalAlert rounds={activeSlowGeoRounds} />
+      <GeoGuessrTipToast tips={toastTips} />
 
       <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
 

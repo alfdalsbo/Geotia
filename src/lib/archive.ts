@@ -23,7 +23,7 @@ export const archiveSections = [
     slug: "kjennelaere",
     title: "Kjennelæren",
     eyebrow: "GeoHeuristikk",
-    description: "Skilt, stolper, veier, magefølelse og andre nesten-sannheter.",
+    description: "Skilt, stolper, veier, GeoGuessr-tips, magefølelse og andre nesten-sannheter.",
   },
   {
     slug: "geoter",

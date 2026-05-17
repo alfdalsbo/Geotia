@@ -13,10 +13,12 @@ import {
 } from "lucide-react";
 
 import { DashboardGameGrid, DashboardPartyGrid } from "@/components/dashboard-sections";
+import { GeoGuessrTipTicker } from "@/components/geo-guessr-tip-ticker";
 import { RotatingGeotiaQuote } from "@/components/rotating-geotia-quote";
 import { ExpandableImage } from "@/components/expandable-image";
 import { SarajevoVideo } from "@/components/sarajevo-video";
 import { Section, StatTile } from "@/components/section";
+import { getGeoGuessrTipDaySeed, selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { computeGameStandings, getHallOfFame, computeRound, computeStandings } from "@/lib/scoring";
 import { getAppState } from "@/lib/store";
 import { dateLabel, formatKm, formatNumber } from "@/lib/utils";
@@ -33,6 +35,11 @@ export default async function DashboardPage() {
   const computedLatest = latestRound ? computeRound(latestRound, state.players) : null;
   const hall = getHallOfFame(standings, state.rounds, state.players);
   const knowledgeQuotes = state.archive.knowledgeGroups.flatMap((group) => group.items);
+  const dailyTips = selectGeoGuessrTips({
+    placement: "dashboard",
+    seed: getGeoGuessrTipDaySeed(),
+    count: 5,
+  });
   const leader = standings[0];
   const kattometerLeader = standings
     .filter((standing) => standing.lockedRounds > 0)
@@ -158,6 +165,8 @@ export default async function DashboardPage() {
       </section>
 
       <RotatingGeotiaQuote quotes={knowledgeQuotes} />
+
+      <GeoGuessrTipTicker tips={dailyTips} />
 
       <SarajevoVideo />
 

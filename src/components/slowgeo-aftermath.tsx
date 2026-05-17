@@ -1,6 +1,8 @@
 import { AlertTriangle, BookOpen, Crown, MapPinned, ShieldAlert } from "lucide-react";
 
+import { GeoGuessrTipCard } from "@/components/geo-guessr-tip-card";
 import { Section } from "@/components/section";
+import { selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { getSlowGeoRoundInsights, slowGeoDifficultyLabels } from "@/lib/slowgeo-insights";
 import type { ComputedRound } from "@/lib/types";
 import { formatKm } from "@/lib/utils";
@@ -18,6 +20,14 @@ export function SlowGeoAftermath({ round }: { round: ComputedRound }) {
   const difficulty = challenge?.difficulty ? slowGeoDifficultyLabels[challenge.difficulty] : null;
   const bestKm = insights.bestResult?.actualKm ?? null;
   const worstKm = insights.worstResult?.actualKm ?? null;
+  const revealTips = selectGeoGuessrTips({
+    placement: "slowgeo-reveal",
+    seed: round.id,
+    count: 4,
+    country: challenge?.country ?? round.country,
+    continent: challenge?.continent ?? round.continent,
+    tags: challenge?.tags ?? [],
+  });
 
   return (
     <Section title="Fasitseremoni" eyebrow="Etterspill og riksarkivets dom">
@@ -77,6 +87,19 @@ export function SlowGeoAftermath({ round }: { round: ComputedRound }) {
               <p className="mt-2 text-sm leading-6 opacity-90">{insight.body}</p>
             </article>
           ))}
+        </div>
+      ) : null}
+
+      {revealTips.length ? (
+        <div className="mt-5">
+          <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
+            Fasitens tegnlære
+          </h3>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            {revealTips.map((tip) => (
+              <GeoGuessrTipCard key={tip.id} tip={tip} compact />
+            ))}
+          </div>
         </div>
       ) : null}
 

@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { ExpandableImage } from "@/components/expandable-image";
+import { GeoGuessrTipLibrary } from "@/components/geo-guessr-tip-library";
 import { Section } from "@/components/section";
 import { SarajevoVideo } from "@/components/sarajevo-video";
 import { archiveSources, getArchiveSection } from "@/lib/archive";
+import { getGeoGuessrTipCategories, getGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { getGeotingLifecycle, geotingImplementationLabels, partyPositionLabels, summarizeProposal } from "@/lib/geoting";
 import { getPartyMechanic } from "@/lib/party-mechanics";
 import { getAppState } from "@/lib/store";
@@ -139,6 +141,9 @@ function ArchiveBody({
   }
 
   if (slug === "kjennelaere") {
+    const geoGuessrTips = getGeoGuessrTips();
+    const geoGuessrTipCategories = getGeoGuessrTipCategories();
+
     return (
       <div className="space-y-6">
         {archive.knowledgeGroups.map((group) => (
@@ -153,6 +158,7 @@ function ArchiveBody({
             </div>
           </Section>
         ))}
+        <GeoGuessrTipLibrary tips={geoGuessrTips} categories={geoGuessrTipCategories} />
       </div>
     );
   }

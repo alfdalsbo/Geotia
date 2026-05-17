@@ -7,6 +7,8 @@ import { submitSlowGeoGuessAction } from "@/app/actions";
 import { loadGoogleMaps, type GoogleMap, type GoogleMapsApi, type GoogleMarker } from "@/components/google-maps-loader";
 import { SlowGeoImageViewer } from "@/components/slowgeo-image-viewer";
 import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
+import { SlowGeoTipPanel } from "@/components/slowgeo-tip-panel";
+import type { GeoGuessrTip } from "@/lib/geoguessr-tips";
 import { buildOpenSlowGeoShareText } from "@/lib/slowgeo-share";
 import { dateTimeLabel } from "@/lib/utils";
 
@@ -25,6 +27,7 @@ type SlowGeoPlayProps = {
   existingGuess: (Guess & { updatedAt?: string | null }) | null;
   existingNote?: string | null;
   shareUrl: string;
+  tips?: GeoGuessrTip[];
 };
 
 function guessLabel(lat: number, lon: number) {
@@ -40,6 +43,7 @@ export function SlowGeoPlay({
   existingGuess,
   existingNote,
   shareUrl,
+  tips = [],
 }: SlowGeoPlayProps) {
   const mapElementRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<GoogleMap | null>(null);
@@ -347,6 +351,8 @@ export function SlowGeoPlay({
               {mapError}
             </p>
           ) : null}
+
+          <SlowGeoTipPanel tips={tips} />
 
           <label className="block rounded border border-[#d8ded0] bg-white p-3">
             <span className="text-sm font-semibold text-[#273125]">Begrunnelse</span>
