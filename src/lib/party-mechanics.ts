@@ -1,3 +1,6 @@
+import { getConstitutionChangeParts, summarizeProposal, votingPlayers } from "@/lib/geoting";
+import type { GeotingProposal, Player } from "@/lib/types";
+
 export type PartyMechanic = {
   partyId: string;
   title: string;
@@ -5,6 +8,12 @@ export type PartyMechanic = {
   trigger: string;
   effect: string;
   limit: string;
+};
+
+export type ProposalPartyMechanic = PartyMechanic & {
+  state: "available" | "waiting" | "satisfied";
+  stateLabel: string;
+  stateDetail: string;
 };
 
 export const partyMechanics: PartyMechanic[] = [
@@ -68,4 +77,103 @@ export const partyMechanics: PartyMechanic[] = [
 
 export function getPartyMechanic(partyId?: string | null) {
   return partyMechanics.find((mechanic) => mechanic.partyId === partyId) ?? null;
+}
+
+export function getProposalPartyMechanics(proposal: GeotingProposal, players: Player[], now = new Date()): ProposalPartyMechanic[] {
+  const summary = summarizeProposal(proposal, players, now);
+  const positions = proposal.partyPositions ?? [];
+  const positionPartyIds = new Set(positions.map((position) => position.partyId));
+  const votingPartyIds = new Set(votingPlayers(players).map((player) => player.partyId).filter(Boolean));
+  const allPartiesHavePosition = [...votingPartyIds].every((partyId) => positionPartyIds.has(partyId));
+  const constitutionParts = getConstitutionChangeParts(proposal.body);
+  const hasBeforeAfter = Boolean(constitutionParts.before && constitutionParts.after);
+  const implementationStatus = proposal.implementationStatus ?? "pending";
+
+  return partyMechanics.map((mechanic) => {
+    if (mechanic.partyId === "ira") {
+      if (proposal.ruleType === "grunnlov" && hasBeforeAfter) {
+        return {
+          ...mechanic,
+          state: "satisfied",
+          stateLabel: "Ivaretatt",
+          stateDetail: "Saken er allerede ført som grunnlovssak med før/etter-tekst.",
+        };
+      }
+      return {
+        ...mechanic,
+        state: !summary.started ? "available" : "waiting",
+        stateLabel: !summary.started ? "Kan reises" : "For sent",
+        stateDetail: !summary.started
+          ? "IRA kan kreve grunnlovsbehandling før geo-eden."
+          : "Urnen er åpnet; innsigelsen må bli arkivmerknad.",
+      };
+    }
+
+    if (mechanic.partyId === "pkk") {
+      return {
+        ...mechanic,
+        state: !summary.started && !allPartiesHavePosition ? "available" : "satisfied",
+        stateLabel: !summary.started && !allPartiesHavePosition ? "Kan kreves" : "Krangelen er moden",
+        stateDetail: !summary.started && !allPartiesHavePosition
+          ? "PKK kan kreve kranglefrist før alle partier har ført linje."
+          : "Partilinjene eller geo-eden har flyttet saken videre.",
+      };
+    }
+
+    if (mechanic.partyId === "mossad") {
+      return {
+        ...mechanic,
+        state: !summary.started ? "available" : "satisfied",
+        stateLabel: !summary.started ? "Kan avslutte" : "Avsluttet",
+        stateDetail: !summary.started ? "MOSSAD kan presse saken fra prat til urne." : "Saken har forlatt kranglefasen.",
+      };
+    }
+
+    if (mechanic.partyId === "pwp") {
+      const blocked = proposal.ruleType === "grunnlov" && !hasBeforeAfter;
+      return {
+        ...mechanic,
+        state: !summary.started && !blocked ? "available" : blocked ? "waiting" : "satisfied",
+        stateLabel: !summary.started && !blocked ? "Kan hasteføres" : blocked ? "Mangler før/etter" : "Behandlet",
+        stateDetail: blocked
+          ? "PWP må vente til grunnlovsteksten har før/etter-form."
+          : !summary.started
+            ? "Hastebehandling kan foreslås før saken stivner."
+            : "Saken er allerede i formell flyt.",
+      };
+    }
+
+    if (mechanic.partyId === "cip") {
+      return {
+        ...mechanic,
+        state: summary.finished && implementationStatus === "pending" ? "available" : implementationStatus === "pending" ? "waiting" : "satisfied",
+        stateLabel: summary.finished && implementationStatus === "pending" ? "Kan forenkle" : implementationStatus === "pending" ? "Venter på vedtak" : "Etterliv ført",
+        stateDetail: summary.finished && implementationStatus === "pending"
+          ? "CIP kan foreslå minste praktiske implementering."
+          : implementationStatus === "pending"
+            ? "Først må saken avgjøres."
+            : "Saken har fått ettervedtak.",
+      };
+    }
+
+    if (mechanic.partyId === "plo") {
+      return {
+        ...mechanic,
+        state: summary.started ? "available" : "waiting",
+        stateLabel: summary.started ? "Kan merknadsføres" : "Venter på urne",
+        stateDetail: summary.started
+          ? "PLO kan legge intensjonsforsvar ved stemmegivning."
+          : "Mindretallsmerknad hører hjemme når saken står i urnen.",
+      };
+    }
+
+    return {
+      ...mechanic,
+      state: !summary.started ? "available" : "waiting",
+      stateLabel: !summary.started ? "Kan presisere" : "Venter",
+      stateDetail: !summary.started
+        ? "SS kan kreve klarere ordlyd før geo-eden."
+        : "Presiseringen må skje som pergamentredigering.",
+    };
+  });
 }

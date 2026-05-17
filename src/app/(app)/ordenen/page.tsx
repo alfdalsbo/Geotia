@@ -2,9 +2,12 @@ import Link from "next/link";
 import {
   ArrowRight,
   BadgeCheck,
+  CheckCircle2,
+  Clock,
   Crown,
   Footprints,
   Gavel,
+  LockKeyhole,
   Milestone,
   ScrollText,
   ShieldCheck,
@@ -19,6 +22,7 @@ import {
   getGeoticOrderRows,
   partyTrials,
 } from "@/lib/geotisk-orden";
+import { getGeoticOnboardingPath, type OnboardingStep } from "@/lib/geotic-onboarding";
 import { computeStandings } from "@/lib/scoring";
 import { getAppState } from "@/lib/store";
 import type { GeoticOrderRank } from "@/lib/geotisk-orden";
@@ -43,6 +47,10 @@ export default async function GeoticOrderPage() {
   const currentRow = rows.find((row) => row.player.id === currentGeot?.id) ?? rows[0];
   const topRanks = rows.filter((row) => row.rank.id === "partigrunder").length;
   const candidates = rows.filter((row) => row.rank.number < 4).length;
+  const currentPath = currentRow ? getGeoticOnboardingPath(currentRow) : null;
+  const candidatePaths = rows
+    .filter((row) => row.rank.number < 4)
+    .map((row) => ({ row, path: getGeoticOnboardingPath(row) }));
 
   return (
     <div className="space-y-7">
@@ -124,6 +132,55 @@ export default async function GeoticOrderPage() {
           tone="red"
         />
       </div>
+
+      {currentPath ? (
+        <Section title="Prøvestien" eyebrow="Onboarding uten skjema">
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
+                    {currentRow.player.shortName}
+                  </p>
+                  <h2 className="font-display mt-1 text-3xl font-semibold text-[#fff7e6]">
+                    {currentPath.nextStep ? `Neste: ${currentPath.nextStep.title}` : "Prøvestien er fullført"}
+                  </h2>
+                </div>
+                <p className="font-display text-4xl font-semibold text-[#e1c06c]">{currentPath.progress}%</p>
+              </div>
+              <div className="mt-4 h-2 overflow-hidden rounded bg-[#fff7e6]/12">
+                <div className="h-full rounded bg-[#e1c06c]" style={{ width: `${currentPath.progress}%` }} />
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {currentPath.steps.map((step) => (
+                  <OnboardingStepCard key={step.id} step={step} />
+                ))}
+              </div>
+            </div>
+            <aside className="rounded border border-[#c49a3c]/45 bg-[#020b11]/45 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
+                Aspirantens prøvedør
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[#eadcbd]">
+                {currentPath.recommendedTrial}
+              </p>
+              <div className="mt-4 grid gap-2">
+                {candidatePaths.slice(0, 4).map(({ row, path }) => (
+                  <div key={row.player.id} className="rounded border border-[#c49a3c]/30 bg-[#fff7e6]/8 px-3 py-2 text-sm">
+                    <p className="flex items-center justify-between gap-3">
+                      <span className="font-semibold text-[#fff7e6]">{row.player.shortName}</span>
+                      <span className="text-[#e1c06c]">{path.completed}/{path.total}</span>
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-[#eadcbd]">
+                      {path.nextStep ? path.nextStep.title : "Klar for videre rang"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </aside>
+          </div>
+        </Section>
+      ) : null}
 
       <section id="ordensstigen" className="space-y-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -247,6 +304,30 @@ function PersonalPathCard({ row }: { row: OrderRow }) {
         </p>
       </div>
     </div>
+  );
+}
+
+function OnboardingStepCard({ step }: { step: OnboardingStep }) {
+  const Icon = step.status === "done" ? CheckCircle2 : step.status === "current" ? Clock : LockKeyhole;
+  const classes =
+    step.status === "done"
+      ? "border-[#194832]/30 bg-[#194832]/10 text-[#dff3e4]"
+      : step.status === "current"
+        ? "border-[#c49a3c]/45 bg-[#fff7e6]/10 text-[#fff7e6]"
+        : "border-[#d8c48c]/25 bg-[#020b11]/35 text-[#cdbd97]";
+
+  return (
+    <article className={`rounded border p-4 ${classes}`}>
+      <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em]">
+        <Icon className="h-4 w-4" aria-hidden="true" />
+        {step.status === "done" ? "Ført" : step.status === "current" ? "Neste" : "Venter"}
+      </p>
+      <h3 className="font-display mt-2 text-2xl font-semibold">{step.title}</h3>
+      <p className="mt-2 text-sm leading-6">{step.detail}</p>
+      <div className="mt-3 h-2 overflow-hidden rounded bg-[#fff7e6]/12">
+        <div className="h-full rounded bg-current" style={{ width: `${step.progress}%` }} />
+      </div>
+    </article>
   );
 }
 

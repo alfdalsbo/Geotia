@@ -43,6 +43,7 @@ import {
   negativeIndexRules,
   positiveIndexRules,
 } from "@/lib/geoterindeks";
+import { getGeoterIndexDossier } from "@/lib/geoterindeks-dossier";
 import {
   geoticOrderHiddenCategories,
   geoticOrderRanks,
@@ -113,6 +114,7 @@ export default async function ThirdCollegePage({
     .filter((standing) => standing.lockedRounds > 0)
     .sort((a, b) => a.totalKattometer - b.totalKattometer)[0];
   const geoterIndexRows = getGeoterIndexRows(state.players, state.geoterIndexAdjustments);
+  const geoterIndexDossier = getGeoterIndexDossier(geoterIndexRows);
   const geoterIndexAverage =
     geoterIndexRows.length > 0
       ? Math.round(geoterIndexRows.reduce((sum, row) => sum + row.score, 0) / geoterIndexRows.length)
@@ -254,6 +256,7 @@ export default async function ThirdCollegePage({
 
       <GeoterIndexSection
         currentGeot={currentGeot}
+        dossier={geoterIndexDossier}
         latestAdjustments={latestIndexAdjustments}
         rows={geoterIndexRows}
         players={state.players}
@@ -614,11 +617,13 @@ function GeotingAdminSection({
 
 function GeoterIndexSection({
   currentGeot,
+  dossier,
   latestAdjustments,
   players,
   rows,
 }: {
   currentGeot: Player;
+  dossier: ReturnType<typeof getGeoterIndexDossier>;
   latestAdjustments: GeoterIndexAdjustment[];
   players: Player[];
   rows: GeoterIndexRow[];
@@ -711,6 +716,54 @@ function GeoterIndexSection({
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded border border-[#c49a3c]/45 bg-[#020b11]/45 p-4">
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
+                  Operativ vurdering
+                </p>
+                <h3 className="font-display mt-1 text-2xl font-semibold">Indeksens dagsorden</h3>
+              </div>
+              <div className="grid grid-cols-4 gap-2 text-center text-xs font-semibold uppercase tracking-[0.1em] text-[#eadcbd]">
+                <IndexSignal label="Risiko" value={dossier.summary.risk} />
+                <IndexSignal label="Fall" value={dossier.summary.falling} />
+                <IndexSignal label="Løft" value={dossier.summary.rising} />
+                <IndexSignal label="Tomrom" value={dossier.summary.unobserved} />
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
+              <div className="grid gap-2 md:grid-cols-2">
+                {dossier.items.length ? (
+                  dossier.items.map((item) => (
+                    <div key={`${item.playerId}-${item.title}`} className={`rounded border px-3 py-2 text-sm ${indexDossierToneClasses[item.tone]}`}>
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em]">{item.playerName} · {item.title}</p>
+                      <p className="mt-1 leading-6">{item.detail}</p>
+                      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.1em]">{item.action}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="rounded border border-[#c49a3c]/30 bg-[#fff7e6]/8 px-3 py-2 text-sm text-[#eadcbd]">
+                    Ingen signaler. Det er enten fred eller dårlig observasjon.
+                  </p>
+                )}
+              </div>
+              <div className="rounded border border-[#c49a3c]/30 bg-[#fff7e6]/8 p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#e1c06c]">Mest ustabile kurver</p>
+                <div className="mt-3 grid gap-2">
+                  {dossier.volatile.map((item) => (
+                    <div key={item.playerId} className="rounded border border-[#c49a3c]/25 bg-[#020b11]/45 px-3 py-2 text-sm">
+                      <p className="flex items-center justify-between gap-3">
+                        <span className="font-semibold text-[#fff7e6]">{item.playerName}</span>
+                        <span className="font-mono text-[#e1c06c]">{item.weight}</span>
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-[#eadcbd]">{item.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1127,6 +1180,22 @@ function GeoticOrderControlSection({
         </aside>
       </div>
     </section>
+  );
+}
+
+const indexDossierToneClasses = {
+  blue: "border-[#203c62]/30 bg-[#203c62]/14 text-[#d9e8f5]",
+  green: "border-[#194832]/30 bg-[#194832]/18 text-[#dff3e4]",
+  gold: "border-[#c49a3c]/45 bg-[#c49a3c]/14 text-[#fff7e6]",
+  red: "border-[#7c2430]/35 bg-[#7c2430]/18 text-[#ffd8d0]",
+} as const;
+
+function IndexSignal({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded border border-[#c49a3c]/30 bg-[#fff7e6]/8 px-2 py-2">
+      <p className="font-display text-2xl font-semibold text-[#e1c06c]">{value}</p>
+      <p className="mt-1">{label}</p>
+    </div>
   );
 }
 

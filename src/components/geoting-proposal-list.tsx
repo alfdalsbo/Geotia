@@ -10,6 +10,7 @@ import {
   summarizeProposal,
 } from "@/lib/geoting";
 import type { GeotingProposal, PartyPositionValue, Player, VoteValue } from "@/lib/types";
+import { getProposalPartyMechanics, type ProposalPartyMechanic } from "@/lib/party-mechanics";
 import { dateLabel, dateTimeLabel } from "@/lib/utils";
 
 const ruleTypeLabels = {
@@ -92,6 +93,7 @@ function ProposalCard({
   const resultTone = summary.finished ? (summary.passed ? "green" : "red") : summary.started ? "gold" : "blue";
   const lifecycle = getGeotingLifecycle(proposal, players);
   const constitutionChange = getConstitutionChangeParts(proposal.body);
+  const partyMechanics = getProposalPartyMechanics(proposal, players);
 
   return (
     <article className="geotia-frame rounded">
@@ -129,6 +131,7 @@ function ProposalCard({
           </div>
 
           <PartyPositionMap proposal={proposal} votingPlayers={votingPlayers} />
+          <PartyMechanicsBoard currentGeot={currentGeot} mechanics={partyMechanics} />
 
           {tingvitner.length ? (
             <p className="mt-3 rounded border border-[#c49a3c]/30 bg-[#fff7e6] px-3 py-2 text-sm text-[#60553f]">
@@ -272,6 +275,45 @@ function PartyPositionMap({
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function PartyMechanicsBoard({
+  currentGeot,
+  mechanics,
+}: {
+  currentGeot: Player | null;
+  mechanics: ProposalPartyMechanic[];
+}) {
+  const ownPartyId = currentGeot?.partyId;
+  return (
+    <div className="mt-4 rounded border border-[#d8ded0] bg-white p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
+        Partimekanikker i saken
+      </p>
+      <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+        {mechanics.map((mechanic) => (
+          <div
+            key={mechanic.partyId}
+            className={
+              mechanic.partyId === ownPartyId
+                ? "rounded border border-[#7c2430]/45 bg-[#7c2430]/10 px-3 py-2 text-sm text-[#4f1d24]"
+                : mechanic.state === "available"
+                  ? "rounded border border-[#194832]/30 bg-[#194832]/10 px-3 py-2 text-sm text-[#194832]"
+                  : mechanic.state === "satisfied"
+                    ? "rounded border border-[#203c62]/25 bg-[#203c62]/8 px-3 py-2 text-sm text-[#203c62]"
+                    : "rounded border border-[#d8ded0] bg-[#f7f8f5] px-3 py-2 text-sm text-[#5b6257]"
+            }
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.12em]">
+              {mechanic.partyId.toUpperCase()} · {mechanic.stateLabel}
+            </p>
+            <p className="mt-1 font-semibold">{mechanic.title}</p>
+            <p className="mt-1 text-xs leading-5">{mechanic.stateDetail}</p>
+          </div>
+        ))}
       </div>
     </div>
   );

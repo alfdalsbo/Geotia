@@ -17,6 +17,7 @@ import { getEarnedPlayerBadges, type GeotiaBadgeTone } from "@/lib/geotia-badges
 import { getGeoticOrderRows } from "@/lib/geotisk-orden";
 import { getThirdCollegeSeat, isThirdCollegeMember } from "@/lib/kollegium";
 import { getPartyMechanic } from "@/lib/party-mechanics";
+import { getPlayerDossier } from "@/lib/player-dossier";
 import { computeRound, computeStandings } from "@/lib/scoring";
 import { getAppState } from "@/lib/store";
 import { dateLabel, formatKm, formatNumber } from "@/lib/utils";
@@ -55,6 +56,7 @@ export default async function MyGeotPage() {
     standing,
   });
   const partyMechanic = getPartyMechanic(player.partyId);
+  const dossier = getPlayerDossier(player, state.players, state.rounds, standing);
 
   return (
     <div className="space-y-7">
@@ -135,6 +137,27 @@ export default async function MyGeotPage() {
         <StatTile label="Ordensrang" value={orderRow?.rank.name ?? "-"} detail={orderRow ? `${orderRow.progressToNext}% mot neste` : "Ikke ført"} tone="green" />
       </div>
 
+      <Section title="Riksmappe" eyebrow="Egne trender">
+        <div className="grid gap-3 md:grid-cols-5">
+          {dossier.stats.map((stat) => (
+            <StatTile key={stat.label} label={stat.label} value={stat.value} detail={stat.detail} tone={stat.tone} />
+          ))}
+        </div>
+        <div className="mt-5 grid gap-3 lg:grid-cols-5">
+          {dossier.recentMoments.map((moment) => (
+            <Link
+              key={`${moment.roundId}-${moment.label}`}
+              href={`/runder/${moment.roundId}`}
+              className={`rounded border p-3 transition hover:-translate-y-0.5 ${badgeToneClasses[moment.tone]}`}
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.14em]">{dateLabel(moment.date)} · {moment.label}</p>
+              <h2 className="font-display mt-1 text-xl font-semibold">{moment.title}</h2>
+              <p className="mt-2 text-sm leading-6">{moment.detail}</p>
+            </Link>
+          ))}
+        </div>
+      </Section>
+
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <Section title="Profil" eyebrow="Geotisk identitet">
           <div className="grid gap-4 md:grid-cols-2">
@@ -195,6 +218,22 @@ export default async function MyGeotPage() {
 
         <Section title="Partipass" eyebrow={party?.id.toUpperCase() ?? "Tingvitne"}>
           <div className="space-y-3">
+            {party ? (
+              <div className="grid gap-3 sm:grid-cols-[12px_1fr]">
+                <span className="min-h-28 rounded-full" style={{ background: party.color }} />
+                <div className="grid gap-3">
+                  <div className="rounded border border-[#d8c48c] bg-white/72 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">Parti</p>
+                    <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{party.name}</h2>
+                    <p className="mt-2 text-sm leading-6 text-[#4f412b]">{party.ideology}</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <SmallFact label="Rivaler" value={party.rivals} />
+                    <SmallFact label="Øyeblikk" value={player.moment} />
+                  </div>
+                </div>
+              </div>
+            ) : null}
             <div className="rounded border border-[#d8c48c] bg-white/72 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">Motto</p>
               <p className="mt-2 text-sm italic leading-6 text-[#4f412b]">
@@ -292,6 +331,15 @@ function Metric({ label, value }: { label: string; value: React.ReactNode }) {
     <div className="rounded border border-[#d8c48c] bg-white/70 p-3">
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">{label}</p>
       <p className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{value}</p>
+    </div>
+  );
+}
+
+function SmallFact({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="rounded border border-[#d8c48c] bg-white/70 p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">{label}</p>
+      <p className="mt-1 text-sm leading-6 text-[#4f412b]">{value}</p>
     </div>
   );
 }

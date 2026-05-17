@@ -72,6 +72,17 @@ export function getPlayerBadges({
       earned: hasAdjustment("anti_sabotasje", "india"),
     },
     {
+      id: "sarajevo-baerer",
+      title: "Sarajevo-bærer",
+      description: "Har båret en høylytt sikkerhet frem til fasit uten å kollapse sosialt.",
+      detail: hasAdjustment("geografisk", "sarajevo") ? "Sarajevo ført i indeksen." : "Venter på kvalmende sikker blink.",
+      tone: "gold",
+      earned:
+        hasAdjustment("geografisk", "sarajevo") ||
+        hasAdjustment("fellesskap", "sarajevo") ||
+        /sarajevo/i.test(`${player.moment} ${player.mark}`),
+    },
+    {
       id: "kartlig-ustabil",
       title: "Kartlig ustabil",
       description: "Har nok store utslag til at riket følger ekstra nøye med.",
