@@ -149,10 +149,12 @@ describe("Geotia file store", () => {
 
     const { createSlowGeoRound, submitSlowGeoGuess, revealDueSlowGeoRounds, getAppState } = await import("@/lib/store");
 
-    const created = await createSlowGeoRound({ title: "Street View-prøven", deadlineMinutes: 60 });
+    const explicitDeadline = new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString();
+    const created = await createSlowGeoRound({ title: "Street View-prøven", deadlineAt: explicitDeadline });
     if (!created.ok || !created.round?.answerLocation) throw new Error("SlowGeo-runden ble ikke opprettet");
 
     expect(created.round.status).toBe("open");
+    expect(created.round.deadlineAt).toBe(explicitDeadline);
     expect(created.round.answerLocation.source).toBe("google_street_view");
     expect(created.round.mapSnapshot).toBeNull();
 
@@ -184,5 +186,40 @@ describe("Geotia file store", () => {
       actualKm: 0,
       distanceSource: "auto",
     });
+  });
+
+  it("lets Tredje Kollegium update and withdraw Geoting proposals", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    vi.resetModules();
+
+    const { createGeotingProposal, getAppState, updateGeotingProposal, withdrawGeotingProposal } = await import("@/lib/store");
+
+    const proposal = await createGeotingProposal({
+      title: "Lov om gammel ordlyd",
+      body: "Første versjon.",
+      ruleType: "annet",
+      proposedBy: "alf",
+    });
+
+    const edited = await updateGeotingProposal({
+      proposalId: proposal.id,
+      title: "Lov om presis ordlyd",
+      body: "Kollegiet har redigert teksten.",
+      ruleType: "mindre",
+    });
+    const withdrawn = await withdrawGeotingProposal({ proposalId: proposal.id });
+    const state = await getAppState();
+    const stored = state.geotingProposals.find((candidate) => candidate.id === proposal.id);
+
+    expect(edited.ok).toBe(true);
+    expect(withdrawn.ok).toBe(true);
+    expect(stored).toMatchObject({
+      title: "Lov om presis ordlyd",
+      body: "Kollegiet har redigert teksten.",
+      ruleType: "mindre",
+      status: "archived",
+    });
+    expect(stored?.resolvedAt).toBeTruthy();
   });
 });

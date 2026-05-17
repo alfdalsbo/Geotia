@@ -37,7 +37,7 @@ function proposalHasAllVotes(proposal: GeotingProposal, players: Player[]) {
 }
 
 export function isProposalFinished(proposal: GeotingProposal, players: Player[], now = new Date()) {
-  if (proposal.status === "passed" || proposal.status === "rejected") return true;
+  if (proposal.status === "passed" || proposal.status === "rejected" || proposal.status === "archived") return true;
   if (!proposal.voteStartedAt) return false;
   return proposalHasAllVotes(proposal, players) || proposalEndedByTime(proposal, now);
 }
@@ -82,13 +82,14 @@ export function summarizeProposal(proposal: GeotingProposal, players: Player[], 
     const vote = votes.find((candidate) => candidate.playerId === player.id);
     return vote?.automatic === true;
   });
+  const archived = proposal.status === "archived";
   const started = Boolean(proposal.voteStartedAt);
   const finished = isProposalFinished(proposal, players, now);
   const required = requiredVotes(proposal, voters.length);
-  const passed = finished && (proposal.ruleType === "grunnlov" ? forVotes === voters.length : forVotes >= required);
-  const rejected = finished && !passed;
+  const passed = !archived && finished && (proposal.ruleType === "grunnlov" ? forVotes === voters.length : forVotes >= required);
+  const rejected = !archived && finished && !passed;
   const phase =
-    proposal.status === "archived"
+    archived
       ? "archived"
       : !started
         ? "proposal"
@@ -96,15 +97,17 @@ export function summarizeProposal(proposal: GeotingProposal, players: Player[], 
           ? "resolved"
           : "voting";
 
-  const label = !started
-    ? "Venter på geo-ed"
-    : finished
-      ? passed
-        ? "Vedtatt og protokollført"
-        : "Forkastet og protokollført"
-      : proposal.ruleType === "grunnlov"
-        ? `Krever ${voters.length}/${voters.length}`
-        : `Krever ${required} for-stemmer`;
+  const label = archived
+    ? "Trukket og arkivert"
+    : !started
+      ? "Venter på geo-ed"
+      : finished
+        ? passed
+          ? "Vedtatt og protokollført"
+          : "Forkastet og protokollført"
+        : proposal.ruleType === "grunnlov"
+          ? `Krever ${voters.length}/${voters.length}`
+          : `Krever ${required} for-stemmer`;
 
   return {
     forVotes,
@@ -121,8 +124,10 @@ export function summarizeProposal(proposal: GeotingProposal, players: Player[], 
     finished,
     phase,
     label,
-    status: (passed ? "passed" : rejected ? "rejected" : started ? "voting" : "open") as GeotingProposalStatus,
-    resultText: finished ? (passed ? "Vedtatt" : "Forkastet") : "Ikke avgjort",
+    status: (
+      archived ? "archived" : passed ? "passed" : rejected ? "rejected" : started ? "voting" : "open"
+    ) as GeotingProposalStatus,
+    resultText: archived ? "Trukket" : finished ? (passed ? "Vedtatt" : "Forkastet") : "Ikke avgjort",
   };
 }
 
@@ -131,7 +136,12 @@ export function resolveProposalIfReady(
   players: Player[],
   now = new Date(),
 ): GeotingProposal {
-  if (!proposal.voteStartedAt || proposal.status === "passed" || proposal.status === "rejected") {
+  if (
+    !proposal.voteStartedAt ||
+    proposal.status === "passed" ||
+    proposal.status === "rejected" ||
+    proposal.status === "archived"
+  ) {
     return proposal;
   }
 

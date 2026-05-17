@@ -3,13 +3,26 @@ import { MapPinned, Satellite } from "lucide-react";
 import { createSlowGeoRoundAction } from "@/app/actions";
 import { getSlowGeoMonthlyRoundCap } from "@/lib/streetview";
 
+function defaultDeadlineTime() {
+  const date = new Date(Date.now() + 2 * 60 * 60 * 1000);
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Oslo",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.hour ?? "20"}:${values.minute ?? "00"}`;
+}
+
 export function SlowGeoRoundLauncher() {
   const hasPublicKey = Boolean(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
   const hasServerKey = Boolean(process.env.GOOGLE_MAPS_SERVER_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
   const monthlyCap = getSlowGeoMonthlyRoundCap();
+  const defaultTime = defaultDeadlineTime();
 
   return (
-    <form action={createSlowGeoRoundAction} className="grid gap-4 lg:grid-cols-[1fr_180px_auto]">
+    <form action={createSlowGeoRoundAction} className="grid gap-4 lg:grid-cols-[1fr_200px_auto]">
       <label className="space-y-2">
         <span className="text-sm font-semibold text-[#273125]">Tittel på bildet</span>
         <input
@@ -19,18 +32,14 @@ export function SlowGeoRoundLauncher() {
         />
       </label>
       <label className="space-y-2">
-        <span className="text-sm font-semibold text-[#273125]">Frist</span>
-        <select
-          name="deadline_minutes"
-          defaultValue="120"
+        <span className="text-sm font-semibold text-[#273125]">Fristklokkeslett</span>
+        <input
+          name="deadline_time"
+          type="time"
+          defaultValue={defaultTime}
           className="h-11 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
-        >
-          <option value="60">1 time</option>
-          <option value="120">2 timer</option>
-          <option value="240">4 timer</option>
-          <option value="480">8 timer</option>
-          <option value="1440">24 timer</option>
-        </select>
+          required
+        />
       </label>
       <div className="flex items-end">
         <button

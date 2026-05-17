@@ -18,10 +18,12 @@ import {
   saveGeotingVote,
   startGeotingVote,
   submitSlowGeoGuess,
+  updateGeotingProposal,
   unlockRound,
   upsertGeoticOrderAssessment,
   upsertGameSession,
   upsertRound,
+  withdrawGeotingProposal,
 } from "@/lib/store";
 import type {
   DistanceSource,
@@ -53,6 +55,60 @@ function kmField(formData: FormData, key: string) {
 function numberField(formData: FormData, key: string) {
   const parsed = Number(field(formData, key).replace(",", "."));
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function osloDateParts(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Oslo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return {
+    year: Number(values.year),
+    month: Number(values.month),
+    day: Number(values.day),
+    hour: Number(values.hour),
+    minute: Number(values.minute),
+    second: Number(values.second),
+  };
+}
+
+function osloWallTimeToDate(year: number, month: number, day: number, hour: number, minute: number) {
+  const desiredWallTime = Date.UTC(year, month - 1, day, hour, minute, 0);
+  const actualParts = osloDateParts(new Date(desiredWallTime));
+  const actualWallTime = Date.UTC(
+    actualParts.year,
+    actualParts.month - 1,
+    actualParts.day,
+    actualParts.hour,
+    actualParts.minute,
+    actualParts.second,
+  );
+  return new Date(desiredWallTime + (desiredWallTime - actualWallTime));
+}
+
+function slowGeoDeadlineAt(formData: FormData) {
+  const rawTime = field(formData, "deadline_time");
+  const match = /^(\d{1,2}):(\d{2})$/.exec(rawTime);
+  if (!match) return undefined;
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour > 23 || minute > 59) return undefined;
+
+  const now = new Date();
+  const today = osloDateParts(now);
+  let candidate = osloWallTimeToDate(today.year, today.month, today.day, hour, minute);
+  if (candidate.getTime() <= now.getTime()) {
+    candidate = osloWallTimeToDate(today.year, today.month, today.day + 1, hour, minute);
+  }
+  return candidate.toISOString();
 }
 
 function statusField(value: string): ResultStatus {
@@ -145,11 +201,11 @@ function revalidateSlowGeoPaths(roundId?: string) {
 export async function createSlowGeoRoundAction(formData: FormData) {
   await requireSession();
   const title = field(formData, "title");
-  const deadlineMinutes = Math.round(numberField(formData, "deadline_minutes"));
+  const deadlineAt = slowGeoDeadlineAt(formData);
 
   const result = await createSlowGeoRound({
     title,
-    deadlineMinutes,
+    deadlineAt,
   });
 
   revalidateSlowGeoPaths(result.ok ? result.round?.id : undefined);
@@ -302,6 +358,51 @@ export async function submitGeotingProposalAction(formData: FormData) {
   revalidatePath("/geotinget");
   revalidatePath("/");
   redirect("/geotinget?status=forslag");
+}
+
+export async function updateGeotingProposalAction(formData: FormData) {
+  const session = await requireSession();
+  if (!isThirdCollegeMember(session.playerId)) {
+    redirect("/");
+  }
+
+  const result = await updateGeotingProposal({
+    proposalId: field(formData, "proposalId"),
+    title: field(formData, "title"),
+    body: field(formData, "body"),
+    ruleType: proposalRuleType(field(formData, "ruleType")),
+  });
+
+  revalidatePath("/tredje-kollegium");
+  revalidatePath("/geotinget");
+  revalidatePath("/arkiv/geotinget");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    redirect(`/tredje-kollegium?error=${encodeURIComponent(result.reason ?? "Kollegiet fikk ikke endret saken.")}`);
+  }
+  redirect("/tredje-kollegium?status=geoting-redigert");
+}
+
+export async function withdrawGeotingProposalAction(formData: FormData) {
+  const session = await requireSession();
+  if (!isThirdCollegeMember(session.playerId)) {
+    redirect("/");
+  }
+
+  const result = await withdrawGeotingProposal({
+    proposalId: field(formData, "proposalId"),
+  });
+
+  revalidatePath("/tredje-kollegium");
+  revalidatePath("/geotinget");
+  revalidatePath("/arkiv/geotinget");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    redirect(`/tredje-kollegium?error=${encodeURIComponent(result.reason ?? "Kollegiet fikk ikke trukket saken.")}`);
+  }
+  redirect("/tredje-kollegium?status=geoting-trukket");
 }
 
 export async function startGeotingVoteAction(formData: FormData) {

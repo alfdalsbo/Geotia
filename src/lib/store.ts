@@ -79,6 +79,17 @@ type ProposalInput = {
   proposedBy: string;
 };
 
+type UpdateProposalInput = {
+  proposalId: string;
+  title: string;
+  body: string;
+  ruleType: ProposalRuleType;
+};
+
+type WithdrawProposalInput = {
+  proposalId: string;
+};
+
 type VoteInput = {
   proposalId: string;
   playerId: string;
@@ -1100,6 +1111,14 @@ export async function getActiveGeotingProposals() {
   return proposals.filter((proposal) => proposal.status === "voting" && proposal.voteEndsAt);
 }
 
+export async function getActiveSlowGeoRounds() {
+  await revealDueSlowGeoRounds();
+  const rounds = await readRounds();
+  return rounds
+    .filter((round) => isSlowGeoOpenRound(round) && round.deadlineAt)
+    .sort((a, b) => String(a.deadlineAt).localeCompare(String(b.deadlineAt)));
+}
+
 export async function getRound(id: string) {
   const rounds = await readRounds();
   return rounds.find((round) => round.id === id) ?? null;
@@ -1142,11 +1161,17 @@ function clampDeadlineMinutes(value: number | undefined) {
   return Math.max(60, Math.min(24 * 60, Math.round(value)));
 }
 
+function normalizeDeadlineAt(value: string | undefined) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : null;
+}
+
 function monthKey(value: string) {
   return value.slice(0, 7);
 }
 
-export async function createSlowGeoRound(input: { title?: string; deadlineMinutes?: number } = {}) {
+export async function createSlowGeoRound(input: { title?: string; deadlineMinutes?: number; deadlineAt?: string } = {}) {
   const rounds = await readRounds();
   const timestamp = nowIso();
   const monthlyCap = getSlowGeoMonthlyRoundCap();
@@ -1171,7 +1196,7 @@ export async function createSlowGeoRound(input: { title?: string; deadlineMinute
   });
   const nextNumber = rounds.reduce((max, round) => Math.max(max, round.number), 0) + 1;
   const deadlineMinutes = clampDeadlineMinutes(input.deadlineMinutes);
-  const deadlineAt = new Date(Date.now() + deadlineMinutes * 60 * 1000).toISOString();
+  const deadlineAt = normalizeDeadlineAt(input.deadlineAt) ?? new Date(Date.now() + deadlineMinutes * 60 * 1000).toISOString();
   const answerLocation: GeoLocation = {
     lat: challenge.lat,
     lon: challenge.lon,
@@ -1344,6 +1369,60 @@ export async function createGeotingProposal(input: ProposalInput) {
 
   await saveProposals([proposal, ...proposals]);
   return proposal;
+}
+
+export async function updateGeotingProposal(input: UpdateProposalInput) {
+  const proposals = await readProposals();
+  const proposal = proposals.find((candidate) => candidate.id === input.proposalId);
+  if (!proposal) {
+    return { ok: false, reason: "Saken finnes ikke i GeoTingets protokoll." };
+  }
+  if (proposal.status === "archived") {
+    return { ok: false, reason: "Saken er allerede trukket og arkivert." };
+  }
+  const title = input.title.trim();
+  const body = input.body.trim();
+  if (!title || !body) {
+    return { ok: false, reason: "Saken må ha både tittel og innhold." };
+  }
+
+  const updated: GeotingProposal = {
+    ...proposal,
+    title,
+    body,
+    ruleType: input.ruleType,
+    updatedAt: nowIso(),
+  };
+  await saveProposals(
+    proposals.map((candidate) => (candidate.id === proposal.id ? updated : candidate)),
+  );
+  return { ok: true, proposal: updated };
+}
+
+export async function withdrawGeotingProposal(input: WithdrawProposalInput) {
+  const proposals = await readProposals();
+  const proposal = proposals.find((candidate) => candidate.id === input.proposalId);
+  if (!proposal) {
+    return { ok: false, reason: "Saken finnes ikke i GeoTingets protokoll." };
+  }
+  if (proposal.status === "passed" || proposal.status === "rejected") {
+    return { ok: false, reason: "Saken er allerede avgjort og kan ikke trekkes." };
+  }
+  if (proposal.status === "archived") {
+    return { ok: false, reason: "Saken er allerede trukket." };
+  }
+
+  const timestamp = nowIso();
+  const archived: GeotingProposal = {
+    ...proposal,
+    status: "archived",
+    updatedAt: timestamp,
+    resolvedAt: proposal.resolvedAt ?? timestamp,
+  };
+  await saveProposals(
+    proposals.map((candidate) => (candidate.id === proposal.id ? archived : candidate)),
+  );
+  return { ok: true, proposal: archived };
 }
 
 export async function startGeotingVote(input: StartVoteInput) {

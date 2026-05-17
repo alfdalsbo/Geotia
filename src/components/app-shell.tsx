@@ -14,8 +14,9 @@ import {
 
 import { logoutAction } from "@/app/actions";
 import { GeotingGlobalAlert } from "@/components/geoting-global-alert";
+import { SlowGeoGlobalAlert } from "@/components/slowgeo-global-alert";
 import { getCurrentGeot } from "@/lib/auth";
-import { getActiveGeotingProposals, getStorageMode } from "@/lib/store";
+import { getActiveGeotingProposals, getActiveSlowGeoRounds, getStorageMode } from "@/lib/store";
 
 const navItems = [
   { href: "/", label: "Kommandosentral", icon: Landmark },
@@ -27,9 +28,10 @@ const navItems = [
 ];
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
-  const [currentGeot, activeGeotingProposals] = await Promise.all([
+  const [currentGeot, activeGeotingProposals, activeSlowGeoRounds] = await Promise.all([
     getCurrentGeot(),
     getActiveGeotingProposals(),
+    getActiveSlowGeoRounds(),
   ]);
 
   return (
@@ -89,6 +91,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <GeotingGlobalAlert proposals={activeGeotingProposals} />
+      <SlowGeoGlobalAlert rounds={activeSlowGeoRounds} />
 
       <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
 

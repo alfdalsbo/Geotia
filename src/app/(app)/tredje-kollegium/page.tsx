@@ -22,7 +22,12 @@ import {
   UserCog,
 } from "lucide-react";
 
-import { submitGeoterIndexAdjustmentAction, submitGeoticOrderAssessmentAction } from "@/app/actions";
+import {
+  submitGeoterIndexAdjustmentAction,
+  submitGeoticOrderAssessmentAction,
+  updateGeotingProposalAction,
+  withdrawGeotingProposalAction,
+} from "@/app/actions";
 import { ExpandableImage } from "@/components/expandable-image";
 import { Section, StatTile } from "@/components/section";
 import { getCurrentGeot } from "@/lib/auth";
@@ -54,11 +59,25 @@ import {
 } from "@/lib/kollegium";
 import { computeRound, computeStandings } from "@/lib/scoring";
 import { getAppState } from "@/lib/store";
-import type { GeoterIndexAdjustment, Player } from "@/lib/types";
+import type { GeoterIndexAdjustment, GeotingProposal, Player } from "@/lib/types";
 import { dateLabel, dateTimeLabel, formatKm, formatNumber } from "@/lib/utils";
 
 export const metadata = {
   title: "Tredje Kollegium",
+};
+
+const proposalRuleLabels = {
+  grunnlov: "GeoGrunnlovsendring",
+  mindre: "Mindre lovendring",
+  annet: "Annet tingvedtak",
+};
+
+const proposalStatusLabels = {
+  open: "Venter på geo-ed",
+  voting: "I avstemning",
+  passed: "Vedtatt",
+  rejected: "Forkastet",
+  archived: "Trukket",
 };
 
 export default async function ThirdCollegePage({
@@ -241,6 +260,8 @@ export default async function ThirdCollegePage({
       />
 
       <GeoticOrderControlSection currentGeot={currentGeot} rows={geoticOrderRows} players={state.players} />
+
+      <GeotingAdminSection proposals={state.geotingProposals} players={state.players} />
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Section
@@ -443,6 +464,14 @@ function ThirdCollegeStatus({ status, error }: { status?: string; error?: string
     );
   }
 
+  if (error) {
+    return (
+      <div className="rounded border border-[#7c2430]/30 bg-[#7c2430]/10 px-4 py-3 text-sm font-semibold text-[#7c2430]">
+        {error}
+      </div>
+    );
+  }
+
   if (status === "geoterindeks") {
     return (
       <div className="rounded border border-[#194832]/30 bg-[#194832]/10 px-4 py-3 text-sm font-semibold text-[#194832]">
@@ -459,11 +488,134 @@ function ThirdCollegeStatus({ status, error }: { status?: string; error?: string
     );
   }
 
+  if (status === "geoting-redigert") {
+    return (
+      <div className="rounded border border-[#194832]/30 bg-[#194832]/10 px-4 py-3 text-sm font-semibold text-[#194832]">
+        GeoTing-saken er endret av Tredje Kollegium.
+      </div>
+    );
+  }
+
+  if (status === "geoting-trukket") {
+    return (
+      <div className="rounded border border-[#194832]/30 bg-[#194832]/10 px-4 py-3 text-sm font-semibold text-[#194832]">
+        GeoTing-saken er trukket og arkivert.
+      </div>
+    );
+  }
+
   return null;
 }
 
 type GeoterIndexRow = ReturnType<typeof getGeoterIndexRows>[number];
 type GeoticOrderRow = ReturnType<typeof getGeoticOrderRows>[number];
+
+function GeotingAdminSection({
+  players,
+  proposals,
+}: {
+  players: Player[];
+  proposals: GeotingProposal[];
+}) {
+  const playerById = new Map(players.map((player) => [player.id, player]));
+  const visibleProposals = proposals.slice(0, 8);
+
+  return (
+    <Section title="GeoTing-administrasjon" eyebrow="Tredje Kollegiums tekniske mandat">
+      {visibleProposals.length ? (
+        <div className="grid gap-4">
+          {visibleProposals.map((proposal) => {
+            const proposer = playerById.get(proposal.proposedBy);
+            const canWithdraw = proposal.status === "open" || proposal.status === "voting";
+            const canEdit = proposal.status !== "archived";
+
+            return (
+              <article key={proposal.id} className="rounded border border-[#d8c48c] bg-[#fff7e6] p-4">
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
+                      {proposalStatusLabels[proposal.status]} · fremmet av {proposer?.shortName ?? proposal.proposedBy}
+                    </p>
+                    <h3 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">
+                      {proposal.title}
+                    </h3>
+                  </div>
+                  <span className="w-fit rounded border border-[#c49a3c]/35 bg-white px-2 py-1 text-xs font-semibold text-[#654517]">
+                    {proposalRuleLabels[proposal.ruleType]}
+                  </span>
+                </div>
+
+                <form action={updateGeotingProposalAction} className="mt-4 grid gap-3 lg:grid-cols-[1fr_230px]">
+                  <input type="hidden" name="proposalId" value={proposal.id} />
+                  <label className="space-y-2">
+                    <span className="text-sm font-semibold text-[#273125]">Tittel</span>
+                    <input
+                      name="title"
+                      defaultValue={proposal.title}
+                      disabled={!canEdit}
+                      className="h-10 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62] disabled:opacity-60"
+                      required
+                    />
+                  </label>
+                  <label className="space-y-2">
+                    <span className="text-sm font-semibold text-[#273125]">Sakstype</span>
+                    <select
+                      name="ruleType"
+                      defaultValue={proposal.ruleType}
+                      disabled={!canEdit}
+                      className="h-10 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62] disabled:opacity-60"
+                    >
+                      <option value="grunnlov">GeoGrunnlovsendring</option>
+                      <option value="mindre">Mindre lovendring</option>
+                      <option value="annet">Annet tingvedtak</option>
+                    </select>
+                  </label>
+                  <label className="space-y-2 lg:col-span-2">
+                    <span className="text-sm font-semibold text-[#273125]">Forslag / innhold</span>
+                    <textarea
+                      name="body"
+                      defaultValue={proposal.body}
+                      disabled={!canEdit}
+                      className="min-h-28 w-full rounded border border-[#d8ded0] bg-white px-3 py-2 outline-none focus:border-[#203c62] disabled:opacity-60"
+                      required
+                    />
+                  </label>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center lg:col-span-2">
+                    <button
+                      type="submit"
+                      disabled={!canEdit}
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <FileText className="h-4 w-4" aria-hidden="true" />
+                      Lagre endring
+                    </button>
+                  </div>
+                </form>
+
+                {canWithdraw ? (
+                  <form action={withdrawGeotingProposalAction} className="mt-3">
+                    <input type="hidden" name="proposalId" value={proposal.id} />
+                    <button
+                      type="submit"
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded border border-[#7c2430]/45 bg-[#7c2430]/10 px-3 text-sm font-semibold text-[#7c2430] transition hover:bg-[#7c2430]/15"
+                    >
+                      <Gavel className="h-4 w-4" aria-hidden="true" />
+                      Trekk forslag
+                    </button>
+                  </form>
+                ) : null}
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="rounded border border-dashed border-[#c49a3c] bg-[#c49a3c]/10 p-5 text-sm text-[#60553f]">
+          Ingen innsendte GeoTing-saker ligger under Kollegiets hånd.
+        </div>
+      )}
+    </Section>
+  );
+}
 
 function GeoterIndexSection({
   currentGeot,
