@@ -1,17 +1,20 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const playwrightPort = process.env.PLAYWRIGHT_PORT ?? "3210";
+const baseURL = `http://127.0.0.1:${playwrightPort}`;
+
 export default defineConfig({
   testDir: "./tests",
   globalSetup: "./tests/global-setup.ts",
   timeout: 60_000,
   workers: 1,
   use: {
-    baseURL: "http://127.0.0.1:3210",
+    baseURL,
     trace: "on-first-retry",
   },
   webServer: {
-    command: "npm run dev -- --hostname 127.0.0.1 --port 3210",
-    url: "http://127.0.0.1:3210",
+    command: `npm run dev -- --hostname 127.0.0.1 --port ${playwrightPort}`,
+    url: baseURL,
     reuseExistingServer: false,
     timeout: 120_000,
     env: {

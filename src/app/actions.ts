@@ -1,7 +1,6 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 
 import { createSession, destroySession, isCorrectPasscode, playerIdFromUsername, requireSession } from "@/lib/auth";
 import { GEO_OATH_TEXT } from "@/lib/geoting";
@@ -9,6 +8,15 @@ import { haversineKm, parseGeoLocationJson } from "@/lib/geo";
 import { geoterIndexCategories } from "@/lib/geoterindeks";
 import { geoticOrderHiddenCategories, geoticOrderRanks, geoticOrderStatuses } from "@/lib/geotisk-orden";
 import { isThirdCollegeMember } from "@/lib/kollegium";
+import {
+  revalidateGameSessionPaths,
+  revalidateGeoticOrderPaths,
+  revalidateGeotingAdminPaths,
+  revalidateGeotingPaths,
+  revalidateRoundPaths,
+  revalidateSlowGeoPaths,
+  revalidateThirdCollegePaths,
+} from "@/lib/revalidation";
 import { competingPlayers, games, isVotingPlayerId, players } from "@/lib/seed";
 import {
   addGeoterIndexAdjustment,
@@ -183,26 +191,8 @@ export async function saveRoundAction(formData: FormData) {
     results,
   });
 
-  revalidatePath("/");
-  revalidatePath("/spill");
-  revalidatePath("/tabeller");
-  revalidatePath("/runder");
-  revalidatePath("/stilling");
-  revalidatePath("/hall-of-fame");
-  revalidatePath("/min-geot");
+  revalidateRoundPaths();
   redirect("/runder?status=lagret");
-}
-
-function revalidateSlowGeoPaths(roundId?: string) {
-  revalidatePath("/");
-  revalidatePath("/spill");
-  revalidatePath("/spill/slowgeo");
-  revalidatePath("/tabeller");
-  revalidatePath("/runder");
-  if (roundId) revalidatePath(`/runder/${roundId}`);
-  revalidatePath("/stilling");
-  revalidatePath("/hall-of-fame");
-  revalidatePath("/min-geot");
 }
 
 export async function createSlowGeoRoundAction(formData: FormData) {
@@ -284,11 +274,7 @@ export async function saveGameSessionAction(formData: FormData) {
     results,
   });
 
-  revalidatePath("/");
-  revalidatePath("/spill");
-  revalidatePath("/spill/registrer");
-  revalidatePath("/tabeller");
-  revalidatePath("/min-geot");
+  revalidateGameSessionPaths();
   redirect(`/spill/registrer?status=lagret&game=${gameId}`);
 }
 
@@ -296,14 +282,7 @@ export async function lockRoundAction(formData: FormData) {
   await requireSession();
   const id = field(formData, "id");
   const result = await lockRound(id);
-  revalidatePath("/");
-  revalidatePath("/spill");
-  revalidatePath("/spill/slowgeo");
-  revalidatePath("/tabeller");
-  revalidatePath("/runder");
-  revalidatePath("/stilling");
-  revalidatePath("/hall-of-fame");
-  revalidatePath("/min-geot");
+  revalidateSlowGeoPaths(id);
 
   if (!result.ok) {
     redirect(`/runder/${id}?error=${encodeURIComponent(result.reason ?? "GeoVAR fant en ukjent feil.")}`);
@@ -315,14 +294,7 @@ export async function unlockRoundAction(formData: FormData) {
   await requireSession();
   const id = field(formData, "id");
   await unlockRound(id);
-  revalidatePath("/");
-  revalidatePath("/spill");
-  revalidatePath("/spill/slowgeo");
-  revalidatePath("/tabeller");
-  revalidatePath("/runder");
-  revalidatePath("/stilling");
-  revalidatePath("/hall-of-fame");
-  revalidatePath("/min-geot");
+  revalidateSlowGeoPaths(id);
   redirect(`/runder/${id}?status=geovar`);
 }
 
@@ -377,10 +349,7 @@ export async function submitGeotingProposalAction(formData: FormData) {
     proposedBy: session.playerId,
   });
 
-  revalidatePath("/geotinget");
-  revalidatePath("/geotinget/avstemninger");
-  revalidatePath("/geotinget/pergamenter");
-  revalidatePath("/");
+  revalidateGeotingPaths();
   redirect("/geotinget?status=forslag");
 }
 
@@ -397,12 +366,7 @@ export async function updateGeotingProposalAction(formData: FormData) {
     ruleType: proposalRuleType(field(formData, "ruleType")),
   });
 
-  revalidatePath("/tredje-kollegium");
-  revalidatePath("/geotinget");
-  revalidatePath("/geotinget/avstemninger");
-  revalidatePath("/geotinget/pergamenter");
-  revalidatePath("/arkiv/geotinget");
-  revalidatePath("/");
+  revalidateGeotingAdminPaths();
 
   if (!result.ok) {
     redirect(geotingAdminErrorRedirect(formData, result.reason ?? "Kollegiet fikk ikke endret saken.", "/tredje-kollegium"));
@@ -420,12 +384,7 @@ export async function withdrawGeotingProposalAction(formData: FormData) {
     proposalId: field(formData, "proposalId"),
   });
 
-  revalidatePath("/tredje-kollegium");
-  revalidatePath("/geotinget");
-  revalidatePath("/geotinget/avstemninger");
-  revalidatePath("/geotinget/pergamenter");
-  revalidatePath("/arkiv/geotinget");
-  revalidatePath("/");
+  revalidateGeotingAdminPaths();
 
   if (!result.ok) {
     redirect(geotingAdminErrorRedirect(formData, result.reason ?? "Kollegiet fikk ikke trukket saken.", "/tredje-kollegium"));
@@ -448,11 +407,7 @@ export async function startGeotingVoteAction(formData: FormData) {
     oathText: field(formData, "oathText") || GEO_OATH_TEXT,
   });
 
-  revalidatePath("/geotinget");
-  revalidatePath("/geotinget/avstemninger");
-  revalidatePath("/geotinget/pergamenter");
-  revalidatePath("/arkiv/geotinget");
-  revalidatePath("/");
+  revalidateGeotingAdminPaths();
 
   if (!result.ok) {
     redirect(`/geotinget/avstemninger?error=${encodeURIComponent(result.reason ?? "Geo-eden sprakk i pergamentet.")}`);
@@ -473,11 +428,7 @@ export async function voteGeotingProposalAction(formData: FormData) {
     comment: field(formData, "comment"),
   });
 
-  revalidatePath("/geotinget");
-  revalidatePath("/geotinget/avstemninger");
-  revalidatePath("/geotinget/pergamenter");
-  revalidatePath("/arkiv/geotinget");
-  revalidatePath("/");
+  revalidateGeotingAdminPaths();
 
   if (!result.ok || !result.proposal) {
     redirect(`/geotinget/avstemninger?error=${encodeURIComponent(result.reason ?? "Stemmen ble stoppet av embetsverket.")}`);
@@ -511,7 +462,7 @@ export async function submitGeoterIndexAdjustmentAction(formData: FormData) {
     createdBy: session.playerId,
   });
 
-  revalidatePath("/tredje-kollegium");
+  revalidateThirdCollegePaths();
   redirect("/tredje-kollegium?status=geoterindeks");
 }
 
@@ -539,8 +490,6 @@ export async function submitGeoticOrderAssessmentAction(formData: FormData) {
     updatedBy: session.playerId,
   });
 
-  revalidatePath("/tredje-kollegium");
-  revalidatePath("/ordenen");
-  revalidatePath("/");
+  revalidateGeoticOrderPaths();
   redirect("/tredje-kollegium?status=orden");
 }

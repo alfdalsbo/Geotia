@@ -1,6 +1,6 @@
-import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
+import { revalidateSlowGeoPaths } from "@/lib/revalidation";
 import { revealDueSlowGeoRounds } from "@/lib/store";
 
 export async function GET(request: Request) {
@@ -12,13 +12,7 @@ export async function GET(request: Request) {
   }
 
   const result = await revealDueSlowGeoRounds();
-  revalidatePath("/");
-  revalidatePath("/spill");
-  revalidatePath("/tabeller");
-  revalidatePath("/runder");
-  revalidatePath("/stilling");
-  revalidatePath("/hall-of-fame");
-  revalidatePath("/min-geot");
+  revalidateSlowGeoPaths();
 
   return NextResponse.json({ ok: true, ...result });
 }
