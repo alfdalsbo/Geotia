@@ -12,6 +12,7 @@ import {
   type GooglePolyline,
 } from "@/components/google-maps-loader";
 import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
+import { buildRevealedSlowGeoShareText } from "@/lib/slowgeo-share";
 import { formatKm } from "@/lib/utils";
 
 type RevealMarker = {
@@ -55,11 +56,11 @@ export function SlowGeoRevealMap({
   const polylineRefs = useRef<GooglePolyline[]>([]);
   const [loadingMap, setLoadingMap] = useState(Boolean(googleMapsApiKey));
   const [mapError, setMapError] = useState("");
+  const revealSummaryText = buildRevealedSlowGeoShareText({ roundName, answerLabel, winnerNames });
   const shareText =
     currentPlayerName && typeof currentDistanceKm === "number"
-      ? `${currentPlayerName} landet ${formatKm(currentDistanceKm)} fra fasit i ${roundName}. Fasit: ${answerLabel}.`
-      : `Fasit er avslørt i ${roundName}: ${answerLabel}.`;
-  const winnerText = winnerNames.length > 0 ? ` Vinner: ${winnerNames.join(", ")}.` : "";
+      ? `${currentPlayerName} landet ${formatKm(currentDistanceKm)} fra fasit i ${roundName}. Fasit: ${answerLabel}.${winnerNames.length ? ` Vinner: ${winnerNames.join(", ")}.` : ""}`
+      : revealSummaryText;
 
   useEffect(() => {
     if (!googleMapsApiKey || !mapElementRef.current || markers.length === 0) {
@@ -162,7 +163,7 @@ export function SlowGeoRevealMap({
             </div>
             <SlowGeoShareButton
               title={`SlowGeo-fasit: ${roundName}`}
-              text={`${shareText}${winnerText}`}
+              text={shareText}
               url={shareUrl}
               label="Del fasit"
               copiedLabel="Fasitlenke kopiert"

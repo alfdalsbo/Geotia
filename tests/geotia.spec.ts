@@ -76,7 +76,7 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await expect(proposalCard.getByRole("button", { name: "Åpne stemmeurnen" })).toBeVisible();
   await proposalCard.getByLabel("Jeg sverger geo-eden og varsler alle geoter umiddelbart.").check();
   await proposalCard.getByRole("button", { name: "Åpne stemmeurnen" }).click();
-  await expect(page.getByText("Geo-eden er avlagt.")).toBeVisible();
+  await expect(page.getByText("Geo-eden er avlagt.", { exact: true })).toBeVisible();
   await proposalCard.getByRole("button", { name: "Avgi stemme" }).click();
   await expect(page.getByText("Stemmen er ført.")).toBeVisible();
   await page.getByRole("link", { name: "Tingpergamentene" }).click();

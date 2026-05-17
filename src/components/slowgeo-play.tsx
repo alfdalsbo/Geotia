@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Loader2, LockKeyhole, MapPin, Send } from "lucide-react";
+import { Loader2, LockKeyhole, MapPin, Maximize2, RotateCcw, Send, X } from "lucide-react";
 
 import { submitSlowGeoGuessAction } from "@/app/actions";
 import { loadGoogleMaps, type GoogleMap, type GoogleMapsApi, type GoogleMarker } from "@/components/google-maps-loader";
 import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
+import { buildOpenSlowGeoShareText } from "@/lib/slowgeo-share";
 import { dateTimeLabel } from "@/lib/utils";
 
 type Guess = {
@@ -24,8 +25,6 @@ type SlowGeoPlayProps = {
   existingGuess: (Guess & { updatedAt?: string | null }) | null;
   existingNote?: string | null;
   shareUrl: string;
-  imageDate?: string;
-  copyright?: string;
 };
 
 function guessLabel(lat: number, lon: number) {
@@ -41,8 +40,6 @@ export function SlowGeoPlay({
   existingGuess,
   existingNote,
   shareUrl,
-  imageDate,
-  copyright,
 }: SlowGeoPlayProps) {
   const mapElementRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<GoogleMap | null>(null);
@@ -51,7 +48,9 @@ export function SlowGeoPlay({
   const [guess, setGuess] = useState<Guess | null>(existingGuess);
   const [mapError, setMapError] = useState("");
   const [loadingMap, setLoadingMap] = useState(Boolean(googleMapsApiKey));
+  const [mapOpen, setMapOpen] = useState(false);
   const answerLocked = Boolean(existingGuess);
+  const openShareText = buildOpenSlowGeoShareText(roundName);
 
   const placeMarker = useCallback((nextGuess: Guess, center = true) => {
     const mapsApi = mapsApiRef.current;
@@ -76,6 +75,27 @@ export function SlowGeoPlay({
     setGuess(nextGuess);
     placeMarker(nextGuess, center);
   }, [placeMarker]);
+
+  const clearGuess = useCallback(() => {
+    if (answerLocked) return;
+    markerRef.current?.setMap(null);
+    markerRef.current = null;
+    setGuess(null);
+  }, [answerLocked]);
+
+  const recenterMap = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (guess) {
+      map.setCenter({ lat: guess.lat, lng: guess.lon });
+      map.setZoom(7);
+      return;
+    }
+
+    map.setCenter({ lat: 20, lng: 12 });
+    map.setZoom(2);
+  }, [guess]);
 
   useEffect(() => {
     if (!googleMapsApiKey || !mapElementRef.current) {
@@ -122,7 +142,36 @@ export function SlowGeoPlay({
     };
   }, [answerLocked, existingGuess, googleMapsApiKey, placeMarker, updateGuess]);
 
+  useEffect(() => {
+    if (!mapOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMapOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [mapOpen]);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const timer = window.setTimeout(() => {
+      if (!mapRef.current) return;
+      mapsApiRef.current?.event?.trigger(mapRef.current, "resize");
+      recenterMap();
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [mapOpen, recenterMap]);
+
   const hasMap = Boolean(googleMapsApiKey);
+  const mapShellClass = mapOpen
+    ? "fixed inset-0 z-[80] flex flex-col overflow-hidden bg-[#fff7e6] text-[#273125]"
+    : "relative min-h-[280px] flex-1 overflow-hidden rounded border border-[#d8ded0] bg-[#e9dcc0] sm:min-h-[320px]";
 
   return (
     <section className="overflow-hidden rounded border border-[#c49a3c]/55 bg-[#fff7e6] shadow-[0_16px_34px_rgba(38,26,12,0.12)]">
@@ -146,16 +195,13 @@ export function SlowGeoPlay({
             </div>
           )}
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3 text-xs text-[#eadcbd]">
-            <div className="flex flex-col gap-1">
-              <span>{imageDate ? `Street View ${imageDate}` : "Google Street View"}</span>
-              <span>{copyright ?? "© Google"}</span>
-            </div>
+            <span>Google Street View</span>
             <SlowGeoShareButton
               title={`SlowGeo: ${roundName}`}
-              text={`Nytt SlowGeo-bilde er oppe: ${roundName}. Krangle først, sett pinnen etterpå.`}
+              text={openShareText}
               url={shareUrl}
-              label="Del bildet"
-              copiedLabel="Bildelenke kopiert"
+              label="Del iMessage-tråden"
+              copiedLabel="Trådtekst kopiert"
               tone="dark"
             />
           </div>
@@ -184,15 +230,93 @@ export function SlowGeoPlay({
           </div>
 
           {hasMap ? (
-            <div className="relative min-h-[320px] flex-1 overflow-hidden rounded border border-[#d8ded0] bg-[#e9dcc0]">
-              <div ref={mapElementRef} className="absolute inset-0" />
-              {loadingMap ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-white/75 text-sm font-semibold text-[#203c62]">
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                  Laster kart
+            <>
+              <button
+                type="button"
+                onClick={() => setMapOpen(true)}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded bg-[#203c62] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b] xl:hidden"
+              >
+                <Maximize2 className="h-4 w-4" aria-hidden="true" />
+                {answerLocked ? "Vis pin i fullskjermkart" : "Sett pin i fullskjermkart"}
+              </button>
+              <div
+                className={mapShellClass}
+                role={mapOpen ? "dialog" : undefined}
+                aria-modal={mapOpen ? "true" : undefined}
+                aria-label={mapOpen ? "Sett pin i kart" : undefined}
+              >
+                {mapOpen ? (
+                  <div className="flex items-center justify-between gap-3 border-b border-[#d8ded0] bg-[#fff7e6] px-3 py-3 shadow-sm">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
+                        SlowGeo-kart
+                      </p>
+                      <p className="truncate text-sm font-semibold text-[#062b40]">{roundName}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setMapOpen(false)}
+                      className="inline-flex h-11 w-11 flex-none items-center justify-center rounded border border-[#d8ded0] bg-white text-[#203c62]"
+                      aria-label="Lukk kart"
+                    >
+                      <X className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                  </div>
+                ) : null}
+                <div className={mapOpen ? "relative min-h-0 flex-1" : "absolute inset-0"}>
+                  <div ref={mapElementRef} data-testid="slowgeo-map-surface" className="absolute inset-0" />
+                  {loadingMap ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/75 text-sm font-semibold text-[#203c62]">
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                      Laster kart
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
-            </div>
+                {mapOpen ? (
+                  <div className="grid gap-3 border-t border-[#d8ded0] bg-[#fff7e6] px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-10px_24px_rgba(38,26,12,0.12)]">
+                    <p className="flex min-h-10 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm text-[#5b6257]">
+                      <MapPin className="h-4 w-4 flex-none text-[#7c2430]" aria-hidden="true" />
+                      <span className="min-w-0 break-words">
+                        {guess ? `${guess.lat.toFixed(5)}, ${guess.lon.toFixed(5)}` : "Trykk i kartet for å sette pin."}
+                      </span>
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-[auto_auto_1fr]">
+                      <button
+                        type="button"
+                        onClick={recenterMap}
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
+                      >
+                        <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                        Sentrer
+                      </button>
+                      <button
+                        type="button"
+                        onClick={clearGuess}
+                        disabled={!guess || answerLocked}
+                        className="inline-flex h-11 items-center justify-center rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62] disabled:cursor-not-allowed disabled:opacity-55"
+                      >
+                        Nullstill
+                      </button>
+                      {answerLocked ? (
+                        <span className="col-span-2 inline-flex h-11 items-center justify-center gap-2 rounded border border-[#285c45]/25 bg-[#285c45]/10 px-4 text-sm font-semibold text-[#285c45] sm:col-span-1">
+                          <LockKeyhole className="h-4 w-4" aria-hidden="true" />
+                          Svar låst
+                        </span>
+                      ) : (
+                        <button
+                          type="submit"
+                          disabled={!guess}
+                          className="col-span-2 inline-flex h-11 items-center justify-center gap-2 rounded bg-[#285c45] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#214b38] disabled:cursor-not-allowed disabled:opacity-55 sm:col-span-1"
+                        >
+                          <Send className="h-4 w-4" aria-hidden="true" />
+                          Send pin-svar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </>
           ) : (
             <div className="grid gap-3 rounded border border-[#d8ded0] bg-white p-3 sm:grid-cols-2">
               <label className="space-y-2">

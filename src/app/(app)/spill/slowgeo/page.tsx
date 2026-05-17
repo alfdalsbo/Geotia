@@ -5,6 +5,7 @@ import { Section, StatTile } from "@/components/section";
 import { SlowGeoRoundLauncher } from "@/components/slowgeo-round-launcher";
 import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
 import { computeRound, computeStandings } from "@/lib/scoring";
+import { buildOpenSlowGeoShareText } from "@/lib/slowgeo-share";
 import { getSlowGeoProgress, getSlowGeoRoundInsights, slowGeoDifficultyLabels } from "@/lib/slowgeo-insights";
 import { getAppState } from "@/lib/store";
 import { dateLabel, dateTimeLabel, formatKm } from "@/lib/utils";
@@ -121,10 +122,10 @@ export default async function SlowGeoGamePage({
                     </Link>
                     <SlowGeoShareButton
                       title={`SlowGeo: ${round.name}`}
-                      text={`Nytt SlowGeo-bilde er oppe: ${round.name}. Krangle først, sett pinnen etterpå.`}
+                      text={buildOpenSlowGeoShareText(round.name)}
                       url={shareUrl}
-                      label="Del bildet"
-                      copiedLabel="Bildelenke kopiert"
+                      label="Del iMessage-tråden"
+                      copiedLabel="Trådtekst kopiert"
                     />
                   </div>
                 </article>

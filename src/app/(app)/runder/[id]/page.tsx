@@ -192,8 +192,6 @@ export default async function RoundDetailPage({
           existingGuess={existingGuess}
           existingNote={currentResult?.note ?? ""}
           shareUrl={slowGeoShareUrl}
-          imageDate={round.challenge.imageDate}
-          copyright={round.challenge.copyright}
         />
       ) : null}
 

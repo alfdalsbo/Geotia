@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, CheckCircle2, Trophy } from "lucide-react";
+import { ArrowRight, CheckCircle2, MessageCircle, Trophy } from "lucide-react";
 
 import { SlowGeoAftermath } from "@/components/slowgeo-aftermath";
 import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
 import { computeRound } from "@/lib/scoring";
+import { buildOpenSlowGeoShareText, buildRevealedSlowGeoShareText } from "@/lib/slowgeo-share";
 import { getAppState, maybeRevealRound } from "@/lib/store";
 import { buildStreetViewImageUrl } from "@/lib/streetview-url";
 import { dateTimeLabel, formatKm } from "@/lib/utils";
@@ -74,10 +75,13 @@ export async function generateMetadata({
 
 export default async function SlowGeoSharePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ created?: string }>;
 }) {
   const { id } = await params;
+  const query = (await searchParams) ?? {};
   const revealedRound = await maybeRevealRound(id);
   if (!revealedRound?.challenge) notFound();
 
@@ -98,8 +102,13 @@ export default async function SlowGeoSharePage({
   const participantCount = round.results.length;
   const shareUrl = `/slowgeo/${round.id}`;
   const shareText = isOpen
-    ? `Nytt SlowGeo-bilde er oppe: ${round.name}. Krangle først, sett pinnen etterpå.`
-    : `Fasit er avslørt i ${round.name}: ${answerLabel}.${computed.winnerNames.length ? ` Vinner: ${computed.winnerNames.join(", ")}.` : ""}`;
+    ? buildOpenSlowGeoShareText(round.name)
+    : buildRevealedSlowGeoShareText({
+        roundName: round.name,
+        answerLabel,
+        winnerNames: computed.winnerNames,
+      });
+  const highlightThreadShare = isOpen && query.created === "1";
 
   return (
     <main className="min-h-screen bg-[#f3ead7] px-4 py-5 text-[#273125] sm:px-6 lg:px-8">
@@ -122,10 +131,34 @@ export default async function SlowGeoSharePage({
             title={`SlowGeo: ${round.name}`}
             text={shareText}
             url={shareUrl}
-            label={isOpen ? "Del bildet" : "Del fasit"}
-            copiedLabel={isOpen ? "Bildelenke kopiert" : "Fasitlenke kopiert"}
+            label={isOpen ? "Del iMessage-tråden" : "Del fasit"}
+            copiedLabel={isOpen ? "Trådtekst kopiert" : "Fasitlenke kopiert"}
+            showCopyFallback={highlightThreadShare}
           />
         </header>
+
+        {highlightThreadShare ? (
+          <section className="flex flex-col gap-4 rounded border border-[#203c62]/20 bg-[#203c62] p-4 text-white shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div className="min-w-0">
+              <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#eadcbd]">
+                <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                Klar for tråden
+              </p>
+              <h2 className="font-display mt-2 text-2xl font-semibold">Del SlowGeo før pin-svarene kommer</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-[#f5ead3]">{shareText}</p>
+            </div>
+            <SlowGeoShareButton
+              title={`SlowGeo: ${round.name}`}
+              text={shareText}
+              url={shareUrl}
+              label="Del iMessage-tråden"
+              copiedLabel="Trådtekst kopiert"
+              showCopyFallback
+              tone="dark"
+              className="bg-white text-[#203c62] hover:bg-[#f7f8f5]"
+            />
+          </section>
+        ) : null}
 
         <section className="overflow-hidden rounded border border-[#c49a3c]/55 bg-[#061d2b] shadow-[0_18px_40px_rgba(38,26,12,0.14)]">
           {streetViewUrl ? (
@@ -147,8 +180,14 @@ export default async function SlowGeoSharePage({
             </div>
           )}
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3 text-xs text-[#eadcbd]">
-            <span>{round.challenge.imageDate ? `Street View ${round.challenge.imageDate}` : "Google Street View"}</span>
-            <span>{round.challenge.copyright ?? "© Google"}</span>
+            {isOpen ? (
+              <span>Google Street View</span>
+            ) : (
+              <>
+                <span>{round.challenge.imageDate ? `Street View ${round.challenge.imageDate}` : "Google Street View"}</span>
+                <span>{round.challenge.copyright ?? "© Google"}</span>
+              </>
+            )}
           </div>
         </section>
 

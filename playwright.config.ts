@@ -22,6 +22,7 @@ export default defineConfig({
       AUTH_SECRET: "playwright-geotia-secret",
       GEOTIA_DATA_FILE: ".data/playwright-geotia.json",
       GEOTIA_FORCE_FILE_STORAGE: "1",
+      NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: "playwright-google-maps-key",
     },
   },
   projects: [

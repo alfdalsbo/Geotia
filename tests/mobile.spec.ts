@@ -1,4 +1,9 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+
 import { expect, test, type Page } from "@playwright/test";
+
+const competingPlayerIds = ["alf", "vegard", "jorgen", "steinar", "sverre", "danny"];
 
 async function login(page: Page) {
   await page.goto("/");
@@ -47,6 +52,132 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(result.offenders, JSON.stringify(result.offenders, null, 2)).toHaveLength(0);
 }
 
+async function mockGoogleMaps(page: Page) {
+  await page.route("https://maps.googleapis.com/maps/api/js**", async (route) => {
+    await route.fulfill({
+      contentType: "application/javascript",
+      body: `
+        (() => {
+          class Map {
+            constructor(element, options) {
+              this.element = element;
+              this.center = options.center;
+              this.zoom = options.zoom;
+            }
+            addListener(eventName, handler) {
+              if (eventName !== "click") return { remove() {} };
+              const listener = () => handler({ latLng: { lat: () => 59.9127, lng: () => 10.7461 } });
+              this.element.addEventListener("click", listener);
+              return { remove: () => this.element.removeEventListener("click", listener) };
+            }
+            fitBounds() {}
+            setCenter(point) { this.center = point; }
+            setZoom(zoom) { this.zoom = zoom; }
+          }
+          class Marker {
+            constructor(options) {
+              this.map = options.map;
+              this.position = options.position;
+            }
+            setMap(map) { this.map = map; }
+            setPosition(point) { this.position = point; }
+          }
+          class Polyline {
+            constructor(options) { this.map = options.map; }
+            setMap(map) { this.map = map; }
+          }
+          class LatLngBounds {
+            extend() {}
+          }
+          window.google = { maps: { Map, Marker, Polyline, LatLngBounds, event: { trigger() {} } } };
+        })();
+      `,
+    });
+  });
+}
+
+async function writeOpenSlowGeoFixture() {
+  const timestamp = new Date().toISOString();
+  const deadlineAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+  const roundId = "playwright-mobile-slowgeo";
+  const dataDir = path.join(process.cwd(), ".data");
+  await mkdir(dataDir, { recursive: true });
+  await writeFile(
+    path.join(dataDir, "playwright-geotia.json"),
+    JSON.stringify(
+      {
+        meta: { schemaVersion: "2" },
+        rounds: [
+          {
+            id: roundId,
+            number: 1,
+            date: timestamp.slice(0, 10),
+            name: "Mobilkart-prøven",
+            answer: "Tromsøbrua, Tromsø",
+            answerLocation: {
+              lat: 69.6534,
+              lon: 18.975,
+              label: "Tromsøbrua, Tromsø",
+              query: "tromso-bridge",
+              country: "Norge",
+              source: "google_street_view",
+            },
+            mapSnapshot: null,
+            challenge: {
+              id: "challenge-mobile",
+              candidateId: "tromso-bridge",
+              source: "google_street_view",
+              lat: 69.6534,
+              lon: 18.975,
+              label: "Tromsøbrua, Tromsø",
+              country: "Norge",
+              continent: "Europa",
+              heading: 64,
+              pitch: 1,
+              fov: 90,
+              panoId: "playwright-pano",
+              imageDate: "2024-01",
+              copyright: "© 2024 Google",
+              difficulty: "lett",
+              theme: "nordlysstat og norsk veifølelse",
+              signature: "Fjell, vann og nordlig infrastruktur uten skam.",
+              tags: ["norge", "nord", "bro"],
+              createdAt: timestamp,
+            },
+            deadlineAt,
+            revealedAt: null,
+            country: "Norge",
+            continent: "Europa",
+            comment: "Google Street View",
+            status: "open",
+            createdAt: timestamp,
+            updatedAt: timestamp,
+            results: competingPlayerIds.map((playerId) => ({
+              playerId,
+              status: "ikke_deltatt",
+              actualKm: null,
+              guessText: "",
+              guessLocation: null,
+              guessUpdatedAt: null,
+              distanceSource: null,
+              note: "",
+            })),
+          },
+        ],
+        gameSessions: [],
+        geotingProposals: [],
+        geoterIndexAdjustments: [],
+        geoticOrderAssessments: [],
+        geocodeCache: [],
+      },
+      null,
+      2,
+    ),
+    "utf8",
+  );
+  return roundId;
+}
+
 test("core pages do not overflow horizontally on mobile", async ({ page }) => {
   test.setTimeout(120_000);
   await login(page);
@@ -68,4 +199,30 @@ test("core pages do not overflow horizontally on mobile", async ({ page }) => {
     await expect(page.getByRole("button", { name: "Forlat embetsverket" })).toBeVisible();
     await expectNoHorizontalOverflow(page);
   }
+});
+
+test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
+  test.setTimeout(120_000);
+  await mockGoogleMaps(page);
+  const roundId = await writeOpenSlowGeoFixture();
+  await login(page);
+
+  await page.goto(`/runder/${roundId}`, { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Mobilkart-prøven" })).toBeVisible();
+  await expect(page.getByText("Google Street View", { exact: true })).toBeVisible();
+  await expect(page.getByText("© 2024 Google")).toHaveCount(0);
+  await expectNoHorizontalOverflow(page);
+
+  await page.getByRole("button", { name: "Sett pin i fullskjermkart" }).click();
+  const dialog = page.getByRole("dialog", { name: "Sett pin i kart" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText("SlowGeo-kart")).toBeVisible();
+
+  await dialog.getByTestId("slowgeo-map-surface").click({ position: { x: 160, y: 180 } });
+  await expect(dialog.getByText("59.91270, 10.74610")).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Send pin-svar" })).toBeEnabled();
+  await expectNoHorizontalOverflow(page);
+
+  await dialog.getByRole("button", { name: "Lukk kart" }).click();
+  await expect(dialog).toBeHidden();
 });

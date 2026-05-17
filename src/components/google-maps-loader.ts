@@ -37,6 +37,9 @@ export type GoogleMapsApi = {
   Marker: new (options: Record<string, unknown>) => GoogleMarker;
   Polyline: new (options: Record<string, unknown>) => GooglePolyline;
   LatLngBounds: new () => GoogleLatLngBounds;
+  event?: {
+    trigger(instance: unknown, eventName: string): void;
+  };
 };
 
 declare global {

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import { isSafeSlowGeoAttribution } from "@/lib/slowgeo-share";
 import type { SlowGeoChallenge, SlowGeoDifficulty } from "@/lib/types";
 
 type StreetViewCandidate = {
@@ -400,6 +401,10 @@ export async function createStreetViewChallenge({
     const metadata = await fetchMetadata(candidate, apiKey);
     lastStatus = metadata.status;
     if (metadata.status === "OK" && metadata.pano_id) {
+      if (!isSafeSlowGeoAttribution(metadata.copyright)) {
+        lastStatus = "UNSAFE_ATTRIBUTION";
+        continue;
+      }
       return challengeFromCandidate(candidate, metadata);
     }
     if (

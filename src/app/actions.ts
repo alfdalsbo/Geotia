@@ -218,7 +218,7 @@ export async function createSlowGeoRoundAction(formData: FormData) {
     redirect(`/spill/slowgeo?error=${encodeURIComponent(result.reason ?? "SlowGeo-runden kunne ikke åpnes.")}`);
   }
 
-  redirect(`/runder/${result.round.id}?status=apnet`);
+  redirect(`/slowgeo/${result.round.id}?created=1`);
 }
 
 export async function submitSlowGeoGuessAction(formData: FormData) {
