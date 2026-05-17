@@ -1,6 +1,7 @@
 import { Gamepad2, Save } from "lucide-react";
 
 import { saveGameSessionAction } from "@/app/actions";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { competingPlayers, games } from "@/lib/seed";
 import type { GameSession } from "@/lib/types";
 
@@ -129,13 +130,12 @@ export function GameSessionForm({ session }: { session: GameSession }) {
           <Gamepad2 className="h-4 w-4 text-[#7c2430]" aria-hidden="true" />
           <span>Geo/MapTap bruker høy score. Satle/Globle bruker færrest forsøk.</span>
         </div>
-        <button
-          type="submit"
+        <PendingSubmitButton
           className="inline-flex h-11 items-center justify-center gap-2 rounded bg-[#203c62] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
         >
           <Save className="h-4 w-4" aria-hidden="true" />
           Før spilløkt
-        </button>
+        </PendingSubmitButton>
       </div>
     </form>
   );

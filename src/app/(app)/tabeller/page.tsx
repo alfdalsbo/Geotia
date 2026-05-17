@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { ArrowRight, Medal, Shield, Sparkles, TableProperties, Trophy } from "lucide-react";
 
+import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { Section, StatTile } from "@/components/section";
 import { computeGameStandings, computeStandings, getHallOfFame } from "@/lib/scoring";
-import { getAppState } from "@/lib/store";
+import { getScoreboardState } from "@/lib/store";
 import type { GameDefinition, GameStanding, Standing } from "@/lib/types";
 import { formatKm, formatNumber, formatScore } from "@/lib/utils";
 
@@ -12,7 +13,7 @@ export const metadata = {
 };
 
 export default async function TablesPage() {
-  const state = await getAppState();
+  const state = await getScoreboardState();
   const standings = computeStandings(state.players, state.rounds);
   const hall = getHallOfFame(standings, state.rounds, state.players);
   const leader = standings[0];
@@ -49,9 +50,10 @@ export default async function TablesPage() {
         title="SlowGeo-tabell"
         eyebrow="Offisiell poenglov"
         action={
-          <Link href="/spill/slowgeo" className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
+          <Link href="/spill/slowgeo" prefetch={false} className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
             Åpne SlowGeo
             <TableProperties className="h-4 w-4" aria-hidden="true" />
+            <LinkPendingIndicator />
           </Link>
         }
       >
@@ -111,9 +113,10 @@ export default async function TablesPage() {
           title="Gammel SlowGeo"
           eyebrow="Historisk import, egen æra"
           action={
-            <Link href="/arkiv/gammel-slowgeo" className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
+            <Link href="/arkiv/gammel-slowgeo" prefetch={false} className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
               Åpne arkiv
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              <LinkPendingIndicator />
             </Link>
           }
         >
@@ -146,9 +149,10 @@ export default async function TablesPage() {
         title="Æreshallen"
         eyebrow="Automatiske rekorder"
         action={
-          <Link href="/hall-of-fame" className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
+          <Link href="/hall-of-fame" prefetch={false} className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
             Egen sal
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            <LinkPendingIndicator />
           </Link>
         }
       >

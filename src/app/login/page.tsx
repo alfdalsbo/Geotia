@@ -2,6 +2,7 @@ import Image from "next/image";
 import { KeyRound, Landmark } from "lucide-react";
 
 import { loginAction } from "@/app/actions";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { parties } from "@/lib/seed";
 
 export const metadata = {
@@ -94,12 +95,12 @@ export default async function LoginPage({
                   GeoVAR avviser adgang. Sjekk nøkkelen og prøv igjen.
                 </p>
               ) : null}
-              <button
-                type="submit"
+              <PendingSubmitButton
                 className="mt-4 inline-flex h-11 w-full items-center justify-center rounded bg-[#062b40] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0d3b4e]"
+                pendingChildren="Åpner..."
               >
                 Åpne Geotia
-              </button>
+              </PendingSubmitButton>
             </form>
 
             <p className="mt-5 text-sm leading-6 text-[#5b6257]">

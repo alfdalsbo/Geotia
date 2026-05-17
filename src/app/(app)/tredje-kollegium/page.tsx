@@ -29,6 +29,7 @@ import {
   withdrawGeotingProposalAction,
 } from "@/app/actions";
 import { ExpandableImage } from "@/components/expandable-image";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Section, StatTile } from "@/components/section";
 import { getCurrentGeot } from "@/lib/auth";
 import {
@@ -580,26 +581,24 @@ function GeotingAdminSection({
                     />
                   </label>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center lg:col-span-2">
-                    <button
-                      type="submit"
+                    <PendingSubmitButton
                       className="inline-flex h-10 items-center justify-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
                     >
                       <FileText className="h-4 w-4" aria-hidden="true" />
                       Lagre endring
-                    </button>
+                    </PendingSubmitButton>
                   </div>
                 </form>
 
                 {canWithdraw ? (
                   <form action={withdrawGeotingProposalAction} className="mt-3">
                     <input type="hidden" name="proposalId" value={proposal.id} />
-                    <button
-                      type="submit"
+                    <PendingSubmitButton
                       className="inline-flex h-10 items-center justify-center gap-2 rounded border border-[#7c2430]/45 bg-[#7c2430]/10 px-3 text-sm font-semibold text-[#7c2430] transition hover:bg-[#7c2430]/15"
                     >
                       <Gavel className="h-4 w-4" aria-hidden="true" />
                       Trekk forslag
-                    </button>
+                    </PendingSubmitButton>
                   </form>
                 ) : null}
               </article>
@@ -882,13 +881,12 @@ function GeoterIndexSection({
                 placeholder="Kort protokolltekst. Husk: ankeinstansen er Kollegiet selv i mørkere rom."
               />
             </label>
-            <button
-              type="submit"
+            <PendingSubmitButton
               className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded bg-[#7c2430] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#641923]"
             >
               <PlusCircle className="h-4 w-4" aria-hidden="true" />
               Juster indeksen
-            </button>
+            </PendingSubmitButton>
           </form>
         </aside>
       </div>
@@ -1169,13 +1167,12 @@ function GeoticOrderControlSection({
                 placeholder="Det egentlige notatet. Her kan mistanken ha navn."
               />
             </label>
-            <button
-              type="submit"
+            <PendingSubmitButton
               className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded bg-[#7c2430] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#641923]"
             >
               <UserCog className="h-4 w-4" aria-hidden="true" />
               Før rang i ordenen
-            </button>
+            </PendingSubmitButton>
           </form>
         </aside>
       </div>

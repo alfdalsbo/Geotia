@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Gavel, ScrollText, Vote } from "lucide-react";
 
+import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { cn } from "@/lib/utils";
 
 const tabs = [
@@ -43,6 +44,7 @@ export function GeotingSubnav({ active }: { active: GeotingTabId }) {
             <Link
               key={tab.id}
               href={tab.href}
+              prefetch={false}
               aria-label={tab.label}
               aria-current={selected ? "page" : undefined}
               className={cn(
@@ -64,6 +66,7 @@ export function GeotingSubnav({ active }: { active: GeotingTabId }) {
                   {tab.description}
                 </span>
               </span>
+              <LinkPendingIndicator className={selected ? "text-white" : "text-[#203c62]"} />
             </Link>
           );
         })}

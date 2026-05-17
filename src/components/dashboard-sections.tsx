@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Gamepad2 } from "lucide-react";
 
 import { ExpandableImage } from "@/components/expandable-image";
+import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import type { Party, Player } from "@/lib/types";
 
 type GameCard = {
@@ -20,6 +21,7 @@ export function DashboardGameGrid({ games }: { games: GameCard[] }) {
         <Link
           key={game.id}
           href={game.href}
+          prefetch={false}
           className="geotia-panel group rounded p-4 transition hover:-translate-y-0.5 hover:border-[#c49a3c]"
         >
           <div className="relative z-10 flex items-center justify-between">
@@ -29,7 +31,10 @@ export function DashboardGameGrid({ games }: { games: GameCard[] }) {
             >
               <Gamepad2 className="h-5 w-5" aria-hidden="true" />
             </div>
-            <ArrowRight className="h-4 w-4 text-[#7c2430] transition group-hover:translate-x-1" aria-hidden="true" />
+            <span className="flex items-center gap-2">
+              <ArrowRight className="h-4 w-4 text-[#7c2430] transition group-hover:translate-x-1" aria-hidden="true" />
+              <LinkPendingIndicator />
+            </span>
           </div>
           <h2 className="font-display relative z-10 mt-4 text-2xl font-semibold text-[#062b40]">
             {game.shortName}
@@ -57,10 +62,12 @@ export function DashboardPartyGrid({ parties, players }: { parties: Party[]; pla
         </div>
         <Link
           href="/arkiv/partier"
+          prefetch={false}
           className="inline-flex h-10 items-center justify-center gap-2 rounded border border-[#062b40]/30 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40] transition hover:border-[#c49a3c]"
         >
           Se alle vedtekter
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          <LinkPendingIndicator />
         </Link>
       </div>
 
@@ -97,10 +104,12 @@ export function DashboardPartyGrid({ parties, players }: { parties: Party[]; pla
                 </p>
                 <Link
                   href={`/arkiv/partier#${party.id}`}
+                  prefetch={false}
                   className="mt-4 inline-flex h-9 items-center gap-2 rounded border border-[#062b40]/25 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40] transition hover:border-[#c49a3c]"
                 >
                   Åpne partiarkiv
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  <LinkPendingIndicator />
                 </Link>
               </div>
             </article>

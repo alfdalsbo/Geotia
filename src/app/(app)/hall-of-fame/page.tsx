@@ -2,7 +2,7 @@ import { Medal, Shield, Sparkles, Trophy } from "lucide-react";
 
 import { Section } from "@/components/section";
 import { computeStandings, getHallOfFame } from "@/lib/scoring";
-import { getAppState } from "@/lib/store";
+import { getRoundsState } from "@/lib/store";
 import { dateLabel, formatKm, formatNumber } from "@/lib/utils";
 
 export const metadata = {
@@ -10,7 +10,7 @@ export const metadata = {
 };
 
 export default async function HallOfFamePage() {
-  const state = await getAppState();
+  const state = await getRoundsState();
   const standings = computeStandings(state.players, state.rounds);
   const hall = getHallOfFame(standings, state.rounds, state.players);
 

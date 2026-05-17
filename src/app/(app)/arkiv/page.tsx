@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { ExpandableImage } from "@/components/expandable-image";
+import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { Section } from "@/components/section";
 import { archiveSections } from "@/lib/archive";
 import { archive } from "@/lib/seed";
@@ -77,13 +78,17 @@ export default function ArchivePage() {
             <Link
               key={section.slug}
               href={`/arkiv/${section.slug}`}
+              prefetch={false}
               className="geotia-panel group rounded p-5 transition hover:-translate-y-0.5 hover:border-[#c49a3c]"
             >
               <div className="relative z-10 flex items-start justify-between gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded border border-[#c49a3c]/45 bg-[#062b40] text-[#e1c06c]">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </div>
-                <ArrowRight className="h-5 w-5 text-[#7c2430] transition group-hover:translate-x-1" aria-hidden="true" />
+                <span className="flex items-center gap-2">
+                  <ArrowRight className="h-5 w-5 text-[#7c2430] transition group-hover:translate-x-1" aria-hidden="true" />
+                  <LinkPendingIndicator />
+                </span>
               </div>
               <p className="relative z-10 mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#7c2430]">
                 {section.eyebrow}

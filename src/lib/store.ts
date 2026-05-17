@@ -236,6 +236,9 @@ const backupDataFile = `${dataFile}.bak`;
 const fileStateSchemaVersion = "2";
 
 let schemaReady = false;
+type SqlClient = ReturnType<typeof import("@neondatabase/serverless").neon>;
+let sqlClient: SqlClient | null | undefined;
+let schemaReadyPromise: Promise<SqlClient | null> | null = null;
 let fileWriteQueue: Promise<void> = Promise.resolve();
 
 export function getStorageMode() {
@@ -454,19 +457,31 @@ async function writeFileRounds(rounds: Round[]) {
   await writeFileState({ ...state, rounds });
 }
 
-async function getSql() {
+async function getSql(): Promise<SqlClient | null> {
   if (process.env.GEOTIA_FORCE_FILE_STORAGE === "1") return null;
+  if (sqlClient !== undefined) return sqlClient;
   const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) return null;
+  if (!databaseUrl) {
+    sqlClient = null;
+    return null;
+  }
 
   const { neon } = await import("@neondatabase/serverless");
-  return neon(databaseUrl);
+  sqlClient = neon(databaseUrl);
+  return sqlClient;
 }
 
-async function ensureSchema() {
+async function ensureSchema(): Promise<SqlClient | null> {
   const sql = await getSql();
   if (!sql || schemaReady) return sql;
+  schemaReadyPromise ??= setupSchema(sql).catch((error) => {
+    schemaReadyPromise = null;
+    throw error;
+  });
+  return schemaReadyPromise;
+}
 
+async function setupSchema(sql: SqlClient): Promise<SqlClient> {
   await sql`
     CREATE TABLE IF NOT EXISTS geotia_meta (
       key text PRIMARY KEY,
@@ -565,6 +580,10 @@ async function ensureSchema() {
       updated_at text NOT NULL
     )
   `;
+  await sql`CREATE INDEX IF NOT EXISTS geotia_rounds_status_number_idx ON geotia_rounds (status, number DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS geotia_rounds_slowgeo_deadline_idx ON geotia_rounds ((location_json ->> 'deadlineAt')) WHERE status = 'open'`;
+  await sql`CREATE INDEX IF NOT EXISTS geotia_game_sessions_game_number_idx ON geotia_game_sessions (game_id, number DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS geotia_geoting_proposals_status_vote_ends_idx ON geotia_geoting_proposals (status, vote_ends_at)`;
 
   schemaReady = true;
   return sql;
@@ -715,6 +734,36 @@ async function readDbRounds(): Promise<Round[] | null> {
   return rows.map(parseDbRound);
 }
 
+async function readDbRoundById(id: string): Promise<Round | null> {
+  const sql = await ensureSchema();
+  if (!sql) return null;
+
+  const rows = (await sql`
+    SELECT id, number, date, name, answer, country, continent, comment, status, created_at, updated_at, results_json, location_json
+    FROM geotia_rounds
+    WHERE id = ${id}
+    LIMIT 1
+  `) as DbRoundRow[];
+
+  return rows[0] ? parseDbRound(rows[0]) : null;
+}
+
+async function readDbActiveSlowGeoRounds(): Promise<Round[] | null> {
+  const sql = await ensureSchema();
+  if (!sql) return null;
+
+  const rows = (await sql`
+    SELECT id, number, date, name, answer, country, continent, comment, status, created_at, updated_at, results_json, location_json
+    FROM geotia_rounds
+    WHERE status = 'open'
+      AND location_json -> 'challenge' IS NOT NULL
+      AND location_json ->> 'deadlineAt' IS NOT NULL
+    ORDER BY location_json ->> 'deadlineAt' ASC
+  `) as DbRoundRow[];
+
+  return rows.map(parseDbRound);
+}
+
 async function upsertDbRound(round: Round) {
   const sql = await ensureSchema();
   if (!sql) return false;
@@ -830,6 +879,39 @@ async function readDbProposals(): Promise<GeotingProposal[] | null> {
       votes_json
     FROM geotia_geoting_proposals
     ORDER BY created_at DESC
+  `) as DbProposalRow[];
+
+  return rows.map(parseDbProposal);
+}
+
+async function readDbActiveGeotingProposals(): Promise<GeotingProposal[] | null> {
+  const sql = await ensureSchema();
+  if (!sql) return null;
+
+  const rows = (await sql`
+    SELECT
+      id,
+      title,
+      body,
+      rule_type,
+      proposed_by,
+      status,
+      created_at,
+      updated_at,
+      vote_started_at,
+      vote_ends_at,
+      vote_started_by,
+      oath_text,
+      resolved_at,
+      implementation_status,
+      implementation_note,
+      implemented_at,
+      party_positions_json,
+      votes_json
+    FROM geotia_geoting_proposals
+    WHERE status = 'voting'
+      AND vote_ends_at IS NOT NULL
+    ORDER BY vote_ends_at ASC
   `) as DbProposalRow[];
 
   return rows.map(parseDbProposal);
@@ -1056,13 +1138,7 @@ async function readGameSessions(): Promise<GameSession[]> {
 
 async function readProposals(): Promise<GeotingProposal[]> {
   const dbProposals = await readDbProposals();
-  const proposals = dbProposals ?? (await readFileState()).geotingProposals;
-  const finalized = proposals.map((proposal) => resolveProposalIfReady(proposal, players));
-  const changed = finalized.some((proposal, index) => JSON.stringify(proposal) !== JSON.stringify(proposals[index]));
-  if (changed) {
-    await saveProposals(finalized);
-  }
-  return finalized;
+  return dbProposals ?? (await readFileState()).geotingProposals;
 }
 
 async function readGeoterIndexAdjustments(): Promise<GeoterIndexAdjustment[]> {
@@ -1157,8 +1233,24 @@ export async function setCachedGeocodeLocation(queryKey: string, location: GeoLo
   return entry;
 }
 
-export async function getAppState(): Promise<AppState> {
-  await revealDueSlowGeoRounds();
+type PersistentState = Pick<
+  FileState,
+  "rounds" | "gameSessions" | "geotingProposals" | "geoterIndexAdjustments" | "geoticOrderAssessments"
+>;
+
+async function readPersistentState(): Promise<PersistentState> {
+  const sql = await getSql();
+  if (!sql) {
+    const state = await readFileState();
+    return {
+      rounds: state.rounds,
+      gameSessions: state.gameSessions,
+      geotingProposals: state.geotingProposals,
+      geoterIndexAdjustments: state.geoterIndexAdjustments,
+      geoticOrderAssessments: state.geoticOrderAssessments,
+    };
+  }
+
   const [rounds, gameSessions, geotingProposals, geoterIndexAdjustments, geoticOrderAssessments] = await Promise.all([
     readRounds(),
     readGameSessions(),
@@ -1166,31 +1258,175 @@ export async function getAppState(): Promise<AppState> {
     readGeoterIndexAdjustments(),
     readGeoticOrderAssessments(),
   ]);
+  return { rounds, gameSessions, geotingProposals, geoterIndexAdjustments, geoticOrderAssessments };
+}
+
+export async function getAppState(): Promise<AppState> {
+  const state = await readPersistentState();
   return {
     ...initialState,
     players,
     parties,
     games,
     archive,
-    rounds,
-    gameSessions,
-    geotingProposals,
-    geoterIndexAdjustments,
-    geoticOrderAssessments,
+    ...state,
   };
 }
 
 export async function getActiveGeotingProposals() {
+  const dbProposals = await readDbActiveGeotingProposals();
+  if (dbProposals) return dbProposals;
+
   const proposals = await readProposals();
   return proposals.filter((proposal) => proposal.status === "voting" && proposal.voteEndsAt);
 }
 
 export async function getActiveSlowGeoRounds() {
-  await revealDueSlowGeoRounds();
+  const dbRounds = await readDbActiveSlowGeoRounds();
+  if (dbRounds) return dbRounds;
+
   const rounds = await readRounds();
   return rounds
     .filter((round) => isSlowGeoOpenRound(round) && round.deadlineAt)
     .sort((a, b) => String(a.deadlineAt).localeCompare(String(b.deadlineAt)));
+}
+
+export async function getAppShellState() {
+  const sql = await getSql();
+  if (!sql) {
+    const state = await readFileState();
+    const activeGeotingProposals = state.geotingProposals.filter(
+      (proposal) => proposal.status === "voting" && proposal.voteEndsAt,
+    );
+    const activeSlowGeoRounds = state.rounds
+      .filter((round) => isSlowGeoOpenRound(round) && round.deadlineAt)
+      .sort((a, b) => String(a.deadlineAt).localeCompare(String(b.deadlineAt)));
+    return { activeGeotingProposals, activeSlowGeoRounds };
+  }
+
+  const [activeGeotingProposals, activeSlowGeoRounds] = await Promise.all([
+    getActiveGeotingProposals(),
+    getActiveSlowGeoRounds(),
+  ]);
+  return { activeGeotingProposals, activeSlowGeoRounds };
+}
+
+export async function getScoreboardState() {
+  const sql = await getSql();
+  if (!sql) {
+    const state = await readFileState();
+    return {
+      players,
+      games,
+      archive,
+      rounds: state.rounds,
+      gameSessions: state.gameSessions,
+    };
+  }
+
+  const [rounds, gameSessions] = await Promise.all([readRounds(), readGameSessions()]);
+  return { players, games, archive, rounds, gameSessions };
+}
+
+export async function getRoundsState() {
+  const sql = await getSql();
+  if (!sql) {
+    const state = await readFileState();
+    return { players, rounds: state.rounds };
+  }
+
+  const rounds = await readRounds();
+  return { players, rounds };
+}
+
+export async function getGamesState() {
+  const sql = await getSql();
+  if (!sql) {
+    const state = await readFileState();
+    return {
+      players,
+      games,
+      rounds: state.rounds,
+      gameSessions: state.gameSessions,
+    };
+  }
+
+  const [rounds, gameSessions] = await Promise.all([readRounds(), readGameSessions()]);
+  return { players, games, rounds, gameSessions };
+}
+
+export async function getSlowGeoState() {
+  const sql = await getSql();
+  if (!sql) {
+    const state = await readFileState();
+    return { players, rounds: state.rounds };
+  }
+
+  const rounds = await readRounds();
+  return { players, rounds };
+}
+
+export async function getSlowGeoRoundState(id: string) {
+  const sql = await getSql();
+  if (sql) {
+    const round = await readDbRoundById(id);
+    return { players, round: round?.challenge ? round : null };
+  }
+
+  const state = await getSlowGeoState();
+  const round = state.rounds.find((candidate) => candidate.id === id && candidate.challenge) ?? null;
+  return { players: state.players, round };
+}
+
+export async function getGeotingState() {
+  const sql = await getSql();
+  if (!sql) {
+    const state = await readFileState();
+    return {
+      players,
+      parties,
+      geotingProposals: state.geotingProposals,
+    };
+  }
+
+  const geotingProposals = await readProposals();
+  return { players, parties, geotingProposals };
+}
+
+export async function getOrderState() {
+  const sql = await getSql();
+  if (!sql) {
+    const state = await readFileState();
+    return {
+      players,
+      rounds: state.rounds,
+      gameSessions: state.gameSessions,
+      geoterIndexAdjustments: state.geoterIndexAdjustments,
+      geoticOrderAssessments: state.geoticOrderAssessments,
+    };
+  }
+
+  const [rounds, gameSessions, geoterIndexAdjustments, geoticOrderAssessments] = await Promise.all([
+    readRounds(),
+    readGameSessions(),
+    readGeoterIndexAdjustments(),
+    readGeoticOrderAssessments(),
+  ]);
+  return { players, rounds, gameSessions, geoterIndexAdjustments, geoticOrderAssessments };
+}
+
+export async function resolveDueGeotingProposals(now = new Date()) {
+  const proposals = await readProposals();
+  const finalized = proposals.map((proposal) => resolveProposalIfReady(proposal, players, now));
+  const ids = finalized.flatMap((proposal, index) =>
+    JSON.stringify(proposal) === JSON.stringify(proposals[index]) ? [] : [proposal.id],
+  );
+
+  if (ids.length > 0) {
+    await saveProposals(finalized);
+  }
+
+  return { resolved: ids.length, ids, proposals: finalized };
 }
 
 export async function getRound(id: string) {

@@ -2,6 +2,7 @@ import { BellRing, CheckCircle2, Clock, Gavel, Landmark, ScrollText, Vote, XCirc
 
 import { saveGeotingPartyPositionAction, startGeotingVoteAction, voteGeotingProposalAction } from "@/app/actions";
 import { GeotingCountdown } from "@/components/geoting-countdown";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import {
   GEO_OATH_TEXT,
   getConstitutionChangeParts,
@@ -396,13 +397,12 @@ function PartyPositionPanel({
         className="mt-3 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713] outline-none focus:border-[#e1c06c]"
         placeholder="Kort partibegrunnelse"
       />
-      <button
-        type="submit"
+      <PendingSubmitButton
         className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded bg-[#e1c06c] px-3 text-sm font-semibold text-[#062b40]"
       >
         <Landmark className="h-4 w-4" aria-hidden="true" />
         Før partilinje
-      </button>
+      </PendingSubmitButton>
     </form>
   );
 }
@@ -451,13 +451,12 @@ function ActionPanel({
           />
           <span>Jeg sverger geo-eden og varsler alle geoter umiddelbart.</span>
         </label>
-        <button
-          type="submit"
+        <PendingSubmitButton
           className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded bg-[#7c2430] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#641923]"
         >
           <Gavel className="h-4 w-4" aria-hidden="true" />
           Åpne stemmeurnen
-        </button>
+        </PendingSubmitButton>
       </form>
     );
   }
@@ -496,13 +495,12 @@ function ActionPanel({
         className="mt-3 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713] outline-none focus:border-[#e1c06c]"
         placeholder="Kort stikk, om nødvendig"
       />
-      <button
-        type="submit"
+      <PendingSubmitButton
         className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white"
       >
         <Vote className="h-4 w-4" aria-hidden="true" />
         Avgi stemme
-      </button>
+      </PendingSubmitButton>
     </form>
   );
 }

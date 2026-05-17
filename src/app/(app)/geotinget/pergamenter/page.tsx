@@ -2,12 +2,13 @@ import { FileText, Gavel, ScrollText, ShieldCheck } from "lucide-react";
 
 import { updateGeotingProposalAction, withdrawGeotingProposalAction } from "@/app/actions";
 import { GeotingSubnav } from "@/components/geoting-subnav";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Section, StatTile } from "@/components/section";
 import { getCurrentGeot } from "@/lib/auth";
 import { getGeotingLifecycle, geotingImplementationLabels, partyPositionLabels, summarizeProposal } from "@/lib/geoting";
 import { isThirdCollegeMember } from "@/lib/kollegium";
 import { archive } from "@/lib/seed";
-import { getAppState } from "@/lib/store";
+import { getGeotingState, resolveDueGeotingProposals } from "@/lib/store";
 import type { GeotingProposal, Player } from "@/lib/types";
 import { dateTimeLabel } from "@/lib/utils";
 
@@ -35,7 +36,8 @@ export default async function GeotingPergamentsPage({
   searchParams?: Promise<{ status?: string; error?: string }>;
 }) {
   const params = (await searchParams) ?? {};
-  const [state, currentGeot] = await Promise.all([getAppState(), getCurrentGeot()]);
+  await resolveDueGeotingProposals();
+  const [state, currentGeot] = await Promise.all([getGeotingState(), getCurrentGeot()]);
   const canEdit = isThirdCollegeMember(currentGeot?.id);
   const proposals = [...state.geotingProposals].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const resolvedCount = proposals.filter((proposal) => proposal.status === "passed" || proposal.status === "rejected").length;
@@ -298,26 +300,24 @@ function PergamentCard({
               />
             </label>
             <div className="flex flex-col gap-2 sm:flex-row lg:col-span-2">
-              <button
-                type="submit"
+              <PendingSubmitButton
                 className="inline-flex h-10 items-center justify-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
               >
                 <FileText className="h-4 w-4" aria-hidden="true" />
                 Lagre pergament
-              </button>
+              </PendingSubmitButton>
             </div>
           </form>
           {canWithdraw ? (
             <form action={withdrawGeotingProposalAction} className="mt-2">
               <input type="hidden" name="proposalId" value={proposal.id} />
               <input type="hidden" name="returnTo" value="/geotinget/pergamenter" />
-              <button
-                type="submit"
+              <PendingSubmitButton
                 className="inline-flex h-10 items-center justify-center gap-2 rounded border border-[#7c2430]/45 bg-[#7c2430]/10 px-3 text-sm font-semibold text-[#7c2430] transition hover:bg-[#7c2430]/15"
               >
                 <Gavel className="h-4 w-4" aria-hidden="true" />
                 Trekk pergament
-              </button>
+              </PendingSubmitButton>
             </form>
           ) : null}
         </div>

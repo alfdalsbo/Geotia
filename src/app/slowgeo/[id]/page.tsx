@@ -3,25 +3,29 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, CheckCircle2, MessageCircle, Trophy } from "lucide-react";
 
+import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { SlowGeoAftermath } from "@/components/slowgeo-aftermath";
 import { SlowGeoImageViewer } from "@/components/slowgeo-image-viewer";
 import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
 import { computeRound } from "@/lib/scoring";
+import { players } from "@/lib/seed";
 import {
   buildOpenSlowGeoShareTextOptions,
   buildRevealedSlowGeoShareTextOptions,
 } from "@/lib/slowgeo-share";
-import { getAppState, maybeRevealRound } from "@/lib/store";
+import { getSlowGeoRoundState, maybeRevealRound } from "@/lib/store";
 import { buildStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
-import { buildStreetViewImageUrl } from "@/lib/streetview-url";
+import {
+  buildStreetViewImageUrl,
+  buildStreetViewStaticZoomImages,
+  STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
+} from "@/lib/streetview-url";
 import { dateTimeLabel, formatKm } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 async function getSlowGeoRound(id: string) {
-  const state = await getAppState();
-  const round = state.rounds.find((candidate) => candidate.id === id);
-  return round?.challenge ? round : null;
+  return (await getSlowGeoRoundState(id)).round;
 }
 
 export async function generateMetadata({
@@ -89,13 +93,18 @@ export default async function SlowGeoSharePage({
   const revealedRound = await maybeRevealRound(id);
   if (!revealedRound?.challenge) notFound();
 
-  const state = await getAppState();
-  const round = state.rounds.find((candidate) => candidate.id === revealedRound.id) ?? revealedRound;
+  const round = revealedRound;
   if (!round.challenge) notFound();
 
-  const computed = computeRound(round, state.players);
+  const computed = computeRound(round, players);
   const publicGoogleKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
   const streetViewUrl = buildStreetViewImageUrl({
+    challenge: round.challenge,
+    apiKey: publicGoogleKey,
+    allowLocationFallback: round.status !== "open",
+    size: STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
+  });
+  const streetViewStaticZoomImages = buildStreetViewStaticZoomImages({
     challenge: round.challenge,
     apiKey: publicGoogleKey,
     allowLocationFallback: round.status !== "open",
@@ -179,6 +188,7 @@ export default async function SlowGeoSharePage({
               alt={`SlowGeo-bilde for ${round.name}`}
               sizes="100vw"
               className="aspect-[4/3] min-h-[320px] sm:aspect-video sm:min-h-[420px]"
+              staticZoomImages={streetViewStaticZoomImages}
               streetViewPanorama={streetViewPanorama}
               priority
               title={round.name}
@@ -233,10 +243,14 @@ export default async function SlowGeoSharePage({
 
           <Link
             href={`/runder/${round.id}`}
+            prefetch={false}
             className="inline-flex min-h-20 items-center justify-between gap-4 rounded bg-[#203c62] px-5 py-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
           >
             <span>{isOpen ? "Registrer pin-svar" : "Åpne protokollen"}</span>
-            <ArrowRight className="h-5 w-5" aria-hidden="true" />
+            <span className="flex flex-none items-center gap-2">
+              <ArrowRight className="h-5 w-5" aria-hidden="true" />
+              <LinkPendingIndicator className="text-white" />
+            </span>
           </Link>
         </section>
 

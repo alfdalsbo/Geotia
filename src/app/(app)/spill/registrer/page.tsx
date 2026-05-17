@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, Gamepad2 } from "lucide-react";
 
 import { GameSessionForm } from "@/components/game-session-form";
+import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { Section } from "@/components/section";
 import { games } from "@/lib/seed";
 import { makeEmptyGameSession } from "@/lib/store";
@@ -32,10 +33,12 @@ export default async function RegisterGamePage({
       <section className="geotia-frame rounded p-5 sm:p-8">
         <Link
           href="/spill"
+          prefetch={false}
           className="inline-flex h-10 items-center gap-2 rounded border border-[#062b40]/30 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Til spillkammeret
+          <LinkPendingIndicator />
         </Link>
         <p className="mt-5 text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
           Geo · MapTap · Satle · Globle

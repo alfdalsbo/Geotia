@@ -212,6 +212,92 @@ describe("Geotia file store", () => {
     expect(backups.some((file) => file.startsWith("geotia-data-"))).toBe(true);
   });
 
+  it("keeps generic reads side-effect free until SlowGeo reveal is explicit", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    process.env.GOOGLE_MAPS_SERVER_API_KEY = "";
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    vi.resetModules();
+
+    const { createSlowGeoRound, getAppState, revealDueSlowGeoRounds } = await import("@/lib/store");
+    const deadlineAt = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const created = await createSlowGeoRound({ title: "Forfalt, men ren lesing", deadlineAt });
+    if (!created.ok || !created.round) throw new Error("SlowGeo-runden ble ikke opprettet");
+    const beforeRead = JSON.parse(await readFile(path.join(tempDir, "state.json"), "utf8")) as { meta?: Record<string, string> };
+
+    const readState = await getAppState();
+    const readRound = readState.rounds.find((candidate) => candidate.id === created.round?.id);
+    const afterRead = JSON.parse(await readFile(path.join(tempDir, "state.json"), "utf8")) as { meta?: Record<string, string> };
+
+    expect(readRound?.status).toBe("open");
+    expect(afterRead.meta?.lastWriteAt).toBe(beforeRead.meta?.lastWriteAt);
+
+    const reveal = await revealDueSlowGeoRounds();
+    const revealedState = await getAppState();
+    const revealedRound = revealedState.rounds.find((candidate) => candidate.id === created.round?.id);
+
+    expect(reveal.revealed).toBe(1);
+    expect(revealedRound?.status).toBe("locked");
+  });
+
+  it("returns the same slices through focused selectors as the compatibility state", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    vi.resetModules();
+
+    const {
+      createGeotingProposal,
+      getAppState,
+      getGamesState,
+      getGeotingState,
+      getRoundsState,
+      getScoreboardState,
+      getSlowGeoState,
+      upsertGameSession,
+      upsertRound,
+    } = await import("@/lib/store");
+
+    await upsertRound({
+      date: "2026-05-17",
+      name: "Selector-runden",
+      answer: "Bergen",
+      answerLocation: null,
+      country: "Norge",
+      continent: "Europa",
+      comment: "Selectorprøve",
+      results: [],
+    });
+    await upsertGameSession({
+      gameId: "geo",
+      date: "2026-05-17",
+      title: "Selector-økt",
+      context: "Test",
+      results: [],
+    });
+    await createGeotingProposal({
+      title: "Selector-sak",
+      body: "Velg bare det du trenger.",
+      ruleType: "annet",
+      proposedBy: "alf",
+    });
+
+    const appState = await getAppState();
+    const [roundsState, gamesState, slowGeoState, geotingState, scoreboardState] = await Promise.all([
+      getRoundsState(),
+      getGamesState(),
+      getSlowGeoState(),
+      getGeotingState(),
+      getScoreboardState(),
+    ]);
+
+    expect(roundsState.rounds).toEqual(appState.rounds);
+    expect(gamesState.gameSessions).toEqual(appState.gameSessions);
+    expect(gamesState.games).toEqual(appState.games);
+    expect(slowGeoState.rounds).toEqual(appState.rounds);
+    expect(geotingState.geotingProposals).toEqual(appState.geotingProposals);
+    expect(scoreboardState.archive).toEqual(appState.archive);
+  });
+
   it("lets Tredje Kollegium update and withdraw Geoting proposals", async () => {
     tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
     process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");

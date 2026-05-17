@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BellRing, Gavel } from "lucide-react";
 
 import { GeotingCountdown } from "@/components/geoting-countdown";
+import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import type { GeotingProposal } from "@/lib/types";
 
 export function GeotingVoteAlarm({
@@ -34,10 +35,12 @@ export function GeotingVoteAlarm({
           {context === "dashboard" ? (
             <Link
               href="/geotinget/avstemninger"
+              prefetch={false}
               className="mt-5 inline-flex h-11 items-center gap-2 rounded bg-[#e1c06c] px-4 text-sm font-semibold text-[#321018] shadow-sm transition hover:bg-[#f0d78f]"
             >
               <Gavel className="h-4 w-4" aria-hidden="true" />
               Gå til avstemning
+              <LinkPendingIndicator />
             </Link>
           ) : null}
         </div>

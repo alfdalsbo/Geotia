@@ -1,6 +1,7 @@
 import { MapPinned, Satellite } from "lucide-react";
 
 import { createSlowGeoRoundAction } from "@/app/actions";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { getSlowGeoMonthlyRoundCap } from "@/lib/streetview";
 
 function defaultDeadlineTime() {
@@ -42,13 +43,12 @@ export function SlowGeoRoundLauncher() {
         />
       </label>
       <div className="flex items-end">
-        <button
-          type="submit"
+        <PendingSubmitButton
           className="inline-flex h-11 w-full items-center justify-center gap-2 rounded bg-[#203c62] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b] lg:w-auto"
         >
           <Satellite className="h-4 w-4" aria-hidden="true" />
           Åpne SlowGeo
-        </button>
+        </PendingSubmitButton>
       </div>
       <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm leading-6 text-[#4f412b] lg:col-span-3">
         <span className="inline-flex items-center gap-2 font-semibold text-[#203c62]">

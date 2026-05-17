@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, Clock, ExternalLink, MapPinned, Trophy } from "lucide-react";
 
+import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { Section, StatTile } from "@/components/section";
 import { SlowGeoRoundLauncher } from "@/components/slowgeo-round-launcher";
 import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
@@ -8,7 +9,7 @@ import { computeRound, computeStandings } from "@/lib/scoring";
 import { pickGeoticLine, slowGeoEmptyStateLines } from "@/lib/geotia-jargon";
 import { buildOpenSlowGeoShareTextOptions } from "@/lib/slowgeo-share";
 import { getSlowGeoProgress, getSlowGeoRoundInsights, slowGeoDifficultyLabels } from "@/lib/slowgeo-insights";
-import { getAppState } from "@/lib/store";
+import { getSlowGeoState } from "@/lib/store";
 import { dateLabel, dateTimeLabel, formatKm } from "@/lib/utils";
 
 export const metadata = {
@@ -21,7 +22,7 @@ export default async function SlowGeoGamePage({
   searchParams?: Promise<{ error?: string; status?: string }>;
 }) {
   const params = (await searchParams) ?? {};
-  const state = await getAppState();
+  const state = await getSlowGeoState();
   const standings = computeStandings(state.players, state.rounds);
   const activeRounds = state.rounds
     .filter((round) => round.challenge && round.status === "open")
@@ -108,17 +109,21 @@ export default async function SlowGeoGamePage({
                 <div className="flex flex-wrap gap-2 lg:justify-end">
                   <Link
                     href={`/slowgeo/${latestResolvedRound.id}`}
+                    prefetch={false}
                     className="inline-flex h-10 items-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
                   >
                     Se fasitkort
                     <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                    <LinkPendingIndicator className="text-white" />
                   </Link>
                   <Link
                     href={`/runder/${latestResolvedRound.id}`}
+                    prefetch={false}
                     className="inline-flex h-10 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
                   >
                     Protokoll
                     <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    <LinkPendingIndicator />
                   </Link>
                 </div>
               </article>
@@ -169,10 +174,12 @@ export default async function SlowGeoGamePage({
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Link
                       href={`/runder/${round.id}`}
+                      prefetch={false}
                       className="inline-flex h-10 items-center justify-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
                     >
                       Åpne spill
                       <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                      <LinkPendingIndicator className="text-white" />
                     </Link>
                     <SlowGeoThreadShareButton
                       title={`SlowGeo: ${round.name}`}
@@ -203,10 +210,12 @@ export default async function SlowGeoGamePage({
         action={
           <Link
             href="/tabeller"
+            prefetch={false}
             className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
           >
             Tabell
             <Trophy className="h-4 w-4" aria-hidden="true" />
+            <LinkPendingIndicator />
           </Link>
         }
       >
@@ -235,16 +244,20 @@ export default async function SlowGeoGamePage({
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Link
                       href={`/runder/${round.id}`}
+                      prefetch={false}
                       className="inline-flex h-9 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
                     >
                       Protokoll
                       <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                      <LinkPendingIndicator />
                     </Link>
                     <Link
                       href={`/slowgeo/${round.id}`}
+                      prefetch={false}
                       className="inline-flex h-9 items-center gap-2 rounded border border-[#d8ded0] bg-[#f7f8f5] px-3 text-sm font-semibold text-[#203c62]"
                     >
                       Delingskort
+                      <LinkPendingIndicator />
                     </Link>
                   </div>
                 </article>

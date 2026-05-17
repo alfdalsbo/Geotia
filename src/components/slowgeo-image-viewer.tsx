@@ -1,11 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { Loader2, Maximize2, Minus, Plus, RotateCcw, X } from "lucide-react";
 
 import { loadGoogleMaps, type GoogleMapsListener, type GoogleStreetViewPanorama } from "@/components/google-maps-loader";
 import type { SlowGeoStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
+import type { StreetViewStaticZoomImage } from "@/lib/streetview-url";
 import { cn } from "@/lib/utils";
 
 type Point = {
@@ -19,7 +20,9 @@ type SlowGeoImageViewerProps = {
   sizes: string;
   className?: string;
   imageClassName?: string;
+  staticZoomImages?: StreetViewStaticZoomImage[];
   streetViewPanorama?: SlowGeoStreetViewPanoramaConfig | null;
+  viewMode?: "static" | "panorama";
   priority?: boolean;
   title?: string;
 };
@@ -37,13 +40,22 @@ function distance(a: Point, b: Point) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
+function selectStaticZoomImage(images: StreetViewStaticZoomImage[], scale: number) {
+  return images.reduce((selected, image) => {
+    if (image.scale <= scale + 0.001 && image.scale >= selected.scale) return image;
+    return selected;
+  }, images[0]);
+}
+
 export function SlowGeoImageViewer({
   src,
   alt,
   sizes,
   className,
   imageClassName,
+  staticZoomImages = [],
   streetViewPanorama,
+  viewMode = "static",
   priority = false,
   title = "SlowGeo-bilde",
 }: SlowGeoImageViewerProps) {
@@ -58,6 +70,15 @@ export function SlowGeoImageViewer({
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 });
   const [interacting, setInteracting] = useState(false);
   const [panoramaStatus, setPanoramaStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const panoramaEnabled = viewMode === "panorama" && Boolean(streetViewPanorama);
+  const orderedStaticZoomImages = useMemo(() => {
+    const images = [...staticZoomImages, { scale: 1, fov: 0, src }].sort((a, b) => a.scale - b.scale);
+    return images.filter((image, index) => index === 0 || image.scale > images[index - 1].scale + 0.001);
+  }, [src, staticZoomImages]);
+  const getStaticTransformScale = useCallback((nextScale: number) => {
+    const selectedImage = selectStaticZoomImage(orderedStaticZoomImages, nextScale);
+    return Math.max(1, nextScale / selectedImage.scale);
+  }, [orderedStaticZoomImages]);
 
   const clampOffset = useCallback((nextOffset: Point, nextScale: number) => {
     const rect = viewportRef.current?.getBoundingClientRect();
@@ -70,31 +91,31 @@ export function SlowGeoImageViewer({
   }, []);
 
   const applyPanoramaZoom = useCallback((nextScale: number) => {
-    if (!streetViewPanorama || !panoramaRef.current) return;
+    if (!panoramaEnabled || !streetViewPanorama || !panoramaRef.current) return;
     panoramaRef.current.setZoom(clamp(streetViewPanorama.initialZoom + nextScale - 1, 0, maxPanoramaZoom));
-  }, [streetViewPanorama]);
+  }, [panoramaEnabled, streetViewPanorama]);
 
   const setZoom = useCallback((nextScale: number) => {
     const normalizedScale = clamp(nextScale, minScale, maxScale);
     setScale(normalizedScale);
     applyPanoramaZoom(normalizedScale);
-    setOffset((current) => clampOffset(current, normalizedScale));
-  }, [applyPanoramaZoom, clampOffset]);
+    setOffset((current) => clampOffset(current, getStaticTransformScale(normalizedScale)));
+  }, [applyPanoramaZoom, clampOffset, getStaticTransformScale]);
 
   const resetViewer = useCallback(() => {
     setScale(1);
     setOffset({ x: 0, y: 0 });
-    if (streetViewPanorama && panoramaRef.current) {
+    if (panoramaEnabled && streetViewPanorama && panoramaRef.current) {
       panoramaRef.current.setPov(streetViewPanorama.pov);
       panoramaRef.current.setZoom(streetViewPanorama.initialZoom);
     }
-  }, [streetViewPanorama]);
+  }, [panoramaEnabled, streetViewPanorama]);
 
   const openViewer = useCallback(() => {
     resetViewer();
-    setPanoramaStatus(streetViewPanorama ? "loading" : "idle");
+    setPanoramaStatus(panoramaEnabled ? "loading" : "idle");
     setOpen(true);
-  }, [resetViewer, streetViewPanorama]);
+  }, [panoramaEnabled, resetViewer]);
 
   const closeViewer = useCallback(() => {
     setOpen(false);
@@ -123,7 +144,7 @@ export function SlowGeoImageViewer({
   }, [closeViewer, open]);
 
   useEffect(() => {
-    if (!open || !streetViewPanorama || !panoramaElementRef.current) return;
+    if (!open || !panoramaEnabled || !streetViewPanorama || !panoramaElementRef.current) return;
 
     let cancelled = false;
     const listeners: GoogleMapsListener[] = [];
@@ -182,7 +203,7 @@ export function SlowGeoImageViewer({
       listeners.forEach((listener) => listener.remove());
       panoramaRef.current = null;
     };
-  }, [open, streetViewPanorama]);
+  }, [open, panoramaEnabled, streetViewPanorama]);
 
   function beginDrag(point: Point) {
     dragStartRef.current = {
@@ -192,7 +213,7 @@ export function SlowGeoImageViewer({
   }
 
   function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
-    if (streetViewPanorama && panoramaStatus !== "error") return;
+    if (panoramaEnabled && panoramaStatus !== "error") return;
     event.currentTarget.setPointerCapture(event.pointerId);
     pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     setInteracting(true);
@@ -214,7 +235,7 @@ export function SlowGeoImageViewer({
   }
 
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
-    if (streetViewPanorama && panoramaStatus !== "error") return;
+    if (panoramaEnabled && panoramaStatus !== "error") return;
     if (!pointersRef.current.has(event.pointerId)) return;
     pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     const points = Array.from(pointersRef.current.values());
@@ -226,11 +247,11 @@ export function SlowGeoImageViewer({
         maxScale,
       );
       setScale(nextScale);
-      setOffset((current) => clampOffset(current, nextScale));
+      setOffset((current) => clampOffset(current, getStaticTransformScale(nextScale)));
       return;
     }
 
-    if (points.length === 1 && dragStartRef.current && scale > 1) {
+    if (points.length === 1 && dragStartRef.current && getStaticTransformScale(scale) > 1) {
       const delta = {
         x: points[0].x - dragStartRef.current.point.x,
         y: points[0].y - dragStartRef.current.point.y,
@@ -241,14 +262,14 @@ export function SlowGeoImageViewer({
             x: dragStartRef.current.offset.x + delta.x,
             y: dragStartRef.current.offset.y + delta.y,
           },
-          scale,
+          getStaticTransformScale(scale),
         ),
       );
     }
   }
 
   function handlePointerEnd(event: PointerEvent<HTMLDivElement>) {
-    if (streetViewPanorama && panoramaStatus !== "error") return;
+    if (panoramaEnabled && panoramaStatus !== "error") return;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
@@ -266,8 +287,10 @@ export function SlowGeoImageViewer({
     setInteracting(false);
   }
 
-  const usePanorama = Boolean(streetViewPanorama && panoramaStatus !== "error");
+  const usePanorama = Boolean(panoramaEnabled && panoramaStatus !== "error");
   const zoomControlsDisabled = usePanorama && panoramaStatus !== "ready";
+  const activeStaticImage = selectStaticZoomImage(orderedStaticZoomImages, scale);
+  const staticTransformScale = getStaticTransformScale(scale);
 
   return (
     <>
@@ -366,13 +389,14 @@ export function SlowGeoImageViewer({
               onDoubleClick={() => (scale === 1 ? setZoom(2) : resetViewer())}
             >
               <Image
-                src={src}
+                key={activeStaticImage.src}
+                src={activeStaticImage.src}
                 alt={alt}
                 fill
                 sizes="100vw"
                 className="object-contain will-change-transform"
                 style={{
-                  transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${scale})`,
+                  transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${staticTransformScale})`,
                   transition: interacting ? "none" : "transform 160ms ease-out",
                 }}
                 referrerPolicy="no-referrer-when-downgrade"

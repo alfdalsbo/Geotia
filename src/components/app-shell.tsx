@@ -15,10 +15,12 @@ import {
 import { logoutAction } from "@/app/actions";
 import { GeoGuessrTipToast } from "@/components/geo-guessr-tip-toast";
 import { GeotingGlobalAlert } from "@/components/geoting-global-alert";
+import { LinkPendingIndicator } from "@/components/link-pending-indicator";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { SlowGeoGlobalAlert } from "@/components/slowgeo-global-alert";
 import { getCurrentGeot } from "@/lib/auth";
 import { getGeoGuessrTipDaySeed, selectGeoGuessrTips } from "@/lib/geoguessr-tips";
-import { getActiveGeotingProposals, getActiveSlowGeoRounds, getStorageMode } from "@/lib/store";
+import { getAppShellState, getStorageMode } from "@/lib/store";
 
 const navItems = [
   { href: "/", label: "Kommandosentral", icon: Landmark },
@@ -30,10 +32,9 @@ const navItems = [
 ];
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
-  const [currentGeot, activeGeotingProposals, activeSlowGeoRounds] = await Promise.all([
+  const [currentGeot, appShellState] = await Promise.all([
     getCurrentGeot(),
-    getActiveGeotingProposals(),
-    getActiveSlowGeoRounds(),
+    getAppShellState(),
   ]);
   const toastTips = selectGeoGuessrTips({
     placement: "global-toast",
@@ -45,7 +46,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
     <div className="geotia-civic-bg min-h-screen text-[#161713]">
       <header className="border-b border-[#c49a3c]/40 bg-[#061d2b]/94 text-[#fff7e6] shadow-[0_10px_30px_rgba(0,0,0,0.22)] backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-          <Link href="/" className="flex min-w-0 items-center gap-3">
+          <Link href="/" prefetch={false} className="flex min-w-0 items-center gap-3">
             <div className="relative h-14 w-14 overflow-hidden rounded border border-[#c49a3c]/70 bg-[#efe3c7] shadow-inner">
               <Image
                 src="/geotia-assets/geotia-asset-4.png"
@@ -77,28 +78,30 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={false}
                   className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 px-3 text-sm font-medium text-[#fff7e6] shadow-sm transition hover:border-[#e1c06c] hover:bg-[#fff7e6]/15"
                 >
                   <Icon className="h-4 w-4 flex-none" aria-hidden="true" />
                   <span className="truncate">{item.label}</span>
+                  <LinkPendingIndicator className="text-[#e1c06c]" />
                 </Link>
               );
             })}
             <form action={logoutAction}>
-              <button
-                type="submit"
+              <PendingSubmitButton
                 className="inline-flex h-10 w-full min-w-0 items-center justify-center gap-2 rounded border border-[#7c2430]/55 bg-[#7c2430] px-3 text-sm font-medium text-white shadow-sm transition hover:bg-[#641923]"
+                pendingChildren="Logger ut..."
               >
                 <DoorOpen className="h-4 w-4 flex-none" aria-hidden="true" />
                 <span className="truncate">Forlat embetsverket</span>
-              </button>
+              </PendingSubmitButton>
             </form>
           </nav>
         </div>
       </header>
 
-      <GeotingGlobalAlert proposals={activeGeotingProposals} />
-      <SlowGeoGlobalAlert rounds={activeSlowGeoRounds} />
+      <GeotingGlobalAlert proposals={appShellState.activeGeotingProposals} />
+      <SlowGeoGlobalAlert rounds={appShellState.activeSlowGeoRounds} />
       <GeoGuessrTipToast tips={toastTips} />
 
       <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>

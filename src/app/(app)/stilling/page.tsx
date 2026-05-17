@@ -2,7 +2,7 @@ import { Crown, Medal, TrendingDown, TrendingUp } from "lucide-react";
 
 import { Section, StatTile } from "@/components/section";
 import { computeStandings } from "@/lib/scoring";
-import { getAppState } from "@/lib/store";
+import { getRoundsState } from "@/lib/store";
 import { formatKm, formatNumber } from "@/lib/utils";
 
 export const metadata = {
@@ -10,7 +10,7 @@ export const metadata = {
 };
 
 export default async function StandingsPage() {
-  const state = await getAppState();
+  const state = await getRoundsState();
   const standings = computeStandings(state.players, state.rounds);
   const leader = standings[0];
   const kattometerLeader = standings

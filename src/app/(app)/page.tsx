@@ -14,6 +14,7 @@ import {
 
 import { DashboardGameGrid, DashboardPartyGrid } from "@/components/dashboard-sections";
 import { GeoGuessrTipTicker } from "@/components/geo-guessr-tip-ticker";
+import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { RotatingGeotiaQuote } from "@/components/rotating-geotia-quote";
 import { ExpandableImage } from "@/components/expandable-image";
 import { SarajevoVideo } from "@/components/sarajevo-video";
@@ -96,24 +97,30 @@ export default async function DashboardPage() {
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
                 href="/spill/slowgeo"
+                prefetch={false}
                 className="inline-flex h-11 items-center gap-2 rounded bg-[#7c2430] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#641923]"
               >
                 Start SlowGeo
                 <TableProperties className="h-4 w-4" aria-hidden="true" />
+                <LinkPendingIndicator className="text-white" />
               </Link>
               <Link
                 href="/arkiv"
+                prefetch={false}
                 className="inline-flex h-11 items-center gap-2 rounded border border-[#062b40]/30 bg-[#fff7e6] px-4 text-sm font-semibold text-[#062b40] shadow-sm transition hover:border-[#c49a3c]"
               >
                 Åpne statsarkivet
                 <BookOpen className="h-4 w-4" aria-hidden="true" />
+                <LinkPendingIndicator />
               </Link>
               <Link
                 href="/ordenen"
+                prefetch={false}
                 className="inline-flex h-11 items-center gap-2 rounded border border-[#062b40]/30 bg-[#fff7e6] px-4 text-sm font-semibold text-[#062b40] shadow-sm transition hover:border-[#c49a3c]"
               >
                 Gå ordensveien
                 <Milestone className="h-4 w-4" aria-hidden="true" />
+                <LinkPendingIndicator />
               </Link>
             </div>
 
@@ -184,10 +191,12 @@ export default async function DashboardPage() {
           action={
             <Link
               href="/tabeller"
+              prefetch={false}
               className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
             >
               Full tabell
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              <LinkPendingIndicator />
             </Link>
           }
         >
@@ -247,10 +256,12 @@ export default async function DashboardPage() {
           action={
             <Link
               href="/runder"
+              prefetch={false}
               className="inline-flex h-10 items-center gap-2 rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
             >
               Før runde
               <TableProperties className="h-4 w-4" aria-hidden="true" />
+              <LinkPendingIndicator />
             </Link>
           }
         >
@@ -324,9 +335,10 @@ export default async function DashboardPage() {
           title="Oppslagsverket"
           eyebrow="Leksikon"
           action={
-            <Link href="/arkiv" className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
+            <Link href="/arkiv" prefetch={false} className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
               Åpne
               <BookOpen className="h-4 w-4" aria-hidden="true" />
+              <LinkPendingIndicator />
             </Link>
           }
         >

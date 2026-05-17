@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { Gavel, LockKeyhole, RotateCcw } from "lucide-react";
 
 import { lockRoundAction, unlockRoundAction } from "@/app/actions";
+import { LinkPendingIndicator } from "@/components/link-pending-indicator";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { RoundForm } from "@/components/round-form";
 import { RoundMapProtocol } from "@/components/round-map-protocol";
 import { Section } from "@/components/section";
@@ -12,9 +14,13 @@ import { SlowGeoRevealMap } from "@/components/slowgeo-reveal-map";
 import { getCurrentGeot } from "@/lib/auth";
 import { selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { computeRound } from "@/lib/scoring";
-import { getAppState, maybeRevealRound } from "@/lib/store";
+import { getRoundsState, maybeRevealRound } from "@/lib/store";
 import { buildStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
-import { buildStreetViewImageUrl } from "@/lib/streetview-url";
+import {
+  buildStreetViewImageUrl,
+  buildStreetViewStaticZoomImages,
+  STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
+} from "@/lib/streetview-url";
 import type { Round, RoundStatus } from "@/lib/types";
 import { dateLabel, formatKm } from "@/lib/utils";
 
@@ -37,13 +43,12 @@ function roundAction(round: Round) {
     return (
       <form action={lockRoundAction}>
         <input type="hidden" name="id" value={round.id} />
-        <button
-          type="submit"
+        <PendingSubmitButton
           className="inline-flex h-10 items-center gap-2 rounded bg-[#285c45] px-3 text-sm font-semibold text-white"
         >
           <LockKeyhole className="h-4 w-4" aria-hidden="true" />
           Lås protokollen
-        </button>
+        </PendingSubmitButton>
       </form>
     );
   }
@@ -52,13 +57,12 @@ function roundAction(round: Round) {
     return (
       <form action={unlockRoundAction}>
         <input type="hidden" name="id" value={round.id} />
-        <button
-          type="submit"
+        <PendingSubmitButton
           className="inline-flex h-10 items-center gap-2 rounded border border-[#b8892f]/40 bg-[#b8892f]/10 px-3 text-sm font-semibold text-[#7b591d]"
         >
           <Gavel className="h-4 w-4" aria-hidden="true" />
           Send til GeoVAR
-        </button>
+        </PendingSubmitButton>
       </form>
     );
   }
@@ -78,7 +82,7 @@ export default async function RoundDetailPage({
   const round = await maybeRevealRound(id);
   if (!round) notFound();
 
-  const [state, currentGeot] = await Promise.all([getAppState(), getCurrentGeot()]);
+  const [state, currentGeot] = await Promise.all([getRoundsState(), getCurrentGeot()]);
   const computed = computeRound(round, state.players);
   const isStreetViewRound = Boolean(round.challenge);
   const isOpenStreetViewRound = isStreetViewRound && round.status === "open";
@@ -89,8 +93,16 @@ export default async function RoundDetailPage({
         challenge: round.challenge,
         apiKey: publicGoogleKey,
         allowLocationFallback: round.status !== "open",
+        size: STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
       })
     : null;
+  const streetViewStaticZoomImages = round.challenge
+    ? buildStreetViewStaticZoomImages({
+        challenge: round.challenge,
+        apiKey: publicGoogleKey,
+        allowLocationFallback: round.status !== "open",
+      })
+    : [];
   const streetViewPanorama = round.challenge
     ? buildStreetViewPanoramaConfig({
         challenge: round.challenge,
@@ -148,9 +160,11 @@ export default async function RoundDetailPage({
         </div>
         <Link
           href="/runder"
+          prefetch={false}
           className="inline-flex h-10 items-center justify-center rounded border border-[#062b40]/30 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
         >
           Til rundearkivet
+          <LinkPendingIndicator />
         </Link>
       </div>
 
@@ -204,6 +218,7 @@ export default async function RoundDetailPage({
           roundName={round.name}
           deadlineAt={round.deadlineAt ?? null}
           streetViewUrl={streetViewUrl}
+          streetViewStaticZoomImages={streetViewStaticZoomImages}
           streetViewPanorama={streetViewPanorama}
           googleMapsApiKey={publicGoogleKey}
           existingGuess={existingGuess}
@@ -217,6 +232,7 @@ export default async function RoundDetailPage({
         <SlowGeoRevealMap
           roundName={round.name}
           streetViewUrl={streetViewUrl}
+          streetViewStaticZoomImages={streetViewStaticZoomImages}
           streetViewPanorama={streetViewPanorama}
           googleMapsApiKey={publicGoogleKey}
           markers={revealMarkers}
@@ -244,10 +260,12 @@ export default async function RoundDetailPage({
             {roundAction(round)}
             <Link
               href="/runder"
+              prefetch={false}
               className="inline-flex h-10 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
             >
               <RotateCcw className="h-4 w-4" aria-hidden="true" />
               Arkivet
+              <LinkPendingIndicator />
             </Link>
           </div>
         }

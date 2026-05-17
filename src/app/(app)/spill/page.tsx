@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { ArrowRight, Gamepad2, MapPinned, TableProperties, Trophy } from "lucide-react";
 
+import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { computeGameStandings, computeStandings } from "@/lib/scoring";
-import { getAppState } from "@/lib/store";
+import { getGamesState } from "@/lib/store";
 import type { GameDefinition } from "@/lib/types";
 
 export const metadata = {
@@ -18,7 +19,7 @@ function gameAction(game: GameDefinition) {
 }
 
 export default async function GamesPage() {
-  const state = await getAppState();
+  const state = await getGamesState();
   const slowGeoStandings = computeStandings(state.players, state.rounds);
   const openSlowGeoRounds = state.rounds.filter((round) => round.challenge && round.status === "open").length;
   const lockedSlowGeoRounds = state.rounds.filter((round) => round.challenge && round.status === "locked").length;
@@ -79,10 +80,12 @@ export default async function GamesPage() {
               ) : null}
               <Link
                 href={href}
+                prefetch={false}
                 className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
               >
                 {gameAction(game)}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                <LinkPendingIndicator className="text-white" />
               </Link>
             </article>
           );
@@ -92,6 +95,7 @@ export default async function GamesPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <Link
           href="/tabeller"
+          prefetch={false}
           className="geotia-panel group rounded p-5 transition hover:-translate-y-0.5 hover:border-[#c49a3c]"
         >
           <div className="flex items-center justify-between gap-4">
@@ -106,11 +110,15 @@ export default async function GamesPage() {
                 SlowGeo-tabell, spilltabeller og Æreshallen samlet på ett sted.
               </p>
             </div>
-            <Trophy className="h-8 w-8 flex-none text-[#b8892f]" aria-hidden="true" />
+            <span className="flex flex-none items-center gap-2">
+              <Trophy className="h-8 w-8 text-[#b8892f]" aria-hidden="true" />
+              <LinkPendingIndicator />
+            </span>
           </div>
         </Link>
         <Link
           href="/runder"
+          prefetch={false}
           className="geotia-panel group rounded p-5 transition hover:-translate-y-0.5 hover:border-[#c49a3c]"
         >
           <div className="flex items-center justify-between gap-4">
@@ -125,7 +133,10 @@ export default async function GamesPage() {
                 Arkiv og manuell etterføring når embetsverket trenger full kontroll.
               </p>
             </div>
-            <TableProperties className="h-8 w-8 flex-none text-[#203c62]" aria-hidden="true" />
+            <span className="flex flex-none items-center gap-2">
+              <TableProperties className="h-8 w-8 text-[#203c62]" aria-hidden="true" />
+              <LinkPendingIndicator />
+            </span>
           </div>
         </Link>
       </div>

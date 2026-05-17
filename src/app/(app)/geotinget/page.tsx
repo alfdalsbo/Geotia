@@ -2,10 +2,11 @@ import { Gavel } from "lucide-react";
 
 import { submitGeotingProposalAction } from "@/app/actions";
 import { GeotingSubnav } from "@/components/geoting-subnav";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Section, StatTile } from "@/components/section";
 import { getCurrentGeot } from "@/lib/auth";
 import { geotiaGeotingLines, pickGeoticLine } from "@/lib/geotia-jargon";
-import { getAppState } from "@/lib/store";
+import { getGeotingState, resolveDueGeotingProposals } from "@/lib/store";
 
 export const metadata = {
   title: "GeoTinget",
@@ -17,8 +18,8 @@ export default async function GeotingPage({
   searchParams?: Promise<{ status?: string; error?: string }>;
 }) {
   const params = (await searchParams) ?? {};
-  const state = await getAppState();
-  const currentGeot = await getCurrentGeot();
+  await resolveDueGeotingProposals();
+  const [state, currentGeot] = await Promise.all([getGeotingState(), getCurrentGeot()]);
   const proposals = state.geotingProposals;
   const activeVotingProposals = proposals.filter((proposal) => proposal.status === "voting");
   const activeVotes = activeVotingProposals.length;
@@ -99,13 +100,12 @@ export default async function GeotingPage({
               required
             />
           </label>
-          <button
-            type="submit"
+          <PendingSubmitButton
             className="inline-flex h-11 items-center justify-center gap-2 rounded bg-[#7c2430] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#641923] lg:col-span-2 lg:w-fit"
           >
             <Gavel className="h-4 w-4" aria-hidden="true" />
             Send til GeoTinget
-          </button>
+          </PendingSubmitButton>
         </form>
       </Section>
     </div>

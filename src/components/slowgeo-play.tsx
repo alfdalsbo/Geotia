@@ -5,11 +5,13 @@ import { Loader2, LockKeyhole, MapPin, Maximize2, RotateCcw, Send, X } from "luc
 
 import { submitSlowGeoGuessAction } from "@/app/actions";
 import { loadGoogleMaps, type GoogleMap, type GoogleMapsApi, type GoogleMarker } from "@/components/google-maps-loader";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { SlowGeoImageViewer } from "@/components/slowgeo-image-viewer";
 import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
 import { SlowGeoTipPanel } from "@/components/slowgeo-tip-panel";
 import type { GeoGuessrTip } from "@/lib/geoguessr-tips";
 import type { SlowGeoStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
+import type { StreetViewStaticZoomImage } from "@/lib/streetview-url";
 import { buildOpenSlowGeoShareTextOptions } from "@/lib/slowgeo-share";
 import { dateTimeLabel } from "@/lib/utils";
 
@@ -24,6 +26,7 @@ type SlowGeoPlayProps = {
   roundName: string;
   deadlineAt: string | null;
   streetViewUrl: string | null;
+  streetViewStaticZoomImages: StreetViewStaticZoomImage[];
   streetViewPanorama: SlowGeoStreetViewPanoramaConfig | null;
   googleMapsApiKey: string;
   existingGuess: (Guess & { updatedAt?: string | null }) | null;
@@ -41,6 +44,7 @@ export function SlowGeoPlay({
   roundName,
   deadlineAt,
   streetViewUrl,
+  streetViewStaticZoomImages,
   streetViewPanorama,
   googleMapsApiKey,
   existingGuess,
@@ -190,6 +194,7 @@ export function SlowGeoPlay({
               alt="SlowGeo-bilde"
               sizes="(min-width: 1280px) 58vw, 100vw"
               className="aspect-[4/3] min-h-[320px] sm:aspect-video sm:min-h-[300px]"
+              staticZoomImages={streetViewStaticZoomImages}
               streetViewPanorama={streetViewPanorama}
               title={roundName}
             />
@@ -308,14 +313,13 @@ export function SlowGeoPlay({
                           Svar låst
                         </span>
                       ) : (
-                        <button
-                          type="submit"
+                        <PendingSubmitButton
                           disabled={!guess}
                           className="col-span-2 inline-flex h-11 items-center justify-center gap-2 rounded bg-[#285c45] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#214b38] disabled:cursor-not-allowed disabled:opacity-55 sm:col-span-1"
                         >
                           <Send className="h-4 w-4" aria-hidden="true" />
                           Send pin-svar
-                        </button>
+                        </PendingSubmitButton>
                       )}
                     </div>
                   </div>
@@ -389,14 +393,13 @@ export function SlowGeoPlay({
                 Svar låst
               </span>
             ) : (
-              <button
-                type="submit"
+              <PendingSubmitButton
                 disabled={!guess}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded bg-[#285c45] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#214b38] disabled:cursor-not-allowed disabled:opacity-55"
               >
                 <Send className="h-4 w-4" aria-hidden="true" />
                 Send pin-svar
-              </button>
+              </PendingSubmitButton>
             )}
           </div>
         </form>

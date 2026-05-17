@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { Calculator, Loader2, MapPin, Save, ShieldCheck } from "lucide-react";
 
 import { saveRoundAction } from "@/app/actions";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { computeRound } from "@/lib/scoring";
 import { competingPlayers } from "@/lib/seed";
 import type { DistanceSource, GeoLocation, ResultStatus, Round } from "@/lib/types";
@@ -391,13 +392,12 @@ export function RoundForm({ round }: { round: Round }) {
             <strong className="text-[#161713]">{formatKm(computed.worstThreeAverage)}</strong>
           </span>
         </div>
-        <button
-          type="submit"
+        <PendingSubmitButton
           className="inline-flex h-11 items-center justify-center gap-2 rounded bg-[#203c62] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
         >
           <Save className="h-4 w-4" aria-hidden="true" />
           Lagre protokoll
-        </button>
+        </PendingSubmitButton>
       </div>
     </form>
   );

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BellRing, MapPinned } from "lucide-react";
 
 import { GeotingMiniCountdown } from "@/components/geoting-countdown";
+import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { getSlowGeoProgress, slowGeoDifficultyLabels } from "@/lib/slowgeo-insights";
 import { competingPlayers } from "@/lib/seed";
 import type { Round } from "@/lib/types";
@@ -47,10 +48,12 @@ export function SlowGeoGlobalAlert({ rounds }: { rounds: Round[] }) {
           </p>
           <Link
             href={`/runder/${primary.id}`}
+            prefetch={false}
             className="inline-flex h-10 items-center justify-center gap-2 rounded bg-[#9dd7b0] px-3 text-sm font-semibold text-[#062113] transition hover:bg-[#b9e7c7]"
           >
             <MapPinned className="h-4 w-4" aria-hidden="true" />
             Gå til SlowGeo
+            <LinkPendingIndicator />
           </Link>
         </div>
       </div>

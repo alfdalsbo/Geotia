@@ -6,7 +6,7 @@ import { GeotingVoteAlarm } from "@/components/geoting-vote-alarm";
 import { Section, StatTile } from "@/components/section";
 import { getCurrentGeot } from "@/lib/auth";
 import { geotiaGeotingLines, pickGeoticLine } from "@/lib/geotia-jargon";
-import { getAppState } from "@/lib/store";
+import { getGeotingState, resolveDueGeotingProposals } from "@/lib/store";
 
 export const metadata = {
   title: "Stemmeurnen",
@@ -18,8 +18,8 @@ export default async function GeotingVotesPage({
   searchParams?: Promise<{ status?: string; error?: string }>;
 }) {
   const params = (await searchParams) ?? {};
-  const state = await getAppState();
-  const currentGeot = await getCurrentGeot();
+  await resolveDueGeotingProposals();
+  const [state, currentGeot] = await Promise.all([getGeotingState(), getCurrentGeot()]);
   const votingPlayers = state.players.filter((player) => player.canVote !== false);
   const tingvitner = state.players.filter((player) => player.canVote === false);
   const currentCanVote = Boolean(currentGeot && currentGeot.canVote !== false);

@@ -26,7 +26,7 @@ import {
 import { geotiaOrderLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { getGeoticOnboardingPath, type OnboardingStep } from "@/lib/geotic-onboarding";
 import { computeStandings } from "@/lib/scoring";
-import { getAppState } from "@/lib/store";
+import { getOrderState } from "@/lib/store";
 import type { GeoticOrderRank } from "@/lib/geotisk-orden";
 import { formatNumber } from "@/lib/utils";
 
@@ -37,7 +37,7 @@ export const metadata = {
 type OrderRow = ReturnType<typeof getGeoticOrderRows>[number];
 
 export default async function GeoticOrderPage() {
-  const state = await getAppState();
+  const state = await getOrderState();
   const currentGeot = await getCurrentGeot();
   const standings = computeStandings(state.players, state.rounds);
   const rows = getGeoticOrderRows(

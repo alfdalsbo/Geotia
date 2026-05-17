@@ -4,8 +4,10 @@ import { ArrowRight, Edit3, LockKeyhole, Plus, ShieldCheck } from "lucide-react"
 import { Section } from "@/components/section";
 import { lockRoundAction } from "@/app/actions";
 import { computeRound } from "@/lib/scoring";
-import { getAppState, makeEmptyRound } from "@/lib/store";
+import { getRoundsState, makeEmptyRound } from "@/lib/store";
 import { dateLabel, formatKm } from "@/lib/utils";
+import { LinkPendingIndicator } from "@/components/link-pending-indicator";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { RoundForm } from "@/components/round-form";
 import type { RoundStatus } from "@/lib/types";
 
@@ -19,7 +21,7 @@ export default async function RoundsPage({
   searchParams?: Promise<{ error?: string; status?: string }>;
 }) {
   const params = (await searchParams) ?? {};
-  const state = await getAppState();
+  const state = await getRoundsState();
   const sortedRounds = [...state.rounds].sort((a, b) => b.number - a.number);
 
   return (
@@ -66,10 +68,12 @@ export default async function RoundsPage({
         action={
           <Link
             href="/spill/slowgeo"
+            prefetch={false}
             className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
           >
             Åpne SlowGeo
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            <LinkPendingIndicator />
           </Link>
         }
       >
@@ -117,21 +121,22 @@ export default async function RoundsPage({
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Link
                       href={`/runder/${round.id}`}
+                      prefetch={false}
                       className="inline-flex h-9 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
                     >
                       <Edit3 className="h-4 w-4" aria-hidden="true" />
                       Åpne
+                      <LinkPendingIndicator />
                     </Link>
                     {round.status === "draft" || round.status === "revealed" ? (
                       <form action={lockRoundAction}>
                         <input type="hidden" name="id" value={round.id} />
-                        <button
-                          type="submit"
+                        <PendingSubmitButton
                           className="inline-flex h-9 items-center gap-2 rounded bg-[#285c45] px-3 text-sm font-semibold text-white"
                         >
                           <LockKeyhole className="h-4 w-4" aria-hidden="true" />
                           Lås
-                        </button>
+                        </PendingSubmitButton>
                       </form>
                     ) : null}
                   </div>
@@ -181,21 +186,22 @@ export default async function RoundsPage({
                         <div className="flex justify-end gap-2">
                           <Link
                             href={`/runder/${round.id}`}
+                            prefetch={false}
                             className="inline-flex h-9 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
                           >
                             <Edit3 className="h-4 w-4" aria-hidden="true" />
                             Åpne
+                            <LinkPendingIndicator />
                           </Link>
                           {round.status === "draft" || round.status === "revealed" ? (
                             <form action={lockRoundAction}>
                               <input type="hidden" name="id" value={round.id} />
-                              <button
-                                type="submit"
+                              <PendingSubmitButton
                                 className="inline-flex h-9 items-center gap-2 rounded bg-[#285c45] px-3 text-sm font-semibold text-white"
                               >
                                 <LockKeyhole className="h-4 w-4" aria-hidden="true" />
                                 Lås
-                              </button>
+                              </PendingSubmitButton>
                             </form>
                           ) : round.status === "locked" ? (
                             <span className="inline-flex h-9 items-center gap-2 rounded bg-[#285c45]/10 px-3 text-sm font-semibold text-[#285c45]">

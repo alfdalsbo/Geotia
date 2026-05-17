@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 
-const SCOREBOARD_PATHS = ["/", "/spill", "/tabeller", "/stilling", "/hall-of-fame", "/min-geot"];
+const ROUND_SUMMARY_PATHS = ["/", "/tabeller", "/stilling", "/hall-of-fame", "/min-geot"];
+const SLOWGEO_PATHS = ["/", "/spill", "/spill/slowgeo", "/tabeller", "/stilling", "/hall-of-fame", "/min-geot", "/runder"];
 const GEOTING_PATHS = ["/", "/geotinget", "/geotinget/avstemninger", "/geotinget/pergamenter"];
 const GEOTING_ADMIN_PATHS = ["/tredje-kollegium", ...GEOTING_PATHS, "/arkiv/geotinget"];
 
@@ -11,11 +12,11 @@ function revalidatePaths(paths: string[]) {
 }
 
 export function revalidateRoundPaths(roundId?: string) {
-  revalidatePaths([...SCOREBOARD_PATHS, "/runder", ...(roundId ? [`/runder/${roundId}`] : [])]);
+  revalidatePaths([...ROUND_SUMMARY_PATHS, "/runder", ...(roundId ? [`/runder/${roundId}`] : [])]);
 }
 
 export function revalidateSlowGeoPaths(roundId?: string) {
-  revalidatePaths([...SCOREBOARD_PATHS, "/spill/slowgeo", "/runder", ...(roundId ? [`/runder/${roundId}`] : [])]);
+  revalidatePaths([...SLOWGEO_PATHS, ...(roundId ? [`/runder/${roundId}`, `/slowgeo/${roundId}`] : [])]);
 }
 
 export function revalidateGameSessionPaths() {

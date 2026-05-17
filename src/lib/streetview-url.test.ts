@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { buildStreetViewPanoramaConfig, streetViewZoomFromFov } from "@/lib/streetview-panorama";
-import { buildStreetViewImageUrl, STREET_VIEW_STATIC_IMAGE_SIZE } from "@/lib/streetview-url";
+import {
+  buildStreetViewImageUrl,
+  buildStreetViewStaticZoomImages,
+  normalizeStreetViewStaticFov,
+  streetViewStaticFovForZoom,
+  STREET_VIEW_STATIC_IMAGE_SIZE,
+  STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
+} from "@/lib/streetview-url";
 import type { SlowGeoChallenge } from "@/lib/types";
 
 const challenge: SlowGeoChallenge = {
@@ -29,9 +36,37 @@ describe("Street View display helpers", () => {
   });
 
   it("keeps explicit Static API sizes when a caller needs one", () => {
-    const url = buildStreetViewImageUrl({ challenge, apiKey: "public-key", size: "320x320" });
+    const url = buildStreetViewImageUrl({
+      challenge,
+      apiKey: "public-key",
+      size: STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
+    });
 
-    expect(url).toContain("size=320x320");
+    expect(url).toContain(`size=${STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE}`);
+  });
+
+  it("builds static zoom variants with narrower fov and max Static API size", () => {
+    const variants = buildStreetViewStaticZoomImages({
+      challenge,
+      apiKey: "public-key",
+    });
+
+    expect(variants.map((variant) => variant.scale)).toEqual([1, 1.5, 2, 3, 4]);
+    expect(variants.map((variant) => variant.fov)).toEqual([90, 60, 45, 30, 22.5]);
+    expect(variants.every((variant) => variant.src.includes(`size=${STREET_VIEW_STATIC_IMAGE_SIZE}`))).toBe(true);
+    expect(variants[1].src).toContain("fov=60");
+  });
+
+  it("clamps static zoom fov before it invents more static detail", () => {
+    expect(normalizeStreetViewStaticFov(200)).toBe(120);
+    expect(streetViewStaticFovForZoom(60, 4)).toBe(20);
+    expect(
+      buildStreetViewStaticZoomImages({
+        challenge: { ...challenge, fov: 60 },
+        apiKey: "public-key",
+        zoomFactors: [1, 2, 3, 4],
+      }).map((variant) => variant.scale),
+    ).toEqual([1, 2, 3]);
   });
 
   it("maps Static API fov to an equivalent Street View panorama zoom", () => {

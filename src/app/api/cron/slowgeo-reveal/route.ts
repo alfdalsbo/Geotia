@@ -12,7 +12,9 @@ export async function GET(request: Request) {
   }
 
   const result = await revealDueSlowGeoRounds();
-  revalidateSlowGeoPaths();
+  if (result.revealed > 0) {
+    revalidateSlowGeoPaths();
+  }
 
   return NextResponse.json({ ok: true, ...result });
 }
