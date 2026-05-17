@@ -54,12 +54,20 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await expect(page.getByRole("cell", { name: "24 000 poeng" }).first()).toBeVisible();
 
   await page.getByRole("link", { name: "GeoTinget" }).click();
+  await expect(page.getByRole("link", { name: "Tingvollen" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Stemmeurnen" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Tingpergamentene" })).toBeVisible();
+  await page.getByRole("link", { name: "Tingpergamentene" }).click();
+  await expect(page.getByRole("heading", { name: "Tingpergamentene" })).toBeVisible();
+  await page.getByRole("link", { name: "Tingvollen" }).click();
   const proposalTitle = `Lov om Playwright-ro ${Date.now()}`;
   await page.getByLabel("Tittel").fill(proposalTitle);
   await page.getByLabel("Forslag / innhold").fill("Alle testgeoter skal få stemme uten parlamentarisk støy.");
   await page.getByRole("button", { name: "Send til GeoTinget" }).click();
   await expect(page.getByText("Forslaget er mottatt.")).toBeVisible();
+  await page.getByRole("link", { name: "Stemmeurnen" }).click();
   const proposalCard = page.locator("article").filter({ hasText: proposalTitle });
+  await expect(proposalCard.getByRole("button", { name: "Åpne stemmeurnen" })).toBeVisible();
   await proposalCard.getByLabel("Jeg sverger geo-eden og varsler alle geoter umiddelbart.").check();
   await proposalCard.getByRole("button", { name: "Åpne stemmeurnen" }).click();
   await expect(page.getByText("Geo-eden er avlagt.")).toBeVisible();
@@ -79,8 +87,12 @@ test("Danny logs in as Tingvitne without voting power", async ({ page }) => {
 
   await expect(page.getByText("Innlogget som Danny · Tingvitne")).toBeVisible();
   await page.getByRole("link", { name: "GeoTinget" }).click();
+  await expect(page.getByRole("link", { name: "Tingvollen" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Stemmeurnen" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Tingpergamentene" })).toBeVisible();
   await expect(page.getByText("Tingvitneprotokoll:")).toBeVisible();
   await expect(page.getByText("har ikke stemmerett")).toBeVisible();
+  await page.getByRole("link", { name: "Stemmeurnen" }).click();
   await expect(page.getByRole("button", { name: "Avgi stemme" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Åpne stemmeurnen" })).toHaveCount(0);
   await page.getByRole("link", { name: "Tingpergamentene" }).click();

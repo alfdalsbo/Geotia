@@ -51,7 +51,17 @@ test("core pages do not overflow horizontally on mobile", async ({ page }) => {
   test.setTimeout(120_000);
   await login(page);
 
-  for (const route of ["/", "/spill", "/tabeller", "/geotinget", "/geotinget/pergamenter", "/min-geot", "/ordenen", "/arkiv"]) {
+  for (const route of [
+    "/",
+    "/spill",
+    "/tabeller",
+    "/geotinget",
+    "/geotinget/avstemninger",
+    "/geotinget/pergamenter",
+    "/min-geot",
+    "/ordenen",
+    "/arkiv",
+  ]) {
     await page.goto(route, { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("button", { name: "Forlat embetsverket" })).toBeVisible();
     await expectNoHorizontalOverflow(page);

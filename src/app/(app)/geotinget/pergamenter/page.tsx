@@ -1,7 +1,7 @@
-import Link from "next/link";
-import { ArrowLeft, FileText, Gavel, ScrollText, ShieldCheck } from "lucide-react";
+import { FileText, Gavel, ScrollText, ShieldCheck } from "lucide-react";
 
 import { updateGeotingProposalAction, withdrawGeotingProposalAction } from "@/app/actions";
+import { GeotingSubnav } from "@/components/geoting-subnav";
 import { Section, StatTile } from "@/components/section";
 import { getCurrentGeot } from "@/lib/auth";
 import { summarizeProposal } from "@/lib/geoting";
@@ -44,28 +44,19 @@ export default async function GeotingPergamentsPage({
   return (
     <div className="space-y-6">
       <section className="geotia-frame geotia-temple rounded p-5 sm:p-7">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7c2430] sm:tracking-[0.22em]">
-              GeoTingets arkiv · pergamenter · protokoller
-            </p>
-            <h1 className="font-display mt-2 text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
-              Tingpergamentene
-            </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-[#4f412b] sm:text-base sm:leading-7">
-              Her ligger GeoTingets innsendte saker, avstemninger, vedtak,
-              trukne forslag og gamle grunnpergamenter samlet i ett arkiv.
-            </p>
-          </div>
-          <Link
-            href="/geotinget"
-            className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded border border-[#062b40]/30 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Til GeoTinget
-          </Link>
-        </div>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7c2430] sm:tracking-[0.22em]">
+          GeoTingets arkiv · pergamenter · protokoller
+        </p>
+        <h1 className="font-display mt-2 text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
+          Tingpergamentene
+        </h1>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-[#4f412b] sm:text-base sm:leading-7">
+          Her ligger GeoTingets innsendte saker, avstemninger, vedtak,
+          trukne forslag og gamle grunnpergamenter samlet i ett arkiv.
+        </p>
       </section>
+
+      <GeotingSubnav active="pergamenter" />
 
       <PergamentStatus status={params.status} error={params.error} />
 

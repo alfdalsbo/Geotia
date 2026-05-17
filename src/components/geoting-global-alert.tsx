@@ -31,7 +31,7 @@ export function GeotingGlobalAlert({ proposals }: { proposals: GeotingProposal[]
             Frist <GeotingMiniCountdown endsAt={primary.voteEndsAt} />
           </p>
           <Link
-            href="/geotinget"
+            href="/geotinget/avstemninger"
             className="inline-flex h-10 items-center justify-center gap-2 rounded bg-[#e1c06c] px-3 text-sm font-semibold text-[#321018] transition hover:bg-[#f0d78f]"
           >
             <Gavel className="h-4 w-4" aria-hidden="true" />

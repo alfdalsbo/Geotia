@@ -374,6 +374,7 @@ export async function submitGeotingProposalAction(formData: FormData) {
   });
 
   revalidatePath("/geotinget");
+  revalidatePath("/geotinget/avstemninger");
   revalidatePath("/geotinget/pergamenter");
   revalidatePath("/");
   redirect("/geotinget?status=forslag");
@@ -394,6 +395,7 @@ export async function updateGeotingProposalAction(formData: FormData) {
 
   revalidatePath("/tredje-kollegium");
   revalidatePath("/geotinget");
+  revalidatePath("/geotinget/avstemninger");
   revalidatePath("/geotinget/pergamenter");
   revalidatePath("/arkiv/geotinget");
   revalidatePath("/");
@@ -416,6 +418,7 @@ export async function withdrawGeotingProposalAction(formData: FormData) {
 
   revalidatePath("/tredje-kollegium");
   revalidatePath("/geotinget");
+  revalidatePath("/geotinget/avstemninger");
   revalidatePath("/geotinget/pergamenter");
   revalidatePath("/arkiv/geotinget");
   revalidatePath("/");
@@ -429,10 +432,10 @@ export async function withdrawGeotingProposalAction(formData: FormData) {
 export async function startGeotingVoteAction(formData: FormData) {
   const session = await requireSession();
   if (!isVotingPlayerId(session.playerId)) {
-    redirect("/geotinget?error=tingvitne");
+    redirect("/geotinget/avstemninger?error=tingvitne");
   }
   if (field(formData, "geoOath") !== "on") {
-    redirect("/geotinget?error=geoed");
+    redirect("/geotinget/avstemninger?error=geoed");
   }
 
   const result = await startGeotingVote({
@@ -442,20 +445,21 @@ export async function startGeotingVoteAction(formData: FormData) {
   });
 
   revalidatePath("/geotinget");
+  revalidatePath("/geotinget/avstemninger");
   revalidatePath("/geotinget/pergamenter");
   revalidatePath("/arkiv/geotinget");
   revalidatePath("/");
 
   if (!result.ok) {
-    redirect(`/geotinget?error=${encodeURIComponent(result.reason ?? "Geo-eden sprakk i pergamentet.")}`);
+    redirect(`/geotinget/avstemninger?error=${encodeURIComponent(result.reason ?? "Geo-eden sprakk i pergamentet.")}`);
   }
-  redirect("/geotinget?status=avstemning");
+  redirect("/geotinget/avstemninger?status=avstemning");
 }
 
 export async function voteGeotingProposalAction(formData: FormData) {
   const session = await requireSession();
   if (!isVotingPlayerId(session.playerId)) {
-    redirect("/geotinget?error=tingvitne");
+    redirect("/geotinget/avstemninger?error=tingvitne");
   }
 
   const result = await saveGeotingVote({
@@ -466,18 +470,19 @@ export async function voteGeotingProposalAction(formData: FormData) {
   });
 
   revalidatePath("/geotinget");
+  revalidatePath("/geotinget/avstemninger");
   revalidatePath("/geotinget/pergamenter");
   revalidatePath("/arkiv/geotinget");
   revalidatePath("/");
 
   if (!result.ok || !result.proposal) {
-    redirect(`/geotinget?error=${encodeURIComponent(result.reason ?? "Stemmen ble stoppet av embetsverket.")}`);
+    redirect(`/geotinget/avstemninger?error=${encodeURIComponent(result.reason ?? "Stemmen ble stoppet av embetsverket.")}`);
   }
   const proposal = result.proposal;
   redirect(
     proposal.status === "passed" || proposal.status === "rejected"
-      ? "/geotinget?status=avgjort"
-      : "/geotinget?status=stemt",
+      ? "/geotinget/avstemninger?status=avgjort"
+      : "/geotinget/avstemninger?status=stemt",
   );
 }
 

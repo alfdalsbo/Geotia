@@ -31,13 +31,15 @@ export function GeotingVoteAlarm({
             på tingvollen med levende frist, og unnlatelse blir ikke mindre
             synlig av at man later som man ikke så dette.
           </p>
-          <Link
-            href="/geotinget"
-            className="mt-5 inline-flex h-11 items-center gap-2 rounded bg-[#e1c06c] px-4 text-sm font-semibold text-[#321018] shadow-sm transition hover:bg-[#f0d78f]"
-          >
-            <Gavel className="h-4 w-4" aria-hidden="true" />
-            Gå til avstemning
-          </Link>
+          {context === "dashboard" ? (
+            <Link
+              href="/geotinget/avstemninger"
+              className="mt-5 inline-flex h-11 items-center gap-2 rounded bg-[#e1c06c] px-4 text-sm font-semibold text-[#321018] shadow-sm transition hover:bg-[#f0d78f]"
+            >
+              <Gavel className="h-4 w-4" aria-hidden="true" />
+              Gå til avstemning
+            </Link>
+          ) : null}
         </div>
         <div className="border-t border-[#e1c06c]/35 bg-[#020b11]/40 p-4 sm:p-5 xl:border-l xl:border-t-0">
           <div className={context === "dashboard" ? "grid gap-3 lg:grid-cols-2 xl:grid-cols-1" : "grid gap-3 lg:grid-cols-2"}>
