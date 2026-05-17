@@ -65,6 +65,10 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await expect(page.getByText("Geo-eden er avlagt.")).toBeVisible();
   await proposalCard.getByRole("button", { name: "Avgi stemme" }).click();
   await expect(page.getByText("Stemmen er ført.")).toBeVisible();
+  await page.getByRole("link", { name: "Tingpergamentene" }).click();
+  await expect(page.getByRole("heading", { name: "Tingpergamentene" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: proposalTitle })).toBeVisible();
+  await expect(page.getByText("Kollegiets redigering")).toBeVisible();
 });
 
 test("Danny logs in as Tingvitne without voting power", async ({ page }) => {
@@ -79,6 +83,9 @@ test("Danny logs in as Tingvitne without voting power", async ({ page }) => {
   await expect(page.getByText("har ikke stemmerett")).toBeVisible();
   await expect(page.getByRole("button", { name: "Avgi stemme" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Åpne stemmeurnen" })).toHaveCount(0);
+  await page.getByRole("link", { name: "Tingpergamentene" }).click();
+  await expect(page.getByRole("heading", { name: "Tingpergamentene" })).toBeVisible();
+  await expect(page.getByText("Kollegiets redigering")).toHaveCount(0);
 });
 
 test("SlowGeo can auto-calculate distances and archive a map protocol", async ({ page }) => {

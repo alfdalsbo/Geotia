@@ -287,6 +287,24 @@ function ArchiveBody({
     const geotingPlayers = livePlayers ?? players;
     return (
       <div className="space-y-6">
+        <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
+                Levende arkiv
+              </p>
+              <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">
+                Tingpergamentene
+              </h2>
+            </div>
+            <Link
+              href="/geotinget/pergamenter"
+              className="inline-flex h-10 w-fit items-center justify-center rounded bg-[#203c62] px-3 text-sm font-semibold text-white"
+            >
+              Åpne pergamentarkivet
+            </Link>
+          </div>
+        </div>
         <Section title="Saker for GeoTinget" eyebrow="Historisk protokollark">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1240px] text-left text-sm">

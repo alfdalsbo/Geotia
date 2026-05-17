@@ -527,7 +527,6 @@ function GeotingAdminSection({
           {visibleProposals.map((proposal) => {
             const proposer = playerById.get(proposal.proposedBy);
             const canWithdraw = proposal.status === "open" || proposal.status === "voting";
-            const canEdit = proposal.status !== "archived";
 
             return (
               <article key={proposal.id} className="rounded border border-[#d8c48c] bg-[#fff7e6] p-4">
@@ -552,8 +551,7 @@ function GeotingAdminSection({
                     <input
                       name="title"
                       defaultValue={proposal.title}
-                      disabled={!canEdit}
-                      className="h-10 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62] disabled:opacity-60"
+                      className="h-10 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
                       required
                     />
                   </label>
@@ -562,8 +560,7 @@ function GeotingAdminSection({
                     <select
                       name="ruleType"
                       defaultValue={proposal.ruleType}
-                      disabled={!canEdit}
-                      className="h-10 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62] disabled:opacity-60"
+                      className="h-10 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
                     >
                       <option value="grunnlov">GeoGrunnlovsendring</option>
                       <option value="mindre">Mindre lovendring</option>
@@ -575,16 +572,14 @@ function GeotingAdminSection({
                     <textarea
                       name="body"
                       defaultValue={proposal.body}
-                      disabled={!canEdit}
-                      className="min-h-28 w-full rounded border border-[#d8ded0] bg-white px-3 py-2 outline-none focus:border-[#203c62] disabled:opacity-60"
+                      className="min-h-28 w-full rounded border border-[#d8ded0] bg-white px-3 py-2 outline-none focus:border-[#203c62]"
                       required
                     />
                   </label>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center lg:col-span-2">
                     <button
                       type="submit"
-                      disabled={!canEdit}
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b] disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
                     >
                       <FileText className="h-4 w-4" aria-hidden="true" />
                       Lagre endring

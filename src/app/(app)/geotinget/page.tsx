@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BellRing, CheckCircle2, Clock, Gavel, Landmark, ScrollText, Vote, XCircle } from "lucide-react";
 
 import { startGeotingVoteAction, submitGeotingProposalAction, voteGeotingProposalAction } from "@/app/actions";
@@ -64,6 +65,15 @@ export default async function GeotingPage({
           geo-eden og varsler alle geoter. Derfra har riket 24 timer, med mindre
           alle syv stemmer før fristen.
         </p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Link
+            href="/geotinget/pergamenter"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
+          >
+            <ScrollText className="h-4 w-4" aria-hidden="true" />
+            Tingpergamentene
+          </Link>
+        </div>
       </section>
 
       <GeotingStatus status={params.status} error={params.error} />

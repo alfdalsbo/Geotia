@@ -1252,6 +1252,10 @@ export async function submitSlowGeoGuess(input: {
     await saveRounds(rounds.map((candidate) => (candidate.id === round.id ? finalized : candidate)));
     return { ok: false, reason: "Fristen er ute og fasit er avslørt." };
   }
+  const existingResult = round.results.find((result) => result.playerId === input.playerId);
+  if (existingResult?.guessLocation) {
+    return { ok: false, reason: "Pin-svaret ditt er allerede låst." };
+  }
 
   if (
     !Number.isFinite(input.location.lat) ||
@@ -1376,9 +1380,6 @@ export async function updateGeotingProposal(input: UpdateProposalInput) {
   const proposal = proposals.find((candidate) => candidate.id === input.proposalId);
   if (!proposal) {
     return { ok: false, reason: "Saken finnes ikke i GeoTingets protokoll." };
-  }
-  if (proposal.status === "archived") {
-    return { ok: false, reason: "Saken er allerede trukket og arkivert." };
   }
   const title = input.title.trim();
   const body = input.body.trim();

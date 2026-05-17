@@ -209,14 +209,21 @@ describe("Geotia file store", () => {
       ruleType: "mindre",
     });
     const withdrawn = await withdrawGeotingProposal({ proposalId: proposal.id });
+    const archivedEdit = await updateGeotingProposal({
+      proposalId: proposal.id,
+      title: "Lov om endelig pergament",
+      body: "Kollegiet kan rette arkivert tekst.",
+      ruleType: "mindre",
+    });
     const state = await getAppState();
     const stored = state.geotingProposals.find((candidate) => candidate.id === proposal.id);
 
     expect(edited.ok).toBe(true);
     expect(withdrawn.ok).toBe(true);
+    expect(archivedEdit.ok).toBe(true);
     expect(stored).toMatchObject({
-      title: "Lov om presis ordlyd",
-      body: "Kollegiet har redigert teksten.",
+      title: "Lov om endelig pergament",
+      body: "Kollegiet kan rette arkivert tekst.",
       ruleType: "mindre",
       status: "archived",
     });

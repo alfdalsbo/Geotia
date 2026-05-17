@@ -346,6 +346,18 @@ function geoticOrderStatus(value: string): GeoticOrderStatus {
   return geoticOrderStatuses.some((status) => status.id === value) ? (value as GeoticOrderStatus) : "normal";
 }
 
+function geotingAdminRedirect(formData: FormData, status: string, fallback: string) {
+  const returnTo = field(formData, "returnTo");
+  const basePath = returnTo === "/geotinget/pergamenter" ? returnTo : fallback;
+  return `${basePath}?status=${encodeURIComponent(status)}`;
+}
+
+function geotingAdminErrorRedirect(formData: FormData, reason: string, fallback: string) {
+  const returnTo = field(formData, "returnTo");
+  const basePath = returnTo === "/geotinget/pergamenter" ? returnTo : fallback;
+  return `${basePath}?error=${encodeURIComponent(reason)}`;
+}
+
 export async function submitGeotingProposalAction(formData: FormData) {
   const session = await requireSession();
   await createGeotingProposal({
@@ -356,6 +368,7 @@ export async function submitGeotingProposalAction(formData: FormData) {
   });
 
   revalidatePath("/geotinget");
+  revalidatePath("/geotinget/pergamenter");
   revalidatePath("/");
   redirect("/geotinget?status=forslag");
 }
@@ -375,13 +388,14 @@ export async function updateGeotingProposalAction(formData: FormData) {
 
   revalidatePath("/tredje-kollegium");
   revalidatePath("/geotinget");
+  revalidatePath("/geotinget/pergamenter");
   revalidatePath("/arkiv/geotinget");
   revalidatePath("/");
 
   if (!result.ok) {
-    redirect(`/tredje-kollegium?error=${encodeURIComponent(result.reason ?? "Kollegiet fikk ikke endret saken.")}`);
+    redirect(geotingAdminErrorRedirect(formData, result.reason ?? "Kollegiet fikk ikke endret saken.", "/tredje-kollegium"));
   }
-  redirect("/tredje-kollegium?status=geoting-redigert");
+  redirect(geotingAdminRedirect(formData, "geoting-redigert", "/tredje-kollegium"));
 }
 
 export async function withdrawGeotingProposalAction(formData: FormData) {
@@ -396,13 +410,14 @@ export async function withdrawGeotingProposalAction(formData: FormData) {
 
   revalidatePath("/tredje-kollegium");
   revalidatePath("/geotinget");
+  revalidatePath("/geotinget/pergamenter");
   revalidatePath("/arkiv/geotinget");
   revalidatePath("/");
 
   if (!result.ok) {
-    redirect(`/tredje-kollegium?error=${encodeURIComponent(result.reason ?? "Kollegiet fikk ikke trukket saken.")}`);
+    redirect(geotingAdminErrorRedirect(formData, result.reason ?? "Kollegiet fikk ikke trukket saken.", "/tredje-kollegium"));
   }
-  redirect("/tredje-kollegium?status=geoting-trukket");
+  redirect(geotingAdminRedirect(formData, "geoting-trukket", "/tredje-kollegium"));
 }
 
 export async function startGeotingVoteAction(formData: FormData) {
@@ -421,6 +436,7 @@ export async function startGeotingVoteAction(formData: FormData) {
   });
 
   revalidatePath("/geotinget");
+  revalidatePath("/geotinget/pergamenter");
   revalidatePath("/arkiv/geotinget");
   revalidatePath("/");
 
@@ -444,6 +460,7 @@ export async function voteGeotingProposalAction(formData: FormData) {
   });
 
   revalidatePath("/geotinget");
+  revalidatePath("/geotinget/pergamenter");
   revalidatePath("/arkiv/geotinget");
   revalidatePath("/");
 
