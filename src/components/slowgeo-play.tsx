@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Loader2, MapPin, Send } from "lucide-react";
+import { Loader2, LockKeyhole, MapPin, Send } from "lucide-react";
 
 import { submitSlowGeoGuessAction } from "@/app/actions";
 import { loadGoogleMaps, type GoogleMap, type GoogleMapsApi, type GoogleMarker } from "@/components/google-maps-loader";
+import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
 import { dateTimeLabel } from "@/lib/utils";
 
 type Guess = {
@@ -16,10 +17,12 @@ type Guess = {
 
 type SlowGeoPlayProps = {
   roundId: string;
+  roundName: string;
   deadlineAt: string | null;
   streetViewUrl: string | null;
   googleMapsApiKey: string;
   existingGuess: (Guess & { updatedAt?: string | null }) | null;
+  shareUrl: string;
   imageDate?: string;
   copyright?: string;
 };
@@ -30,10 +33,12 @@ function guessLabel(lat: number, lon: number) {
 
 export function SlowGeoPlay({
   roundId,
+  roundName,
   deadlineAt,
   streetViewUrl,
   googleMapsApiKey,
   existingGuess,
+  shareUrl,
   imageDate,
   copyright,
 }: SlowGeoPlayProps) {
@@ -44,6 +49,7 @@ export function SlowGeoPlay({
   const [guess, setGuess] = useState<Guess | null>(existingGuess);
   const [mapError, setMapError] = useState("");
   const [loadingMap, setLoadingMap] = useState(Boolean(googleMapsApiKey));
+  const answerLocked = Boolean(existingGuess);
 
   const placeMarker = useCallback((nextGuess: Guess, center = true) => {
     const mapsApi = mapsApiRef.current;
@@ -89,13 +95,15 @@ export function SlowGeoPlay({
           streetViewControl: false,
         });
         mapRef.current = map;
-        map.addListener("click", (event) => {
-          const lat = event.latLng?.lat();
-          const lon = event.latLng?.lng();
-          if (typeof lat === "number" && typeof lon === "number") {
-            updateGuess(lat, lon);
-          }
-        });
+        if (!answerLocked) {
+          map.addListener("click", (event) => {
+            const lat = event.latLng?.lat();
+            const lon = event.latLng?.lng();
+            if (typeof lat === "number" && typeof lon === "number") {
+              updateGuess(lat, lon);
+            }
+          });
+        }
         if (existingGuess) {
           placeMarker(existingGuess, false);
         }
@@ -110,7 +118,7 @@ export function SlowGeoPlay({
       cancelled = true;
       markerRef.current?.setMap(null);
     };
-  }, [existingGuess, googleMapsApiKey, placeMarker, updateGuess]);
+  }, [answerLocked, existingGuess, googleMapsApiKey, placeMarker, updateGuess]);
 
   const hasMap = Boolean(googleMapsApiKey);
 
@@ -135,9 +143,19 @@ export function SlowGeoPlay({
               Street View-bildet mangler pano-ID eller Google-nøkkel. Sett Google-miljøvariablene og opprett en ny runde.
             </div>
           )}
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 px-4 py-3 text-xs text-[#eadcbd]">
-            <span>{imageDate ? `Street View ${imageDate}` : "Google Street View"}</span>
-            <span>{copyright ?? "© Google"}</span>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3 text-xs text-[#eadcbd]">
+            <div className="flex flex-col gap-1">
+              <span>{imageDate ? `Street View ${imageDate}` : "Google Street View"}</span>
+              <span>{copyright ?? "© Google"}</span>
+            </div>
+            <SlowGeoShareButton
+              title={`SlowGeo: ${roundName}`}
+              text={`Nytt SlowGeo-bilde er oppe: ${roundName}. Krangle først, sett pinnen etterpå.`}
+              url={shareUrl}
+              label="Del bildet"
+              copiedLabel="Bildelenke kopiert"
+              tone="dark"
+            />
           </div>
         </div>
 
@@ -154,7 +172,9 @@ export function SlowGeoPlay({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">Ditt svar</p>
-              <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">Sett pinnen</h2>
+              <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">
+                {answerLocked ? "Pin-svaret er låst" : "Sett pinnen"}
+              </h2>
             </div>
             <p className="rounded border border-[#d8ded0] bg-white px-3 py-2 text-sm font-semibold text-[#203c62]">
               Frist {deadlineAt ? dateTimeLabel(deadlineAt) : "ikke satt"}
@@ -181,6 +201,7 @@ export function SlowGeoPlay({
                   step="0.000001"
                   value={guess?.lat ?? ""}
                   onChange={(event) => updateGuess(Number(event.target.value), guess?.lon ?? 0)}
+                  disabled={answerLocked}
                   className="h-10 w-full rounded border border-[#d8ded0] px-2 outline-none focus:border-[#203c62]"
                 />
               </label>
@@ -192,6 +213,7 @@ export function SlowGeoPlay({
                   step="0.000001"
                   value={guess?.lon ?? ""}
                   onChange={(event) => updateGuess(guess?.lat ?? 0, Number(event.target.value))}
+                  disabled={answerLocked}
                   className="h-10 w-full rounded border border-[#d8ded0] px-2 outline-none focus:border-[#203c62]"
                 />
               </label>
@@ -209,18 +231,25 @@ export function SlowGeoPlay({
               <MapPin className="h-4 w-4 flex-none text-[#7c2430]" aria-hidden="true" />
               <span>
                 {guess
-                  ? `${guess.lat.toFixed(5)}, ${guess.lon.toFixed(5)}${existingGuess?.updatedAt ? ` · sist lagret ${dateTimeLabel(existingGuess.updatedAt)}` : ""}`
+                  ? `${guess.lat.toFixed(5)}, ${guess.lon.toFixed(5)}${existingGuess?.updatedAt ? ` · låst ${dateTimeLabel(existingGuess.updatedAt)}` : ""}`
                   : "Ingen pin satt ennå."}
               </span>
             </p>
-            <button
-              type="submit"
-              disabled={!guess}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded bg-[#285c45] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#214b38] disabled:cursor-not-allowed disabled:opacity-55"
-            >
-              <Send className="h-4 w-4" aria-hidden="true" />
-              Send pin-svar
-            </button>
+            {answerLocked ? (
+              <span className="inline-flex h-11 items-center justify-center gap-2 rounded border border-[#285c45]/25 bg-[#285c45]/10 px-4 text-sm font-semibold text-[#285c45]">
+                <LockKeyhole className="h-4 w-4" aria-hidden="true" />
+                Svar låst
+              </span>
+            ) : (
+              <button
+                type="submit"
+                disabled={!guess}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded bg-[#285c45] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#214b38] disabled:cursor-not-allowed disabled:opacity-55"
+              >
+                <Send className="h-4 w-4" aria-hidden="true" />
+                Send pin-svar
+              </button>
+            )}
           </div>
         </form>
       </div>

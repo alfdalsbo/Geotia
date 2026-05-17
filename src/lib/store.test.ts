@@ -174,6 +174,21 @@ describe("Geotia file store", () => {
     expect(submitted.round?.status).toBe("open");
     expect(submitted.round?.results.find((result) => result.playerId === "alf")?.guessLocation?.label).toBe("Testpin");
 
+    const resubmitted = await submitSlowGeoGuess({
+      roundId: created.round.id,
+      playerId: "alf",
+      location: {
+        lat: 0,
+        lon: 0,
+        label: "For sent å angre",
+        query: "pin",
+        source: "manual",
+      },
+    });
+
+    expect(resubmitted.ok).toBe(false);
+    expect(resubmitted.reason).toContain("låst");
+
     const reveal = await revealDueSlowGeoRounds(new Date(Date.now() + 25 * 60 * 60 * 1000));
     const state = await getAppState();
     const round = state.rounds.find((candidate) => candidate.id === created.round.id);

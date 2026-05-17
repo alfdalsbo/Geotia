@@ -79,6 +79,7 @@ export default async function RoundDetailPage({
   const computed = computeRound(round, state.players);
   const isStreetViewRound = Boolean(round.challenge);
   const isOpenStreetViewRound = isStreetViewRound && round.status === "open";
+  const slowGeoShareUrl = `/slowgeo/${round.id}`;
   const publicGoogleKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
   const streetViewUrl = round.challenge
     ? buildStreetViewImageUrl({
@@ -89,6 +90,9 @@ export default async function RoundDetailPage({
     : null;
   const currentResult = currentGeot
     ? round.results.find((result) => result.playerId === currentGeot.id)
+    : null;
+  const currentComputedResult = currentGeot
+    ? computed.results.find((result) => result.playerId === currentGeot.id)
     : null;
   const existingGuess = currentResult?.guessLocation
     ? {
@@ -143,7 +147,7 @@ export default async function RoundDetailPage({
           {query.status === "geovar"
             ? "GeoVAR har åpnet protokollen for ny behandling."
             : query.status === "gjettet"
-              ? "Pin-svaret er ført. Siste svar gjelder fram til reveal."
+              ? "Pin-svaret er låst. Kranglingen kan fortsette uten at pinnen flytter seg."
               : query.status === "avslort"
                 ? "Alle geoter har svart. Fasit er avslørt."
                 : query.status === "apnet"
@@ -180,10 +184,12 @@ export default async function RoundDetailPage({
       {isOpenStreetViewRound && round.challenge ? (
         <SlowGeoPlay
           roundId={round.id}
+          roundName={round.name}
           deadlineAt={round.deadlineAt ?? null}
           streetViewUrl={streetViewUrl}
           googleMapsApiKey={publicGoogleKey}
           existingGuess={existingGuess}
+          shareUrl={slowGeoShareUrl}
           imageDate={round.challenge.imageDate}
           copyright={round.challenge.copyright}
         />
@@ -191,9 +197,15 @@ export default async function RoundDetailPage({
 
       {isStreetViewRound && round.challenge && round.status !== "open" ? (
         <SlowGeoRevealMap
+          roundName={round.name}
           streetViewUrl={streetViewUrl}
           googleMapsApiKey={publicGoogleKey}
           markers={revealMarkers}
+          shareUrl={slowGeoShareUrl}
+          answerLabel={round.answer || round.challenge.label}
+          currentPlayerName={currentComputedResult?.player.shortName}
+          currentDistanceKm={currentComputedResult?.actualKm}
+          winnerNames={computed.winnerNames}
           imageDate={round.challenge.imageDate}
           copyright={round.challenge.copyright}
         />
@@ -241,9 +253,9 @@ export default async function RoundDetailPage({
                     <td className="py-3 pr-3">
                       {round.status === "open"
                         ? result.playerId === currentGeot?.id && result.guessLocation
-                          ? "Ditt pin-svar er lagret"
+                          ? "Ditt pin-svar er låst"
                           : result.guessLocation
-                            ? "Svar mottatt"
+                            ? "Svar låst"
                             : "-"
                         : result.guessText || result.guessLocation?.label || "-"}
                     </td>

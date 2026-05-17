@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, MapPin } from "lucide-react";
 
 import { loadGoogleMaps, type GoogleMap, type GoogleMapsApi, type GoogleMarker } from "@/components/google-maps-loader";
+import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
 import { formatKm } from "@/lib/utils";
 
 type RevealMarker = {
@@ -18,15 +19,27 @@ type RevealMarker = {
 };
 
 export function SlowGeoRevealMap({
+  roundName,
   streetViewUrl,
   googleMapsApiKey,
   markers,
+  shareUrl,
+  answerLabel,
+  currentPlayerName,
+  currentDistanceKm,
+  winnerNames,
   imageDate,
   copyright,
 }: {
+  roundName: string;
   streetViewUrl: string | null;
   googleMapsApiKey: string;
   markers: RevealMarker[];
+  shareUrl: string;
+  answerLabel: string;
+  currentPlayerName?: string;
+  currentDistanceKm?: number | null;
+  winnerNames: string[];
   imageDate?: string;
   copyright?: string;
 }) {
@@ -35,6 +48,11 @@ export function SlowGeoRevealMap({
   const markerRefs = useRef<GoogleMarker[]>([]);
   const [loadingMap, setLoadingMap] = useState(Boolean(googleMapsApiKey));
   const [mapError, setMapError] = useState("");
+  const shareText =
+    currentPlayerName && typeof currentDistanceKm === "number"
+      ? `${currentPlayerName} landet ${formatKm(currentDistanceKm)} fra fasit i ${roundName}. Fasit: ${answerLabel}.`
+      : `Fasit er avslørt i ${roundName}: ${answerLabel}.`;
+  const winnerText = winnerNames.length > 0 ? ` Vinner: ${winnerNames.join(", ")}.` : "";
 
   useEffect(() => {
     if (!googleMapsApiKey || !mapElementRef.current || markers.length === 0) {
@@ -108,9 +126,19 @@ export function SlowGeoRevealMap({
               Street View-bildet kan ikke vises uten Google-nøkkel.
             </div>
           )}
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 px-4 py-3 text-xs text-[#eadcbd]">
-            <span>{imageDate ? `Street View ${imageDate}` : "Google Street View"}</span>
-            <span>{copyright ?? "© Google"}</span>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3 text-xs text-[#eadcbd]">
+            <div className="flex flex-col gap-1">
+              <span>{imageDate ? `Street View ${imageDate}` : "Google Street View"}</span>
+              <span>{copyright ?? "© Google"}</span>
+            </div>
+            <SlowGeoShareButton
+              title={`SlowGeo-fasit: ${roundName}`}
+              text={`${shareText}${winnerText}`}
+              url={shareUrl}
+              label="Del fasit"
+              copiedLabel="Fasitlenke kopiert"
+              tone="dark"
+            />
           </div>
         </div>
         <div className="flex flex-col gap-4 p-4 sm:p-5">

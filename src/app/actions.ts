@@ -44,6 +44,11 @@ function field(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
+function safeRedirectPath(value: string) {
+  if (!value.startsWith("/") || value.startsWith("//") || value.startsWith("/login")) return "/";
+  return value;
+}
+
 function kmField(formData: FormData, key: string) {
   const raw = field(formData, key).replace(",", ".");
   if (!raw) return null;
@@ -125,12 +130,13 @@ export async function loginAction(formData: FormData) {
   const username = field(formData, "username");
   const playerId = playerIdFromUsername(username);
   const passcode = field(formData, "passcode");
+  const next = safeRedirectPath(field(formData, "next"));
   if (!playerId || !isCorrectPasscode(passcode)) {
-    redirect("/login?error=avvist");
+    redirect(`/login?error=avvist&next=${encodeURIComponent(next)}`);
   }
 
   await createSession(playerId);
-  redirect("/");
+  redirect(next);
 }
 
 export async function logoutAction() {

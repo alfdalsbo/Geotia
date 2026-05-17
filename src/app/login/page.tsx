@@ -11,10 +11,11 @@ export const metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ error?: string }>;
+  searchParams?: Promise<{ error?: string; next?: string }>;
 }) {
   const params = (await searchParams) ?? {};
   const rejected = params.error === "avvist";
+  const next = params.next?.startsWith("/") && !params.next.startsWith("//") ? params.next : "/";
 
   return (
     <main className="min-h-screen bg-[#061d2b] text-white">
@@ -56,6 +57,7 @@ export default async function LoginPage({
             </div>
 
             <form action={loginAction} className="geotia-frame rounded p-5">
+              <input type="hidden" name="next" value={next} />
               <label htmlFor="username" className="text-sm font-semibold text-[#273125]">
                 Brukernavn
               </label>
