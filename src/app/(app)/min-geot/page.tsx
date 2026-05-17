@@ -13,8 +13,10 @@ import {
 
 import { Section, StatTile } from "@/components/section";
 import { getCurrentGeot } from "@/lib/auth";
+import { getEarnedPlayerBadges, type GeotiaBadgeTone } from "@/lib/geotia-badges";
 import { getGeoticOrderRows } from "@/lib/geotisk-orden";
 import { getThirdCollegeSeat, isThirdCollegeMember } from "@/lib/kollegium";
+import { getPartyMechanic } from "@/lib/party-mechanics";
 import { computeRound, computeStandings } from "@/lib/scoring";
 import { getAppState } from "@/lib/store";
 import { dateLabel, formatKm, formatNumber } from "@/lib/utils";
@@ -46,6 +48,13 @@ export default async function MyGeotPage() {
     result: round.results.find((result) => result.player.id === player.id)!,
   }));
   const collegeSeat = isThirdCollegeMember(player.id) ? getThirdCollegeSeat(player.id) : null;
+  const badges = getEarnedPlayerBadges({
+    adjustments: state.geoterIndexAdjustments,
+    player,
+    rounds: state.rounds,
+    standing,
+  });
+  const partyMechanic = getPartyMechanic(player.partyId);
 
   return (
     <div className="space-y-7">
@@ -165,6 +174,47 @@ export default async function MyGeotPage() {
         </Section>
       </div>
 
+      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <Section title="Merker" eyebrow="Fase 3-forberedelse">
+          {badges.length ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {badges.map((badge) => (
+                <article key={badge.id} className={`rounded border p-4 ${badgeToneClasses[badge.tone]}`}>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em]">{badge.detail}</p>
+                  <h2 className="font-display mt-1 text-2xl font-semibold">{badge.title}</h2>
+                  <p className="mt-2 text-sm leading-6">{badge.description}</p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded border border-dashed border-[#c49a3c] bg-[#c49a3c]/10 p-5 text-sm leading-6 text-[#60553f]">
+              Ingen merker er utløst ennå. Det er nesten mistenkelig ryddig.
+            </div>
+          )}
+        </Section>
+
+        <Section title="Partipass" eyebrow={party?.id.toUpperCase() ?? "Tingvitne"}>
+          <div className="space-y-3">
+            <div className="rounded border border-[#d8c48c] bg-white/72 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">Motto</p>
+              <p className="mt-2 text-sm italic leading-6 text-[#4f412b]">
+                {party?.motto ?? "Uten parti, men ikke uten observasjonsverdi."}
+              </p>
+            </div>
+            {partyMechanic ? (
+              <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
+                  Partimekanikk · {partyMechanic.phase}
+                </p>
+                <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{partyMechanic.title}</h2>
+                <p className="mt-2 text-sm leading-6 text-[#4f412b]">{partyMechanic.effect}</p>
+                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#60553f]">{partyMechanic.limit}</p>
+              </div>
+            ) : null}
+          </div>
+        </Section>
+      </div>
+
       <Section title="Siste SlowGeo-spor" eyebrow="Personlig protokoll">
         {latestResults.length ? (
           <>
@@ -217,6 +267,13 @@ export default async function MyGeotPage() {
     </div>
   );
 }
+
+const badgeToneClasses: Record<GeotiaBadgeTone, string> = {
+  blue: "border-[#203c62]/30 bg-[#203c62]/10 text-[#062b40]",
+  green: "border-[#194832]/30 bg-[#194832]/10 text-[#194832]",
+  gold: "border-[#c49a3c]/45 bg-[#fff7e6] text-[#654517]",
+  red: "border-[#7c2430]/25 bg-[#7c2430]/10 text-[#7c2430]",
+};
 
 function InfoBlock({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (

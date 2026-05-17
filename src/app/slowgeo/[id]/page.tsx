@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, CheckCircle2, Trophy } from "lucide-react";
 
+import { SlowGeoAftermath } from "@/components/slowgeo-aftermath";
 import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
 import { computeRound } from "@/lib/scoring";
 import { getAppState, maybeRevealRound } from "@/lib/store";
@@ -192,31 +193,34 @@ export default async function SlowGeoSharePage({
         </section>
 
         {!isOpen ? (
-          <section className="rounded border border-[#d8ded0] bg-white p-4 shadow-sm sm:p-5">
-            <div className="mb-3 flex items-center gap-2 text-[#203c62]">
-              <Trophy className="h-5 w-5" aria-hidden="true" />
-              <h2 className="font-display text-2xl font-semibold">Resultat</h2>
-            </div>
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {computed.results
-                .filter((result) => result.guessLocation || result.actualKm !== null)
-                .map((result) => (
-                  <div key={result.playerId} className="rounded border border-[#d8ded0] bg-[#fff7e6] p-3">
-                    <p className="flex items-center gap-2 font-semibold text-[#203c62]">
-                      <span className="h-3 w-3 rounded-sm" style={{ background: result.player.color }} />
-                      {result.player.shortName}
-                    </p>
-                    <p className="mt-1 font-mono text-[#7c2430]">{formatKm(result.actualKm)}</p>
-                    {result.rank === 1 ? (
-                      <p className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#285c45]">
-                        <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-                        Vant runden
+          <>
+            <section className="rounded border border-[#d8ded0] bg-white p-4 shadow-sm sm:p-5">
+              <div className="mb-3 flex items-center gap-2 text-[#203c62]">
+                <Trophy className="h-5 w-5" aria-hidden="true" />
+                <h2 className="font-display text-2xl font-semibold">Resultat</h2>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {computed.results
+                  .filter((result) => result.guessLocation || result.actualKm !== null)
+                  .map((result) => (
+                    <div key={result.playerId} className="rounded border border-[#d8ded0] bg-[#fff7e6] p-3">
+                      <p className="flex items-center gap-2 font-semibold text-[#203c62]">
+                        <span className="h-3 w-3 rounded-sm" style={{ background: result.player.color }} />
+                        {result.player.shortName}
                       </p>
-                    ) : null}
-                  </div>
-                ))}
-            </div>
-          </section>
+                      <p className="mt-1 font-mono text-[#7c2430]">{formatKm(result.actualKm)}</p>
+                      {result.rank === 1 ? (
+                        <p className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#285c45]">
+                          <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                          Vant runden
+                        </p>
+                      ) : null}
+                    </div>
+                  ))}
+              </div>
+            </section>
+            <SlowGeoAftermath round={computed} />
+          </>
         ) : null}
       </div>
     </main>

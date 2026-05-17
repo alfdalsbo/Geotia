@@ -17,6 +17,8 @@ export type GeoLocation = {
   source: "nominatim" | "manual" | "google_street_view";
 };
 
+export type SlowGeoDifficulty = "lett" | "middels" | "hard" | "absurd";
+
 export type SlowGeoChallenge = {
   id: string;
   candidateId: string;
@@ -32,6 +34,10 @@ export type SlowGeoChallenge = {
   panoId?: string;
   imageDate?: string;
   copyright?: string;
+  difficulty?: SlowGeoDifficulty;
+  theme?: string;
+  signature?: string;
+  tags?: string[];
   createdAt: string;
 };
 
@@ -233,6 +239,17 @@ export type CalendarEvent = {
   significance: string;
 };
 
+export type ArchiveEpisode = {
+  id: string;
+  title: string;
+  date: string;
+  category: string;
+  summary: string;
+  rememberedFor: string[];
+  lesson: string;
+  relatedTerms: string[];
+};
+
 export type ConstitutionSection = {
   paragraph: string;
   title: string;
@@ -257,12 +274,24 @@ export type VoteValue = "for" | "mot" | "blankt" | "avhold";
 
 export type GeotingProposalStatus = "open" | "voting" | "passed" | "rejected" | "archived";
 
+export type GeotingImplementationStatus = "pending" | "implemented" | "ignored";
+
+export type PartyPositionValue = "for" | "mot" | "blankt" | "fri";
+
 export type GeotingVote = {
   playerId: string;
   vote: VoteValue;
   comment: string;
   createdAt: string;
   automatic?: boolean;
+};
+
+export type GeotingPartyPosition = {
+  partyId: string;
+  position: PartyPositionValue;
+  comment: string;
+  updatedAt: string;
+  updatedBy: string;
 };
 
 export type GeotingProposal = {
@@ -279,6 +308,10 @@ export type GeotingProposal = {
   voteStartedBy?: string | null;
   oathText?: string;
   resolvedAt?: string | null;
+  implementationStatus?: GeotingImplementationStatus;
+  implementationNote?: string;
+  implementedAt?: string | null;
+  partyPositions?: GeotingPartyPosition[];
   votes: GeotingVote[];
 };
 
@@ -358,6 +391,7 @@ export type ArchiveData = {
   code: string[];
   lexicon: LexiconEntry[];
   calendar: CalendarEvent[];
+  episodes: ArchiveEpisode[];
   geotingCases: GeotingCase[];
   oldSlowGeo: OldSlowGeoRecord[];
   geosophy: string[];

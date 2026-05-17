@@ -6,10 +6,11 @@ import { ExpandableImage } from "@/components/expandable-image";
 import { Section } from "@/components/section";
 import { SarajevoVideo } from "@/components/sarajevo-video";
 import { archiveSources, getArchiveSection } from "@/lib/archive";
-import { summarizeProposal } from "@/lib/geoting";
+import { getGeotingLifecycle, geotingImplementationLabels, partyPositionLabels, summarizeProposal } from "@/lib/geoting";
+import { getPartyMechanic } from "@/lib/party-mechanics";
 import { getAppState } from "@/lib/store";
 import type { GeotingProposal, Player } from "@/lib/types";
-import { dateTimeLabel } from "@/lib/utils";
+import { dateTimeLabel, formatKm, formatNumber } from "@/lib/utils";
 
 export const metadata = {
   title: "Arkiv",
@@ -191,12 +192,14 @@ function ArchiveBody({
   if (slug === "partier") {
     return (
       <div className="grid gap-6 xl:grid-cols-2">
-        {parties.map((party) => (
-          <article
-            id={party.id}
-            key={party.id}
-            className="geotia-frame scroll-mt-24 rounded"
-          >
+        {parties.map((party) => {
+          const mechanic = getPartyMechanic(party.id);
+          return (
+            <article
+              id={party.id}
+              key={party.id}
+              className="geotia-frame scroll-mt-24 rounded"
+            >
             <div className="grid gap-0">
               {party.asset ? (
                 <ExpandableImage
@@ -229,6 +232,19 @@ function ArchiveBody({
                   <ArchiveFact label="Motstandere" value={party.rivals} />
                   <ArchiveFact label="Kommentar" value={party.comment} />
                 </dl>
+                {mechanic ? (
+                  <div className="mt-5 rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
+                      Partimekanikk
+                    </h3>
+                    <p className="font-display mt-2 text-2xl font-semibold text-[#062b40]">{mechanic.title}</p>
+                    <p className="mt-2 text-sm leading-6 text-[#4f412b]">{mechanic.effect}</p>
+                    <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#60553f]">
+                      {mechanic.trigger}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-[#60553f]">{mechanic.limit}</p>
+                  </div>
+                ) : null}
                 {party.manifesto?.length ? (
                   <div className="mt-5 rounded border border-[#d8ded0] bg-[#f7f8f5] p-4">
                     <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
@@ -255,8 +271,9 @@ function ArchiveBody({
                 ) : null}
               </div>
             </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </div>
     );
   }
@@ -265,6 +282,23 @@ function ArchiveBody({
     return (
       <div className="space-y-6">
         <SarajevoVideo />
+        <Section title="Historisk tidslinje" eyebrow="Fra kalender til myte">
+          <div className="relative grid gap-3">
+            {archive.calendar.map((event) => (
+              <article key={`${event.date}-${event.name}-timeline`} className="grid gap-3 rounded border border-[#d8ded0] bg-white p-4 sm:grid-cols-[150px_1fr]">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">{event.date}</p>
+                  <p className="mt-1 text-sm text-[#5b6257]">{event.category}</p>
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-[#203c62]">{event.name}</h2>
+                  <p className="mt-1 text-sm leading-6 text-[#273125]">{event.description}</p>
+                  <p className="mt-2 text-sm text-[#5b6257]">{event.significance}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </Section>
         <Section title="Geotisk kalender" eyebrow="Faste merkedager">
           <div className="grid gap-3 md:grid-cols-2">
             {archive.calendar.map((event) => (
@@ -275,6 +309,44 @@ function ArchiveBody({
                 <h2 className="mt-2 text-xl font-semibold text-[#203c62]">{event.name}</h2>
                 <p className="mt-2 text-sm leading-6 text-[#273125]">{event.description}</p>
                 <p className="mt-2 text-sm text-[#5b6257]">{event.significance}</p>
+              </article>
+            ))}
+          </div>
+        </Section>
+      </div>
+    );
+  }
+
+  if (slug === "episoder") {
+    return (
+      <div className="space-y-6">
+        <Section title="Episoder med rettsvirkning" eyebrow="Rikets fortellinger">
+          <div className="grid gap-4 lg:grid-cols-2">
+            {archive.episodes.map((episode) => (
+              <article key={episode.id} className="rounded border border-[#d8ded0] bg-[#f7f8f5] p-4 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8e3030]">
+                  {episode.date} · {episode.category}
+                </p>
+                <h2 className="font-display mt-2 text-2xl font-semibold text-[#062b40]">{episode.title}</h2>
+                <p className="mt-2 text-sm leading-6 text-[#273125]">{episode.summary}</p>
+                <div className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">Huskes for</p>
+                  <ul className="mt-2 space-y-2 text-sm leading-6 text-[#4f412b]">
+                    {episode.rememberedFor.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <p className="mt-4 rounded border border-[#d8ded0] bg-white p-3 text-sm leading-6 text-[#203c62]">
+                  {episode.lesson}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {episode.relatedTerms.map((term) => (
+                    <span key={term} className="rounded border border-[#d8ded0] bg-white px-2 py-1 text-xs font-semibold text-[#7c2430]">
+                      {term}
+                    </span>
+                  ))}
+                </div>
               </article>
             ))}
           </div>
@@ -345,8 +417,10 @@ function ArchiveBody({
             <div className="grid gap-4 lg:grid-cols-2">
               {dynamicGeotingProposals.map((proposal) => {
                 const summary = summarizeProposal(proposal, geotingPlayers);
+                const lifecycle = getGeotingLifecycle(proposal, geotingPlayers);
                 const proposer = geotingPlayers.find((player) => player.id === proposal.proposedBy);
                 const starter = geotingPlayers.find((player) => player.id === proposal.voteStartedBy);
+                const implementationStatus = proposal.implementationStatus ?? "pending";
                 return (
                   <article key={proposal.id} className="rounded border border-[#d8ded0] bg-[#f7f8f5] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8e3030]">
@@ -365,7 +439,30 @@ function ArchiveBody({
                         value={`For ${summary.forVotes} · Mot ${summary.againstVotes} · Blankt ${summary.blankVotes}`}
                       />
                       <ArchiveFact label="Vedtak" value={summary.label} />
+                      <ArchiveFact label="Etterliv" value={geotingImplementationLabels[implementationStatus]} />
                     </dl>
+                    <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                      {lifecycle.map((step) => (
+                        <div key={step.id} className="rounded border border-[#d8ded0] bg-white px-3 py-2 text-sm">
+                          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">{step.label}</p>
+                          <p className="mt-1 text-[#4f412b]">{step.detail}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {proposal.implementationNote ? (
+                      <p className="mt-3 rounded border border-[#c49a3c]/30 bg-[#fff7e6] p-3 text-sm leading-6 text-[#4f412b]">
+                        {proposal.implementationNote}
+                      </p>
+                    ) : null}
+                    {proposal.partyPositions?.length ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {proposal.partyPositions.map((position) => (
+                          <span key={position.partyId} className="rounded border border-[#d8ded0] bg-white px-2 py-1 text-xs font-semibold text-[#203c62]">
+                            {position.partyId.toUpperCase()} · {partyPositionLabels[position.position]}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
                   </article>
                 );
               })}
@@ -381,6 +478,85 @@ function ArchiveBody({
             </div>
           )}
         </Section>
+      </div>
+    );
+  }
+
+  if (slug === "gammel-slowgeo") {
+    const byPoints = [...archive.oldSlowGeo].sort((a, b) => b.points - a.points || a.player.localeCompare(b.player, "nb"));
+    const byKattometer = [...archive.oldSlowGeo].sort(
+      (a, b) => a.kattometer - b.kattometer || b.points - a.points || a.player.localeCompare(b.player, "nb"),
+    );
+    const totalPointRounds = archive.oldSlowGeo.reduce((sum, record) => sum + record.pointRounds, 0);
+    const totalKattometer = archive.oldSlowGeo.reduce((sum, record) => sum + record.kattometer, 0);
+
+    return (
+      <div className="space-y-6">
+        <Section title="Den gamle SlowGeo-tabellen" eyebrow="Importert historisk æra">
+          <div className="grid gap-3 md:grid-cols-3">
+            <ArchiveFact label="Geoter i kilden" value={`${archive.oldSlowGeo.length}`} />
+            <ArchiveFact label="Poengførte deltakelser" value={`${totalPointRounds}`} />
+            <ArchiveFact label="Samlet kattometer" value={formatKm(totalKattometer)} />
+          </div>
+          <div className="mt-5 overflow-x-auto">
+            <table className="w-full min-w-[820px] text-left text-sm">
+              <thead className="bg-[#203c62] text-xs uppercase tracking-[0.12em] text-white">
+                <tr>
+                  <th className="px-3 py-3">#</th>
+                  <th className="px-3 py-3">Geot</th>
+                  <th className="px-3 py-3 text-right">Poeng</th>
+                  <th className="px-3 py-3 text-right">Poengrunder</th>
+                  <th className="px-3 py-3 text-right">Poengsnitt</th>
+                  <th className="px-3 py-3 text-right">Kattometer</th>
+                  <th className="px-3 py-3 text-right">Kattometerrunder</th>
+                  <th className="px-3 py-3 text-right">Km-snitt</th>
+                </tr>
+              </thead>
+              <tbody>
+                {byPoints.map((record, index) => (
+                  <tr key={record.player} className="border-b border-[#eef1eb] bg-white last:border-b-0">
+                    <td className="px-3 py-3 font-mono text-[#8e3030]">{index + 1}</td>
+                    <td className="px-3 py-3 font-semibold text-[#203c62]">{record.player}</td>
+                    <td className="px-3 py-3 text-right font-semibold">{record.points}</td>
+                    <td className="px-3 py-3 text-right">{record.pointRounds}</td>
+                    <td className="px-3 py-3 text-right">{formatNumber(record.points / Math.max(record.pointRounds, 1))}</td>
+                    <td className="px-3 py-3 text-right">{formatKm(record.kattometer)}</td>
+                    <td className="px-3 py-3 text-right">{record.kattometerRounds}</td>
+                    <td className="px-3 py-3 text-right">
+                      {formatKm(record.kattometer / Math.max(record.kattometerRounds, 1))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Section title="Poengadelen" eyebrow="Gammel rang">
+            <HistoricPodium
+              rows={byPoints.slice(0, 3).map((record) => ({
+                name: record.player,
+                value: `${record.points} poeng`,
+                detail: `${record.pointRounds} poengrunder`,
+              }))}
+            />
+          </Section>
+          <Section title="Presisjonsadelen" eyebrow="Lavest kattometer">
+            <HistoricPodium
+              rows={byKattometer.slice(0, 3).map((record) => ({
+                name: record.player,
+                value: formatKm(record.kattometer),
+                detail: `${formatKm(record.kattometer / Math.max(record.kattometerRounds, 1))} i snitt`,
+              }))}
+            />
+          </Section>
+        </div>
+
+        <p className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-4 text-sm leading-6 text-[#4f412b]">
+          Dette er en historisk import. Tallene teller ikke inn i dagens levende SlowGeo-tabell, men står som egen æra i
+          riksarkivet.
+        </p>
       </div>
     );
   }
@@ -406,6 +582,25 @@ function ArchiveBody({
   }
 
   return null;
+}
+
+function HistoricPodium({
+  rows,
+}: {
+  rows: Array<{ name: string; value: string; detail: string }>;
+}) {
+  return (
+    <div className="space-y-3">
+      {rows.map((row, index) => (
+        <div key={row.name} className="rounded border border-[#d8ded0] bg-white p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">#{index + 1}</p>
+          <h3 className="mt-1 text-xl font-semibold text-[#203c62]">{row.name}</h3>
+          <p className="mt-2 font-mono text-[#8e3030]">{row.value}</p>
+          <p className="mt-1 text-sm text-[#5b6257]">{row.detail}</p>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function ArchiveFact({ label, value }: { label: string; value: string }) {

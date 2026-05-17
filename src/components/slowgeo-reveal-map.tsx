@@ -4,7 +4,13 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Loader2, MapPin } from "lucide-react";
 
-import { loadGoogleMaps, type GoogleMap, type GoogleMapsApi, type GoogleMarker } from "@/components/google-maps-loader";
+import {
+  loadGoogleMaps,
+  type GoogleMap,
+  type GoogleMapsApi,
+  type GoogleMarker,
+  type GooglePolyline,
+} from "@/components/google-maps-loader";
 import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
 import { formatKm } from "@/lib/utils";
 
@@ -46,6 +52,7 @@ export function SlowGeoRevealMap({
   const mapElementRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<GoogleMap | null>(null);
   const markerRefs = useRef<GoogleMarker[]>([]);
+  const polylineRefs = useRef<GooglePolyline[]>([]);
   const [loadingMap, setLoadingMap] = useState(Boolean(googleMapsApiKey));
   const [mapError, setMapError] = useState("");
   const shareText =
@@ -85,6 +92,26 @@ export function SlowGeoRevealMap({
             label: marker.type === "answer" ? "F" : marker.label.slice(0, 1),
           });
         });
+        const answerMarker = markers.find((marker) => marker.type === "answer");
+        polylineRefs.current =
+          answerMarker
+            ? markers
+                .filter((marker) => marker.type === "guess")
+                .map(
+                  (marker) =>
+                    new mapsApi.Polyline({
+                      map,
+                      path: [
+                        { lat: answerMarker.lat, lng: answerMarker.lon },
+                        { lat: marker.lat, lng: marker.lon },
+                      ],
+                      geodesic: true,
+                      strokeColor: marker.color,
+                      strokeOpacity: 0.62,
+                      strokeWeight: 2,
+                    }),
+                )
+            : [];
         if (markers.length > 1) {
           map.fitBounds(bounds);
         } else {
@@ -101,7 +128,9 @@ export function SlowGeoRevealMap({
     return () => {
       cancelled = true;
       markerRefs.current.forEach((marker) => marker.setMap(null));
+      polylineRefs.current.forEach((polyline) => polyline.setMap(null));
       markerRefs.current = [];
+      polylineRefs.current = [];
     };
   }, [googleMapsApiKey, markers]);
 
@@ -144,7 +173,7 @@ export function SlowGeoRevealMap({
         <div className="flex flex-col gap-4 p-4 sm:p-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">Fasit</p>
-            <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">Kart og bom</h2>
+            <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">Kart, linjer og bom</h2>
           </div>
           {googleMapsApiKey ? (
             <div className="relative min-h-[320px] overflow-hidden rounded border border-[#d8ded0] bg-[#e9dcc0]">

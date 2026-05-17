@@ -20,6 +20,9 @@ export default async function TablesPage() {
     .filter((standing) => standing.lockedRounds > 0)
     .sort((a, b) => a.totalKattometer - b.totalKattometer)[0];
   const scoreGames = state.games.filter((game) => game.id !== "slowgeo");
+  const oldSlowGeo = state.archive.oldSlowGeo;
+  const oldPointLeader = [...oldSlowGeo].sort((a, b) => b.points - a.points)[0];
+  const oldKattometerLeader = [...oldSlowGeo].sort((a, b) => a.kattometer - b.kattometer)[0];
 
   return (
     <div className="space-y-7">
@@ -102,6 +105,35 @@ export default async function TablesPage() {
           </table>
         </div>
       </Section>
+
+      {oldSlowGeo.length ? (
+        <Section
+          title="Gammel SlowGeo"
+          eyebrow="Historisk import, egen æra"
+          action={
+            <Link href="/arkiv/gammel-slowgeo" className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
+              Åpne arkiv
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          }
+        >
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="rounded border border-[#d8ded0] bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">Gammel poengleder</p>
+              <p className="font-display mt-2 text-2xl font-semibold text-[#062b40]">{oldPointLeader?.player ?? "-"}</p>
+              <p className="mt-1 text-sm text-[#5b6257]">{oldPointLeader?.points ?? 0} poeng</p>
+            </div>
+            <div className="rounded border border-[#d8ded0] bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">Gammel presisjonsleder</p>
+              <p className="font-display mt-2 text-2xl font-semibold text-[#062b40]">{oldKattometerLeader?.player ?? "-"}</p>
+              <p className="mt-1 text-sm text-[#5b6257]">{formatKm(oldKattometerLeader?.kattometer)}</p>
+            </div>
+          </div>
+          <p className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-4 text-sm leading-6 text-[#4f412b]">
+            Den gamle tabellen er synlig for historikk og ære, men blandes ikke inn i dagens levende rangering.
+          </p>
+        </Section>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-2">
         {scoreGames.map((game) => {

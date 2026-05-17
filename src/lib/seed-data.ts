@@ -1,6 +1,7 @@
 import type {
   AppState,
   ArchiveData,
+  ArchiveEpisode,
   CalendarEvent,
   CanonSection,
   ConstitutionSection,
@@ -638,6 +639,79 @@ const calendar: CalendarEvent[] = [
   },
 ];
 
+const episodes: ArchiveEpisode[] = [
+  {
+    id: "sarajevodagen",
+    title: "Sarajevodagen",
+    date: "26. mai",
+    category: "Traumatisk/Heroisk",
+    summary: "Dagen geo nesten døde, men i stedet ble en læresetning om selvtillit, kulehull og kollektiv redning.",
+    rememberedFor: [
+      "Å ta en Sarajevo: høyt ut, hånet, kvalmende sikker og blink.",
+      "Balkan-tegn ble mytologisk materiale, ikke bare kartdata.",
+      "Flokken lærte at ekstrem selvtillit kan være både gift og nådegave.",
+    ],
+    lesson: "Når noen ser Sarajevo i murpussen, skal de hånes, men ikke nødvendigvis ignoreres.",
+    relatedTerms: ["Å ta en Sarajevo", "Kulehull i murbygninger", "GeoKodeksen"],
+  },
+  {
+    id: "byvandringsdagen",
+    title: "Byvandringsdagen",
+    date: "9. februar",
+    category: "Episk",
+    summary: "Dagen geotene vandret hvileløst rundt i Wien for å finne svaret og gjorde leting til eksodusmotiv.",
+    rememberedFor: [
+      "Fysisk uro ble geotisk metode.",
+      "Wien ble mer enn fasit; byen ble en prøvelse.",
+      "Runden beviste at kart ikke alltid er nok når kroppen krever ritual.",
+    ],
+    lesson: "Noen ganger må man gå seg vill på ordentlig for å forstå hvor feil man nesten var.",
+    relatedTerms: ["Byvandringsdagen", "Wien", "Eksodus"],
+  },
+  {
+    id: "pinot-noir",
+    title: "Pinot Noir-dagen",
+    date: "14. januar",
+    category: "Konstitusjonell",
+    summary: "Dagen GeoGrunnloven ble befestet gjennom den evige sannheten: Pinot Noir er en drue, ikke Frankrike.",
+    rememberedFor: [
+      "Frukt, bær og vin ble rettslig farlige kategorier.",
+      "GeoVARs ånd fikk tidlig næring.",
+      "Navnefadese ble til lovstoff.",
+    ],
+    lesson: "Et geografisk navn må fortsatt være et sted. Druer får null og varig mistanke.",
+    relatedTerms: ["Petit verdot", "Fruktistan-Sympatisør", "GeoVAR"],
+  },
+  {
+    id: "el-tari",
+    title: "El Tari-episoden",
+    date: "Dato ukjent",
+    category: "Mistenkelig presisjon",
+    summary: "Episoden som ga Geotia et språk for for presise svar uten synlig resonnement.",
+    rememberedFor: [
+      "Å ta en El Tari ble arkivets navn på mistenkelig presisjon.",
+      "Skjermdeling og sosial kulde ble mulige renselsesmidler.",
+      "Riket lærte at rett svar også kan kreve forklaring.",
+    ],
+    lesson: "Presisjon uten resonnement er ikke bare seier. Det er bevismateriale.",
+    relatedTerms: ["Å ta en El Tari", "GeoVAR", "El Tari-Klassen"],
+  },
+  {
+    id: "botswana-dagen",
+    title: "Botswana-dagen",
+    date: "6. februar",
+    category: "Adel og seremoni",
+    summary: "Dagen adling av Ingebjørg gjorde geotisk adel mulig, og dermed også nødvendig å føre med alvor.",
+    rememberedFor: [
+      "Geotia fikk adel som sosialt faktum.",
+      "Seremonien viste at overbygningen kan være rik uten å gjøre motoren tung.",
+      "Riket fikk et glimt av orden før Ordenen ble egen institusjon.",
+    ],
+    lesson: "Når fellesskapet lager en seremoni, må arkivet late som det alltid var en institusjon.",
+    relatedTerms: ["Botswana-dagen", "Den Geotiske Orden", "Geotisk adel"],
+  },
+];
+
 const geotingCases: GeotingCase[] = [
   {
     date: "15. januar",
@@ -730,7 +804,15 @@ const geotingCases: GeotingCase[] = [
   },
 ];
 
-const oldSlowGeo: OldSlowGeoRecord[] = [];
+const oldSlowGeo: OldSlowGeoRecord[] = [
+  { player: "Alf Kåre", points: 84, pointRounds: 18, kattometer: 12104, kattometerRounds: 18 },
+  { player: "Fredrik", points: 106, pointRounds: 19, kattometer: 10592, kattometerRounds: 19 },
+  { player: "Jørgen", points: 17, pointRounds: 3, kattometer: 629, kattometerRounds: 3 },
+  { player: "Sverre", points: 41, pointRounds: 10, kattometer: 8227, kattometerRounds: 11 },
+  { player: "Steinar", points: 77, pointRounds: 18, kattometer: 12909, kattometerRounds: 18 },
+  { player: "Vegard", points: 87, pointRounds: 19, kattometer: 13720, kattometerRounds: 18 },
+  { player: "Glenn Ruben", points: 83, pointRounds: 18, kattometer: 13666, kattometerRounds: 18 },
+];
 
 const knowledgeGroups: KnowledgeGroup[] = [
   {
@@ -976,6 +1058,7 @@ export const archive: ArchiveData = {
   code,
   lexicon,
   calendar,
+  episodes,
   geotingCases,
   oldSlowGeo,
   geosophy: [

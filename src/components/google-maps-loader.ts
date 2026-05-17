@@ -28,9 +28,14 @@ export type GoogleMarker = {
   setPosition(point: LatLngLiteral): void;
 };
 
+export type GooglePolyline = {
+  setMap(map: GoogleMap | null): void;
+};
+
 export type GoogleMapsApi = {
   Map: new (element: HTMLElement, options: Record<string, unknown>) => GoogleMap;
   Marker: new (options: Record<string, unknown>) => GoogleMarker;
+  Polyline: new (options: Record<string, unknown>) => GooglePolyline;
   LatLngBounds: new () => GoogleLatLngBounds;
 };
 

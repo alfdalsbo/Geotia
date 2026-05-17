@@ -34,6 +34,9 @@ describe("Geotia canon seed", () => {
       "KONESPILLET",
       "sexnekt",
       "PLO | IRA | SS | PKK | PWP | CIP | MOSSAD",
+      "Glenn Ruben",
+      "El Tari-episoden",
+      "Byvandringsdagen",
     ];
 
     for (const phrase of requiredPhrases) {

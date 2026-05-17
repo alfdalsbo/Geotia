@@ -22,6 +22,7 @@ type SlowGeoPlayProps = {
   streetViewUrl: string | null;
   googleMapsApiKey: string;
   existingGuess: (Guess & { updatedAt?: string | null }) | null;
+  existingNote?: string | null;
   shareUrl: string;
   imageDate?: string;
   copyright?: string;
@@ -38,6 +39,7 @@ export function SlowGeoPlay({
   streetViewUrl,
   googleMapsApiKey,
   existingGuess,
+  existingNote,
   shareUrl,
   imageDate,
   copyright,
@@ -225,6 +227,21 @@ export function SlowGeoPlay({
               {mapError}
             </p>
           ) : null}
+
+          <label className="block rounded border border-[#d8ded0] bg-white p-3">
+            <span className="text-sm font-semibold text-[#273125]">Begrunnelse</span>
+            <textarea
+              name="guess_note"
+              maxLength={280}
+              defaultValue={existingNote ?? ""}
+              disabled={answerLocked}
+              placeholder="Valgfritt: skriv hva du så, trodde eller overbeviste deg selv om."
+              className="mt-2 min-h-24 w-full resize-none rounded border border-[#d8ded0] bg-[#f7f8f5] px-3 py-2 text-sm leading-6 text-[#273125] outline-none focus:border-[#203c62] disabled:bg-[#eef1eb]"
+            />
+            <span className="mt-2 block text-xs leading-5 text-[#5b6257]">
+              Begrunnelsen låses med pinnen og vises først når fasit er avslørt.
+            </span>
+          </label>
 
           <div className="flex flex-col gap-3 rounded border border-[#d8ded0] bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="flex min-h-10 items-center gap-2 text-sm text-[#5b6257]">

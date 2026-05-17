@@ -2,12 +2,22 @@ import Link from "next/link";
 import { BellRing, MapPinned } from "lucide-react";
 
 import { GeotingMiniCountdown } from "@/components/geoting-countdown";
+import { getSlowGeoProgress, slowGeoDifficultyLabels } from "@/lib/slowgeo-insights";
+import { competingPlayers } from "@/lib/seed";
 import type { Round } from "@/lib/types";
 
 export function SlowGeoGlobalAlert({ rounds }: { rounds: Round[] }) {
   const active = rounds.filter((round) => round.status === "open" && round.challenge && round.deadlineAt);
   const primary = active[0];
   if (!primary) return null;
+  const progress = getSlowGeoProgress(primary);
+  const missingNames = competingPlayers
+    .filter((player) => {
+      const result = primary.results.find((candidate) => candidate.playerId === player.id);
+      return !result?.guessLocation;
+    })
+    .map((player) => player.shortName);
+  const difficulty = primary.challenge?.difficulty ? slowGeoDifficultyLabels[primary.challenge.difficulty] : null;
 
   return (
     <div className="border-b border-[#9dd7b0]/65 bg-[#06311f] text-[#f4fff7] shadow-[0_12px_28px_rgba(6,49,31,0.28)]">
@@ -23,6 +33,11 @@ export function SlowGeoGlobalAlert({ rounds }: { rounds: Round[] }) {
             <p className="mt-1 break-words font-semibold leading-6">
               {primary.name}
               {active.length > 1 ? ` + ${active.length - 1} til` : ""}
+            </p>
+            <p className="mt-1 text-sm leading-5 text-[#dff7e6]">
+              {progress.submittedCount}/{progress.totalCount} pin-svar låst
+              {difficulty ? ` · ${difficulty}` : ""}
+              {missingNames.length ? ` · mangler ${missingNames.slice(0, 3).join(", ")}${missingNames.length > 3 ? " ..." : ""}` : " · alle er inne"}
             </p>
           </div>
         </div>

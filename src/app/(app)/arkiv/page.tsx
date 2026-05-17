@@ -8,6 +8,7 @@ import {
   Landmark,
   MapPinned,
   ScrollText,
+  Trophy,
   Users,
 } from "lucide-react";
 
@@ -28,7 +29,9 @@ const iconBySlug = {
   geoter: Users,
   partier: Landmark,
   merkedager: CalendarDays,
+  episoder: ScrollText,
   geotinget: Gavel,
+  "gammel-slowgeo": Trophy,
   konespillet: Gavel,
 };
 

@@ -44,10 +44,22 @@ export const archiveSections = [
     description: "Dager som staten har funnet verdige til å huske.",
   },
   {
+    slug: "episoder",
+    title: "Rikets episoder",
+    eyebrow: "Historiske hendelser",
+    description: "Sarajevodagen, Byvandringsdagen, Pinot Noir, El Tari og andre hendelser med varig rettsvirkning.",
+  },
+  {
     slug: "geotinget",
     title: "GeoTinget",
     eyebrow: "Saker og vedtak",
     description: "Forslag, vedtak og saksbehandling i rikets kranglende kammer.",
+  },
+  {
+    slug: "gammel-slowgeo",
+    title: "Gammel SlowGeo",
+    eyebrow: "Den gamle tiden",
+    description: "Importert æra fra før appens levende protokoll. Poeng og kattometer holdes ærbødig adskilt.",
   },
   {
     slug: "konespillet",

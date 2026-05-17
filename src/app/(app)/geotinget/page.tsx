@@ -88,7 +88,7 @@ export default async function GeotingPage({
             <textarea
               name="body"
               className="min-h-32 w-full rounded border border-[#d8ded0] bg-white px-3 py-2 outline-none focus:border-[#203c62]"
-              placeholder="Skriv forslaget slik at også motstanderne forstår hva de skal krangle med."
+              placeholder="Skriv forslaget slik at også motstanderne forstår hva de skal krangle med. For grunnlov: bruk gjerne Før: og Etter:."
               required
             />
           </label>

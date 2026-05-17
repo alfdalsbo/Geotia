@@ -104,6 +104,8 @@ function GeotingVoteStatus({ status, error }: { status?: string; error?: string 
   const text =
     status === "stemt"
       ? "Stemmen er ført. Tingvollen dirrer svakt."
+      : status === "partiposisjon"
+        ? "Partiets offisielle posisjon er ført. Nå kan motstanderne tolke den i verste mening."
       : status === "avstemning"
         ? "Geo-eden er avlagt. Stemmeurnen er åpnet, og alle geoter skal varsles umiddelbart."
         : status === "avgjort"

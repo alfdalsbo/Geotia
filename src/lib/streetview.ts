@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type { SlowGeoChallenge } from "@/lib/types";
+import type { SlowGeoChallenge, SlowGeoDifficulty } from "@/lib/types";
 
 type StreetViewCandidate = {
   id: string;
@@ -12,6 +12,10 @@ type StreetViewCandidate = {
   heading: number;
   pitch?: number;
   fov?: number;
+  difficulty: SlowGeoDifficulty;
+  theme: string;
+  signature: string;
+  tags: string[];
 };
 
 type StreetViewMetadataResponse = {
@@ -37,6 +41,10 @@ export const slowGeoCandidates: StreetViewCandidate[] = [
     heading: 88,
     pitch: 2,
     fov: 92,
+    difficulty: "middels",
+    theme: "Balkan og kulehull-lære",
+    signature: "Sarajevodagen lurer alltid i murpussen.",
+    tags: ["sarajevo", "europa", "by"],
   },
   {
     id: "tromso-bridge",
@@ -48,6 +56,10 @@ export const slowGeoCandidates: StreetViewCandidate[] = [
     heading: 64,
     pitch: 1,
     fov: 90,
+    difficulty: "lett",
+    theme: "nordlysstat og norsk veifølelse",
+    signature: "Fjell, vann og nordlig infrastruktur uten skam.",
+    tags: ["norge", "nord", "bro"],
   },
   {
     id: "wellington-cable-car",
@@ -59,6 +71,10 @@ export const slowGeoCandidates: StreetViewCandidate[] = [
     heading: 340,
     pitch: 0,
     fov: 88,
+    difficulty: "hard",
+    theme: "øystat med britisk etterklang",
+    signature: "New Zealand kan alltid late som det er Irland, og omvendt.",
+    tags: ["oseania", "øy", "by"],
   },
   {
     id: "montevideo-rambla",
@@ -70,6 +86,10 @@ export const slowGeoCandidates: StreetViewCandidate[] = [
     heading: 110,
     pitch: 0,
     fov: 92,
+    difficulty: "hard",
+    theme: "søramerikansk kystro",
+    signature: "Ramblaen smiler som om Buenos Aires ikke står i rommet.",
+    tags: ["sor-amerika", "kyst", "by"],
   },
   {
     id: "riga-old-town",
@@ -81,6 +101,10 @@ export const slowGeoCandidates: StreetViewCandidate[] = [
     heading: 215,
     pitch: 2,
     fov: 86,
+    difficulty: "middels",
+    theme: "baltisk gammelby",
+    signature: "Nok Europa til at noen blir for selvsikre.",
+    tags: ["baltikum", "europa", "by"],
   },
   {
     id: "valparaiso-cerro-alegre",
@@ -92,6 +116,10 @@ export const slowGeoCandidates: StreetViewCandidate[] = [
     heading: 52,
     pitch: -4,
     fov: 90,
+    difficulty: "hard",
+    theme: "bratt fargekaos ved Stillehavet",
+    signature: "Alt går oppover, men det er ikke Peru denne gangen.",
+    tags: ["chile", "bratt", "kyst"],
   },
   {
     id: "tbilisi-rustaveli",
@@ -103,6 +131,10 @@ export const slowGeoCandidates: StreetViewCandidate[] = [
     heading: 101,
     pitch: 1,
     fov: 90,
+    difficulty: "hard",
+    theme: "Kaukasus mellom Europa og Asia",
+    signature: "En perfekt arena for kontinentforvirring med høy selvtillit.",
+    tags: ["kaukasus", "asia", "by"],
   },
   {
     id: "cape-town-bo-kaap",
@@ -114,6 +146,10 @@ export const slowGeoCandidates: StreetViewCandidate[] = [
     heading: 148,
     pitch: 3,
     fov: 84,
+    difficulty: "middels",
+    theme: "fargerik sørspiss",
+    signature: "Sør-Afrika når paletten bestemmer seg for å hjelpe.",
+    tags: ["afrika", "sor-afrika", "farger"],
   },
   {
     id: "vilnius-pilies",
@@ -125,6 +161,10 @@ export const slowGeoCandidates: StreetViewCandidate[] = [
     heading: 6,
     pitch: 1,
     fov: 86,
+    difficulty: "middels",
+    theme: "litauisk hageorden",
+    signature: "Polen-følelse med litt for pene kanter.",
+    tags: ["litauen", "baltikum", "by"],
   },
   {
     id: "la-paz-mirador",
@@ -136,6 +176,10 @@ export const slowGeoCandidates: StreetViewCandidate[] = [
     heading: 247,
     pitch: -7,
     fov: 94,
+    difficulty: "lett",
+    theme: "høyde, utsikt og geotisk svimmelhet",
+    signature: "Er det utsikt, begynner Bolivia å rope.",
+    tags: ["bolivia", "hoyde", "utsikt"],
   },
   {
     id: "seoul-bukchon",
@@ -147,6 +191,10 @@ export const slowGeoCandidates: StreetViewCandidate[] = [
     heading: 136,
     pitch: 1,
     fov: 84,
+    difficulty: "middels",
+    theme: "østasiatisk presisjon og taklinjer",
+    signature: "For ordentlig til å være en panikkteori, farlig nok likevel.",
+    tags: ["asia", "sor-korea", "by"],
   },
   {
     id: "marrakesh-koutoubia",
@@ -158,6 +206,115 @@ export const slowGeoCandidates: StreetViewCandidate[] = [
     heading: 28,
     pitch: 2,
     fov: 88,
+    difficulty: "middels",
+    theme: "nordafrikansk varme",
+    signature: "Sandfarget autoritet med minaret i sidesynet.",
+    tags: ["afrika", "marokko", "by"],
+  },
+  {
+    id: "dakar-plateau",
+    label: "Plateau, Dakar",
+    country: "Senegal",
+    continent: "Afrika",
+    lat: 14.6685,
+    lon: -17.4359,
+    heading: 78,
+    pitch: 1,
+    fov: 90,
+    difficulty: "hard",
+    theme: "vestafrikansk bylesning",
+    signature: "Når Afrika ikke vil være det første geoten tør å si høyt.",
+    tags: ["afrika", "senegal", "by"],
+  },
+  {
+    id: "ghent-canal",
+    label: "Graslei, Gent",
+    country: "Belgia",
+    continent: "Europa",
+    lat: 51.0543,
+    lon: 3.7206,
+    heading: 250,
+    pitch: 0,
+    fov: 88,
+    difficulty: "middels",
+    theme: "kanaler, tegl og lavlandsforvirring",
+    signature: "Nederlandsk selvtillit kan her bli belgisk korreksjon.",
+    tags: ["europa", "belgia", "kanal"],
+  },
+  {
+    id: "sapporo-odori",
+    label: "Odori Park, Sapporo",
+    country: "Japan",
+    continent: "Asia",
+    lat: 43.0606,
+    lon: 141.3538,
+    heading: 96,
+    pitch: 0,
+    fov: 86,
+    difficulty: "hard",
+    theme: "Japan, men ikke Tokyo-refleks",
+    signature: "Shabby, ryddig og rart nok til å forstyrre alle.",
+    tags: ["asia", "japan", "by"],
+  },
+  {
+    id: "porto-ribeira",
+    label: "Ribeira, Porto",
+    country: "Portugal",
+    continent: "Europa",
+    lat: 41.1406,
+    lon: -8.611,
+    heading: 64,
+    pitch: 1,
+    fov: 88,
+    difficulty: "middels",
+    theme: "iberisk skråning og fliser",
+    signature: "Ikke alle varme vegger er Spania.",
+    tags: ["europa", "portugal", "kyst"],
+  },
+  {
+    id: "cusco-san-blas",
+    label: "San Blas, Cusco",
+    country: "Peru",
+    continent: "Sør-Amerika",
+    lat: -13.5153,
+    lon: -71.9763,
+    heading: 192,
+    pitch: -2,
+    fov: 90,
+    difficulty: "middels",
+    theme: "andesby og oppoverlov",
+    signature: "Det går alltid oppover i Peru, særlig i argumentasjonen.",
+    tags: ["sor-amerika", "peru", "hoyde"],
+  },
+  {
+    id: "tallinn-old-town",
+    label: "Viru Gate, Tallinn",
+    country: "Estland",
+    continent: "Europa",
+    lat: 59.4369,
+    lon: 24.7504,
+    heading: 310,
+    pitch: 1,
+    fov: 86,
+    difficulty: "middels",
+    theme: "baltisk middelaldermaskering",
+    signature: "For pen til Polen, for farlig til at PLO får rett alene.",
+    tags: ["baltikum", "estland", "by"],
+  },
+  {
+    id: "kingston-waterfront",
+    label: "Kingston Waterfront",
+    country: "Jamaica",
+    continent: "Nord-Amerika",
+    lat: 17.9655,
+    lon: -76.7936,
+    heading: 135,
+    pitch: 0,
+    fov: 90,
+    difficulty: "absurd",
+    theme: "karibisk kyst uten trygg autopilot",
+    signature: "Når palmer ikke lenger betyr at noen egentlig vet noe.",
+    tags: ["karibia", "jamaica", "kyst"],
   },
 ];
 
@@ -200,6 +357,10 @@ function challengeFromCandidate(
     panoId: metadata?.pano_id,
     imageDate: metadata?.date,
     copyright: metadata?.copyright,
+    difficulty: candidate.difficulty,
+    theme: candidate.theme,
+    signature: candidate.signature,
+    tags: candidate.tags,
     createdAt: new Date().toISOString(),
   };
 }

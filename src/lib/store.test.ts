@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -161,6 +161,7 @@ describe("Geotia file store", () => {
     const submitted = await submitSlowGeoGuess({
       roundId: created.round.id,
       playerId: "alf",
+      note: "Jeg så trikkeskinner og valgte å tro på meg selv.",
       location: {
         lat: created.round.answerLocation.lat,
         lon: created.round.answerLocation.lon,
@@ -173,6 +174,9 @@ describe("Geotia file store", () => {
     expect(submitted.ok).toBe(true);
     expect(submitted.round?.status).toBe("open");
     expect(submitted.round?.results.find((result) => result.playerId === "alf")?.guessLocation?.label).toBe("Testpin");
+    expect(submitted.round?.results.find((result) => result.playerId === "alf")?.note).toBe(
+      "Jeg så trikkeskinner og valgte å tro på meg selv.",
+    );
 
     const resubmitted = await submitSlowGeoGuess({
       roundId: created.round.id,
@@ -200,7 +204,12 @@ describe("Geotia file store", () => {
       status: "deltatt",
       actualKm: 0,
       distanceSource: "auto",
+      note: "Jeg så trikkeskinner og valgte å tro på meg selv.",
     });
+    const raw = JSON.parse(await readFile(path.join(tempDir, "state.json"), "utf8")) as { meta?: Record<string, string> };
+    const backups = await readdir(path.join(tempDir, "backups"));
+    expect(raw.meta?.schemaVersion).toBe("2");
+    expect(backups.some((file) => file.startsWith("geotia-data-"))).toBe(true);
   });
 
   it("lets Tredje Kollegium update and withdraw Geoting proposals", async () => {
@@ -208,7 +217,7 @@ describe("Geotia file store", () => {
     process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
     vi.resetModules();
 
-    const { createGeotingProposal, getAppState, updateGeotingProposal, withdrawGeotingProposal } = await import("@/lib/store");
+    const { createGeotingProposal, getAppState, saveGeotingPartyPosition, updateGeotingProposal, withdrawGeotingProposal } = await import("@/lib/store");
 
     const proposal = await createGeotingProposal({
       title: "Lov om gammel ordlyd",
@@ -222,6 +231,15 @@ describe("Geotia file store", () => {
       title: "Lov om presis ordlyd",
       body: "Kollegiet har redigert teksten.",
       ruleType: "mindre",
+      implementationStatus: "implemented",
+      implementationNote: "Ført i embetsverket.",
+    });
+    const partyPosition = await saveGeotingPartyPosition({
+      proposalId: proposal.id,
+      partyId: "ss",
+      position: "for",
+      comment: "Embetslig ryddig.",
+      updatedBy: "alf",
     });
     const withdrawn = await withdrawGeotingProposal({ proposalId: proposal.id });
     const archivedEdit = await updateGeotingProposal({
@@ -234,6 +252,7 @@ describe("Geotia file store", () => {
     const stored = state.geotingProposals.find((candidate) => candidate.id === proposal.id);
 
     expect(edited.ok).toBe(true);
+    expect(partyPosition.ok).toBe(true);
     expect(withdrawn.ok).toBe(true);
     expect(archivedEdit.ok).toBe(true);
     expect(stored).toMatchObject({
@@ -241,7 +260,11 @@ describe("Geotia file store", () => {
       body: "Kollegiet kan rette arkivert tekst.",
       ruleType: "mindre",
       status: "archived",
+      implementationStatus: "implemented",
+      implementationNote: "Ført i embetsverket.",
     });
+    expect(stored?.partyPositions).toHaveLength(1);
     expect(stored?.resolvedAt).toBeTruthy();
+    expect(stored?.implementedAt).toBeTruthy();
   });
 });

@@ -4,7 +4,7 @@ import { updateGeotingProposalAction, withdrawGeotingProposalAction } from "@/ap
 import { GeotingSubnav } from "@/components/geoting-subnav";
 import { Section, StatTile } from "@/components/section";
 import { getCurrentGeot } from "@/lib/auth";
-import { summarizeProposal } from "@/lib/geoting";
+import { getGeotingLifecycle, geotingImplementationLabels, partyPositionLabels, summarizeProposal } from "@/lib/geoting";
 import { isThirdCollegeMember } from "@/lib/kollegium";
 import { archive } from "@/lib/seed";
 import { getAppState } from "@/lib/store";
@@ -162,9 +162,11 @@ function PergamentCard({
   proposal: GeotingProposal;
 }) {
   const summary = summarizeProposal(proposal, players);
+  const lifecycle = getGeotingLifecycle(proposal, players);
   const proposer = players.find((player) => player.id === proposal.proposedBy);
   const starter = players.find((player) => player.id === proposal.voteStartedBy);
   const canWithdraw = proposal.status === "open" || proposal.status === "voting";
+  const implementationStatus = proposal.implementationStatus ?? "pending";
 
   return (
     <article className="rounded border border-[#d8c48c] bg-[#fff7e6] p-4 shadow-sm">
@@ -188,13 +190,52 @@ function PergamentCard({
         <PergamentFact label="Urne åpnet av" value={starter?.shortName ?? "Ikke åpnet"} />
         <PergamentFact label="Tingfrist" value={dateTimeLabel(proposal.voteEndsAt)} />
         <PergamentFact label="Vedtak" value={summary.label} />
+        <PergamentFact label="Etterliv" value={geotingImplementationLabels[implementationStatus]} />
       </dl>
+
+      {proposal.implementationNote ? (
+        <p className="mt-3 rounded border border-[#c49a3c]/30 bg-white/72 px-3 py-2 text-sm leading-6 text-[#4f412b]">
+          {proposal.implementationNote}
+        </p>
+      ) : null}
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-3 xl:grid-cols-6">
+        {lifecycle.map((step) => (
+          <div
+            key={step.id}
+            className={
+              step.state === "done"
+                ? "rounded border border-[#285c45]/25 bg-[#285c45]/8 p-3 text-[#194832]"
+                : step.state === "current"
+                  ? "rounded border border-[#c49a3c]/45 bg-white p-3 text-[#654517]"
+                  : "rounded border border-[#d8ded0] bg-white/70 p-3 text-[#5b6257]"
+            }
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.12em]">{step.label}</p>
+            <p className="mt-1 text-xs leading-5">{step.detail}</p>
+          </div>
+        ))}
+      </div>
 
       <div className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
         <VoteMeasure label="For" value={summary.forVotes} tone="green" />
         <VoteMeasure label="Mot" value={summary.againstVotes} tone="red" />
         <VoteMeasure label="Blankt" value={summary.blankVotes} tone="gold" />
       </div>
+
+      {proposal.partyPositions?.length ? (
+        <div className="mt-4 rounded border border-[#c49a3c]/30 bg-white/70 p-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">Partilinjer</p>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {proposal.partyPositions.map((position) => (
+              <div key={position.partyId} className="rounded border border-[#d8ded0] bg-white px-3 py-2 text-sm">
+                <p className="font-semibold text-[#203c62]">{position.partyId.toUpperCase()} · {partyPositionLabels[position.position]}</p>
+                {position.comment ? <p className="mt-1 text-xs leading-5 text-[#60553f]">{position.comment}</p> : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {canEdit ? (
         <div className="mt-4 rounded border border-[#c49a3c]/45 bg-white/72 p-3">
@@ -233,6 +274,27 @@ function PergamentCard({
                 defaultValue={proposal.body}
                 className="min-h-28 w-full rounded border border-[#d8ded0] bg-white px-3 py-2 outline-none focus:border-[#203c62]"
                 required
+              />
+            </label>
+            <label className="space-y-2">
+              <span className="text-sm font-semibold text-[#273125]">Ettervedtak</span>
+              <select
+                name="implementationStatus"
+                defaultValue={implementationStatus}
+                className="h-10 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
+              >
+                <option value="pending">Venter</option>
+                <option value="implemented">Implementert</option>
+                <option value="ignored">Ignorert</option>
+              </select>
+            </label>
+            <label className="space-y-2 lg:col-span-2">
+              <span className="text-sm font-semibold text-[#273125]">Ettervedtaksnotat</span>
+              <input
+                name="implementationNote"
+                defaultValue={proposal.implementationNote ?? ""}
+                className="h-10 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
+                placeholder="Kort notat om saken faktisk ble iverksatt, sovnet eller ble ignorert."
               />
             </label>
             <div className="flex flex-col gap-2 sm:flex-row lg:col-span-2">

@@ -6,6 +6,7 @@ import { lockRoundAction, unlockRoundAction } from "@/app/actions";
 import { RoundForm } from "@/components/round-form";
 import { RoundMapProtocol } from "@/components/round-map-protocol";
 import { Section } from "@/components/section";
+import { SlowGeoAftermath } from "@/components/slowgeo-aftermath";
 import { SlowGeoPlay } from "@/components/slowgeo-play";
 import { SlowGeoRevealMap } from "@/components/slowgeo-reveal-map";
 import { getCurrentGeot } from "@/lib/auth";
@@ -189,6 +190,7 @@ export default async function RoundDetailPage({
           streetViewUrl={streetViewUrl}
           googleMapsApiKey={publicGoogleKey}
           existingGuess={existingGuess}
+          existingNote={currentResult?.note ?? ""}
           shareUrl={slowGeoShareUrl}
           imageDate={round.challenge.imageDate}
           copyright={round.challenge.copyright}
@@ -211,6 +213,10 @@ export default async function RoundDetailPage({
         />
       ) : null}
 
+      {isStreetViewRound && round.challenge && round.status !== "open" ? (
+        <SlowGeoAftermath round={computed} />
+      ) : null}
+
       {!isStreetViewRound ? <RoundMapProtocol snapshot={round.mapSnapshot} /> : null}
 
       <Section
@@ -231,7 +237,7 @@ export default async function RoundDetailPage({
       >
         {isStreetViewRound ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
+            <table className="w-full min-w-[920px] text-left text-sm">
               <thead className="border-b border-[#d8ded0] text-xs uppercase tracking-[0.12em] text-[#5b6257]">
                 <tr>
                   <th className="py-2 pr-3">Geot</th>
@@ -239,6 +245,7 @@ export default async function RoundDetailPage({
                   <th className="py-2 pr-3 text-right">Km</th>
                   <th className="py-2 pr-3 text-right">Poeng</th>
                   <th className="py-2 pr-3">Status</th>
+                  {round.status === "open" ? null : <th className="py-2 pr-3">Begrunnelse</th>}
                 </tr>
               </thead>
               <tbody>
@@ -262,6 +269,9 @@ export default async function RoundDetailPage({
                     <td className="py-3 pr-3 text-right font-mono">{round.status === "open" ? "-" : formatKm(result.actualKm)}</td>
                     <td className="py-3 pr-3 text-right font-mono">{round.status === "open" ? "-" : result.points}</td>
                     <td className="py-3 pr-3">{result.status === "deltatt" ? "Deltatt" : result.guessLocation ? "Levert" : "Ikke levert"}</td>
+                    {round.status === "open" ? null : (
+                      <td className="max-w-xs py-3 pr-3 text-[#5b6257]">{result.note || "-"}</td>
+                    )}
                   </tr>
                 ))}
               </tbody>

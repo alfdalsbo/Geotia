@@ -20,9 +20,12 @@ import type {
   GeoticOrderHiddenCategory,
   GeoticOrderRankId,
   GeoticOrderStatus,
+  GeotingImplementationStatus,
+  GeotingPartyPosition,
   GeotingProposal,
   GeotingProposalStatus,
   GeotingVote,
+  PartyPositionValue,
   PlayerResult,
   ProposalRuleType,
   Round,
@@ -84,6 +87,8 @@ type UpdateProposalInput = {
   title: string;
   body: string;
   ruleType: ProposalRuleType;
+  implementationStatus?: GeotingImplementationStatus;
+  implementationNote?: string;
 };
 
 type WithdrawProposalInput = {
@@ -95,6 +100,14 @@ type VoteInput = {
   playerId: string;
   vote: VoteValue;
   comment: string;
+};
+
+type PartyPositionInput = {
+  proposalId: string;
+  partyId: string;
+  position: PartyPositionValue;
+  comment: string;
+  updatedBy: string;
 };
 
 type GeoterIndexAdjustmentInput = {
@@ -152,6 +165,10 @@ type DbProposalRow = {
   vote_started_by: string | null;
   oath_text: string | null;
   resolved_at: string | null;
+  implementation_status: GeotingImplementationStatus | null;
+  implementation_note: string | null;
+  implemented_at: string | null;
+  party_positions_json: GeotingPartyPosition[] | string | null;
   votes_json: GeotingVote[] | string;
 };
 
@@ -216,6 +233,7 @@ const dataFile =
     ? path.join("/tmp", "geotia-data.json")
     : path.join(process.cwd(), ".data", "geotia-data.json"));
 const backupDataFile = `${dataFile}.bak`;
+const fileStateSchemaVersion = "2";
 
 let schemaReady = false;
 let fileWriteQueue: Promise<void> = Promise.resolve();
@@ -303,6 +321,10 @@ function normalizeProposal(proposal: GeotingProposal): GeotingProposal {
     voteStartedBy: proposal.voteStartedBy ?? null,
     oathText: proposal.oathText ?? "",
     resolvedAt: proposal.resolvedAt ?? null,
+    implementationStatus: proposal.implementationStatus ?? "pending",
+    implementationNote: proposal.implementationNote ?? "",
+    implementedAt: proposal.implementedAt ?? null,
+    partyPositions: proposal.partyPositions ?? [],
     votes: (proposal.votes ?? []).map((vote) => ({
       ...vote,
       vote: normalizeVoteValue(vote.vote),
@@ -341,7 +363,10 @@ async function readFileState(): Promise<FileState> {
   const raw = await fs.readFile(dataFile, "utf8");
   const parsed = parseFileState(raw) ?? (await readBackupFileState());
   return {
-    meta: parsed.meta ?? {},
+    meta: {
+      schemaVersion: "1",
+      ...(parsed.meta ?? {}),
+    },
     rounds: (parsed.rounds ?? []).map(normalizeRound),
     gameSessions: (parsed.gameSessions ?? []).map(normalizeGameSession),
     geotingProposals: (parsed.geotingProposals ?? []).map(normalizeProposal),
@@ -374,7 +399,17 @@ async function readBackupFileState(): Promise<Partial<FileState>> {
 async function writeFileStateUnlocked(state: FileState) {
   await fs.mkdir(path.dirname(dataFile), { recursive: true });
   const tempFile = `${dataFile}.${process.pid}.${Date.now()}.${randomUUID()}.tmp`;
-  await fs.writeFile(tempFile, JSON.stringify(state, null, 2), "utf8");
+  const timestamp = nowIso();
+  const stateToWrite: FileState = {
+    ...state,
+    meta: {
+      ...(state.meta ?? {}),
+      schemaVersion: fileStateSchemaVersion,
+      lastWriteAt: timestamp,
+    },
+  };
+  await fs.writeFile(tempFile, JSON.stringify(stateToWrite, null, 2), "utf8");
+  await writeTimestampedBackup(timestamp);
   try {
     await fs.copyFile(dataFile, backupDataFile);
   } catch {
@@ -387,6 +422,17 @@ async function writeFileStateUnlocked(state: FileState) {
     if (code !== "EPERM" && code !== "EEXIST") throw error;
     await fs.copyFile(tempFile, dataFile);
     await fs.rm(tempFile, { force: true });
+  }
+}
+
+async function writeTimestampedBackup(timestamp: string) {
+  try {
+    const backupDir = path.join(path.dirname(dataFile), "backups");
+    const backupName = `geotia-data-${timestamp.replace(/[:.]/g, "-")}.json`;
+    await fs.mkdir(backupDir, { recursive: true });
+    await fs.copyFile(dataFile, path.join(backupDir, backupName));
+  } catch {
+    // Backups are best-effort; the primary atomic write should not fail because of the archive copy.
   }
 }
 
@@ -478,6 +524,10 @@ async function ensureSchema() {
   await sql`ALTER TABLE geotia_geoting_proposals ADD COLUMN IF NOT EXISTS vote_started_by text`;
   await sql`ALTER TABLE geotia_geoting_proposals ADD COLUMN IF NOT EXISTS oath_text text`;
   await sql`ALTER TABLE geotia_geoting_proposals ADD COLUMN IF NOT EXISTS resolved_at text`;
+  await sql`ALTER TABLE geotia_geoting_proposals ADD COLUMN IF NOT EXISTS implementation_status text`;
+  await sql`ALTER TABLE geotia_geoting_proposals ADD COLUMN IF NOT EXISTS implementation_note text`;
+  await sql`ALTER TABLE geotia_geoting_proposals ADD COLUMN IF NOT EXISTS implemented_at text`;
+  await sql`ALTER TABLE geotia_geoting_proposals ADD COLUMN IF NOT EXISTS party_positions_json jsonb`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS geotia_geoter_index_adjustments (
@@ -585,6 +635,10 @@ function parseDbProposal(row: DbProposalRow): GeotingProposal {
     typeof row.votes_json === "string"
       ? (JSON.parse(row.votes_json) as GeotingVote[])
       : row.votes_json;
+  const partyPositions =
+    typeof row.party_positions_json === "string"
+      ? (JSON.parse(row.party_positions_json) as GeotingPartyPosition[])
+      : (row.party_positions_json ?? []);
 
   return normalizeProposal({
     id: row.id,
@@ -600,6 +654,10 @@ function parseDbProposal(row: DbProposalRow): GeotingProposal {
     voteStartedBy: row.vote_started_by,
     oathText: row.oath_text ?? "",
     resolvedAt: row.resolved_at,
+    implementationStatus: row.implementation_status ?? "pending",
+    implementationNote: row.implementation_note ?? "",
+    implementedAt: row.implemented_at,
+    partyPositions,
     votes,
   });
 }
@@ -765,6 +823,10 @@ async function readDbProposals(): Promise<GeotingProposal[] | null> {
       vote_started_by,
       oath_text,
       resolved_at,
+      implementation_status,
+      implementation_note,
+      implemented_at,
+      party_positions_json,
       votes_json
     FROM geotia_geoting_proposals
     ORDER BY created_at DESC
@@ -792,6 +854,10 @@ async function upsertDbProposal(proposal: GeotingProposal) {
       vote_started_by,
       oath_text,
       resolved_at,
+      implementation_status,
+      implementation_note,
+      implemented_at,
+      party_positions_json,
       votes_json
     )
     VALUES (
@@ -808,6 +874,10 @@ async function upsertDbProposal(proposal: GeotingProposal) {
       ${proposal.voteStartedBy ?? null},
       ${proposal.oathText ?? ""},
       ${proposal.resolvedAt ?? null},
+      ${proposal.implementationStatus ?? "pending"},
+      ${proposal.implementationNote ?? ""},
+      ${proposal.implementedAt ?? null},
+      ${JSON.stringify(proposal.partyPositions ?? [])}::jsonb,
       ${JSON.stringify(proposal.votes)}::jsonb
     )
     ON CONFLICT (id) DO UPDATE SET
@@ -822,6 +892,10 @@ async function upsertDbProposal(proposal: GeotingProposal) {
       vote_started_by = EXCLUDED.vote_started_by,
       oath_text = EXCLUDED.oath_text,
       resolved_at = EXCLUDED.resolved_at,
+      implementation_status = EXCLUDED.implementation_status,
+      implementation_note = EXCLUDED.implementation_note,
+      implemented_at = EXCLUDED.implemented_at,
+      party_positions_json = EXCLUDED.party_positions_json,
       votes_json = EXCLUDED.votes_json
   `;
   return true;
@@ -1233,6 +1307,7 @@ export async function submitSlowGeoGuess(input: {
   roundId: string;
   playerId: string;
   location: GeoLocation;
+  note?: string;
 }) {
   const rounds = await readRounds();
   const round = rounds.find((candidate) => candidate.id === input.roundId);
@@ -1279,6 +1354,7 @@ export async function submitSlowGeoGuess(input: {
           guessUpdatedAt: timestamp,
           actualKm: null,
           distanceSource: null,
+          note: input.note?.trim().slice(0, 280) ?? "",
         }
       : result,
   );
@@ -1368,6 +1444,10 @@ export async function createGeotingProposal(input: ProposalInput) {
     voteStartedBy: null,
     oathText: "",
     resolvedAt: null,
+    implementationStatus: "pending",
+    implementationNote: "",
+    implementedAt: null,
+    partyPositions: [],
     votes: [],
   };
 
@@ -1392,8 +1472,52 @@ export async function updateGeotingProposal(input: UpdateProposalInput) {
     title,
     body,
     ruleType: input.ruleType,
+    implementationStatus: input.implementationStatus ?? proposal.implementationStatus ?? "pending",
+    implementationNote: input.implementationNote?.trim() ?? proposal.implementationNote ?? "",
+    implementedAt:
+      input.implementationStatus === "implemented" || input.implementationStatus === "ignored"
+        ? (proposal.implementedAt ?? nowIso())
+        : input.implementationStatus === "pending"
+          ? null
+          : (proposal.implementedAt ?? null),
     updatedAt: nowIso(),
   };
+  await saveProposals(
+    proposals.map((candidate) => (candidate.id === proposal.id ? updated : candidate)),
+  );
+  return { ok: true, proposal: updated };
+}
+
+export async function saveGeotingPartyPosition(input: PartyPositionInput) {
+  const proposals = await readProposals();
+  const proposal = proposals.find((candidate) => candidate.id === input.proposalId);
+  if (!proposal) {
+    return { ok: false, reason: "Saken finnes ikke i GeoTingets protokoll." };
+  }
+  if (!parties.some((party) => party.id === input.partyId)) {
+    return { ok: false, reason: "Partiet finnes ikke i GeoTingets register." };
+  }
+  if (proposal.status === "passed" || proposal.status === "rejected" || proposal.status === "archived") {
+    return { ok: false, reason: "Partiposisjoner føres før vedtaket er avgjort." };
+  }
+
+  const timestamp = nowIso();
+  const position: GeotingPartyPosition = {
+    partyId: input.partyId,
+    position: input.position,
+    comment: input.comment.trim().slice(0, 220),
+    updatedAt: timestamp,
+    updatedBy: input.updatedBy,
+  };
+  const updated: GeotingProposal = {
+    ...proposal,
+    partyPositions: [
+      position,
+      ...(proposal.partyPositions ?? []).filter((candidate) => candidate.partyId !== input.partyId),
+    ],
+    updatedAt: timestamp,
+  };
+
   await saveProposals(
     proposals.map((candidate) => (candidate.id === proposal.id ? updated : candidate)),
   );

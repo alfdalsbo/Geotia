@@ -24,6 +24,7 @@ import {
   createGeotingProposal,
   lockRound,
   saveGeotingVote,
+  saveGeotingPartyPosition,
   startGeotingVote,
   submitSlowGeoGuess,
   updateGeotingProposal,
@@ -42,6 +43,8 @@ import type {
   GeoticOrderHiddenCategory,
   GeoticOrderRankId,
   GeoticOrderStatus,
+  GeotingImplementationStatus,
+  PartyPositionValue,
   PlayerResult,
   ProposalRuleType,
   ResultStatus,
@@ -50,6 +53,10 @@ import type {
 
 function field(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
+}
+
+function limitedField(formData: FormData, key: string, maxLength: number) {
+  return field(formData, key).slice(0, maxLength);
 }
 
 function safeRedirectPath(value: string) {
@@ -235,6 +242,7 @@ export async function submitSlowGeoGuessAction(formData: FormData) {
     roundId,
     playerId: session.playerId,
     location,
+    note: limitedField(formData, "guess_note", 280),
   });
 
   revalidateSlowGeoPaths(roundId);
@@ -303,6 +311,16 @@ function proposalRuleType(value: string): ProposalRuleType {
   return "annet";
 }
 
+function implementationStatusField(value: string): GeotingImplementationStatus | undefined {
+  if (value === "pending" || value === "implemented" || value === "ignored") return value;
+  return undefined;
+}
+
+function partyPositionField(value: string): PartyPositionValue {
+  if (value === "for" || value === "mot" || value === "blankt" || value === "fri") return value;
+  return "fri";
+}
+
 function voteValue(value: string): VoteValue {
   if (value === "for" || value === "mot" || value === "blankt") return value;
   return "blankt";
@@ -364,6 +382,8 @@ export async function updateGeotingProposalAction(formData: FormData) {
     title: field(formData, "title"),
     body: field(formData, "body"),
     ruleType: proposalRuleType(field(formData, "ruleType")),
+    implementationStatus: implementationStatusField(field(formData, "implementationStatus")),
+    implementationNote: formData.has("implementationNote") ? limitedField(formData, "implementationNote", 320) : undefined,
   });
 
   revalidateGeotingAdminPaths();
@@ -372,6 +392,30 @@ export async function updateGeotingProposalAction(formData: FormData) {
     redirect(geotingAdminErrorRedirect(formData, result.reason ?? "Kollegiet fikk ikke endret saken.", "/tredje-kollegium"));
   }
   redirect(geotingAdminRedirect(formData, "geoting-redigert", "/tredje-kollegium"));
+}
+
+export async function saveGeotingPartyPositionAction(formData: FormData) {
+  const session = await requireSession();
+  const player = players.find((candidate) => candidate.id === session.playerId);
+  if (!player?.partyId || player.canVote === false) {
+    redirect("/geotinget/avstemninger?error=tingvitne");
+  }
+
+  const proposalId = field(formData, "proposalId");
+  const result = await saveGeotingPartyPosition({
+    proposalId,
+    partyId: player.partyId,
+    position: partyPositionField(field(formData, "position")),
+    comment: limitedField(formData, "comment", 220),
+    updatedBy: player.id,
+  });
+
+  revalidateGeotingAdminPaths();
+
+  if (!result.ok) {
+    redirect(`/geotinget/avstemninger?error=${encodeURIComponent(result.reason ?? "Partiposisjonen ble ikke ført.")}`);
+  }
+  redirect(`/geotinget/avstemninger?status=partiposisjon`);
 }
 
 export async function withdrawGeotingProposalAction(formData: FormData) {

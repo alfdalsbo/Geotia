@@ -1,9 +1,15 @@
 import { BellRing, CheckCircle2, Clock, Gavel, Landmark, ScrollText, Vote, XCircle } from "lucide-react";
 
-import { startGeotingVoteAction, voteGeotingProposalAction } from "@/app/actions";
+import { saveGeotingPartyPositionAction, startGeotingVoteAction, voteGeotingProposalAction } from "@/app/actions";
 import { GeotingCountdown } from "@/components/geoting-countdown";
-import { GEO_OATH_TEXT, summarizeProposal } from "@/lib/geoting";
-import type { GeotingProposal, Player, VoteValue } from "@/lib/types";
+import {
+  GEO_OATH_TEXT,
+  getConstitutionChangeParts,
+  getGeotingLifecycle,
+  partyPositionLabels,
+  summarizeProposal,
+} from "@/lib/geoting";
+import type { GeotingProposal, PartyPositionValue, Player, VoteValue } from "@/lib/types";
 import { dateLabel, dateTimeLabel } from "@/lib/utils";
 
 const ruleTypeLabels = {
@@ -84,6 +90,8 @@ function ProposalCard({
   const voteStarter = players.find((player) => player.id === proposal.voteStartedBy);
   const ownVote = proposal.votes.find((vote) => vote.playerId === currentGeot?.id);
   const resultTone = summary.finished ? (summary.passed ? "green" : "red") : summary.started ? "gold" : "blue";
+  const lifecycle = getGeotingLifecycle(proposal, players);
+  const constitutionChange = getConstitutionChangeParts(proposal.body);
 
   return (
     <article className="geotia-frame rounded">
@@ -98,6 +106,9 @@ function ProposalCard({
                 {proposal.title}
               </h2>
               <p className="mt-2 max-w-4xl text-sm leading-6 text-[#4f412b]">{proposal.body}</p>
+              {proposal.ruleType === "grunnlov" ? (
+                <ConstitutionChangePanel before={constitutionChange.before} after={constitutionChange.after} />
+              ) : null}
               <p className="mt-3 flex items-center gap-2 text-sm text-[#60553f]">
                 <Landmark className="h-4 w-4 text-[#b8892f]" aria-hidden="true" />
                 Fremmet av {proposer?.shortName ?? "ukjent geot"} · {summary.label}
@@ -110,10 +121,14 @@ function ProposalCard({
             </div>
           </div>
 
+          <LifecycleSteps steps={lifecycle} />
+
           <div className="mt-4 grid gap-3 lg:grid-cols-2">
             <StatusPanel proposal={proposal} resultTone={resultTone} summary={summary} voteStarter={voteStarter} />
             <VoteMap proposal={proposal} summary={summary} votingPlayers={votingPlayers} />
           </div>
+
+          <PartyPositionMap proposal={proposal} votingPlayers={votingPlayers} />
 
           {tingvitner.length ? (
             <p className="mt-3 rounded border border-[#c49a3c]/30 bg-[#fff7e6] px-3 py-2 text-sm text-[#60553f]">
@@ -123,6 +138,7 @@ function ProposalCard({
         </div>
 
         <div className="border-t border-[#c49a3c]/35 bg-[#061d2b] p-4 text-[#fff7e6] xl:border-l xl:border-t-0">
+          <PartyPositionPanel currentCanVote={currentCanVote} currentGeot={currentGeot} proposal={proposal} summary={summary} />
           <ActionPanel
             currentCanVote={currentCanVote}
             ownVote={ownVote?.vote}
@@ -132,6 +148,47 @@ function ProposalCard({
         </div>
       </div>
     </article>
+  );
+}
+
+function ConstitutionChangePanel({ before, after }: { before: string; after: string }) {
+  return (
+    <div className="mt-3 grid gap-2 rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-3 sm:grid-cols-2">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">Før</p>
+        <p className="mt-1 text-sm leading-6 text-[#4f412b]">{before || "Ikke strukturert. Bruk gjerne 'Før:' i pergamentet."}</p>
+      </div>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">Etter</p>
+        <p className="mt-1 text-sm leading-6 text-[#4f412b]">{after || "Ikke strukturert. Bruk gjerne 'Etter:' i pergamentet."}</p>
+      </div>
+    </div>
+  );
+}
+
+function LifecycleSteps({
+  steps,
+}: {
+  steps: ReturnType<typeof getGeotingLifecycle>;
+}) {
+  return (
+    <div className="mt-4 grid gap-2 sm:grid-cols-3 xl:grid-cols-6">
+      {steps.map((step) => (
+        <div
+          key={step.id}
+          className={
+            step.state === "done"
+              ? "rounded border border-[#285c45]/25 bg-[#285c45]/8 p-3 text-[#194832]"
+              : step.state === "current"
+                ? "rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-3 text-[#654517]"
+                : "rounded border border-[#d8ded0] bg-white/70 p-3 text-[#5b6257]"
+          }
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.12em]">{step.label}</p>
+          <p className="mt-1 text-xs leading-5">{step.detail}</p>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -186,6 +243,40 @@ function StatusPanel({
   );
 }
 
+function PartyPositionMap({
+  proposal,
+  votingPlayers,
+}: {
+  proposal: GeotingProposal;
+  votingPlayers: Player[];
+}) {
+  const parties = [...new Map(votingPlayers.filter((player) => player.partyId).map((player) => [player.partyId, player])).values()];
+
+  return (
+    <div className="mt-4 rounded border border-[#c49a3c]/30 bg-[#fff7e6] p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
+        Partienes offisielle posisjoner
+      </p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {parties.map((player) => {
+          const partyPosition = proposal.partyPositions?.find((position) => position.partyId === player.partyId);
+          return (
+            <div key={player.partyId} className="rounded border border-[#d8ded0] bg-white px-3 py-2 text-sm">
+              <p className="font-semibold text-[#203c62]">{player.partyId.toUpperCase()}</p>
+              <p className="mt-1 text-[#4f412b]">
+                {partyPosition ? partyPositionLabels[partyPosition.position] : "Ikke ført"}
+              </p>
+              {partyPosition?.comment ? (
+                <p className="mt-1 text-xs leading-5 text-[#60553f]">{partyPosition.comment}</p>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function VoteMap({
   proposal,
   summary,
@@ -224,6 +315,53 @@ function VoteMap({
         </p>
       ) : null}
     </div>
+  );
+}
+
+function PartyPositionPanel({
+  currentCanVote,
+  currentGeot,
+  proposal,
+  summary,
+}: {
+  currentCanVote: boolean;
+  currentGeot: Player | null;
+  proposal: GeotingProposal;
+  summary: ReturnType<typeof summarizeProposal>;
+}) {
+  if (!currentCanVote || !currentGeot?.partyId || summary.finished || proposal.status === "archived") return null;
+
+  const ownPosition = proposal.partyPositions?.find((position) => position.partyId === currentGeot.partyId);
+
+  return (
+    <form action={saveGeotingPartyPositionAction} className="mb-3 rounded border border-[#c49a3c]/45 bg-[#fff7e6]/10 p-4">
+      <input type="hidden" name="proposalId" value={proposal.id} />
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#e1c06c]">
+        Partilinje · {currentGeot.partyId.toUpperCase()}
+      </p>
+      <select
+        name="position"
+        defaultValue={ownPosition?.position ?? "fri"}
+        className="mt-3 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713] outline-none focus:border-[#e1c06c]"
+      >
+        {(["fri", "for", "mot", "blankt"] as PartyPositionValue[]).map((position) => (
+          <option key={position} value={position}>{partyPositionLabels[position]}</option>
+        ))}
+      </select>
+      <input
+        name="comment"
+        defaultValue={ownPosition?.comment ?? ""}
+        className="mt-3 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713] outline-none focus:border-[#e1c06c]"
+        placeholder="Kort partibegrunnelse"
+      />
+      <button
+        type="submit"
+        className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded bg-[#e1c06c] px-3 text-sm font-semibold text-[#062b40]"
+      >
+        <Landmark className="h-4 w-4" aria-hidden="true" />
+        Før partilinje
+      </button>
+    </form>
   );
 }
 

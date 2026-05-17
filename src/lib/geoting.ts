@@ -131,6 +131,74 @@ export function summarizeProposal(proposal: GeotingProposal, players: Player[], 
   };
 }
 
+export const geotingImplementationLabels = {
+  pending: "Venter på ettervedtak",
+  implemented: "Implementert",
+  ignored: "Ignorert",
+} as const;
+
+export const partyPositionLabels = {
+  for: "For",
+  mot: "Mot",
+  blankt: "Blankt",
+  fri: "Fri stemme",
+} as const;
+
+export function getConstitutionChangeParts(body: string) {
+  const beforeMatch = /(?:^|\n)\s*(?:før|foer)\s*:\s*([\s\S]*?)(?=(?:\n\s*(?:etter)\s*:)|$)/i.exec(body);
+  const afterMatch = /(?:^|\n)\s*etter\s*:\s*([\s\S]*)$/i.exec(body);
+  return {
+    before: beforeMatch?.[1]?.trim() || "",
+    after: afterMatch?.[1]?.trim() || "",
+  };
+}
+
+export function getGeotingLifecycle(proposal: GeotingProposal, players: Player[], now = new Date()) {
+  const summary = summarizeProposal(proposal, players, now);
+  const implementationStatus = proposal.implementationStatus ?? "pending";
+  const resolved = summary.finished || proposal.status === "passed" || proposal.status === "rejected";
+  const implemented = resolved && (implementationStatus === "implemented" || implementationStatus === "ignored");
+
+  return [
+    {
+      id: "forslag",
+      label: "Forslag",
+      state: "done",
+      detail: "Saken er lagt på tingvollen.",
+    },
+    {
+      id: "krangel",
+      label: "Krangel",
+      state: summary.started ? "done" : "current",
+      detail: summary.started ? "Krangelen er moden nok til urne." : "Saken venter på offentlig uro.",
+    },
+    {
+      id: "geo-ed",
+      label: "Geo-ed",
+      state: summary.started ? "done" : "waiting",
+      detail: summary.started ? "Geo-eden er avlagt." : "Et parti må sverge før urnen åpnes.",
+    },
+    {
+      id: "avstemning",
+      label: "Avstemning",
+      state: resolved ? "done" : summary.started ? "current" : "waiting",
+      detail: resolved ? "Urnen er lukket." : summary.started ? summary.label : "Ikke åpnet.",
+    },
+    {
+      id: "vedtak",
+      label: "Vedtak",
+      state: resolved ? (implemented ? "done" : "current") : "waiting",
+      detail: resolved ? summary.resultText : "Venter på stemmer.",
+    },
+    {
+      id: "etterliv",
+      label: "Implementert/ignorert",
+      state: implemented ? "done" : resolved ? "current" : "waiting",
+      detail: geotingImplementationLabels[implementationStatus],
+    },
+  ] as const;
+}
+
 export function resolveProposalIfReady(
   proposal: GeotingProposal,
   players: Player[],

@@ -5,6 +5,7 @@ import { Section, StatTile } from "@/components/section";
 import { SlowGeoRoundLauncher } from "@/components/slowgeo-round-launcher";
 import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
 import { computeRound, computeStandings } from "@/lib/scoring";
+import { getSlowGeoProgress, getSlowGeoRoundInsights, slowGeoDifficultyLabels } from "@/lib/slowgeo-insights";
 import { getAppState } from "@/lib/store";
 import { dateLabel, dateTimeLabel, formatKm } from "@/lib/utils";
 
@@ -75,8 +76,9 @@ export default async function SlowGeoGamePage({
         {activeRounds.length ? (
           <div className="grid gap-3 lg:grid-cols-2">
             {activeRounds.map((round) => {
-              const submitted = round.results.filter((result) => result.guessLocation).length;
+              const progress = getSlowGeoProgress(round);
               const shareUrl = `/slowgeo/${round.id}`;
+              const difficulty = round.challenge?.difficulty ? slowGeoDifficultyLabels[round.challenge.difficulty] : null;
               return (
                 <article key={round.id} className="rounded border border-[#d8ded0] bg-white p-4 shadow-sm">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -94,8 +96,21 @@ export default async function SlowGeoGamePage({
                     </p>
                   </div>
                   <p className="mt-3 text-sm leading-6 text-[#5b6257]">
-                    {submitted}/{round.results.length} pin-svar er låst. Fasit er skjult til reveal.
+                    {progress.submittedCount}/{progress.totalCount} pin-svar er låst. Fasit er skjult til reveal.
                   </p>
+                  <div className="mt-3 h-2 overflow-hidden rounded bg-[#eef1eb]">
+                    <div
+                      className="h-full rounded bg-[#285c45]"
+                      style={{ width: `${Math.round((progress.submittedCount / Math.max(progress.totalCount, 1)) * 100)}%` }}
+                    />
+                  </div>
+                  {round.challenge ? (
+                    <div className="mt-3 rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-3 text-sm leading-6 text-[#4f412b]">
+                      <span className="font-semibold text-[#7c2430]">{difficulty ?? "Umerket"}</span>
+                      {round.challenge.theme ? ` · ${round.challenge.theme}` : ""}
+                      {round.challenge.signature ? ` · ${round.challenge.signature}` : ""}
+                    </div>
+                  ) : null}
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Link
                       href={`/runder/${round.id}`}
@@ -145,6 +160,7 @@ export default async function SlowGeoGamePage({
             {recentRounds.map((round) => {
               const computed = computeRound(round, state.players);
               const winnerKm = computed.results.find((result) => result.rank === 1)?.actualKm;
+              const insight = getSlowGeoRoundInsights(computed).insightCards[0];
               return (
                 <article key={round.id} className="rounded border border-[#d8ded0] bg-white p-4 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8e3030]">
@@ -156,6 +172,11 @@ export default async function SlowGeoGamePage({
                   <p className="mt-2 text-sm leading-6 text-[#5b6257]">
                     Vinner: {computed.winnerNames.join(", ") || "-"} · beste bom {formatKm(winnerKm)}
                   </p>
+                  {insight ? (
+                    <p className="mt-3 rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm font-semibold text-[#654517]">
+                      {insight.title}
+                    </p>
+                  ) : null}
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Link
                       href={`/runder/${round.id}`}
