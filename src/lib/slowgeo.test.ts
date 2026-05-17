@@ -109,7 +109,7 @@ describe("SlowGeo reveal rules", () => {
     const alf = revealed.results.find((result) => result.playerId === "alf");
     const vegard = revealed.results.find((result) => result.playerId === "vegard");
 
-    expect(revealed.status).toBe("revealed");
+    expect(revealed.status).toBe("locked");
     expect(revealed.revealedAt).toBe("2026-05-16T12:00:00.000Z");
     expect(alf).toMatchObject({ status: "deltatt", actualKm: 214, distanceSource: "auto" });
     expect(vegard).toMatchObject({ status: "ikke_deltatt", actualKm: null, distanceSource: null });

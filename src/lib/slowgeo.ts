@@ -51,7 +51,7 @@ export function finalizeSlowGeoRound(round: Round, players: Player[], revealedAt
 
   return {
     ...round,
-    status: "revealed",
+    status: "locked",
     revealedAt: round.revealedAt ?? revealedAt,
     updatedAt: revealedAt,
     results,

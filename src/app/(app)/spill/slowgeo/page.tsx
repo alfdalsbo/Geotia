@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Clock, ExternalLink, MapPinned, Trophy } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, ExternalLink, MapPinned, Trophy } from "lucide-react";
 
 import { Section, StatTile } from "@/components/section";
 import { SlowGeoRoundLauncher } from "@/components/slowgeo-round-launcher";
@@ -29,6 +29,10 @@ export default async function SlowGeoGamePage({
     .filter((round) => round.challenge && round.status !== "open")
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     .slice(0, 6);
+  const latestResolvedRound = state.rounds
+    .filter((round) => round.challenge && round.status !== "open")
+    .sort((a, b) => b.number - a.number)[0];
+  const olderRecentRounds = recentRounds.filter((round) => round.id !== latestResolvedRound?.id);
   const lockedRounds = state.rounds.filter((round) => round.challenge && round.status === "locked");
   const leader = standings[0];
   const kattometerLeader = standings
@@ -46,7 +50,7 @@ export default async function SlowGeoGamePage({
         </h1>
         <p className="mt-4 max-w-4xl text-base leading-7 text-[#4f412b]">
           Start et bilde, del det i samtaletråden, la geotene krangle seg varme,
-          og lås pin-svarene før fasit vises.
+          og la appen låse protokollen når fasit vises.
         </p>
       </section>
 
@@ -72,6 +76,54 @@ export default async function SlowGeoGamePage({
       <Section title="Start nytt SlowGeo" eyebrow="Nytt bilde til tråden">
         <SlowGeoRoundLauncher />
       </Section>
+
+      {latestResolvedRound ? (
+        <Section title="Siste fasit står fremme" eyebrow="Automatisk arkivført">
+          {(() => {
+            const computed = computeRound(latestResolvedRound, state.players);
+            const winnerKm = computed.results.find((result) => result.rank === 1)?.actualKm;
+            const insight = getSlowGeoRoundInsights(computed).insightCards[0];
+            return (
+              <article className="grid gap-4 rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm lg:grid-cols-[1fr_auto] lg:items-center">
+                <div>
+                  <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
+                    <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                    Låst i protokollen
+                  </p>
+                  <h2 className="font-display mt-2 text-3xl font-semibold text-[#062b40]">
+                    {latestResolvedRound.name}
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-[#5b6257]">
+                    Fasit: {latestResolvedRound.answer || latestResolvedRound.challenge?.label || "-"} · vinner{" "}
+                    {computed.winnerNames.join(", ") || "-"} · beste bom {formatKm(winnerKm)}
+                  </p>
+                  {insight ? (
+                    <p className="mt-3 inline-flex rounded border border-[#c49a3c]/45 bg-white/70 px-3 py-2 text-sm font-semibold text-[#654517]">
+                      {insight.title}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap gap-2 lg:justify-end">
+                  <Link
+                    href={`/slowgeo/${latestResolvedRound.id}`}
+                    className="inline-flex h-10 items-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
+                  >
+                    Se fasitkort
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                  <Link
+                    href={`/runder/${latestResolvedRound.id}`}
+                    className="inline-flex h-10 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
+                  >
+                    Protokoll
+                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                </div>
+              </article>
+            );
+          })()}
+        </Section>
+      ) : null}
 
       <Section title="Aktive SlowGeo-runder" eyebrow="Åpne bilder og låste pins">
         {activeRounds.length ? (
@@ -156,9 +208,9 @@ export default async function SlowGeoGamePage({
           </Link>
         }
       >
-        {recentRounds.length ? (
+        {olderRecentRounds.length ? (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {recentRounds.map((round) => {
+            {olderRecentRounds.map((round) => {
               const computed = computeRound(round, state.players);
               const winnerKm = computed.results.find((result) => result.rank === 1)?.actualKm;
               const insight = getSlowGeoRoundInsights(computed).insightCards[0];
@@ -200,7 +252,7 @@ export default async function SlowGeoGamePage({
         ) : (
           <div className="rounded border border-dashed border-[#b8892f] bg-[#b8892f]/8 p-5">
             <p className="text-sm text-[#5b6257]">
-              Ingen avslørte Street View-runder ennå. Første fasit blir stående her.
+              Ingen eldre avslørte Street View-runder ennå. Første fasit blir stående over.
             </p>
           </div>
         )}

@@ -198,7 +198,7 @@ describe("Geotia file store", () => {
     const round = state.rounds.find((candidate) => candidate.id === created.round.id);
 
     expect(reveal.revealed).toBe(1);
-    expect(round?.status).toBe("revealed");
+    expect(round?.status).toBe("locked");
     expect(round?.revealedAt).toBeTruthy();
     expect(round?.results.find((result) => result.playerId === "alf")).toMatchObject({
       status: "deltatt",

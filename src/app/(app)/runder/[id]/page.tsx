@@ -14,7 +14,7 @@ import { selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { computeRound } from "@/lib/scoring";
 import { getAppState, maybeRevealRound } from "@/lib/store";
 import { buildStreetViewImageUrl } from "@/lib/streetview-url";
-import type { RoundStatus } from "@/lib/types";
+import type { Round, RoundStatus } from "@/lib/types";
 import { dateLabel, formatKm } from "@/lib/utils";
 
 export const metadata = {
@@ -31,11 +31,11 @@ function statusName(status: RoundStatus) {
   return labels[status];
 }
 
-function roundAction(roundId: string, status: RoundStatus) {
-  if (status === "revealed" || status === "draft") {
+function roundAction(round: Round) {
+  if (round.status === "revealed" || round.status === "draft") {
     return (
       <form action={lockRoundAction}>
-        <input type="hidden" name="id" value={roundId} />
+        <input type="hidden" name="id" value={round.id} />
         <button
           type="submit"
           className="inline-flex h-10 items-center gap-2 rounded bg-[#285c45] px-3 text-sm font-semibold text-white"
@@ -47,10 +47,10 @@ function roundAction(roundId: string, status: RoundStatus) {
     );
   }
 
-  if (status === "locked") {
+  if (round.status === "locked") {
     return (
       <form action={unlockRoundAction}>
-        <input type="hidden" name="id" value={roundId} />
+        <input type="hidden" name="id" value={round.id} />
         <button
           type="submit"
           className="inline-flex h-10 items-center gap-2 rounded border border-[#b8892f]/40 bg-[#b8892f]/10 px-3 text-sm font-semibold text-[#7b591d]"
@@ -158,7 +158,7 @@ export default async function RoundDetailPage({
             : query.status === "gjettet"
               ? "Pin-svaret er låst. Kranglingen kan fortsette uten at pinnen flytter seg."
               : query.status === "avslort"
-                ? "Alle geoter har svart. Fasit er avslørt."
+                ? "Fasit er avslørt, protokollen er låst og runden ligger i arkivet."
                 : query.status === "apnet"
                   ? "SlowGeo-runden er åpnet."
                   : "Protokollen er oppdatert."}
@@ -231,7 +231,7 @@ export default async function RoundDetailPage({
         eyebrow={isOpenStreetViewRound ? "Svarfrist og innsendte pins" : "Km, deltakelse og kattometer"}
         action={
           <div className="flex flex-wrap gap-2">
-            {roundAction(round.id, round.status)}
+            {roundAction(round)}
             <Link
               href="/runder"
               className="inline-flex h-10 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"

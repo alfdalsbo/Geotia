@@ -33,7 +33,8 @@ export default async function RoundsPage({
         </h1>
         <p className="mt-3 max-w-3xl text-[#60553f]">
           Før fasit, geotenes svar, km og hendelser. Kartografen kan regne avstander,
-          men GeoVAR lar deg fortsatt overstyre når verden oppfører seg urimelig.
+          men SlowGeo låser seg selv når fasit kommer, og GeoVAR lar deg fortsatt
+          overstyre når verden oppfører seg urimelig.
         </p>
         <p className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm leading-6 text-[#4f412b]">
           Poengrekken følger antall gyldige deltakere i runden. Kattometeret beregner
@@ -53,6 +54,8 @@ export default async function RoundsPage({
             ? "Protokollen er låst. Kattometeret har talt."
             : params.status === "apnet"
               ? "SlowGeo-runden er åpnet."
+              : params.status === "avslort"
+                ? "SlowGeo-fasiten er vist og protokollen er automatisk arkivført."
               : "Protokollen er lagret."}
         </div>
       ) : null}
@@ -72,7 +75,8 @@ export default async function RoundsPage({
       >
         <p className="text-sm leading-6 text-[#5b6257]">
           Nye Street View-runder startes i SlowGeo-rommet. Rundearkivet under er fortsatt
-          den offisielle protokollen for fasit, låsing og etterkontroll.
+          den offisielle protokollen for fasit og etterkontroll, men SlowGeo-runder
+          arkivføres automatisk når fasit vises.
         </p>
       </Section>
 
