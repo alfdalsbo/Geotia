@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Edit3, LockKeyhole, Plus, ShieldCheck } from "lucide-react";
+import { ArrowRight, Edit3, LockKeyhole, Plus, ShieldCheck } from "lucide-react";
 
 import { Section } from "@/components/section";
 import { lockRoundAction } from "@/app/actions";
@@ -7,7 +7,6 @@ import { computeRound } from "@/lib/scoring";
 import { getAppState, makeEmptyRound } from "@/lib/store";
 import { dateLabel, formatKm } from "@/lib/utils";
 import { RoundForm } from "@/components/round-form";
-import { SlowGeoRoundLauncher } from "@/components/slowgeo-round-launcher";
 import type { RoundStatus } from "@/lib/types";
 
 export const metadata = {
@@ -58,8 +57,23 @@ export default async function RoundsPage({
         </div>
       ) : null}
 
-      <Section title="Ny SlowGeo" eyebrow="Street View og pin-svar">
-        <SlowGeoRoundLauncher />
+      <Section
+        title="SlowGeo-spillrom"
+        eyebrow="Street View og pin-svar"
+        action={
+          <Link
+            href="/spill/slowgeo"
+            className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
+          >
+            Åpne SlowGeo
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        }
+      >
+        <p className="text-sm leading-6 text-[#5b6257]">
+          Nye Street View-runder startes i SlowGeo-rommet. Rundearkivet under er fortsatt
+          den offisielle protokollen for fasit, låsing og etterkontroll.
+        </p>
       </Section>
 
       <Section title="Manuell protokoll" eyebrow="Embetsverkets hurtigskjema">

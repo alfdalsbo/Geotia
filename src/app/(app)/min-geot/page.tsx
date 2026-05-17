@@ -66,10 +66,10 @@ export default async function MyGeotPage() {
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
-                href="/runder"
+                href="/spill/slowgeo"
                 className="inline-flex h-11 items-center gap-2 rounded bg-[#e1c06c] px-4 text-sm font-semibold text-[#062b40] shadow-sm transition hover:bg-[#f0d78f]"
               >
-                Før SlowGeo
+                Åpne SlowGeo
                 <MapPin className="h-4 w-4" aria-hidden="true" />
               </Link>
               <Link

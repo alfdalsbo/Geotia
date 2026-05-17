@@ -54,6 +54,8 @@ test("core pages do not overflow horizontally on mobile", async ({ page }) => {
   for (const route of [
     "/",
     "/spill",
+    "/spill/slowgeo",
+    "/spill/registrer?game=geo",
     "/tabeller",
     "/geotinget",
     "/geotinget/avstemninger",

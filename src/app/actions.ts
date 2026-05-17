@@ -196,6 +196,7 @@ export async function saveRoundAction(formData: FormData) {
 function revalidateSlowGeoPaths(roundId?: string) {
   revalidatePath("/");
   revalidatePath("/spill");
+  revalidatePath("/spill/slowgeo");
   revalidatePath("/tabeller");
   revalidatePath("/runder");
   if (roundId) revalidatePath(`/runder/${roundId}`);
@@ -217,7 +218,7 @@ export async function createSlowGeoRoundAction(formData: FormData) {
   revalidateSlowGeoPaths(result.ok ? result.round?.id : undefined);
 
   if (!result.ok || !result.round) {
-    redirect(`/runder?error=${encodeURIComponent(result.reason ?? "SlowGeo-runden kunne ikke åpnes.")}`);
+    redirect(`/spill/slowgeo?error=${encodeURIComponent(result.reason ?? "SlowGeo-runden kunne ikke åpnes.")}`);
   }
 
   redirect(`/runder/${result.round.id}?status=apnet`);
@@ -285,9 +286,10 @@ export async function saveGameSessionAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/spill");
+  revalidatePath("/spill/registrer");
   revalidatePath("/tabeller");
   revalidatePath("/min-geot");
-  redirect("/spill?status=lagret");
+  redirect(`/spill/registrer?status=lagret&game=${gameId}`);
 }
 
 export async function lockRoundAction(formData: FormData) {
@@ -296,6 +298,7 @@ export async function lockRoundAction(formData: FormData) {
   const result = await lockRound(id);
   revalidatePath("/");
   revalidatePath("/spill");
+  revalidatePath("/spill/slowgeo");
   revalidatePath("/tabeller");
   revalidatePath("/runder");
   revalidatePath("/stilling");
@@ -314,6 +317,7 @@ export async function unlockRoundAction(formData: FormData) {
   await unlockRound(id);
   revalidatePath("/");
   revalidatePath("/spill");
+  revalidatePath("/spill/slowgeo");
   revalidatePath("/tabeller");
   revalidatePath("/runder");
   revalidatePath("/stilling");

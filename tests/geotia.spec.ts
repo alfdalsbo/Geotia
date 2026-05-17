@@ -11,7 +11,7 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await page.getByLabel("Vis større bilde: Partioversikt for Geotia").click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("button", { name: "Lukk større bilde" }).click();
-  await page.getByRole("link", { name: "Før ny runde" }).click();
+  await page.goto("/runder");
 
   await page.getByLabel("Rundenavn").fill("Playwright-protokollen");
   await page.getByLabel("Fasit / sted").fill("Wien");
@@ -43,6 +43,10 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "SlowGeo-tabell" })).toBeVisible();
 
   await page.getByRole("link", { name: "Spill" }).click();
+  await expect(page.getByRole("heading", { name: "Geotias spillkammer" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Åpne SlowGeo/ })).toBeVisible();
+  await expect(page.getByText("Før ny spilløkt")).toHaveCount(0);
+  await page.locator('a[href="/spill/registrer?game=geo"]').first().click();
   await page.getByLabel("Spill").selectOption("geo");
   await page.getByLabel("Navn på økt").fill("Geo-fellesprotokoll");
   await page.locator('select[name="status_alf"]').selectOption("deltatt");
@@ -50,6 +54,8 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await page.locator('select[name="status_vegard"]').selectOption("deltatt");
   await page.locator('input[name="score_vegard"]').fill("23000");
   await page.getByRole("button", { name: "Før spilløkt" }).click();
+  await expect(page.getByText("Spilløkten er ført.")).toBeVisible();
+  await page.getByRole("link", { name: "Tabeller", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Geo-tabell", exact: true })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("cell", { name: "24 000 poeng" }).first()).toBeVisible();
 
@@ -195,7 +201,8 @@ test("SlowGeo can auto-calculate distances and archive a map protocol", async ({
   await page.getByLabel("Brukernavn").fill("SS");
   await page.getByLabel("Passord").fill("geotia");
   await page.getByRole("button", { name: "Åpne Geotia" }).click();
-  await page.getByRole("link", { name: "Før ny runde" }).click();
+  await expect(page.getByRole("button", { name: "Forlat embetsverket" })).toBeVisible({ timeout: 15_000 });
+  await page.goto("/runder");
 
   const roundName = `Kartprotokollen ${Date.now()}`;
   await page.getByLabel("Rundenavn").fill(roundName);

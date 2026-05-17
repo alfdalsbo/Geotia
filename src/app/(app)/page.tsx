@@ -65,10 +65,10 @@ export default async function DashboardPage() {
 
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
-                href="/runder"
+                href="/spill/slowgeo"
                 className="inline-flex h-11 items-center gap-2 rounded bg-[#7c2430] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#641923]"
               >
-                Før ny runde
+                Start SlowGeo
                 <TableProperties className="h-4 w-4" aria-hidden="true" />
               </Link>
               <Link
@@ -155,7 +155,7 @@ export default async function DashboardPage() {
           return (
             <Link
               key={game.id}
-              href={game.id === "slowgeo" ? "/runder" : "/spill"}
+              href={game.id === "slowgeo" ? "/spill/slowgeo" : `/spill/registrer?game=${game.id}`}
               className="geotia-panel group rounded p-4 transition hover:-translate-y-0.5 hover:border-[#c49a3c]"
             >
               <div className="relative z-10 flex items-center justify-between">
