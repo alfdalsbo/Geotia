@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Loader2, MapPin } from "lucide-react";
 
@@ -11,6 +10,7 @@ import {
   type GoogleMarker,
   type GooglePolyline,
 } from "@/components/google-maps-loader";
+import { SlowGeoImageViewer } from "@/components/slowgeo-image-viewer";
 import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
 import { buildRevealedSlowGeoShareText } from "@/lib/slowgeo-share";
 import { formatKm } from "@/lib/utils";
@@ -140,17 +140,13 @@ export function SlowGeoRevealMap({
       <div className="grid gap-0 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
         <div className="bg-[#061d2b]">
           {streetViewUrl ? (
-            <div className="relative aspect-video min-h-[240px] w-full sm:min-h-[300px]">
-              <Image
-                src={streetViewUrl}
-                alt="SlowGeo-fasitbilde"
-                fill
-                sizes="(min-width: 1280px) 55vw, 100vw"
-                className="object-cover"
-                referrerPolicy="no-referrer-when-downgrade"
-                unoptimized
-              />
-            </div>
+            <SlowGeoImageViewer
+              src={streetViewUrl}
+              alt="SlowGeo-fasitbilde"
+              sizes="(min-width: 1280px) 55vw, 100vw"
+              className="aspect-[4/3] min-h-[320px] sm:aspect-video sm:min-h-[300px]"
+              title={roundName}
+            />
           ) : (
             <div className="flex aspect-video min-h-[240px] items-center justify-center px-6 text-center text-sm font-semibold text-[#fff7e6] sm:min-h-[300px]">
               Street View-bildet kan ikke vises uten Google-nøkkel.

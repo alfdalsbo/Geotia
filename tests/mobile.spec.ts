@@ -213,6 +213,15 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
   await expect(page.getByText("© 2024 Google")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
 
+  await page.getByRole("button", { name: "Åpne SlowGeo-bildet i fullskjerm" }).click();
+  const imageDialog = page.getByRole("dialog", { name: "SlowGeo-bilde i fullskjerm" });
+  await expect(imageDialog).toBeVisible();
+  await imageDialog.getByRole("button", { name: "Zoom inn" }).click();
+  await expect(imageDialog.getByText("150%")).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+  await imageDialog.getByRole("button", { name: "Lukk bilde" }).click();
+  await expect(imageDialog).toBeHidden();
+
   await page.getByRole("button", { name: "Sett pin i fullskjermkart" }).click();
   const dialog = page.getByRole("dialog", { name: "Sett pin i kart" });
   await expect(dialog).toBeVisible();

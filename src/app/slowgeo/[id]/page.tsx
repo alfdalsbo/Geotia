@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, CheckCircle2, MessageCircle, Trophy } from "lucide-react";
 
 import { SlowGeoAftermath } from "@/components/slowgeo-aftermath";
+import { SlowGeoImageViewer } from "@/components/slowgeo-image-viewer";
 import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
 import { computeRound } from "@/lib/scoring";
 import { buildOpenSlowGeoShareText, buildRevealedSlowGeoShareText } from "@/lib/slowgeo-share";
@@ -162,18 +162,14 @@ export default async function SlowGeoSharePage({
 
         <section className="overflow-hidden rounded border border-[#c49a3c]/55 bg-[#061d2b] shadow-[0_18px_40px_rgba(38,26,12,0.14)]">
           {streetViewUrl ? (
-            <div className="relative aspect-video min-h-[240px] w-full sm:min-h-[420px]">
-              <Image
-                src={streetViewUrl}
-                alt={`SlowGeo-bilde for ${round.name}`}
-                fill
-                sizes="100vw"
-                className="object-cover"
-                referrerPolicy="no-referrer-when-downgrade"
-                unoptimized
-                priority
-              />
-            </div>
+            <SlowGeoImageViewer
+              src={streetViewUrl}
+              alt={`SlowGeo-bilde for ${round.name}`}
+              sizes="100vw"
+              className="aspect-[4/3] min-h-[320px] sm:aspect-video sm:min-h-[420px]"
+              priority
+              title={round.name}
+            />
           ) : (
             <div className="flex aspect-video min-h-[280px] items-center justify-center px-6 text-center text-sm font-semibold text-[#fff7e6]">
               Street View-bildet kan ikke vises akkurat nå.

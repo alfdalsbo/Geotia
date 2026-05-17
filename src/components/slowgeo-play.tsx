@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, LockKeyhole, MapPin, Maximize2, RotateCcw, Send, X } from "lucide-react";
 
 import { submitSlowGeoGuessAction } from "@/app/actions";
 import { loadGoogleMaps, type GoogleMap, type GoogleMapsApi, type GoogleMarker } from "@/components/google-maps-loader";
+import { SlowGeoImageViewer } from "@/components/slowgeo-image-viewer";
 import { SlowGeoShareButton } from "@/components/slowgeo-share-button";
 import { buildOpenSlowGeoShareText } from "@/lib/slowgeo-share";
 import { dateTimeLabel } from "@/lib/utils";
@@ -178,17 +178,13 @@ export function SlowGeoPlay({
       <div className="grid gap-0 xl:grid-cols-[minmax(0,1.18fr)_minmax(360px,0.82fr)]">
         <div className="bg-[#061d2b]">
           {streetViewUrl ? (
-            <div className="relative aspect-video min-h-[240px] w-full sm:min-h-[300px]">
-              <Image
-                src={streetViewUrl}
-                alt="SlowGeo-bilde"
-                fill
-                sizes="(min-width: 1280px) 58vw, 100vw"
-                className="object-cover"
-                referrerPolicy="no-referrer-when-downgrade"
-                unoptimized
-              />
-            </div>
+            <SlowGeoImageViewer
+              src={streetViewUrl}
+              alt="SlowGeo-bilde"
+              sizes="(min-width: 1280px) 58vw, 100vw"
+              className="aspect-[4/3] min-h-[320px] sm:aspect-video sm:min-h-[300px]"
+              title={roundName}
+            />
           ) : (
             <div className="flex aspect-video min-h-[240px] items-center justify-center px-6 text-center text-sm font-semibold text-[#fff7e6] sm:min-h-[300px]">
               Street View-bildet mangler pano-ID eller Google-nøkkel. Sett Google-miljøvariablene og opprett en ny runde.
