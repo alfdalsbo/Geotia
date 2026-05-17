@@ -241,6 +241,8 @@ export const partyTrials = [
 ];
 
 const foundingPlayerIds = new Set(["alf", "vegard", "jorgen", "steinar", "sverre", "fredrik", "ruben"]);
+const GEOTIA_SERVICE_START_DATE = "2020-04-01";
+const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
 
 export function getGeoticOrderRank(rankId: GeoticOrderRankId) {
   return geoticOrderRanks.find((rank) => rank.id === rankId) ?? geoticOrderRanks[0];
@@ -266,8 +268,34 @@ function defaultRankId(player: Player): GeoticOrderRankId {
   return "borger";
 }
 
+function serviceStartDate(player: Player) {
+  if (player.role === "tingvitne" || player.id === "danny") return null;
+  return GEOTIA_SERVICE_START_DATE;
+}
+
+export function getServiceWeeksSince(startDate: string, now = new Date()) {
+  const [year, month, day] = startDate.split("-").map(Number);
+  if (!year || !month || !day) return 0;
+  const startUtc = Date.UTC(year, month - 1, day);
+  const nowUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Math.max(0, Math.floor((nowUtc - startUtc) / MS_PER_WEEK));
+}
+
+export function formatServiceTime(weeks: number) {
+  const safeWeeks = Math.max(0, Math.round(weeks));
+  const years = Math.floor(safeWeeks / 52);
+  const remainingWeeks = safeWeeks % 52;
+  const weekLabel = safeWeeks === 1 ? "uke" : "uker";
+  if (years === 0) return `${safeWeeks} ${weekLabel}`;
+  const remainingLabel = remainingWeeks === 1 ? "uke" : "uker";
+  return remainingWeeks > 0
+    ? `${safeWeeks} uker · ${years} år og ${remainingWeeks} ${remainingLabel}`
+    : `${safeWeeks} uker · ${years} år`;
+}
+
 function defaultServiceWeeks(player: Player) {
-  if (foundingPlayerIds.has(player.id)) return 20;
+  const startDate = serviceStartDate(player);
+  if (startDate) return getServiceWeeksSince(startDate);
   if (player.role === "tingvitne") return 1;
   return 0;
 }
@@ -339,7 +367,10 @@ export function getGeoticOrderRows(
   return players.map((player) => {
     const standing = standingByPlayerId.get(player.id);
     const assessment = assessmentByPlayerId.get(player.id) ?? null;
-    const serviceWeeks = assessment?.serviceWeeks ?? defaultServiceWeeks(player);
+    const baselineServiceWeeks = defaultServiceWeeks(player);
+    const serviceWeeks = serviceStartDate(player)
+      ? Math.max(assessment?.serviceWeeks ?? 0, baselineServiceWeeks)
+      : (assessment?.serviceWeeks ?? baselineServiceWeeks);
     const roundsPlayed = standing?.roundsPlayed ?? 0;
     const lifetimePoints = standing?.totalPoints ?? 0;
     const trustScore = getOrderIndexScore(player.id, adjustments);
@@ -359,6 +390,8 @@ export function getGeoticOrderRows(
       status: getGeoticOrderStatus(assessment?.status ?? "normal"),
       hiddenCategory: getHiddenOrderCategory(assessment?.hiddenCategory ?? defaultHiddenCategory(player)),
       serviceWeeks,
+      serviceTimeLabel: formatServiceTime(serviceWeeks),
+      serviceStartedAt: serviceStartDate(player),
       roundsPlayed,
       lifetimePoints,
       trustScore,

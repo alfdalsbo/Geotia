@@ -15,7 +15,6 @@ import {
 
 import { RotatingGeotiaQuote } from "@/components/rotating-geotia-quote";
 import { ExpandableImage } from "@/components/expandable-image";
-import { GeotingVoteAlarm } from "@/components/geoting-vote-alarm";
 import { SarajevoVideo } from "@/components/sarajevo-video";
 import { Section, StatTile } from "@/components/section";
 import { computeGameStandings, getHallOfFame, computeRound, computeStandings } from "@/lib/scoring";
@@ -40,7 +39,6 @@ export default async function DashboardPage() {
     .sort((a, b) => a.totalKattometer - b.totalKattometer)[0];
   const drafts = state.rounds.length - lockedRounds.length;
   const openGeotingCases = state.geotingProposals.filter((proposal) => proposal.status === "open").length;
-  const activeVotingProposals = state.geotingProposals.filter((proposal) => proposal.status === "voting");
 
   return (
     <div className="space-y-7">
@@ -138,8 +136,6 @@ export default async function DashboardPage() {
           </div>
         </div>
       </section>
-
-      <GeotingVoteAlarm proposals={activeVotingProposals} />
 
       <RotatingGeotiaQuote quotes={knowledgeQuotes} />
 
@@ -252,7 +248,7 @@ export default async function DashboardPage() {
           eyebrow="Poengprotokoll"
           action={
             <Link
-              href="/stilling"
+              href="/tabeller"
               className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
             >
               Full tabell
@@ -260,7 +256,21 @@ export default async function DashboardPage() {
             </Link>
           }
         >
-          <div className="overflow-x-auto">
+          <div className="grid gap-3 md:hidden">
+            {standings.map((standing) => (
+              <article key={standing.player.id} className="rounded border border-[#d8ded0] bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8e3030]">#{standing.rank}</p>
+                <h3 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{standing.player.shortName}</h3>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                  <MobileMetric label="Poeng" value={standing.totalPoints} />
+                  <MobileMetric label="Kattometer" value={formatKm(standing.totalKattometer)} />
+                  <MobileMetric label="Seire" value={standing.wins} />
+                  <MobileMetric label="Topp 3" value={standing.top3} />
+                </div>
+              </article>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[680px] text-left text-sm">
               <thead className="border-b border-[#c49a3c]/35 text-xs uppercase tracking-[0.12em] text-[#60553f]">
                 <tr>
@@ -403,6 +413,15 @@ export default async function DashboardPage() {
           </div>
         </Section>
       </div>
+    </div>
+  );
+}
+
+function MobileMetric({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="rounded border border-[#d8c48c] bg-[#fff7e6] p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">{label}</p>
+      <p className="mt-1 font-semibold text-[#062b40]">{value}</p>
     </div>
   );
 }

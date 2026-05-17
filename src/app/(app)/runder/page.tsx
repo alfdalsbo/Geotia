@@ -68,7 +68,60 @@ export default async function RoundsPage({
 
       <Section title="Rundearkiv" eyebrow="Løpende register">
         {sortedRounds.length ? (
-          <div className="overflow-x-auto">
+          <>
+          <div className="grid gap-3 md:hidden">
+            {sortedRounds.map((round) => {
+              const computed = computeRound(round, state.players);
+              const statusLabel: Record<RoundStatus, string> = {
+                draft: "Utkast",
+                open: "Åpen",
+                revealed: "Fasit vist",
+                locked: "Låst",
+              };
+              return (
+                <article key={round.id} className="rounded border border-[#d8ded0] bg-white p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8e3030]">Runde #{round.number}</p>
+                      <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{round.name}</h2>
+                      <p className="mt-1 text-sm text-[#5b6257]">{dateLabel(round.date)}</p>
+                    </div>
+                    <span className="rounded border border-[#d8ded0] bg-[#f7f8f5] px-2 py-1 text-xs font-semibold">
+                      {statusLabel[round.status]}
+                    </span>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                    <MobileMetric label="Fasit" value={round.status === "open" && round.challenge ? "Skjult" : round.answer || "-"} />
+                    <MobileMetric label="Deltakere" value={computed.participantCount} />
+                    <MobileMetric label="Straff" value={formatKm(computed.worstThreeAverage)} />
+                    <MobileMetric label="Status" value={statusLabel[round.status]} />
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Link
+                      href={`/runder/${round.id}`}
+                      className="inline-flex h-9 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
+                    >
+                      <Edit3 className="h-4 w-4" aria-hidden="true" />
+                      Åpne
+                    </Link>
+                    {round.status === "draft" || round.status === "revealed" ? (
+                      <form action={lockRoundAction}>
+                        <input type="hidden" name="id" value={round.id} />
+                        <button
+                          type="submit"
+                          className="inline-flex h-9 items-center gap-2 rounded bg-[#285c45] px-3 text-sm font-semibold text-white"
+                        >
+                          <LockKeyhole className="h-4 w-4" aria-hidden="true" />
+                          Lås
+                        </button>
+                      </form>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[940px] text-left text-sm">
               <thead className="border-b border-[#d8ded0] text-xs uppercase tracking-[0.12em] text-[#5b6257]">
                 <tr>
@@ -144,6 +197,7 @@ export default async function RoundsPage({
               </tbody>
             </table>
           </div>
+          </>
         ) : (
           <div className="rounded border border-dashed border-[#b8892f] bg-[#b8892f]/8 p-5">
             <p className="flex items-center gap-2 text-lg font-semibold text-[#7b591d]">
@@ -156,6 +210,15 @@ export default async function RoundsPage({
           </div>
         )}
       </Section>
+    </div>
+  );
+}
+
+function MobileMetric({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="rounded border border-[#d8c48c] bg-[#fff7e6] p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">{label}</p>
+      <p className="mt-1 font-semibold text-[#062b40]">{value}</p>
     </div>
   );
 }

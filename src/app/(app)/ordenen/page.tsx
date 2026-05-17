@@ -231,7 +231,7 @@ function PersonalPathCard({ row }: { row: OrderRow }) {
       <div className="mt-4 grid gap-2 text-sm text-[#eadcbd]">
         <p className="flex items-center justify-between gap-3">
           <span>Tjenestetid</span>
-          <span className="font-semibold text-[#fff7e6]">{row.serviceWeeks} uker</span>
+          <span className="text-right font-semibold text-[#fff7e6]">{row.serviceTimeLabel}</span>
         </p>
         <p className="flex items-center justify-between gap-3">
           <span>Tellende runder</span>
@@ -318,7 +318,7 @@ function OrderPersonCard({ row, current }: { row: OrderRow; current: boolean }) 
       </p>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-3">
-        <Metric icon={<Footprints className="h-4 w-4" aria-hidden="true" />} label="Uker" value={row.serviceWeeks} />
+        <Metric icon={<Footprints className="h-4 w-4" aria-hidden="true" />} label="Tjenestetid" value={row.serviceTimeLabel} />
         <Metric icon={<Gavel className="h-4 w-4" aria-hidden="true" />} label="Runder" value={row.roundsPlayed} />
         <Metric icon={<Crown className="h-4 w-4" aria-hidden="true" />} label="Poeng" value={formatNumber(row.lifetimePoints)} />
       </div>

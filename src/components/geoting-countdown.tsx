@@ -85,17 +85,17 @@ export function GeotingCountdown({
           Geotisk klokke {osloClock(now)}
         </p>
       </div>
-      <div className={compact ? "mt-2 grid grid-cols-3 gap-2" : "mt-3 grid grid-cols-3 gap-3"}>
+      <div className={compact ? "mt-2 grid grid-cols-3 gap-2" : "mt-3 grid grid-cols-3 gap-2 sm:gap-3"}>
         {[
           ["Timer", remaining.hours],
           ["Minutter", remaining.minutes],
           ["Sekunder", remaining.seconds],
         ].map(([label, value]) => (
           <div key={label} className="rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 px-2 py-2 text-center">
-            <p className={compact ? "font-display text-2xl font-semibold" : "font-display text-4xl font-semibold"}>
+            <p className={compact ? "font-display text-xl font-semibold sm:text-2xl" : "font-display text-3xl font-semibold sm:text-4xl"}>
               {expired ? "00" : pad(Number(value))}
             </p>
-            <p className="mt-1 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#e1c06c]">
+            <p className="mt-1 text-[0.62rem] font-semibold uppercase tracking-[0.08em] text-[#e1c06c] sm:text-[0.68rem] sm:tracking-[0.12em]">
               {label}
             </p>
           </div>
@@ -105,5 +105,34 @@ export function GeotingCountdown({
         {expired ? "Tingfristen er ute. Embetsverket lukker urnen." : `Urnen stenger ${osloDateTime(endsAt!)}`}
       </p>
     </div>
+  );
+}
+
+export function GeotingMiniCountdown({ endsAt }: { endsAt: string | null | undefined }) {
+  const [now, setNow] = useState<number | null>(null);
+  const target = useMemo(() => (endsAt ? new Date(endsAt).getTime() : null), [endsAt]);
+
+  useEffect(() => {
+    const update = () => setNow(Date.now());
+    const firstTick = window.setTimeout(update, 0);
+    const timer = window.setInterval(update, 1000);
+    return () => {
+      window.clearTimeout(firstTick);
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  if (!target || now === null) {
+    return <span className="font-mono">--:--:--</span>;
+  }
+
+  const remainingMs = target - now;
+  const expired = remainingMs <= 0;
+  const remaining = parts(remainingMs);
+
+  return (
+    <span className="font-mono tabular-nums">
+      {expired ? "00:00:00" : `${pad(remaining.hours)}:${pad(remaining.minutes)}:${pad(remaining.seconds)}`}
+    </span>
   );
 }

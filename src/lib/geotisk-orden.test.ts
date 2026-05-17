@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  formatServiceTime,
   getEligibleOrderRank,
   getGeoticOrderRows,
   getOrderProgressToRank,
+  getServiceWeeksSince,
   geoticOrderRanks,
 } from "@/lib/geotisk-orden";
 import { players } from "@/lib/seed";
@@ -33,6 +35,11 @@ describe("Den Geotiske Orden", () => {
   it("keeps public progress free of the hidden trust score", () => {
     const partimedlem = geoticOrderRanks.find((rank) => rank.id === "partimedlem")!;
     expect(getOrderProgressToRank({ serviceWeeks: 8, roundsPlayed: 25, lifetimePoints: 75 }, partimedlem)).toBe(100);
+  });
+
+  it("formats long service time from the 2020 start point", () => {
+    expect(getServiceWeeksSince("2020-04-01", new Date("2026-05-17T12:00:00.000Z"))).toBe(319);
+    expect(formatServiceTime(319)).toBe("319 uker · 6 år og 7 uker");
   });
 
   it("lets a college assessment set a visible order rank", () => {

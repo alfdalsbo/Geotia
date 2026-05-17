@@ -1095,6 +1095,11 @@ export async function getAppState(): Promise<AppState> {
   };
 }
 
+export async function getActiveGeotingProposals() {
+  const proposals = await readProposals();
+  return proposals.filter((proposal) => proposal.status === "voting" && proposal.voteEndsAt);
+}
+
 export async function getRound(id: string) {
   const rounds = await readRounds();
   return rounds.find((round) => round.id === id) ?? null;

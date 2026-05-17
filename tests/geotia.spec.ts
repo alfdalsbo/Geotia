@@ -11,7 +11,7 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await page.getByLabel("Vis større bilde: Partioversikt for Geotia").click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("button", { name: "Lukk større bilde" }).click();
-  await page.getByRole("link", { name: "SlowGeo", exact: true }).click();
+  await page.getByRole("link", { name: "Før ny runde" }).click();
 
   await page.getByLabel("Rundenavn").fill("Playwright-protokollen");
   await page.getByLabel("Fasit / sted").fill("Wien");
@@ -37,8 +37,9 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await page.getByRole("button", { name: "Lås" }).first().click();
   await expect(page.getByText("Protokollen er låst. Kattometeret har talt.")).toBeVisible();
 
-  await page.getByRole("link", { name: "SlowGeo-tabell" }).click();
+  await page.getByRole("link", { name: "Tabeller", exact: true }).click();
   await expect(page.getByRole("cell", { name: /Alf Kåre/ }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Rikets tabeller" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "SlowGeo-tabell" })).toBeVisible();
 
   await page.getByRole("link", { name: "Spill" }).click();
@@ -175,7 +176,7 @@ test("SlowGeo can auto-calculate distances and archive a map protocol", async ({
   await page.getByLabel("Brukernavn").fill("SS");
   await page.getByLabel("Passord").fill("geotia");
   await page.getByRole("button", { name: "Åpne Geotia" }).click();
-  await page.getByRole("link", { name: "SlowGeo", exact: true }).click();
+  await page.getByRole("link", { name: "Før ny runde" }).click();
 
   const roundName = `Kartprotokollen ${Date.now()}`;
   await page.getByLabel("Rundenavn").fill(roundName);

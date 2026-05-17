@@ -80,7 +80,7 @@ export function ExpandableImage({
           onClick={() => setOpen(false)}
         >
           <div
-            className="relative w-full max-w-6xl rounded border border-[#c49a3c]/55 bg-[#061d2b] p-3 shadow-[0_28px_80px_rgba(0,0,0,0.45)]"
+            className="relative max-h-[calc(100dvh-1.5rem)] w-full max-w-6xl overflow-y-auto rounded border border-[#c49a3c]/55 bg-[#061d2b] p-3 shadow-[0_28px_80px_rgba(0,0,0,0.45)] sm:max-h-[calc(100dvh-3rem)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div id={titleId} className="sr-only">
@@ -94,7 +94,7 @@ export function ExpandableImage({
             >
               <X className="h-5 w-5" aria-hidden="true" />
             </button>
-            <div className="relative h-[78vh] min-h-[360px] w-full">
+            <div className="relative h-[72dvh] min-h-[220px] w-full sm:min-h-[360px]">
               <Image
                 src={src}
                 alt={alt}

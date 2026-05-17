@@ -52,10 +52,10 @@ export default async function GeotingPage({
   return (
     <div className="space-y-7">
       <section className="geotia-frame geotia-agora rounded p-5 sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430] sm:tracking-[0.22em]">
           GeoTinget · tingvoll · agora · kranglekammer
         </p>
-        <h1 className="font-display mt-2 text-5xl font-semibold tracking-normal text-[#062b40]">
+        <h1 className="font-display mt-2 text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
           GeoTinget
         </h1>
         <p className="mt-4 max-w-4xl text-base leading-7 text-[#4f412b]">
@@ -236,7 +236,7 @@ function ProposalCard({
                 Fremmet av {proposer?.shortName ?? "ukjent geot"} · {summary.label}
               </p>
             </div>
-            <div className="grid min-w-[260px] grid-cols-3 gap-2 text-center text-sm">
+            <div className="grid w-full min-w-0 grid-cols-3 gap-2 text-center text-sm sm:min-w-[260px] lg:w-auto">
               <VoteBox label="For" value={summary.forVotes} tone="green" />
               <VoteBox label="Mot" value={summary.againstVotes} tone="red" />
               <VoteBox label="Blankt" value={summary.blankVotes} tone="gold" />

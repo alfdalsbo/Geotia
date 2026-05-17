@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, MapPin, Send } from "lucide-react";
 
@@ -118,14 +119,19 @@ export function SlowGeoPlay({
       <div className="grid gap-0 xl:grid-cols-[minmax(0,1.18fr)_minmax(360px,0.82fr)]">
         <div className="bg-[#061d2b]">
           {streetViewUrl ? (
-            <img
-              src={streetViewUrl}
-              alt="SlowGeo-bilde"
-              className="aspect-video h-full min-h-[300px] w-full object-cover"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
+            <div className="relative aspect-video min-h-[240px] w-full sm:min-h-[300px]">
+              <Image
+                src={streetViewUrl}
+                alt="SlowGeo-bilde"
+                fill
+                sizes="(min-width: 1280px) 58vw, 100vw"
+                className="object-cover"
+                referrerPolicy="no-referrer-when-downgrade"
+                unoptimized
+              />
+            </div>
           ) : (
-            <div className="flex aspect-video min-h-[300px] items-center justify-center px-6 text-center text-sm font-semibold text-[#fff7e6]">
+            <div className="flex aspect-video min-h-[240px] items-center justify-center px-6 text-center text-sm font-semibold text-[#fff7e6] sm:min-h-[300px]">
               Street View-bildet mangler pano-ID eller Google-nøkkel. Sett Google-miljøvariablene og opprett en ny runde.
             </div>
           )}

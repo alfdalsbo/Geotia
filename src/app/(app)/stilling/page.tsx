@@ -55,7 +55,27 @@ export default async function StandingsPage() {
       </div>
 
       <Section title="Rangert tabell" eyebrow="Offisiell poenglov">
-        <div className="overflow-x-auto">
+        <div className="grid gap-3 md:hidden">
+          {standings.map((standing) => (
+            <article key={standing.player.id} className="rounded border border-[#d8ded0] bg-white p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8e3030]">#{standing.rank}</p>
+                  <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{standing.player.shortName}</h2>
+                  <p className="mt-1 text-sm text-[#5b6257]">{standing.player.title}</p>
+                </div>
+                <span className="h-11 w-2 flex-none rounded-full" style={{ background: standing.player.color }} />
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                <MobileMetric label="Poeng" value={standing.totalPoints} />
+                <MobileMetric label="Kattometer" value={formatKm(standing.totalKattometer)} />
+                <MobileMetric label="Runder" value={standing.roundsPlayed} />
+                <MobileMetric label="Seire" value={standing.wins} />
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[1120px] text-left text-sm">
             <thead className="bg-[#203c62] text-xs uppercase tracking-[0.12em] text-white">
               <tr>
@@ -159,6 +179,15 @@ export default async function StandingsPage() {
           </div>
         </Section>
       </div>
+    </div>
+  );
+}
+
+function MobileMetric({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="rounded border border-[#d8c48c] bg-[#fff7e6] p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">{label}</p>
+      <p className="mt-1 font-semibold text-[#062b40]">{value}</p>
     </div>
   );
 }

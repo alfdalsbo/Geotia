@@ -122,6 +122,8 @@ export async function saveRoundAction(formData: FormData) {
   });
 
   revalidatePath("/");
+  revalidatePath("/spill");
+  revalidatePath("/tabeller");
   revalidatePath("/runder");
   revalidatePath("/stilling");
   revalidatePath("/hall-of-fame");
@@ -131,6 +133,8 @@ export async function saveRoundAction(formData: FormData) {
 
 function revalidateSlowGeoPaths(roundId?: string) {
   revalidatePath("/");
+  revalidatePath("/spill");
+  revalidatePath("/tabeller");
   revalidatePath("/runder");
   if (roundId) revalidatePath(`/runder/${roundId}`);
   revalidatePath("/stilling");
@@ -219,6 +223,7 @@ export async function saveGameSessionAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/spill");
+  revalidatePath("/tabeller");
   revalidatePath("/min-geot");
   redirect("/spill?status=lagret");
 }
@@ -228,6 +233,8 @@ export async function lockRoundAction(formData: FormData) {
   const id = field(formData, "id");
   const result = await lockRound(id);
   revalidatePath("/");
+  revalidatePath("/spill");
+  revalidatePath("/tabeller");
   revalidatePath("/runder");
   revalidatePath("/stilling");
   revalidatePath("/hall-of-fame");
@@ -244,6 +251,8 @@ export async function unlockRoundAction(formData: FormData) {
   const id = field(formData, "id");
   await unlockRound(id);
   revalidatePath("/");
+  revalidatePath("/spill");
+  revalidatePath("/tabeller");
   revalidatePath("/runder");
   revalidatePath("/stilling");
   revalidatePath("/hall-of-fame");

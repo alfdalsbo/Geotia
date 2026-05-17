@@ -19,11 +19,11 @@ export function GeotingVoteAlarm({
       <div className="absolute inset-x-0 top-0 h-1 bg-[repeating-linear-gradient(90deg,#e1c06c_0,#e1c06c_18px,#7c2430_18px,#7c2430_36px)]" />
       <div className="grid gap-0 xl:grid-cols-[minmax(0,0.9fr)_minmax(360px,1.1fr)]">
         <div className="p-5 sm:p-6">
-          <p className="inline-flex items-center gap-2 rounded border border-[#e1c06c]/55 bg-[#020b11]/35 px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#e1c06c]">
+          <p className="inline-flex items-center gap-2 rounded border border-[#e1c06c]/55 bg-[#020b11]/35 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#e1c06c] sm:tracking-[0.22em]">
             <BellRing className="h-4 w-4" aria-hidden="true" />
             GeoTinget kaller
           </p>
-          <h2 className="font-display mt-4 text-4xl font-semibold leading-tight sm:text-5xl">
+          <h2 className="font-display mt-4 text-3xl font-semibold leading-tight sm:text-5xl">
             Stemmeurnen er åpen
           </h2>
           <p className="mt-3 max-w-2xl text-base leading-7 text-[#f5ddad]">

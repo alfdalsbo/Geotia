@@ -830,7 +830,7 @@ function GeoticOrderControlSection({
                       <p className="font-semibold text-[#e1c06c]">{row.hiddenCategory.label}</p>
                       <p className="max-w-xs text-xs leading-5 text-[#eadcbd]">{row.hiddenCategory.description}</p>
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold">{row.serviceWeeks}</td>
+                    <td className="px-4 py-3 text-right font-semibold">{row.serviceTimeLabel}</td>
                     <td className="px-4 py-3 text-right font-semibold">{formatNumber(row.lifetimePoints)}</td>
                     <td className="px-4 py-3 text-right font-semibold text-[#e1c06c]">{row.trustScore}</td>
                     <td className="px-4 py-3">

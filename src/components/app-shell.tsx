@@ -2,43 +2,41 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   BookOpen,
-  Crown,
   DoorOpen,
   Gavel,
   Landmark,
-  Milestone,
   Map,
   ScrollText,
   ShieldCheck,
   TableProperties,
-  Trophy,
   UserRound,
 } from "lucide-react";
 
 import { logoutAction } from "@/app/actions";
+import { GeotingGlobalAlert } from "@/components/geoting-global-alert";
 import { getCurrentGeot } from "@/lib/auth";
-import { getStorageMode } from "@/lib/store";
+import { getActiveGeotingProposals, getStorageMode } from "@/lib/store";
 
 const navItems = [
   { href: "/", label: "Kommandosentral", icon: Landmark },
   { href: "/spill", label: "Spill", icon: Map },
-  { href: "/runder", label: "SlowGeo", icon: TableProperties },
-  { href: "/stilling", label: "SlowGeo-tabell", icon: Crown },
+  { href: "/tabeller", label: "Tabeller", icon: TableProperties },
   { href: "/geotinget", label: "GeoTinget", icon: Gavel },
-  { href: "/ordenen", label: "Ordenen", icon: Milestone },
-  { href: "/hall-of-fame", label: "Æreshallen", icon: Trophy },
   { href: "/arkiv", label: "Oppslagsverk", icon: BookOpen },
   { href: "/min-geot", label: "Min geot", icon: UserRound },
 ];
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
-  const currentGeot = await getCurrentGeot();
+  const [currentGeot, activeGeotingProposals] = await Promise.all([
+    getCurrentGeot(),
+    getActiveGeotingProposals(),
+  ]);
 
   return (
     <div className="geotia-civic-bg min-h-screen text-[#161713]">
       <header className="border-b border-[#c49a3c]/40 bg-[#061d2b]/94 text-[#fff7e6] shadow-[0_10px_30px_rgba(0,0,0,0.22)] backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/" className="flex min-w-0 items-center gap-3">
             <div className="relative h-14 w-14 overflow-hidden rounded border border-[#c49a3c]/70 bg-[#efe3c7] shadow-inner">
               <Image
                 src="/geotia-assets/geotia-asset-4.png"
@@ -48,8 +46,8 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
                 className="object-cover"
               />
             </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#e1c06c]">
+            <div className="min-w-0">
+              <p className="break-words text-xs font-semibold uppercase tracking-[0.14em] text-[#e1c06c] sm:tracking-[0.22em]">
                 Statsarkivet · rikets embetsverk
               </p>
               <p className="font-display text-3xl font-semibold tracking-normal text-[#fff7e6]">
@@ -63,32 +61,34 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </Link>
 
-          <nav className="flex flex-wrap items-center gap-2">
+          <nav className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="inline-flex h-10 items-center gap-2 rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 px-3 text-sm font-medium text-[#fff7e6] shadow-sm transition hover:border-[#e1c06c] hover:bg-[#fff7e6]/15"
+                  className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 px-3 text-sm font-medium text-[#fff7e6] shadow-sm transition hover:border-[#e1c06c] hover:bg-[#fff7e6]/15"
                 >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                  {item.label}
+                  <Icon className="h-4 w-4 flex-none" aria-hidden="true" />
+                  <span className="truncate">{item.label}</span>
                 </Link>
               );
             })}
             <form action={logoutAction}>
               <button
                 type="submit"
-                className="inline-flex h-10 items-center gap-2 rounded border border-[#7c2430]/55 bg-[#7c2430] px-3 text-sm font-medium text-white shadow-sm transition hover:bg-[#641923]"
+                className="inline-flex h-10 w-full min-w-0 items-center justify-center gap-2 rounded border border-[#7c2430]/55 bg-[#7c2430] px-3 text-sm font-medium text-white shadow-sm transition hover:bg-[#641923]"
               >
-                <DoorOpen className="h-4 w-4" aria-hidden="true" />
-                Forlat embetsverket
+                <DoorOpen className="h-4 w-4 flex-none" aria-hidden="true" />
+                <span className="truncate">Forlat embetsverket</span>
               </button>
             </form>
           </nav>
         </div>
       </header>
+
+      <GeotingGlobalAlert proposals={activeGeotingProposals} />
 
       <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
 

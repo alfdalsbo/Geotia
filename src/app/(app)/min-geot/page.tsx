@@ -156,7 +156,7 @@ export default async function MyGeotPage() {
                 <div className="h-full rounded bg-[#7c2430]" style={{ width: `${orderRow.nextRank ? orderRow.progressToNext : 100}%` }} />
               </div>
               <div className="grid gap-2 text-sm sm:grid-cols-3">
-                <Metric label="Uker" value={orderRow.serviceWeeks} />
+                <Metric label="Tjenestetid" value={orderRow.serviceTimeLabel} />
                 <Metric label="Poeng" value={formatNumber(orderRow.lifetimePoints)} />
                 <Metric label="Runder" value={orderRow.roundsPlayed} />
               </div>
@@ -167,7 +167,22 @@ export default async function MyGeotPage() {
 
       <Section title="Siste SlowGeo-spor" eyebrow="Personlig protokoll">
         {latestResults.length ? (
-          <div className="overflow-x-auto">
+          <>
+          <div className="grid gap-3 md:hidden">
+            {latestResults.map(({ round, result }) => (
+              <article key={round.id} className="rounded border border-[#d8ded0] bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8e3030]">{dateLabel(round.date)}</p>
+                <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{round.name}</h2>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                  <Metric label="Km" value={formatKm(result.actualKm)} />
+                  <Metric label="Poeng" value={result.points} />
+                  <Metric label="Svar" value={result.guessText || "-"} />
+                  <Metric label="Runde" value={`#${round.number}`} />
+                </div>
+              </article>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead className="border-b border-[#d8ded0] text-xs uppercase tracking-[0.12em] text-[#5b6257]">
                 <tr>
@@ -191,6 +206,7 @@ export default async function MyGeotPage() {
               </tbody>
             </table>
           </div>
+          </>
         ) : (
           <div className="rounded border border-dashed border-[#b8892f] bg-[#b8892f]/8 p-5">
             <p className="font-display text-2xl font-semibold text-[#654517]">Ingen låste spor ennå.</p>

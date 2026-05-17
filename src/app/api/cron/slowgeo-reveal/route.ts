@@ -13,6 +13,8 @@ export async function GET(request: Request) {
 
   const result = await revealDueSlowGeoRounds();
   revalidatePath("/");
+  revalidatePath("/spill");
+  revalidatePath("/tabeller");
   revalidatePath("/runder");
   revalidatePath("/stilling");
   revalidatePath("/hall-of-fame");

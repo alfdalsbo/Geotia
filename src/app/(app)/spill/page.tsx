@@ -83,16 +83,25 @@ export default async function GamesPage({
       </Section>
 
       <Section
-        title="SlowGeo-tabell"
+        title="SlowGeo"
         eyebrow="Kattometerets gamle hus"
         action={
-          <Link
-            href="/runder"
-            className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
-          >
-            Før SlowGeo
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/runder"
+              className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
+            >
+              Før SlowGeo
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+            <Link
+              href="/tabeller"
+              className="inline-flex h-10 items-center gap-2 rounded border border-[#fff7e6]/55 px-3 text-sm font-semibold text-[#fff7e6]"
+            >
+              Tabell
+              <Trophy className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
         }
       >
         <div className="grid gap-3 md:grid-cols-3">
@@ -126,7 +135,21 @@ export default async function GamesPage({
           const standings = computeGameStandings(state.players, gameSessions, game);
           return (
             <Section key={game.id} title={`${game.name}-tabell`} eyebrow={game.scoreHelp}>
-              <div className="overflow-x-auto">
+              <div className="grid gap-3 md:hidden">
+                {standings.map((standing) => (
+                  <article key={standing.player.id} className="rounded border border-[#d8ded0] bg-white p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8e3030]">#{standing.rank}</p>
+                    <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{standing.player.shortName}</h2>
+                    <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                      <MobileMetric label="Poeng" value={standing.totalPoints} />
+                      <MobileMetric label="Økter" value={standing.sessionsPlayed} />
+                      <MobileMetric label="Seire" value={standing.wins} />
+                      <MobileMetric label="Beste" value={formatScore(standing.bestScore, game.scoreLabel)} />
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full min-w-[720px] text-left text-sm">
                   <thead className="bg-[#203c62] text-xs uppercase tracking-[0.12em] text-white">
                     <tr>
@@ -192,6 +215,15 @@ export default async function GamesPage({
           </div>
         )}
       </Section>
+    </div>
+  );
+}
+
+function MobileMetric({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="rounded border border-[#d8c48c] bg-[#fff7e6] p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">{label}</p>
+      <p className="mt-1 font-semibold text-[#062b40]">{value}</p>
     </div>
   );
 }

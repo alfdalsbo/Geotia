@@ -32,6 +32,21 @@ body {
   font-feature-settings:
     "liga" 1,
     "kern" 1;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+@supports not (overflow: clip) {
+  body {
+    overflow-x: hidden;
+  }
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
 }
 
 .geotia-civic-bg {
@@ -42,6 +57,14 @@ body {
     linear-gradient(180deg, rgba(75, 46, 24, 0.07) 1px, transparent 1px),
     linear-gradient(180deg, #fbf3df 0%, #e4d2aa 100%);
   background-size: auto, auto, 52px 52px, 52px 52px, auto;
+}
+
+.geotia-civic-bg :where(*) {
+  min-width: 0;
+}
+
+.geotia-civic-bg :where(h1, h2, h3, p, li, span, a, button, td, th, label) {
+  overflow-wrap: break-word;
 }
 
 button,
@@ -61,6 +84,7 @@ textarea {
 
 .geotia-frame {
   position: relative;
+  min-width: 0;
   overflow: hidden;
   border: 1px solid rgba(196, 154, 60, 0.68);
   background:
@@ -95,6 +119,7 @@ textarea {
 
 .geotia-panel {
   position: relative;
+  min-width: 0;
   overflow: hidden;
   border: 1px solid rgba(196, 154, 60, 0.5);
   background:
