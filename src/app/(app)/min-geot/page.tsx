@@ -202,47 +202,79 @@ export default async function MyGeotPage() {
           )}
         </Section>
 
-        <Section title="Partipass" eyebrow={party?.id.toUpperCase() ?? "Tingvitne"}>
-          <div className="space-y-3">
+        <article className="personal-poster">
+          <div
+            className="personal-poster-band"
+            style={{ background: party?.color ?? "#4b2e18" }}
+          >
+            <span style={{ fontFamily: "var(--font-display)" }}>
+              {party?.id.toUpperCase() ?? "TINGVITNE"} · PARTIPASS
+            </span>
+          </div>
+          <div className="personal-poster-body">
             {party ? (
-              <div className="grid gap-3 sm:grid-cols-[12px_1fr]">
-                <span className="min-h-28 rounded-full" style={{ background: party.color }} />
-                <div className="grid gap-3">
-                  <div className="rounded border border-[#d8c48c] bg-white/72 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">Parti</p>
-                    <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{party.name}</h2>
-                    <p className="mt-2 text-sm leading-6 text-[#4f412b]">{party.ideology}</p>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <SmallFact label="Rivaler" value={party.rivals} />
-                    <SmallFact label="Øyeblikk" value={player.moment} />
-                  </div>
-                </div>
-              </div>
-            ) : null}
-            <div className="rounded border border-[#d8c48c] bg-white/72 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">Motto</p>
-              <p className="mt-2 text-sm italic leading-6 text-[#4f412b]">
-                {party?.motto ?? "Uten parti, men ikke uten observasjonsverdi."}
-              </p>
-              {!party ? (
-                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
-                  Partistiftelse kan først søkes på nivå 7: Partigründer.
+              <>
+                <p
+                  className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#7c2430]"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  Parti
                 </p>
-              ) : null}
-            </div>
+                <h2 className="font-display text-2xl font-semibold uppercase tracking-[0.06em] text-[#062b40]">
+                  {party.name}
+                </h2>
+                <p className="mt-1 text-sm text-[#4f412b]">{party.ideology}</p>
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  <SmallFact label="Rivaler" value={party.rivals} />
+                  <SmallFact label="Øyeblikk" value={player.moment} />
+                </div>
+              </>
+            ) : (
+              <>
+                <p
+                  className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#7c2430]"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  Uten parti
+                </p>
+                <h2 className="font-display text-2xl font-semibold uppercase tracking-[0.06em] text-[#062b40]">
+                  Tingvitne i embetsverket
+                </h2>
+              </>
+            )}
+            <p
+              className="mt-4 rounded border border-[#c49a3c]/45 bg-[#fffbe9] p-3 text-sm leading-6 text-[#654517]"
+              style={{ fontFamily: "var(--font-italic)", fontStyle: "italic" }}
+            >
+              &ldquo;{party?.motto ?? "Uten parti, men ikke uten observasjonsverdi."}&rdquo;
+            </p>
+            {!party ? (
+              <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
+                Partistiftelse kan først søkes på nivå 7: Partigründer.
+              </p>
+            ) : null}
             {partyMechanic ? (
-              <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
+              <div className="mt-4 rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+                <p
+                  className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#7c2430]"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
                   Partimekanikk · {partyMechanic.phase}
                 </p>
-                <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{partyMechanic.title}</h2>
+                <h3 className="font-display mt-1 text-xl font-semibold uppercase tracking-[0.04em] text-[#062b40]">
+                  {partyMechanic.title}
+                </h3>
                 <p className="mt-2 text-sm leading-6 text-[#4f412b]">{partyMechanic.effect}</p>
-                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#60553f]">{partyMechanic.limit}</p>
+                <p
+                  className="mt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#60553f]"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {partyMechanic.limit}
+                </p>
               </div>
             ) : null}
           </div>
-        </Section>
+        </article>
       </div>
 
       <Section title="Siste SlowGeo-spor" eyebrow="Personlig protokoll">
