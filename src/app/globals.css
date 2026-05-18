@@ -1049,6 +1049,82 @@ textarea {
   }
 }
 
+/* ----- § 15 — Archive cards ----- */
+.archive-card {
+  position: relative;
+  display: block;
+  padding: 24px 22px 22px;
+  background: linear-gradient(180deg, rgba(255, 250, 228, 0.95), rgba(238, 217, 168, 0.85));
+  border: 1px solid var(--gold);
+  box-shadow: var(--shadow-card);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.archive-card h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.18em;
+  color: var(--navy);
+  margin: 4px 0 4px;
+  text-transform: uppercase;
+}
+
+.archive-card .crown-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #f6e3a8, var(--gold));
+  border: 1.5px solid var(--gold-deep);
+  display: grid;
+  place-items: center;
+  margin-bottom: 10px;
+  color: var(--burgundy);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.archive-card .lead-name {
+  font-family: var(--font-numerals);
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--navy);
+  line-height: 1.05;
+  margin: 6px 0 4px;
+  word-break: keep-all;
+}
+
+.archive-card .lead-detail {
+  font-family: var(--font-italic);
+  font-style: italic;
+  color: var(--ink-muted);
+  font-size: 14px;
+  margin: 4px 0;
+  line-height: 1.5;
+}
+
+/* Partikort med plakat-ramme */
+.party-poster-card {
+  border: 1px solid var(--gold);
+  border-radius: 0;
+  box-shadow:
+    0 16px 28px rgba(0, 0, 0, 0.18),
+    inset 0 0 0 1px rgba(255, 247, 230, 0.5);
+}
+
+.party-poster-card .poster-frame {
+  border-bottom: 1px solid var(--gold);
+  position: relative;
+}
+
+.party-poster-card .poster-frame::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(184, 137, 47, 0.4);
+  pointer-events: none;
+}
+
 /* ----- § 16 — Quote strip ----- */
 .geo-quote-strip {
   background:

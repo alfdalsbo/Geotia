@@ -3,6 +3,8 @@ import { ArrowRight, Gamepad2 } from "lucide-react";
 
 import { ExpandableImage } from "@/components/expandable-image";
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
+import { buttonClass } from "@/components/ui/button";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import type { Party, Player } from "@/lib/types";
 
 type GameCard = {
@@ -22,12 +24,12 @@ export function DashboardGameGrid({ games }: { games: GameCard[] }) {
           key={game.id}
           href={game.href}
           prefetch={false}
-          className="geotia-panel group rounded p-4 transition hover:-translate-y-0.5 hover:border-[#c49a3c]"
+          className="archive-card group block transition hover:-translate-y-0.5"
         >
-          <div className="relative z-10 flex items-center justify-between">
+          <div className="flex items-center justify-between">
             <div
-              className="flex h-10 w-10 items-center justify-center rounded border border-[#c49a3c]/45 text-white"
-              style={{ background: game.color }}
+              className="flex h-12 w-12 items-center justify-center rounded-full border-2 text-white shadow-sm"
+              style={{ background: game.color, borderColor: "var(--gold-deep)" }}
             >
               <Gamepad2 className="h-5 w-5" aria-hidden="true" />
             </div>
@@ -36,10 +38,8 @@ export function DashboardGameGrid({ games }: { games: GameCard[] }) {
               <LinkPendingIndicator />
             </span>
           </div>
-          <h2 className="font-display relative z-10 mt-4 text-2xl font-semibold text-[#062b40]">
-            {game.shortName}
-          </h2>
-          <p className="relative z-10 mt-2 text-sm leading-6 text-[#60553f]">
+          <h3 className="mt-3 break-words">{game.shortName}</h3>
+          <p className="lead-detail">
             {game.count} økter · leder {game.leaderName}
           </p>
         </Link>
@@ -51,19 +51,17 @@ export function DashboardGameGrid({ games }: { games: GameCard[] }) {
 export function DashboardPartyGrid({ parties, players }: { parties: Party[]; players: Player[] }) {
   return (
     <section className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
-            GeoTingets partier
-          </p>
-          <h2 className="font-display mt-1 text-3xl font-semibold text-[#062b40]">
+          <Eyebrow>GeoTingets partier</Eyebrow>
+          <h2 className="font-display text-3xl font-semibold uppercase tracking-[0.06em] text-[#062b40]">
             Partikort fra rikets urolige sal
           </h2>
         </div>
         <Link
           href="/arkiv/partier"
           prefetch={false}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded border border-[#062b40]/30 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40] transition hover:border-[#c49a3c]"
+          className={buttonClass({ variant: "quiet", size: "small" })}
         >
           Se alle vedtekter
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -77,35 +75,43 @@ export function DashboardPartyGrid({ parties, players }: { parties: Party[]; pla
           return (
             <article
               key={party.id}
-              className="group overflow-hidden rounded border border-[#c49a3c]/45 bg-[#fff7e6] shadow-[0_16px_28px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-[#e1c06c]"
+              className="party-poster-card group overflow-hidden bg-[#fff7e6] transition hover:-translate-y-0.5"
             >
               {party.asset ? (
-                <ExpandableImage
-                  src={party.asset}
-                  alt={`Partikort for ${party.name}`}
-                  loading="eager"
-                  sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                  className="relative aspect-[4/5] w-full bg-[#061d2b]"
-                  imageClassName="object-cover transition duration-300 group-hover:scale-[1.02]"
-                  caption={`Partikort for ${party.name}`}
-                />
+                <div className="poster-frame relative aspect-[4/5] w-full bg-[#061d2b]">
+                  <ExpandableImage
+                    src={party.asset}
+                    alt={`Partikort for ${party.name}`}
+                    loading="eager"
+                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                    className="absolute inset-0 h-full w-full"
+                    imageClassName="object-cover transition duration-300 group-hover:scale-[1.02]"
+                    caption={`Partikort for ${party.name}`}
+                  />
+                </div>
               ) : (
-                <div className="relative aspect-[4/5] bg-[#061d2b]" />
+                <div className="poster-frame relative aspect-[4/5] bg-[#061d2b]" />
               )}
-              <div className="border-t border-[#c49a3c]/35 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7c2430]">
+              <div className="border-t-2 border-double border-[#b8892f] p-4">
+                <p
+                  className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#7c2430]"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
                   {party.id.toUpperCase()} · {party.ideology}
                 </p>
-                <h3 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">
+                <h3 className="font-display mt-1 text-2xl font-semibold uppercase tracking-[0.06em] text-[#062b40]">
                   {party.name.split(" - ")[0]}
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-[#55452f]">
+                <p
+                  className="mt-2 text-sm leading-6 text-[#55452f]"
+                  style={{ fontFamily: "var(--font-italic)", fontStyle: "italic" }}
+                >
                   {party.motto}. Leder: {partyLeader?.shortName ?? party.leader}.
                 </p>
                 <Link
                   href={`/arkiv/partier#${party.id}`}
                   prefetch={false}
-                  className="mt-4 inline-flex h-9 items-center gap-2 rounded border border-[#062b40]/25 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40] transition hover:border-[#c49a3c]"
+                  className={`${buttonClass({ variant: "quiet", size: "small" })} mt-4`}
                 >
                   Åpne partiarkiv
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
