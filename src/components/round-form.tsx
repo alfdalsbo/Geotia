@@ -168,32 +168,20 @@ export function RoundForm({ round }: { round: Round }) {
   }
 
   return (
-    <form action={saveRoundAction} className="space-y-5">
+    <form action={saveRoundAction} className="geo-form space-y-5">
       <input type="hidden" name="id" value={round.id} />
       <input name="answer_location_json" type="hidden" value={answerLocation ? JSON.stringify(answerLocation) : ""} />
       <div className="grid gap-4 lg:grid-cols-3">
-        <label className="space-y-2">
-          <span className="text-sm font-semibold text-[#273125]">Dato</span>
-          <input
-            name="date"
-            type="date"
-            defaultValue={round.date}
-            className="h-11 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
-            required
-          />
+        <label>
+          <span>Dato</span>
+          <input name="date" type="date" defaultValue={round.date} required />
         </label>
-        <label className="space-y-2">
-          <span className="text-sm font-semibold text-[#273125]">Rundenavn</span>
-          <input
-            name="name"
-            defaultValue={round.name}
-            className="h-11 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
-            placeholder="F.eks. Sarajevoprøven"
-            required
-          />
+        <label>
+          <span>Rundenavn</span>
+          <input name="name" defaultValue={round.name} placeholder="F.eks. Sarajevoprøven" required />
         </label>
-        <label className="space-y-2">
-          <span className="text-sm font-semibold text-[#273125]">Fasit / sted</span>
+        <label>
+          <span>Fasit / sted</span>
           <input
             name="answer"
             value={answer}
@@ -212,48 +200,39 @@ export function RoundForm({ round }: { round: Round }) {
                 Object.fromEntries(Object.keys(current).map((playerId) => [playerId, ""])),
               );
             }}
-            className="h-11 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
             placeholder="Riktig sted"
           />
           {answerLocation ? (
-            <span className="flex items-start gap-1 text-xs leading-5 text-[#285c45]">
+            <small className="flex items-start gap-1 text-[#285c45]">
               <MapPin className="mt-0.5 h-3.5 w-3.5 flex-none" aria-hidden="true" />
               {locationText(answerLocation)}
-            </span>
+            </small>
           ) : null}
         </label>
-        <label className="space-y-2">
-          <span className="text-sm font-semibold text-[#273125]">Land</span>
-          <input
-            name="country"
-            defaultValue={round.country}
-            className="h-11 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
-          />
+        <label>
+          <span>Land</span>
+          <input name="country" defaultValue={round.country} />
         </label>
-        <label className="space-y-2">
-          <span className="text-sm font-semibold text-[#273125]">Kontinent</span>
-          <input
-            name="continent"
-            defaultValue={round.continent}
-            className="h-11 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
-          />
+        <label>
+          <span>Kontinent</span>
+          <input name="continent" defaultValue={round.continent} />
         </label>
-        <label className="space-y-2 lg:col-span-1">
-          <span className="text-sm font-semibold text-[#273125]">Kommentar</span>
-          <input
-            name="comment"
-            defaultValue={round.comment}
-            className="h-11 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
-            placeholder="Kort hendelse til annalene"
-          />
+        <label className="lg:col-span-1">
+          <span>Kommentar</span>
+          <input name="comment" defaultValue={round.comment} placeholder="Kort hendelse til annalene" />
         </label>
       </div>
 
-      <div className="rounded border border-[#d8ded0] bg-[#f7f8f5] p-4">
+      <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-[#203c62]">Auto-kilometer</p>
-            <p className="mt-1 text-sm leading-6 text-[#5b6257]">
+            <p
+              className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#7c2430]"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              Auto-kilometer
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[#4f412b]">
               Skriv fasit og svarene slik de ble gitt, trykk beregn, og juster manuelt hvis karttreffet trenger GeoVAR.
             </p>
           </div>
@@ -261,30 +240,30 @@ export function RoundForm({ round }: { round: Round }) {
             type="button"
             onClick={calculateDistances}
             disabled={isPending}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded bg-[#285c45] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#214b38] disabled:cursor-wait disabled:opacity-70"
+            className="btn btn-brass btn-small disabled:cursor-wait disabled:opacity-70"
           >
             {isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Calculator className="h-4 w-4" aria-hidden="true" />}
             Beregn avstander
           </button>
         </div>
         {error ? (
-          <p className="mt-3 rounded border border-[#8e3030]/25 bg-[#8e3030]/8 px-3 py-2 text-sm font-semibold text-[#8e3030]">
+          <p className="mt-3 rounded border border-[#8e3030]/45 bg-[#8e3030]/10 px-3 py-2 text-sm font-semibold text-[#8e3030]">
             {error}
           </p>
         ) : null}
       </div>
 
-      <div className="overflow-x-auto rounded border border-[#d8ded0]">
-        <table className="w-full min-w-[1160px] text-left text-sm">
-          <thead className="bg-[#203c62] text-xs uppercase tracking-[0.12em] text-white">
+      <div className="overflow-x-auto">
+        <table className="protocol w-full min-w-[1160px]">
+          <thead>
             <tr>
-              <th className="px-3 py-3">Geot</th>
-              <th className="px-3 py-3">Svar</th>
-              <th className="px-3 py-3">Status</th>
-              <th className="px-3 py-3">Km fra fasit</th>
-              <th className="px-3 py-3">Poeng</th>
-              <th className="px-3 py-3">Tellende kattometer</th>
-              <th className="px-3 py-3">Merknad</th>
+              <th>Geot</th>
+              <th>Svar</th>
+              <th>Status</th>
+              <th className="right">Km fra fasit</th>
+              <th className="right">Poeng</th>
+              <th className="right">Tellende kattometer</th>
+              <th>Merknad</th>
             </tr>
           </thead>
           <tbody>
@@ -294,17 +273,17 @@ export function RoundForm({ round }: { round: Round }) {
               const preview = geoResults[player.id];
 
               return (
-                <tr key={player.id} className="border-b border-[#eef1eb] last:border-b-0">
-                  <td className="px-3 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="h-3 w-3 rounded-sm" style={{ background: player.color }} />
-                      <div>
-                        <p className="font-semibold text-[#161713]">{player.shortName}</p>
-                        <p className="text-xs text-[#5b6257]">{player.title}</p>
+                <tr key={player.id}>
+                  <td>
+                    <div className="geot-cell">
+                      <span className="geot-flag" style={{ background: player.color }} />
+                      <div className="min-w-0">
+                        <div className="geot-name">{player.shortName}</div>
+                        <div className="geot-title">{player.title}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-3 py-3">
+                  <td>
                     <input
                       name={`guess_text_${player.id}`}
                       value={guessTexts[player.id] ?? ""}
@@ -315,7 +294,7 @@ export function RoundForm({ round }: { round: Round }) {
                         setKmValues((current) => ({ ...current, [player.id]: "" }));
                         setDistanceSources((current) => ({ ...current, [player.id]: "" }));
                       }}
-                      className="h-10 w-64 rounded border border-[#d8ded0] bg-white px-2 outline-none focus:border-[#203c62]"
+                      className="w-64"
                       placeholder="Svaret geoten ga"
                     />
                     <input
@@ -326,17 +305,16 @@ export function RoundForm({ round }: { round: Round }) {
                     <input name={`auto_km_${player.id}`} type="hidden" value={preview?.distanceKm ?? ""} />
                     <input name={`distance_source_${player.id}`} type="hidden" value={distanceSources[player.id] ?? ""} />
                     {preview?.location ? (
-                      <p className="mt-1 max-w-64 text-xs leading-5 text-[#285c45]">{locationText(preview.location)}</p>
+                      <small className="mt-1 max-w-64 text-[#285c45]">{locationText(preview.location)}</small>
                     ) : guessTexts[player.id]?.trim() ? (
-                      <p className="mt-1 max-w-64 text-xs leading-5 text-[#8e3030]">Ikke beregnet ennå</p>
+                      <small className="mt-1 max-w-64 text-[#8e3030]">Ikke beregnet ennå</small>
                     ) : null}
                   </td>
-                  <td className="px-3 py-3">
+                  <td>
                     <select
                       name={`status_${player.id}`}
                       value={statusValues[player.id] ?? "ikke_deltatt"}
                       onChange={(event) => setStatusValues((current) => ({ ...current, [player.id]: event.target.value as ResultStatus }))}
-                      className="h-10 w-full rounded border border-[#d8ded0] bg-white px-2 outline-none focus:border-[#203c62]"
                     >
                       {statusOptions.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -345,7 +323,7 @@ export function RoundForm({ round }: { round: Round }) {
                       ))}
                     </select>
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="right">
                     <input
                       name={`km_${player.id}`}
                       type="number"
@@ -356,24 +334,23 @@ export function RoundForm({ round }: { round: Round }) {
                         setKmValues((current) => ({ ...current, [player.id]: event.target.value }));
                         setDistanceSources((current) => ({ ...current, [player.id]: "manual" }));
                       }}
-                      className="h-10 w-32 rounded border border-[#d8ded0] bg-white px-2 text-right outline-none focus:border-[#203c62]"
+                      className="w-32 text-right"
                       placeholder="0"
                     />
-                    <p className="mt-1 text-xs text-[#5b6257]">
+                    <small className="mt-1 block text-right">
                       {distanceSources[player.id] === "auto" ? "Auto" : distanceSources[player.id] === "manual" ? "Manuell" : "Ikke satt"}
-                    </p>
+                    </small>
                   </td>
-                  <td className="px-3 py-3 font-mono text-[#203c62]">{computedResult?.points ?? 0}</td>
-                  <td className="px-3 py-3">
+                  <td className="right"><span className="num-display">{computedResult?.points ?? 0}</span></td>
+                  <td className="right">
                     <span className={computedResult?.chargedReason === "kattometerstraff" ? "font-semibold text-[#8e3030]" : ""}>
                       {formatKm(computedResult?.chargedKm)}
                     </span>
                   </td>
-                  <td className="px-3 py-3">
+                  <td>
                     <input
                       name={`note_${player.id}`}
                       defaultValue={result?.note ?? ""}
-                      className="h-10 w-full rounded border border-[#d8ded0] bg-white px-2 outline-none focus:border-[#203c62]"
                       placeholder="Kort protokollmerknad"
                     />
                   </td>
@@ -384,17 +361,15 @@ export function RoundForm({ round }: { round: Round }) {
         </table>
       </div>
 
-      <div className="flex flex-col gap-3 rounded border border-[#d8ded0] bg-[#f7f8f5] p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2 text-sm text-[#5b6257]">
+      <div className="flex flex-col gap-3 rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 text-sm text-[#4f412b]">
           <ShieldCheck className="h-4 w-4 text-[#285c45]" aria-hidden="true" />
           <span>
             {computed.participantCount} gyldige deltakere · maks {computed.maxPoints} poeng · kattometerstraff:{" "}
             <strong className="text-[#161713]">{formatKm(computed.worstThreeAverage)}</strong>
           </span>
         </div>
-        <PendingSubmitButton
-          className="inline-flex h-11 items-center justify-center gap-2 rounded bg-[#203c62] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
-        >
+        <PendingSubmitButton className="btn btn-wax">
           <Save className="h-4 w-4" aria-hidden="true" />
           Lagre protokoll
         </PendingSubmitButton>

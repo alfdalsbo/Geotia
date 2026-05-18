@@ -81,40 +81,33 @@ export default async function GeotingPage({
       </div>
 
       <Section title="Send inn forslag" eyebrow="Innkomne saker">
-        <form action={submitGeotingProposalAction} className="grid gap-4 lg:grid-cols-[1fr_240px]">
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-[#273125]">Tittel</span>
+        <form action={submitGeotingProposalAction} className="geo-form grid gap-4 lg:grid-cols-[1fr_240px]">
+          <label>
+            <span>Tittel</span>
             <input
               name="title"
-              className="h-11 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
               placeholder="F.eks. Lov om obligatorisk India-varsling"
               required
             />
           </label>
-          <label className="space-y-2">
-            <span className="text-sm font-semibold text-[#273125]">Sakstype</span>
-            <select
-              name="ruleType"
-              className="h-11 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
-              defaultValue="annet"
-            >
+          <label>
+            <span>Sakstype</span>
+            <select name="ruleType" defaultValue="annet">
               <option value="grunnlov">GeoGrunnlovsendring</option>
               <option value="mindre">Mindre lovendring</option>
               <option value="annet">Annet tingvedtak</option>
             </select>
           </label>
-          <label className="space-y-2 lg:col-span-2">
-            <span className="text-sm font-semibold text-[#273125]">Forslag / innhold</span>
+          <label className="lg:col-span-2">
+            <span>Forslag / innhold</span>
             <textarea
               name="body"
-              className="min-h-32 w-full rounded border border-[#d8ded0] bg-white px-3 py-2 outline-none focus:border-[#203c62]"
+              className="min-h-32"
               placeholder="Skriv forslaget slik at også motstanderne forstår hva de skal krangle med. For grunnlov: bruk gjerne Før: og Etter:."
               required
             />
           </label>
-          <PendingSubmitButton
-            className="inline-flex h-11 items-center justify-center gap-2 rounded bg-[#7c2430] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#641923] lg:col-span-2 lg:w-fit"
-          >
+          <PendingSubmitButton className="btn btn-wax lg:col-span-2 lg:w-fit">
             <Gavel className="h-4 w-4" aria-hidden="true" />
             Send til GeoTinget
           </PendingSubmitButton>
