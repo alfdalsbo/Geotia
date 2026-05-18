@@ -2,13 +2,13 @@ import { expect, test } from "@playwright/test";
 
 test("login, register a round, and lock the protocol", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Geotia" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "G·E·O·T·I·A" })).toBeVisible();
   await page.getByLabel("Brukernavn").fill("SS");
   await page.getByLabel("Passord").fill("geotia");
   await page.getByRole("button", { name: "Åpne Geotia" }).click();
 
   await expect(page.getByRole("heading", { name: "Geotia" })).toBeVisible();
-  await page.getByLabel("Vis større bilde: Partioversikt for Geotia").click();
+  await page.getByRole("button", { name: /Vis større bilde: Partikort for SS/ }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("button", { name: "Lukk større bilde" }).click();
   await page.goto("/runder");
@@ -43,7 +43,7 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "SlowGeo-tabell" })).toBeVisible();
 
   await page.getByRole("link", { name: "Spill" }).click();
-  await expect(page.getByRole("heading", { name: "Geotias spillkammer" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Spillkammer" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Åpne SlowGeo/ })).toBeVisible();
   await expect(page.getByText("Før ny spilløkt")).toHaveCount(0);
   await page.locator('a[href="/spill/registrer?game=geo"]').first().click();
@@ -91,7 +91,7 @@ test("Danny logs in as Tingvitne without voting power", async ({ page }) => {
   await page.getByLabel("Passord").fill("geotia");
   await page.getByRole("button", { name: "Åpne Geotia" }).click();
 
-  await expect(page.getByText("Innlogget som Danny · Tingvitne")).toBeVisible();
+  await expect(page.getByText("Innlogget som Danny — Tingvitne")).toBeVisible();
   await page.getByRole("link", { name: "GeoTinget" }).click();
   await expect(page.getByRole("link", { name: "Tingvollen" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Stemmeurnen" })).toBeVisible();
