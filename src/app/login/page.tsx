@@ -1,8 +1,10 @@
 import Image from "next/image";
-import { KeyRound, Landmark } from "lucide-react";
+import { KeyRound } from "lucide-react";
 
 import { loginAction } from "@/app/actions";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { RiksSegl } from "@/components/ui/riks-segl";
 import { parties } from "@/lib/seed";
 
 export const metadata = {
@@ -19,94 +21,134 @@ export default async function LoginPage({
   const next = params.next?.startsWith("/") && !params.next.startsWith("//") ? params.next : "/";
 
   return (
-    <main className="min-h-screen bg-[#061d2b] text-white">
-      <div className="grid min-h-screen lg:grid-cols-[minmax(0,1fr)_440px]">
-        <section className="relative flex min-h-[46vh] items-end overflow-hidden p-6 lg:min-h-screen lg:p-10">
+    <main className="min-h-screen bg-[#061a26] text-white">
+      <div className="grid min-h-screen lg:grid-cols-[minmax(0,1fr)_460px]">
+        <section className="relative flex min-h-[46vh] items-end overflow-hidden lg:min-h-screen">
           <Image
             src="/geotia-assets/party-overview.png"
             alt="Geotia partioversikt"
             fill
             priority
-            sizes="(min-width: 1024px) calc(100vw - 440px), 100vw"
-            className="object-cover object-top opacity-78"
+            sizes="(min-width: 1024px) calc(100vw - 460px), 100vw"
+            className="object-cover object-top opacity-80"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#061d2b] via-[#061d2b]/40 to-transparent" />
-          <div className="relative max-w-3xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#e2c479]">
-              Statsarkivet · sannhet orden forvirrelse
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#061a26] via-[#061a26]/55 to-transparent" />
+          {/* Gull-doble border langs høyre side på lg+ */}
+          <div className="absolute inset-y-0 right-0 hidden w-[6px] bg-[#b8892f] lg:block" />
+          <div className="absolute inset-y-0 right-[10px] hidden w-px bg-[#b8892f]/45 lg:block" />
+
+          <div className="relative max-w-3xl p-6 lg:p-12">
+            <p
+              className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#e1c06c] sm:text-xs"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              Statsarkivet · sannhet · orden · forvirrelse
             </p>
-            <h1 className="font-display mt-3 text-5xl font-semibold tracking-normal sm:text-7xl">Geotia</h1>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-white/82">
+            <h1
+              className="mt-3 text-5xl font-black tracking-[0.18em] sm:text-7xl"
+              style={{
+                fontFamily: "var(--font-display)",
+                textShadow: "0 2px 0 rgba(0,0,0,.4), 0 0 18px rgba(184,137,47,.3)",
+              }}
+            >
+              G·E·O·T·I·A
+            </h1>
+            <p
+              className="mt-5 max-w-2xl text-lg leading-8 text-white/85"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
               Privat embetsverk for SlowGeo, kattometer, GeoTinget og de annaler
               som gjør at staten virker uten å ligne et skjema fra en kommune.
+            </p>
+            <p
+              className="mt-4 max-w-2xl text-base italic leading-7 text-[#e1c06c]/85"
+              style={{ fontFamily: "var(--font-italic)" }}
+            >
+              Motoren enkel. Overbygningen rik.
             </p>
           </div>
         </section>
 
-        <section className="flex items-center border-l border-white/12 bg-[#f3ead8] p-6 text-[#161713] lg:p-10">
+        <section
+          className="flex items-center bg-[#f3ead8] p-6 text-[#161713] lg:p-10"
+          style={{
+            backgroundImage:
+              "linear-gradient(180deg, rgba(75,46,24,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(75,46,24,0.05) 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+          }}
+        >
           <div className="w-full">
-            <div className="mb-8 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded border border-[#c49a3c]/45 bg-[#fff7e6] text-[#062b40]">
-                <Landmark className="h-6 w-6" aria-hidden="true" />
+            <div className="mb-8 flex items-center gap-4">
+              <div className="seal-frame" style={{ width: 64, height: 64 }}>
+                <RiksSegl size={54} />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
-                  Adgangskontroll
+                <Eyebrow>Adgangskontroll</Eyebrow>
+                <p
+                  className="font-display text-2xl font-bold uppercase tracking-[0.06em] text-[#062b40]"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  Embetsverket venter
                 </p>
-                <p className="font-display text-2xl font-semibold text-[#062b40]">Embetsverket venter</p>
               </div>
             </div>
 
-            <form action={loginAction} className="geotia-frame rounded p-5">
+            <form action={loginAction} className="geo-form space-y-4">
               <input type="hidden" name="next" value={next} />
-              <label htmlFor="username" className="text-sm font-semibold text-[#273125]">
-                Brukernavn
-              </label>
-              <input
-                id="username"
-                name="username"
-                autoComplete="username"
-                className="mt-2 h-12 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 text-base outline-none focus:border-[#062b40]"
-                placeholder="SS, IRA, PLO, PKK, PWP, CIP, MOSSAD eller Danny"
-                required
-              />
-              <p className="mt-2 text-xs leading-5 text-[#5b6257]">
-                Bruk partiforkortelsen: {parties.map((party) => party.id.toUpperCase()).join(" · ")}.
-                Danny logger inn som Tingvitne.
-              </p>
 
-              <label htmlFor="passcode" className="mt-4 block text-sm font-semibold text-[#273125]">
-                Passord
-              </label>
-              <div className="mt-2 flex items-center gap-2 rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3">
-                <KeyRound className="h-4 w-4 text-[#7c2430]" aria-hidden="true" />
+              <label>
+                <span>Brukernavn</span>
                 <input
-                  id="passcode"
-                  name="passcode"
-                  type="password"
-                  autoComplete="current-password"
-                  className="h-12 min-w-0 flex-1 bg-transparent text-base outline-none"
-                  placeholder="geotia"
+                  id="username"
+                  name="username"
+                  autoComplete="username"
+                  placeholder="SS, IRA, PLO, PKK, PWP, CIP, MOSSAD eller Danny"
                   required
                 />
-              </div>
+                <small>
+                  Bruk partiforkortelsen: {parties.map((party) => party.id.toUpperCase()).join(" · ")}.
+                  Danny logger inn som Tingvitne.
+                </small>
+              </label>
+
+              <label>
+                <span>Passord</span>
+                <div className="relative">
+                  <KeyRound
+                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7c2430]"
+                    aria-hidden="true"
+                  />
+                  <input
+                    id="passcode"
+                    name="passcode"
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="geotia"
+                    required
+                    style={{ paddingLeft: "36px" }}
+                  />
+                </div>
+              </label>
+
               {rejected ? (
-                <p className="mt-3 rounded border border-[#7c2430]/25 bg-[#7c2430]/10 px-3 py-2 text-sm text-[#7c2430]">
+                <p className="rounded border border-[#8e3030]/45 bg-[#8e3030]/10 px-3 py-2 text-sm font-semibold text-[#8e3030]">
                   GeoVAR avviser adgang. Sjekk nøkkelen og prøv igjen.
                 </p>
               ) : null}
-              <PendingSubmitButton
-                className="mt-4 inline-flex h-11 w-full items-center justify-center rounded bg-[#062b40] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0d3b4e]"
-                pendingChildren="Åpner..."
-              >
+
+              <PendingSubmitButton className="btn btn-wax w-full justify-center" pendingChildren="Åpner …">
                 Åpne Geotia
               </PendingSubmitButton>
             </form>
 
-            <p className="mt-5 text-sm leading-6 text-[#5b6257]">
-              Hver geot logger inn med sitt parti. Danny logger inn med navnet sitt og får
-              Tingvitnebenken til ordensveien eventuelt gjør ham til Partigründer.
-              Passordet er felles: geotia.
+            <p
+              className="mt-6 text-sm leading-6 text-[#594226]"
+              style={{ fontFamily: "var(--font-italic)", fontStyle: "italic" }}
+            >
+              Hver geot logger inn med sitt parti. Danny logger inn med navnet
+              sitt og får Tingvitnebenken til ordensveien eventuelt gjør ham til
+              Partigründer. Passordet er felles: geotia.
             </p>
           </div>
         </section>

@@ -93,10 +93,9 @@ export function SlowGeoShareButton({
         type="button"
         onClick={share}
         className={cn(
-          "inline-flex h-10 min-w-[128px] items-center justify-center gap-2 rounded px-3 text-sm font-semibold transition",
-          tone === "dark"
-            ? "border border-white/20 bg-white/10 text-white hover:bg-white/15"
-            : "border border-[#d8ded0] bg-white text-[#203c62] hover:border-[#203c62]/35 hover:bg-[#f7f8f5]",
+          "btn btn-small",
+          tone === "dark" ? "btn-brass" : "btn-wax",
+          "min-w-[148px] justify-center",
           className,
         )}
       >
@@ -107,12 +106,7 @@ export function SlowGeoShareButton({
         <button
           type="button"
           onClick={copy}
-          className={cn(
-            "inline-flex h-10 min-w-[128px] items-center justify-center gap-2 rounded px-3 text-sm font-semibold transition",
-            tone === "dark"
-              ? "border border-white/20 bg-transparent text-white hover:bg-white/10"
-              : "border border-[#d8ded0] bg-[#f7f8f5] text-[#203c62] hover:border-[#203c62]/35 hover:bg-white",
-          )}
+          className="btn btn-quiet btn-small min-w-[148px] justify-center"
         >
           <Copy className="h-4 w-4" aria-hidden="true" />
           {status === "copied" ? copiedLabel : copyLabel}
@@ -121,9 +115,10 @@ export function SlowGeoShareButton({
       {status === "failed" ? (
         <span
           className={cn(
-            "text-xs font-semibold",
+            "text-xs font-semibold italic",
             tone === "dark" ? "text-[#eadcbd]" : "text-[#8e3030]",
           )}
+          style={{ fontFamily: "var(--font-italic)" }}
           aria-live="polite"
         >
           Deling feilet
