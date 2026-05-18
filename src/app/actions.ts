@@ -354,18 +354,22 @@ function geoticOrderStatus(value: string): GeoticOrderStatus {
 function geotingAdminRedirect(formData: FormData, status: string, fallback: string) {
   const returnTo = field(formData, "returnTo");
   const basePath = returnTo === "/geotinget/pergamenter" ? returnTo : fallback;
-  return `${basePath}?status=${encodeURIComponent(status)}`;
+  const proposalId = field(formData, "proposalId");
+  const sak = proposalId ? `&sak=${encodeURIComponent(proposalId)}` : "";
+  return `${basePath}?status=${encodeURIComponent(status)}${sak}`;
 }
 
 function geotingAdminErrorRedirect(formData: FormData, reason: string, fallback: string) {
   const returnTo = field(formData, "returnTo");
   const basePath = returnTo === "/geotinget/pergamenter" ? returnTo : fallback;
-  return `${basePath}?error=${encodeURIComponent(reason)}`;
+  const proposalId = field(formData, "proposalId");
+  const sak = proposalId ? `&sak=${encodeURIComponent(proposalId)}` : "";
+  return `${basePath}?error=${encodeURIComponent(reason)}${sak}`;
 }
 
 export async function submitGeotingProposalAction(formData: FormData) {
   const session = await requireSession();
-  await createGeotingProposal({
+  const proposal = await createGeotingProposal({
     title: field(formData, "title") || "Navnløst forslag",
     body: field(formData, "body"),
     ruleType: proposalRuleType(field(formData, "ruleType")),
@@ -373,7 +377,7 @@ export async function submitGeotingProposalAction(formData: FormData) {
   });
 
   revalidateGeotingPaths();
-  redirect("/geotinget?status=forslag");
+  redirect(`/geotinget/avstemninger?status=forslag&sak=${encodeURIComponent(proposal.id)}`);
 }
 
 export async function updateGeotingProposalAction(formData: FormData) {
@@ -418,9 +422,9 @@ export async function saveGeotingPartyPositionAction(formData: FormData) {
   revalidateGeotingAdminPaths();
 
   if (!result.ok) {
-    redirect(`/geotinget/avstemninger?error=${encodeURIComponent(result.reason ?? "Partiposisjonen ble ikke ført.")}`);
+    redirect(`/geotinget/avstemninger?error=${encodeURIComponent(result.reason ?? "Partiposisjonen ble ikke ført.")}&sak=${encodeURIComponent(proposalId)}`);
   }
-  redirect(`/geotinget/avstemninger?status=partiposisjon`);
+  redirect(`/geotinget/avstemninger?status=partiposisjon&sak=${encodeURIComponent(proposalId)}`);
 }
 
 export async function withdrawGeotingProposalAction(formData: FormData) {
@@ -450,8 +454,9 @@ export async function startGeotingVoteAction(formData: FormData) {
     redirect("/geotinget/avstemninger?error=geoed");
   }
 
+  const proposalId = field(formData, "proposalId");
   const result = await startGeotingVote({
-    proposalId: field(formData, "proposalId"),
+    proposalId,
     playerId: session.playerId,
     oathText: field(formData, "oathText") || GEO_OATH_TEXT,
   });
@@ -459,9 +464,9 @@ export async function startGeotingVoteAction(formData: FormData) {
   revalidateGeotingAdminPaths();
 
   if (!result.ok) {
-    redirect(`/geotinget/avstemninger?error=${encodeURIComponent(result.reason ?? "Geo-eden sprakk i pergamentet.")}`);
+    redirect(`/geotinget/avstemninger?error=${encodeURIComponent(result.reason ?? "Geo-eden sprakk i pergamentet.")}&sak=${encodeURIComponent(proposalId)}`);
   }
-  redirect("/geotinget/avstemninger?status=avstemning");
+  redirect(`/geotinget/avstemninger?status=avstemning&sak=${encodeURIComponent(proposalId)}`);
 }
 
 export async function voteGeotingProposalAction(formData: FormData) {
@@ -470,8 +475,9 @@ export async function voteGeotingProposalAction(formData: FormData) {
     redirect("/geotinget/avstemninger?error=tingvitne");
   }
 
+  const proposalId = field(formData, "proposalId");
   const result = await saveGeotingVote({
-    proposalId: field(formData, "proposalId"),
+    proposalId,
     playerId: session.playerId,
     vote: voteValue(field(formData, "vote")),
     comment: field(formData, "comment"),
@@ -480,13 +486,14 @@ export async function voteGeotingProposalAction(formData: FormData) {
   revalidateGeotingAdminPaths();
 
   if (!result.ok || !result.proposal) {
-    redirect(`/geotinget/avstemninger?error=${encodeURIComponent(result.reason ?? "Stemmen ble stoppet av embetsverket.")}`);
+    redirect(`/geotinget/avstemninger?error=${encodeURIComponent(result.reason ?? "Stemmen ble stoppet av embetsverket.")}&sak=${encodeURIComponent(proposalId)}`);
   }
   const proposal = result.proposal;
+  const sak = `&sak=${encodeURIComponent(proposalId)}`;
   redirect(
     proposal.status === "passed" || proposal.status === "rejected"
-      ? "/geotinget/avstemninger?status=avgjort"
-      : "/geotinget/avstemninger?status=stemt",
+      ? `/geotinget/avstemninger?status=avgjort${sak}`
+      : `/geotinget/avstemninger?status=stemt${sak}`,
   );
 }
 

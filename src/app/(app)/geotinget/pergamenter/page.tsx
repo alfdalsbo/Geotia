@@ -1,4 +1,4 @@
-import { FileText, Gavel, ScrollText, ShieldCheck } from "lucide-react";
+import { ChevronDown, FileText, Gavel, ScrollText, ShieldCheck } from "lucide-react";
 
 import { updateGeotingProposalAction, withdrawGeotingProposalAction } from "@/app/actions";
 import { GeotingSubnav } from "@/components/geoting-subnav";
@@ -42,7 +42,7 @@ const proposalStatusStamp: Record<keyof typeof proposalStatusLabels, { tone: Sta
 export default async function GeotingPergamentsPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ status?: string; error?: string }>;
+  searchParams?: Promise<{ status?: string; error?: string; sak?: string }>;
 }) {
   const params = (await searchParams) ?? {};
   await resolveDueGeotingProposals();
@@ -89,6 +89,7 @@ export default async function GeotingPergamentsPage({
               <PergamentCard
                 key={proposal.id}
                 canEdit={canEdit}
+                defaultOpen={proposal.id === params.sak}
                 players={state.players}
                 proposal={proposal}
               />
@@ -104,26 +105,40 @@ export default async function GeotingPergamentsPage({
       <Section title="Grunnpergamentene" eyebrow="Historisk GeoTing-protokoll">
         <div className="grid gap-3 lg:grid-cols-2">
           {archive.geotingCases.map((item) => (
-            <article key={`${item.date}-${item.caseName}`} className="rounded border border-[#d8ded0] bg-[#f7f8f5] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
-                {item.date} · {item.caseNumber ?? "Sak uten nummer"}
-              </p>
-              <h2 className="font-display mt-2 text-2xl font-semibold text-[#062b40]">
-                {item.caseName}
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-[#273125]">{item.proposal}</p>
-              <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
-                <PergamentFact label="Fremmet av" value={item.proposedBy} />
-                <PergamentFact label="Vedtak" value={item.decision} />
-                <PergamentFact label="Stemmer" value={item.votes} />
-                <PergamentFact label="Status" value={item.status} />
-              </dl>
-              {item.comment ? (
-                <p className="mt-3 rounded border border-[#c49a3c]/30 bg-[#fff7e6] px-3 py-2 text-sm leading-6 text-[#4f412b]">
-                  {item.comment}
-                </p>
-              ) : null}
-            </article>
+            <details key={`${item.date}-${item.caseName}`} className="group rounded border border-[#d8ded0] bg-[#f7f8f5]">
+              <summary className="cursor-pointer list-none p-4 outline-none transition hover:bg-[#fff7e6]/70 focus-visible:ring-2 focus-visible:ring-[#c49a3c] [&::-webkit-details-marker]:hidden">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
+                      {item.date} · {item.caseNumber ?? "Sak uten nummer"} · {item.status}
+                    </p>
+                    <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">
+                      {item.caseName}
+                    </h2>
+                    <p className="mt-1 text-sm font-semibold text-[#4f412b]">{item.decision}</p>
+                  </div>
+                  <div className="inline-flex items-center justify-between gap-3 rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm font-semibold text-[#062b40] sm:min-w-[118px]">
+                    <span className="group-open:hidden">Åpne</span>
+                    <span className="hidden group-open:inline">Lukk</span>
+                    <ChevronDown className="h-4 w-4 transition group-open:rotate-180" aria-hidden="true" />
+                  </div>
+                </div>
+              </summary>
+              <div className="border-t border-[#d8ded0] p-4">
+                <p className="text-sm leading-6 text-[#273125]">{item.proposal}</p>
+                <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+                  <PergamentFact label="Fremmet av" value={item.proposedBy} />
+                  <PergamentFact label="Vedtak" value={item.decision} />
+                  <PergamentFact label="Stemmer" value={item.votes} />
+                  <PergamentFact label="Status" value={item.status} />
+                </dl>
+                {item.comment ? (
+                  <p className="mt-3 rounded border border-[#c49a3c]/30 bg-[#fff7e6] px-3 py-2 text-sm leading-6 text-[#4f412b]">
+                    {item.comment}
+                  </p>
+                ) : null}
+              </div>
+            </details>
           ))}
         </div>
       </Section>
@@ -158,10 +173,12 @@ function PergamentStatus({ status, error }: { status?: string; error?: string })
 
 function PergamentCard({
   canEdit,
+  defaultOpen,
   players,
   proposal,
 }: {
   canEdit: boolean;
+  defaultOpen?: boolean;
   players: Player[];
   proposal: GeotingProposal;
 }) {
@@ -173,8 +190,39 @@ function PergamentCard({
   const implementationStatus = proposal.implementationStatus ?? "pending";
 
   return (
-    <article className="rounded border border-[#d8c48c] bg-[#fff7e6] p-4 shadow-sm">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+    <details
+      id={`sak-${proposal.id}`}
+      className="group rounded border border-[#d8c48c] bg-[#fff7e6] shadow-sm"
+      data-testid="geoting-pergament"
+      open={defaultOpen}
+    >
+      <summary className="cursor-pointer list-none p-4 outline-none transition hover:bg-white/50 focus-visible:ring-2 focus-visible:ring-[#c49a3c] [&::-webkit-details-marker]:hidden">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(220px,420px)_auto] lg:items-center">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
+              {proposalStatusLabels[proposal.status]} · {dateTimeLabel(proposal.createdAt)}
+            </p>
+            <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">
+              {proposal.title}
+            </h2>
+            <p className="mt-1 line-clamp-2 text-sm leading-6 text-[#4f412b]">{proposal.body}</p>
+          </div>
+
+          <dl className="grid gap-2 text-sm sm:grid-cols-2">
+            <PergamentFact label="Fremmet av" value={proposer?.shortName ?? "Ukjent geot"} />
+            <PergamentFact label="Vedtak" value={summary.label} />
+          </dl>
+
+          <div className="flex items-center justify-between gap-3 rounded border border-[#c49a3c]/35 bg-white px-3 py-2 text-sm font-semibold text-[#062b40] lg:min-w-[118px]">
+            <span className="group-open:hidden">Åpne</span>
+            <span className="hidden group-open:inline">Lukk</span>
+            <ChevronDown className="h-4 w-4 transition group-open:rotate-180" aria-hidden="true" />
+          </div>
+        </div>
+      </summary>
+
+      <article className="border-t border-[#d8c48c] p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
             {proposalStatusLabels[proposal.status]} · {dateTimeLabel(proposal.createdAt)}
@@ -327,7 +375,8 @@ function PergamentCard({
           ) : null}
         </div>
       ) : null}
-    </article>
+      </article>
+    </details>
   );
 }
 

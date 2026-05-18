@@ -13,7 +13,7 @@ export const metadata = {
 export default async function GeotingVotesPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ status?: string; error?: string }>;
+  searchParams?: Promise<{ status?: string; error?: string; sak?: string }>;
 }) {
   const params = (await searchParams) ?? {};
   await resolveDueGeotingProposals();
@@ -55,6 +55,7 @@ export default async function GeotingVotesPage({
         <GeotingProposalList
           currentCanVote={currentCanVote}
           currentGeot={currentGeot}
+          openProposalId={params.sak}
           players={state.players}
           proposals={proposals}
           tingvitner={tingvitner}

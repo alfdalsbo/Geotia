@@ -89,8 +89,8 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await page.getByLabel("Forslag / innhold").fill("Alle testgeoter skal få stemme uten parlamentarisk støy.");
   await page.getByRole("button", { name: "Send til GeoTinget" }).click();
   await expect(page.getByText("Forslaget er mottatt.")).toBeVisible();
-  await page.getByRole("link", { name: "Stemmeurnen" }).click();
-  const proposalCard = page.locator("article").filter({ hasText: proposalTitle });
+  const proposalCard = page.getByTestId("geoting-case").filter({ hasText: proposalTitle });
+  await expect(proposalCard.locator("summary")).toBeVisible();
   await expect(proposalCard.getByRole("button", { name: "Åpne stemmeurnen" })).toBeVisible();
   await proposalCard.getByLabel("Jeg sverger geo-eden og varsler alle geoter umiddelbart.").check();
   await proposalCard.getByRole("button", { name: "Åpne stemmeurnen" }).click();
@@ -99,8 +99,11 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await expect(page.getByText("Stemmen er ført.")).toBeVisible();
   await page.getByRole("link", { name: "Tingpergamentene" }).click();
   await expect(page.getByRole("heading", { name: "Tingpergamentene" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: proposalTitle })).toBeVisible();
-  await expect(page.getByText("Kollegiets redigering")).toBeVisible();
+  const pergament = page.getByTestId("geoting-pergament").filter({ hasText: proposalTitle });
+  await expect(pergament.locator("summary")).toBeVisible();
+  await pergament.locator("summary").click();
+  await expect(pergament.getByRole("heading", { name: proposalTitle }).first()).toBeVisible();
+  await expect(pergament.getByText("Kollegiets redigering")).toBeVisible();
 });
 
 test("Danny logs in as Tingvitne without voting power", async ({ page }) => {

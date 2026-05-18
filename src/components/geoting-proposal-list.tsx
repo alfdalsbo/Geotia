@@ -1,4 +1,4 @@
-import { BellRing, CheckCircle2, Clock, Gavel, Landmark, ScrollText, Vote, XCircle } from "lucide-react";
+import { BellRing, CheckCircle2, ChevronDown, Clock, Gavel, Landmark, ScrollText, Vote, XCircle } from "lucide-react";
 
 import { saveGeotingPartyPositionAction, startGeotingVoteAction, voteGeotingProposalAction } from "@/app/actions";
 import { GeotingCountdown } from "@/components/geoting-countdown";
@@ -27,9 +27,18 @@ const voteLabels: Record<VoteValue, string> = {
   avhold: "Blankt",
 };
 
+const proposalStatusLabels = {
+  open: "Venter på geo-ed",
+  voting: "I avstemning",
+  passed: "Vedtatt",
+  rejected: "Forkastet",
+  archived: "Trukket",
+};
+
 export function GeotingProposalList({
   currentCanVote,
   currentGeot,
+  openProposalId,
   players,
   proposals,
   tingvitner,
@@ -37,6 +46,7 @@ export function GeotingProposalList({
 }: {
   currentCanVote: boolean;
   currentGeot: Player | null;
+  openProposalId?: string;
   players: Player[];
   proposals: GeotingProposal[];
   tingvitner: Player[];
@@ -56,12 +66,13 @@ export function GeotingProposalList({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="grid gap-3" data-testid="geoting-case-list">
       {proposals.map((proposal) => (
         <ProposalCard
           key={proposal.id}
           currentCanVote={currentCanVote}
           currentGeot={currentGeot}
+          defaultOpen={proposal.id === openProposalId}
           proposal={proposal}
           tingvitner={tingvitner}
           votingPlayers={votingPlayers}
@@ -75,6 +86,7 @@ export function GeotingProposalList({
 function ProposalCard({
   currentCanVote,
   currentGeot,
+  defaultOpen,
   players,
   proposal,
   tingvitner,
@@ -82,6 +94,7 @@ function ProposalCard({
 }: {
   currentCanVote: boolean;
   currentGeot: Player | null;
+  defaultOpen?: boolean;
   players: Player[];
   proposal: GeotingProposal;
   tingvitner: Player[];
@@ -95,10 +108,43 @@ function ProposalCard({
   const lifecycle = getGeotingLifecycle(proposal, players);
   const constitutionChange = getConstitutionChangeParts(proposal.body);
   const partyMechanics = getProposalPartyMechanics(proposal, players);
+  const actionLabel = summary.finished ? "Les protokoll" : summary.started ? "Åpne og stem" : "Åpne geo-ed";
 
   return (
-    <article className="geotia-frame rounded">
-      <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <details
+      id={`sak-${proposal.id}`}
+      className="geotia-frame group rounded"
+      data-testid="geoting-case"
+      open={defaultOpen}
+    >
+      <summary className="cursor-pointer list-none p-4 outline-none transition hover:bg-[#fff7e6]/55 focus-visible:ring-2 focus-visible:ring-[#c49a3c] sm:p-5 [&::-webkit-details-marker]:hidden">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(240px,380px)_auto] lg:items-center">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
+              {proposalStatusLabels[proposal.status]} · {ruleTypeLabels[proposal.ruleType]} · {dateLabel(proposal.createdAt.slice(0, 10))}
+            </p>
+            <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">
+              {proposal.title}
+            </h2>
+            <p className="mt-1 line-clamp-2 text-sm leading-6 text-[#4f412b]">{proposal.body}</p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 text-center text-sm">
+            <CompactCaseMetric label="For" value={summary.forVotes} tone="green" />
+            <CompactCaseMetric label="Mot" value={summary.againstVotes} tone="red" />
+            <CompactCaseMetric label="Blankt" value={summary.blankVotes} tone="gold" />
+          </div>
+
+          <div className="flex items-center justify-between gap-3 rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm font-semibold text-[#062b40] lg:min-w-[138px]">
+            <span className="group-open:hidden">{actionLabel}</span>
+            <span className="hidden group-open:inline">Lukk sak</span>
+            <ChevronDown className="h-4 w-4 transition group-open:rotate-180" aria-hidden="true" />
+          </div>
+        </div>
+      </summary>
+
+      <article className="border-t border-[#c49a3c]/35">
+        <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="p-4 sm:p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
@@ -151,7 +197,23 @@ function ProposalCard({
           />
         </div>
       </div>
-    </article>
+      </article>
+    </details>
+  );
+}
+
+function CompactCaseMetric({ label, value, tone }: { label: string; value: number; tone: "green" | "red" | "gold" }) {
+  const tones = {
+    green: "border-[#194832]/25 bg-[#194832]/8 text-[#194832]",
+    red: "border-[#7c2430]/25 bg-[#7c2430]/8 text-[#7c2430]",
+    gold: "border-[#c49a3c]/40 bg-[#c49a3c]/12 text-[#654517]",
+  };
+
+  return (
+    <div className={`rounded border px-2 py-2 ${tones[tone]}`}>
+      <p className="text-[0.64rem] font-semibold uppercase tracking-[0.12em]">{label}</p>
+      <p className="font-display mt-1 text-2xl font-semibold">{value}</p>
+    </div>
   );
 }
 
