@@ -26,7 +26,7 @@ import { getGeoGuessrTipDaySeed, selectGeoGuessrTips } from "@/lib/geoguessr-tip
 import { geotiaDashboardLines, geotiaTipLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { computeGameStandings, geotStatus, getHallOfFame, computeRound, computeStandings } from "@/lib/scoring";
 import { getAppState } from "@/lib/store";
-import { dateLabel, formatKm, formatNumber } from "@/lib/utils";
+import { cn, dateLabel, formatKm, formatNumber } from "@/lib/utils";
 
 export const metadata = {
   title: "Kommandosentral",
@@ -315,64 +315,69 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Section title="Æreshallen" eyebrow="Automatiske rekorder">
-          <div className="space-y-3 text-sm">
-            <p className="flex items-center gap-2 font-semibold text-[#062b40]">
-              <Trophy className="h-4 w-4" aria-hidden="true" />
-              Flest poeng
-            </p>
-            <p>{hall.mostPoints[0]?.player.shortName ?? "-"} · {hall.mostPoints[0]?.totalPoints ?? 0} poeng</p>
-            <p className="flex items-center gap-2 font-semibold text-[#194832]">
-              <Crown className="h-4 w-4" aria-hidden="true" />
-              Flest seire
-            </p>
-            <p>{hall.mostWins[0]?.player.shortName ?? "-"} · {hall.mostWins[0]?.wins ?? 0} seire</p>
+        <article className="archive-card">
+          <div className="crown-icon">
+            <Trophy className="h-5 w-5" aria-hidden="true" />
           </div>
-        </Section>
-        <Section title="Skammens protokoll" eyebrow="Kattometer">
-          <div className="space-y-3 text-sm">
-            <p className="font-semibold text-[#7c2430]">Verste enkeltbom</p>
-            <p>
-              {hall.worstSingle
-                ? `${hall.worstSingle.result.player.shortName} · ${formatKm(hall.worstSingle.result.actualKm)}`
-                : "Ingen skam ført ennå"}
-            </p>
-            <p className="font-semibold text-[#654517]">Beste enkeltprestasjon</p>
-            <p>
-              {hall.bestSingle
-                ? `${hall.bestSingle.result.player.shortName} · ${formatKm(hall.bestSingle.result.actualKm)}`
-                : "Ingen udødelige øyeblikk ennå"}
-            </p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#7e5a18]" style={{ fontFamily: "var(--font-display)" }}>
+            Automatiske rekorder
+          </p>
+          <h3>Æreshallen</h3>
+          <p className="lead-name mt-3">{hall.mostPoints[0]?.player.shortName ?? "-"}</p>
+          <p className="lead-detail">Flest poeng · {hall.mostPoints[0]?.totalPoints ?? 0} poeng</p>
+          <p className="lead-detail">
+            <Crown className="mr-1 inline h-3 w-3 text-[#194832]" aria-hidden="true" />
+            Flest seire: {hall.mostWins[0]?.player.shortName ?? "-"} ({hall.mostWins[0]?.wins ?? 0})
+          </p>
+          <p className="mt-3"><Stamp tone="brass">REKORD ARKIVERT</Stamp></p>
+        </article>
+
+        <article className="archive-card">
+          <div className="crown-icon" style={{ background: "radial-gradient(circle, #f0b0b8, var(--burgundy))", color: "#fff7e0" }}>
+            <ScrollText className="h-5 w-5" aria-hidden="true" />
           </div>
-        </Section>
-        <Section
-          title="Oppslagsverket"
-          eyebrow="Leksikon"
-          action={
-            <Link href="/arkiv" prefetch={false} className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
-              Åpne
-              <BookOpen className="h-4 w-4" aria-hidden="true" />
-              <LinkPendingIndicator />
-            </Link>
-          }
-        >
-          <div className="space-y-3 text-sm">
-            <p className="flex items-center gap-2 font-semibold text-[#062b40]">
-              <UsersRound className="h-4 w-4" aria-hidden="true" />
-              Uttrykk i statsarkivet
-            </p>
-            <p>{formatNumber(state.archive.lexicon.length)} oppføringer</p>
-            <p className="flex items-center gap-2 font-semibold text-[#7c2430]">
-              <Gavel className="h-4 w-4" aria-hidden="true" />
-              Saker i GeoTinget
-            </p>
-            <p>{state.archive.geotingCases.length} protokollførte saker</p>
-            <p className="flex items-center gap-2 font-semibold text-[#654517]">
-              <ScrollText className="h-4 w-4" aria-hidden="true" />
-              Arkivet er ikke nøytralt. Det er bare pent ført.
-            </p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#7e5a18]" style={{ fontFamily: "var(--font-display)" }}>
+            Kattometer
+          </p>
+          <h3>Skammens protokoll</h3>
+          <p className="lead-name mt-3">
+            {hall.worstSingle ? hall.worstSingle.result.player.shortName : "-"}
+          </p>
+          <p className="lead-detail">
+            Verste enkeltbom: {hall.worstSingle ? formatKm(hall.worstSingle.result.actualKm) : "Ingen skam ført ennå"}
+          </p>
+          <p className="lead-detail">
+            Beste: {hall.bestSingle ? `${hall.bestSingle.result.player.shortName} · ${formatKm(hall.bestSingle.result.actualKm)}` : "Ingen udødelige øyeblikk ennå"}
+          </p>
+          <p className="mt-3"><Stamp tone="alarm">EVIG REGISTRERT</Stamp></p>
+        </article>
+
+        <article className="archive-card">
+          <div className="crown-icon">
+            <BookOpen className="h-5 w-5" aria-hidden="true" />
           </div>
-        </Section>
+          <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#7e5a18]" style={{ fontFamily: "var(--font-display)" }}>
+            Leksikon
+          </p>
+          <h3>Oppslagsverket</h3>
+          <p className="lead-name mt-3">{formatNumber(state.archive.lexicon.length)} oppføringer</p>
+          <p className="lead-detail">
+            <Gavel className="mr-1 inline h-3 w-3 text-[#7c2430]" aria-hidden="true" />
+            {state.archive.geotingCases.length} protokollførte saker
+          </p>
+          <p className="lead-detail">
+            <UsersRound className="mr-1 inline h-3 w-3 text-[#062b40]" aria-hidden="true" />
+            Arkivet er ikke nøytralt. Det er bare pent ført.
+          </p>
+          <Link
+            href="/arkiv"
+            prefetch={false}
+            className={cn(buttonClass({ variant: "quiet", size: "small" }), "mt-4")}
+          >
+            Åpne <BookOpen className="h-3 w-3" aria-hidden="true" />
+            <LinkPendingIndicator />
+          </Link>
+        </article>
       </div>
     </div>
   );
