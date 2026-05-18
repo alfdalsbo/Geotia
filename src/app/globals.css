@@ -1125,6 +1125,43 @@ textarea {
   pointer-events: none;
 }
 
+/* ----- Sarajevo film-frame ----- */
+.sarajevo-film-frame {
+  background: #000;
+  padding: 0;
+  position: relative;
+}
+
+.sarajevo-film-frame .film-perforation {
+  height: 18px;
+  background:
+    radial-gradient(ellipse 7px 5px at 14px 50%, #f5ead0 0 100%, transparent),
+    radial-gradient(ellipse 7px 5px at 42px 50%, #f5ead0 0 100%, transparent),
+    radial-gradient(ellipse 7px 5px at 70px 50%, #f5ead0 0 100%, transparent),
+    radial-gradient(ellipse 7px 5px at 98px 50%, #f5ead0 0 100%, transparent),
+    repeating-linear-gradient(90deg, #f5ead0 0 7px, transparent 7px 28px) 0 50% / 28px 10px no-repeat,
+    #1c1408;
+  background-blend-mode: normal;
+}
+
+.sarajevo-film-frame .film-perforation::before {
+  content: "";
+  display: block;
+  height: 100%;
+  background-image:
+    radial-gradient(ellipse 6px 4px at 14px 50%, #f5ead0 99%, transparent 100%);
+  background-size: 28px 100%;
+  background-repeat: repeat-x;
+}
+
+.sarajevo-film-frame .film-perforation.top {
+  border-bottom: 1px solid rgba(184, 137, 47, 0.5);
+}
+
+.sarajevo-film-frame .film-perforation.bottom {
+  border-top: 1px solid rgba(184, 137, 47, 0.5);
+}
+
 /* ----- § 16 — Quote strip ----- */
 .geo-quote-strip {
   background:
