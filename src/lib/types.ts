@@ -361,6 +361,41 @@ export type GeoticOrderAssessment = {
   updatedBy: string;
 };
 
+export type GeoticOrderPromotionStatus = "pending" | "approved" | "rejected" | "superseded";
+
+export type GeoticOrderPromotionVoteValue = "for" | "mot";
+
+export type GeoticOrderPromotionSnapshot = {
+  serviceWeeks: number;
+  roundsPlayed: number;
+  lifetimePoints: number;
+  trustScore: number;
+  eligibleRankId: GeoticOrderRankId;
+};
+
+export type GeoticOrderPromotionVote = {
+  voterId: string;
+  vote: GeoticOrderPromotionVoteValue;
+  comment: string;
+  createdAt: string;
+};
+
+export type GeoticOrderPromotionCase = {
+  id: string;
+  playerId: string;
+  fromRankId: GeoticOrderRankId;
+  targetRankId: GeoticOrderRankId;
+  status: GeoticOrderPromotionStatus;
+  snapshot: GeoticOrderPromotionSnapshot;
+  votes: GeoticOrderPromotionVote[];
+  publicNote: string;
+  internalNote: string;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt?: string | null;
+  openedBy: "system" | string;
+};
+
 export type OldSlowGeoRecord = {
   player: string;
   points: number;
@@ -410,4 +445,5 @@ export type AppState = {
   geotingProposals: GeotingProposal[];
   geoterIndexAdjustments: GeoterIndexAdjustment[];
   geoticOrderAssessments: GeoticOrderAssessment[];
+  geoticOrderPromotionCases: GeoticOrderPromotionCase[];
 };

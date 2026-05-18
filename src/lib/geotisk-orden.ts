@@ -295,6 +295,10 @@ function defaultRankId(player: Player): GeoticOrderRankId {
   return "borger";
 }
 
+export function getDefaultGeoticOrderRankId(player: Player): GeoticOrderRankId {
+  return defaultRankId(player);
+}
+
 function serviceStartDate(player: Player) {
   if (player.role === "tingvitne" || player.id === "danny") return null;
   return GEOTIA_SERVICE_START_DATE;
@@ -332,6 +336,10 @@ function defaultHiddenCategory(player: Player): GeoticOrderHiddenCategory {
   if (player.id === "fredrik") return "stolpe";
   if (player.role === "tingvitne") return "turist";
   return "baerer";
+}
+
+export function getDefaultHiddenOrderCategory(player: Player): GeoticOrderHiddenCategory {
+  return defaultHiddenCategory(player);
 }
 
 export function getOrderIndexScore(playerId: string, adjustments: GeoterIndexAdjustment[]) {
@@ -403,10 +411,15 @@ export function getGeoticOrderRows(
     const trustScore = getOrderIndexScore(player.id, adjustments);
     const eligibleRank = getEligibleOrderRank({ lifetimePoints, roundsPlayed, serviceWeeks, trustScore });
     const baselineRank = getGeoticOrderRank(defaultRankId(player));
-    const rank = getGeoticOrderRank(
-      assessment?.rankId ?? (eligibleRank.number > baselineRank.number ? eligibleRank.id : baselineRank.id),
-    );
+    const rank = getGeoticOrderRank(assessment?.rankId ?? baselineRank.id);
     const nextRank = getNextGeoticOrderRank(rank.id);
+    const promotionReady = Boolean(
+      nextRank &&
+        eligibleRank.number >= nextRank.number &&
+        rank.number < eligibleRank.number &&
+        assessment?.status !== "frosset" &&
+        assessment?.status !== "degradert",
+    );
 
     return {
       player,
@@ -423,6 +436,7 @@ export function getGeoticOrderRows(
       lifetimePoints,
       trustScore,
       eligibleRank,
+      promotionReady,
       progressToNext: getOrderProgressToRank({ lifetimePoints, roundsPlayed, serviceWeeks }, nextRank),
       publicNote: assessment?.publicNote ?? "",
       sponsor: assessment?.sponsor ?? "",
@@ -435,4 +449,60 @@ export function getGeoticOrderRows(
       a.player.shortName.localeCompare(b.player.shortName, "nb")
     );
   });
+}
+
+export type GeoticOrderRow = ReturnType<typeof getGeoticOrderRows>[number];
+
+export type GeoticOrderCapabilities = {
+  canSubmitBasicProposal: boolean;
+  canSubmitLawProposal: boolean;
+  canSetPartyPosition: boolean;
+  canVote: boolean;
+  canStartVote: boolean;
+  canFoundParty: boolean;
+  publicSummary: string;
+  lockedSummary: string;
+};
+
+export function getOrderCapabilities(row: Pick<GeoticOrderRow, "player" | "rank"> | null): GeoticOrderCapabilities {
+  const rankNumber = row?.rank.number ?? 0;
+  const partyMember = Boolean(row?.player.partyId);
+  const hasPublicVote = row?.player.canVote !== false;
+
+  const canSubmitBasicProposal = rankNumber >= 2;
+  const canSubmitLawProposal = rankNumber >= 5;
+  const canSetPartyPosition = rankNumber >= 4 && partyMember && hasPublicVote;
+  const canVote = rankNumber >= 4 && partyMember && hasPublicVote;
+  const canStartVote = rankNumber >= 5 && hasPublicVote;
+  const canFoundParty = rankNumber >= 7;
+  const next =
+    rankNumber < 2
+      ? "Nivå 2 åpner enkle forslag."
+      : rankNumber < 4
+        ? "Nivå 4 åpner partilinje og stemmerett."
+        : rankNumber < 5
+          ? "Nivå 5 åpner geo-ed og direkte lovsaker."
+          : rankNumber < 7
+            ? "Nivå 7 åpner søknad om partistiftelse."
+            : "Alle synlige ordensporter er åpne.";
+
+  return {
+    canSubmitBasicProposal,
+    canSubmitLawProposal,
+    canSetPartyPosition,
+    canVote,
+    canStartVote,
+    canFoundParty,
+    publicSummary:
+      rankNumber >= 7
+        ? "Full synlig ordensmakt"
+        : rankNumber >= 5
+          ? "Kan bære saker inn i GeoTinget"
+          : rankNumber >= 4
+            ? "Kan stemme og føre partilinje"
+            : rankNumber >= 2
+              ? "Kan sende enkle forslag"
+              : "Kan spille, lese og lære rikslyden",
+    lockedSummary: next,
+  };
 }

@@ -320,6 +320,7 @@ export default async function GeoticOrderPage() {
 
 function PersonalPathCard({ row }: { row: OrderRow }) {
   const nextRank = row.nextRank;
+  const statusLabel = row.promotionReady ? "PROTOKOLL" : nextRank ? "PÅ VEI" : "FULLFØRT";
   return (
     <div className="rounded border border-[#c49a3c]/55 bg-[#fff7e6] p-5 shadow-sm" data-testid="personal-order-path">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -332,7 +333,7 @@ function PersonalPathCard({ row }: { row: OrderRow }) {
           </p>
         </div>
         <div className="flex flex-col items-start gap-2 sm:items-end">
-          <Stamp tone={nextRank ? "navy" : "brass"}>{nextRank ? "PÅ VEI" : "FULLFØRT"}</Stamp>
+          <Stamp tone={row.promotionReady ? "alarm" : nextRank ? "navy" : "brass"}>{statusLabel}</Stamp>
           <p className="font-display text-3xl font-semibold text-[#7c2430]">
             {nextRank ? `${row.progressToNext}%` : "Fullført"}
           </p>
@@ -350,6 +351,11 @@ function PersonalPathCard({ row }: { row: OrderRow }) {
         <PathFact label="Livstidspoeng" value={formatNumber(row.lifetimePoints)} />
         <PathFact label="Fellesskapstillit" value="Vurderes i ordenen" />
       </div>
+      {row.promotionReady ? (
+        <p className="mt-4 rounded border border-[#c49a3c]/45 bg-[#fffaf0] px-3 py-2 text-sm font-semibold text-[#654517]">
+          Kriteriene er oppfylt. Protokollen føres videre før ny rang vises.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -477,7 +483,7 @@ function OrderPersonCard({ row, current }: { row: OrderRow; current: boolean }) 
             />
           </div>
           <p className="mt-2 text-xs leading-5 text-[#60553f]">
-            Status: {row.status.publicLabel}. Fellesskapstillit inngår i opprykk, men føres ikke som offentlig tall.
+            Status: {row.promotionReady ? "Kriterier oppfylt · protokollen føres" : row.status.publicLabel}. Fellesskapstillit inngår i opprykk, men føres ikke som offentlig tall.
           </p>
         </div>
       </div>

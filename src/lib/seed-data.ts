@@ -1084,4 +1084,5 @@ export const initialState: AppState = {
   geotingProposals: [],
   geoterIndexAdjustments: [],
   geoticOrderAssessments: [],
+  geoticOrderPromotionCases: [],
 };

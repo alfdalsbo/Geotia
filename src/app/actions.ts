@@ -6,7 +6,13 @@ import { createSession, destroySession, getSession, isCorrectPasscode, playerIdF
 import { GEO_OATH_TEXT } from "@/lib/geoting";
 import { haversineKm, parseGeoLocationJson } from "@/lib/geo";
 import { geoterIndexCategories } from "@/lib/geoterindeks";
-import { geoticOrderHiddenCategories, geoticOrderRanks, geoticOrderStatuses } from "@/lib/geotisk-orden";
+import {
+  geoticOrderHiddenCategories,
+  geoticOrderRanks,
+  geoticOrderStatuses,
+  getGeoticOrderRows,
+  getOrderCapabilities,
+} from "@/lib/geotisk-orden";
 import { isThirdCollegeMember } from "@/lib/kollegium";
 import {
   revalidateGameSessionPaths,
@@ -17,11 +23,13 @@ import {
   revalidateSlowGeoPaths,
   revalidateThirdCollegePaths,
 } from "@/lib/revalidation";
-import { competingPlayers, games, isVotingPlayerId, players } from "@/lib/seed";
+import { competingPlayers, games, players } from "@/lib/seed";
+import { computeStandings } from "@/lib/scoring";
 import {
   addGeoterIndexAdjustment,
   createSlowGeoRound,
   createGeotingProposal,
+  getOrderState,
   lockRound,
   saveGeotingVote,
   saveGeotingPartyPosition,
@@ -32,6 +40,7 @@ import {
   upsertGeoticOrderAssessment,
   upsertGameSession,
   upsertRound,
+  voteGeoticOrderPromotionCase,
   withdrawGeotingProposal,
 } from "@/lib/store";
 import type {
@@ -41,6 +50,7 @@ import type {
   GeoLocation,
   GeoterIndexCategory,
   GeoticOrderHiddenCategory,
+  GeoticOrderPromotionVoteValue,
   GeoticOrderRankId,
   GeoticOrderStatus,
   GeotingImplementationStatus,
@@ -331,6 +341,10 @@ function voteValue(value: string): VoteValue {
   return "blankt";
 }
 
+function promotionVoteValue(value: string): GeoticOrderPromotionVoteValue {
+  return value === "mot" ? "mot" : "for";
+}
+
 function geoterIndexCategory(value: string): GeoterIndexCategory {
   return geoterIndexCategories.some((category) => category.id === value)
     ? (value as GeoterIndexCategory)
@@ -351,6 +365,19 @@ function geoticOrderStatus(value: string): GeoticOrderStatus {
   return geoticOrderStatuses.some((status) => status.id === value) ? (value as GeoticOrderStatus) : "normal";
 }
 
+async function getCurrentOrderAccess(playerId: string) {
+  const state = await getOrderState();
+  const standings = computeStandings(state.players, state.rounds);
+  const rows = getGeoticOrderRows(
+    state.players,
+    standings,
+    state.geoterIndexAdjustments,
+    state.geoticOrderAssessments,
+  );
+  const row = rows.find((candidate) => candidate.player.id === playerId) ?? null;
+  return { row, capabilities: getOrderCapabilities(row) };
+}
+
 function geotingAdminRedirect(formData: FormData, status: string, fallback: string) {
   const returnTo = field(formData, "returnTo");
   const basePath = returnTo === "/geotinget/pergamenter" ? returnTo : fallback;
@@ -369,10 +396,17 @@ function geotingAdminErrorRedirect(formData: FormData, reason: string, fallback:
 
 export async function submitGeotingProposalAction(formData: FormData) {
   const session = await requireSession();
+  const ruleType = proposalRuleType(field(formData, "ruleType"));
+  const { capabilities } = await getCurrentOrderAccess(session.playerId);
+  const allowed = ruleType === "annet" ? capabilities.canSubmitBasicProposal : capabilities.canSubmitLawProposal;
+  if (!allowed) {
+    redirect("/geotinget?error=ordensport");
+  }
+
   const proposal = await createGeotingProposal({
     title: field(formData, "title") || "Navnløst forslag",
     body: field(formData, "body"),
-    ruleType: proposalRuleType(field(formData, "ruleType")),
+    ruleType,
     proposedBy: session.playerId,
   });
 
@@ -406,7 +440,8 @@ export async function updateGeotingProposalAction(formData: FormData) {
 export async function saveGeotingPartyPositionAction(formData: FormData) {
   const session = await requireSession();
   const player = players.find((candidate) => candidate.id === session.playerId);
-  if (!player?.partyId || player.canVote === false) {
+  const { capabilities } = await getCurrentOrderAccess(session.playerId);
+  if (!player?.partyId || !capabilities.canSetPartyPosition) {
     redirect("/geotinget/avstemninger?error=tingvitne");
   }
 
@@ -447,7 +482,8 @@ export async function withdrawGeotingProposalAction(formData: FormData) {
 
 export async function startGeotingVoteAction(formData: FormData) {
   const session = await requireSession();
-  if (!isVotingPlayerId(session.playerId)) {
+  const { capabilities } = await getCurrentOrderAccess(session.playerId);
+  if (!capabilities.canStartVote) {
     redirect("/geotinget/avstemninger?error=tingvitne");
   }
   if (field(formData, "geoOath") !== "on") {
@@ -471,7 +507,8 @@ export async function startGeotingVoteAction(formData: FormData) {
 
 export async function voteGeotingProposalAction(formData: FormData) {
   const session = await requireSession();
-  if (!isVotingPlayerId(session.playerId)) {
+  const { capabilities } = await getCurrentOrderAccess(session.playerId);
+  if (!capabilities.canVote) {
     redirect("/geotinget/avstemninger?error=tingvitne");
   }
 
@@ -533,7 +570,7 @@ export async function submitGeoticOrderAssessmentAction(formData: FormData) {
     redirect("/tredje-kollegium?error=orden");
   }
 
-  await upsertGeoticOrderAssessment({
+  const result = await upsertGeoticOrderAssessment({
     playerId,
     rankId: geoticOrderRank(field(formData, "rankId")),
     serviceWeeks: Math.max(0, Math.min(999, Math.round(numberField(formData, "serviceWeeks")))),
@@ -547,5 +584,29 @@ export async function submitGeoticOrderAssessmentAction(formData: FormData) {
   });
 
   revalidateGeoticOrderPaths();
+  if (!result.ok) {
+    redirect(`/tredje-kollegium?error=${encodeURIComponent(result.reason ?? "Ordensrang ble ikke ført.")}`);
+  }
   redirect("/tredje-kollegium?status=orden");
+}
+
+export async function voteGeoticOrderPromotionAction(formData: FormData) {
+  const session = await requireSession();
+  if (!isThirdCollegeMember(session.playerId)) {
+    redirect("/");
+  }
+
+  const result = await voteGeoticOrderPromotionCase({
+    caseId: field(formData, "caseId"),
+    voterId: session.playerId,
+    vote: promotionVoteValue(field(formData, "vote")),
+    comment: limitedField(formData, "comment", 240),
+  });
+
+  revalidateGeoticOrderPaths();
+
+  if (!result.ok) {
+    redirect(`/tredje-kollegium?error=${encodeURIComponent(result.reason ?? "Opprykksvotum ble ikke ført.")}`);
+  }
+  redirect("/tredje-kollegium?status=opprykk");
 }

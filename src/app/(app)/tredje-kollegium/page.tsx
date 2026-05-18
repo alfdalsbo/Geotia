@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
 import {
   ArrowRight,
   BarChart3,
@@ -26,6 +27,7 @@ import {
   submitGeoterIndexAdjustmentAction,
   submitGeoticOrderAssessmentAction,
   updateGeotingProposalAction,
+  voteGeoticOrderPromotionAction,
   withdrawGeotingProposalAction,
 } from "@/app/actions";
 import { ExpandableImage } from "@/components/expandable-image";
@@ -65,7 +67,7 @@ import {
 } from "@/lib/kollegium";
 import { computeRound, computeStandings } from "@/lib/scoring";
 import { getAppState } from "@/lib/store";
-import type { GeoterIndexAdjustment, GeotingProposal, Player } from "@/lib/types";
+import type { GeoterIndexAdjustment, GeoticOrderPromotionCase, GeotingProposal, Player } from "@/lib/types";
 import { dateLabel, dateTimeLabel, formatKm, formatNumber } from "@/lib/utils";
 
 export const metadata = {
@@ -214,7 +216,7 @@ export default async function ThirdCollegePage({
               src="/tredje-kollegium/segl"
               alt="Seglet til Tredje Kollegium"
               sizes="(min-width: 1024px) 42vw, 100vw"
-              className="relative aspect-square min-h-[420px] w-full"
+              className="relative aspect-square min-h-[280px] w-full sm:min-h-[420px]"
               imageClassName="object-cover"
               caption="Tredje Kollegium · de som aldri tar feil"
               priority
@@ -289,7 +291,12 @@ export default async function ThirdCollegePage({
         players={state.players}
       />
 
-      <GeoticOrderControlSection currentGeot={currentGeot} rows={geoticOrderRows} players={state.players} />
+      <GeoticOrderControlSection
+        currentGeot={currentGeot}
+        promotionCases={state.geoticOrderPromotionCases}
+        rows={geoticOrderRows}
+        players={state.players}
+      />
 
       <GeotingAdminSection proposals={state.geotingProposals} players={state.players} />
 
@@ -515,6 +522,14 @@ function ThirdCollegeStatus({ status, error }: { status?: string; error?: string
     return (
       <div className="rounded border border-[#194832]/30 bg-[#194832]/10 px-4 py-3 text-sm font-semibold text-[#194832]">
         Ordensrang er ført. Den offentlige veien ser høytidelig ut; årsaken forblir bak døren.
+      </div>
+    );
+  }
+
+  if (status === "opprykk") {
+    return (
+      <div className="rounded border border-[#194832]/30 bg-[#194832]/10 px-4 py-3 text-sm font-semibold text-[#194832]">
+        Opprykksvotum er ført. Enten nikket alle tre stoler, eller mørket gjorde det mørket gjør.
       </div>
     );
   }
@@ -1080,13 +1095,16 @@ function MobileIndexTrendCard({ row }: { row: GeoterIndexRow }) {
 function GeoticOrderControlSection({
   currentGeot,
   players,
+  promotionCases,
   rows,
 }: {
   currentGeot: Player;
   players: Player[];
+  promotionCases: GeoticOrderPromotionCase[];
   rows: GeoticOrderRow[];
 }) {
   const firstRow = rows[0];
+  const pendingPromotionCases = promotionCases.filter((promotionCase) => promotionCase.status === "pending");
 
   return (
     <section className="overflow-hidden rounded border border-[#c49a3c]/70 bg-[#061d2b] text-[#fff7e6] shadow-[0_22px_48px_rgba(0,0,0,0.24)]">
@@ -1127,9 +1145,9 @@ function GeoticOrderControlSection({
               </p>
             </div>
             <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">Turistfare</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">Opprykkssaker</p>
               <p className="font-display mt-2 text-2xl font-semibold">
-                {rows.filter((row) => row.hiddenCategory.id === "turist").length}
+                {pendingPromotionCases.length}
               </p>
             </div>
           </div>
@@ -1177,6 +1195,13 @@ function GeoticOrderControlSection({
             </table>
           </div>
 
+          <PromotionProtocol
+            currentGeot={currentGeot}
+            players={players}
+            promotionCases={promotionCases}
+            rows={rows}
+          />
+
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
             <div className="rounded border border-[#c49a3c]/45 bg-[#020b11]/45 p-4">
               <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
@@ -1216,7 +1241,7 @@ function GeoticOrderControlSection({
               Før ordensrang
             </p>
             <p className="mt-2 text-sm leading-6 text-[#eadcbd]">
-              Operatør: {currentGeot.shortName}. Dette endrer den synlige ordensveien uten å forklare hvem som vippet vekten.
+              Operatør: {currentGeot.shortName}. Denne formen kan fryse, senke og føre noter. Opprykk skjer bare gjennom opprykksprotokollen.
             </p>
             <label className="mt-4">
               Geot
@@ -1229,7 +1254,7 @@ function GeoticOrderControlSection({
               </select>
             </label>
             <label className="mt-3">
-              Synlig rang
+              Synlig rang (ikke opprykk)
               <select name="rankId" defaultValue={firstRow?.rank.id} className="mt-2">
                 {geoticOrderRanks.map((rank) => (
                   <option key={rank.id} value={rank.id}>
@@ -1310,6 +1335,180 @@ function GeoticOrderControlSection({
         </aside>
       </div>
     </section>
+  );
+}
+
+function PromotionProtocol({
+  currentGeot,
+  players,
+  promotionCases,
+  rows,
+}: {
+  currentGeot: Player;
+  players: Player[];
+  promotionCases: GeoticOrderPromotionCase[];
+  rows: GeoticOrderRow[];
+}) {
+  const playerById = new Map(players.map((player) => [player.id, player]));
+  const rowByPlayerId = new Map(rows.map((row) => [row.player.id, row]));
+  const pendingCases = promotionCases.filter((promotionCase) => promotionCase.status === "pending");
+  const recentCases = promotionCases
+    .filter((promotionCase) => promotionCase.status !== "pending")
+    .slice(0, 4);
+
+  return (
+    <div className="mt-6 rounded border border-[#c49a3c]/45 bg-[#020b11]/55 p-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
+            <Scale className="h-4 w-4" aria-hidden="true" />
+            Opprykksprotokollen
+          </p>
+          <h3 className="font-display mt-2 text-3xl font-semibold text-[#fff7e6]">
+            Tre stoler. Ingen automatikk.
+          </h3>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#eadcbd]">
+            Når en geot når synlige kriterier, tror riket at protokollen bare
+            beveger seg. Her inne må alle tre stoler nikke før rangen faktisk
+            åpner rettigheter.
+          </p>
+        </div>
+        <Stamp tone={pendingCases.length ? "alarm" : "brass"}>
+          {pendingCases.length ? `${pendingCases.length} VENTER` : "INGEN SAK"}
+        </Stamp>
+      </div>
+
+      <div className="mt-4 grid gap-4">
+        {pendingCases.length ? (
+          pendingCases.map((promotionCase) => {
+            const player = playerById.get(promotionCase.playerId);
+            const row = rowByPlayerId.get(promotionCase.playerId);
+            const fromRank = geoticOrderRanks.find((rank) => rank.id === promotionCase.fromRankId);
+            const targetRank = geoticOrderRanks.find((rank) => rank.id === promotionCase.targetRankId);
+            const ownVote = promotionCase.votes.find((vote) => vote.voterId === currentGeot.id);
+
+            return (
+              <article
+                key={promotionCase.id}
+                className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8 p-4"
+                data-testid="promotion-case"
+              >
+                <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
+                      Reist {dateTimeLabel(promotionCase.createdAt)}
+                    </p>
+                    <h4 className="font-display mt-1 text-3xl font-semibold text-[#fff7e6]">
+                      {player?.shortName ?? promotionCase.playerId}
+                    </h4>
+                    <p className="mt-2 text-sm leading-6 text-[#eadcbd]">
+                      {fromRank?.name ?? promotionCase.fromRankId} → {targetRank?.name ?? promotionCase.targetRankId}
+                    </p>
+                    <div className="mt-4 grid gap-2 sm:grid-cols-4">
+                      <DarkMetric label="Uker" value={promotionCase.snapshot.serviceWeeks} />
+                      <DarkMetric label="Runder" value={promotionCase.snapshot.roundsPlayed} />
+                      <DarkMetric label="Poeng" value={formatNumber(promotionCase.snapshot.lifetimePoints)} />
+                      <DarkMetric label="Indeks" value={promotionCase.snapshot.trustScore} />
+                    </div>
+                    <p className="mt-3 rounded border border-[#c49a3c]/30 bg-[#061d2b]/70 px-3 py-2 text-sm leading-6 text-[#eadcbd]">
+                      Offentlig forklaring: {promotionCase.publicNote}
+                    </p>
+                    {row?.promotionReady ? (
+                      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#e1c06c]">
+                        Rå terskel: {row.eligibleRank.name}. Neste synlige port: {targetRank?.name}.
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="grid gap-2">
+                      {thirdCollegeSeats.map((seat) => {
+                        const vote = promotionCase.votes.find((candidate) => candidate.voterId === seat.playerId);
+                        const voter = playerById.get(seat.playerId);
+                        return (
+                          <div
+                            key={seat.playerId}
+                            className="flex items-center justify-between gap-3 rounded border border-[#c49a3c]/35 bg-[#020b11]/60 px-3 py-2 text-sm"
+                          >
+                            <div className="min-w-0">
+                              <p className="font-semibold text-[#fff7e6]">{seat.seal}</p>
+                              <p className="text-xs text-[#cdbd97]">{voter?.shortName ?? seat.playerId}</p>
+                            </div>
+                            <Stamp tone={vote?.vote === "for" ? "brass" : vote?.vote === "mot" ? "alarm" : "navy"}>
+                              {vote?.vote === "for" ? "NIKK" : vote?.vote === "mot" ? "INNSIGELSE" : "TAUS"}
+                            </Stamp>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <form action={voteGeoticOrderPromotionAction} className="geo-form geo-form--dark rounded border border-[#c49a3c]/35 bg-[#fff7e6]/8 p-3">
+                      <input type="hidden" name="caseId" value={promotionCase.id} />
+                      <label>
+                        Protokollbemerkning
+                        <input
+                          name="comment"
+                          className="mt-2"
+                          defaultValue={ownVote?.comment ?? ""}
+                          placeholder="Kort, mistenksomt og høytidelig."
+                        />
+                      </label>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        <PendingSubmitButton name="vote" value="for" className="btn btn-wax justify-center">
+                          <BadgeCheck className="h-4 w-4" aria-hidden="true" />
+                          Nikk i mørket
+                        </PendingSubmitButton>
+                        <PendingSubmitButton name="vote" value="mot" className="btn btn-quiet justify-center">
+                          <LockKeyhole className="h-4 w-4" aria-hidden="true" />
+                          Mørk innsigelse
+                        </PendingSubmitButton>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </article>
+            );
+          })
+        ) : (
+          <div className="rounded border border-dashed border-[#c49a3c]/45 bg-[#fff7e6]/8 p-5 text-sm leading-6 text-[#eadcbd]">
+            Ingen geot står ved den skjulte porten akkurat nå. Det betyr ikke
+            at systemet sover, bare at det ikke lager lyd.
+          </div>
+        )}
+      </div>
+
+      {recentCases.length ? (
+        <div className="mt-4 grid gap-2 md:grid-cols-2">
+          {recentCases.map((promotionCase) => {
+            const player = playerById.get(promotionCase.playerId);
+            const targetRank = geoticOrderRanks.find((rank) => rank.id === promotionCase.targetRankId);
+            return (
+              <div key={promotionCase.id} className="rounded border border-[#c49a3c]/30 bg-[#fff7e6]/8 px-3 py-2 text-sm">
+                <p className="font-semibold text-[#fff7e6]">
+                  {player?.shortName ?? promotionCase.playerId} · {targetRank?.name ?? promotionCase.targetRankId}
+                </p>
+                <p className="mt-1 text-[#cdbd97]">
+                  {promotionCase.status === "approved"
+                    ? "Ført med 3/3 bifall"
+                    : promotionCase.status === "rejected"
+                      ? "Stanset av mørk innsigelse"
+                      : "Innhentet av nyere protokoll"}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function DarkMetric({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="rounded border border-[#c49a3c]/30 bg-[#fff7e6]/8 px-3 py-2">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#e1c06c]">{label}</p>
+      <p className="font-display mt-1 text-2xl font-semibold text-[#fff7e6]">{value}</p>
+    </div>
   );
 }
 

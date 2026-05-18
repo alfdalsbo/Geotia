@@ -1,6 +1,8 @@
-import { BellRing, CheckCircle2, ChevronDown, Clock, Gavel, Landmark, ScrollText, Vote, XCircle } from "lucide-react";
+import { BellRing, CheckCircle2, Clock, Gavel, Landmark, ScrollText, Vote, XCircle } from "lucide-react";
 
 import { saveGeotingPartyPositionAction, startGeotingVoteAction, voteGeotingProposalAction } from "@/app/actions";
+import { GeotingAccordion } from "@/components/geoting-accordion";
+import { GeotingCloseStrip, GeotingSummaryActionStrip } from "@/components/geoting-action-strip";
 import { GeotingCountdown } from "@/components/geoting-countdown";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import {
@@ -36,16 +38,22 @@ const proposalStatusLabels = {
 };
 
 export function GeotingProposalList({
+  currentCanSetPartyPosition,
+  currentCanStartVote,
   currentCanVote,
   currentGeot,
+  currentOrderSummary,
   openProposalId,
   players,
   proposals,
   tingvitner,
   votingPlayers,
 }: {
+  currentCanSetPartyPosition: boolean;
+  currentCanStartVote: boolean;
   currentCanVote: boolean;
   currentGeot: Player | null;
+  currentOrderSummary: string;
   openProposalId?: string;
   players: Player[];
   proposals: GeotingProposal[];
@@ -66,12 +74,15 @@ export function GeotingProposalList({
   }
 
   return (
-    <div className="grid gap-3" data-testid="geoting-case-list">
+    <GeotingAccordion className="grid gap-3" data-testid="geoting-case-list">
       {proposals.map((proposal) => (
         <ProposalCard
           key={proposal.id}
+          currentCanSetPartyPosition={currentCanSetPartyPosition}
+          currentCanStartVote={currentCanStartVote}
           currentCanVote={currentCanVote}
           currentGeot={currentGeot}
+          currentOrderSummary={currentOrderSummary}
           defaultOpen={proposal.id === openProposalId}
           proposal={proposal}
           tingvitner={tingvitner}
@@ -79,33 +90,39 @@ export function GeotingProposalList({
           players={players}
         />
       ))}
-    </div>
+    </GeotingAccordion>
   );
 }
 
 function ProposalCard({
+  currentCanSetPartyPosition,
+  currentCanStartVote,
   currentCanVote,
   currentGeot,
+  currentOrderSummary,
   defaultOpen,
   players,
   proposal,
   tingvitner,
   votingPlayers,
 }: {
+  currentCanSetPartyPosition: boolean;
+  currentCanStartVote: boolean;
   currentCanVote: boolean;
   currentGeot: Player | null;
+  currentOrderSummary: string;
   defaultOpen?: boolean;
   players: Player[];
   proposal: GeotingProposal;
   tingvitner: Player[];
   votingPlayers: Player[];
 }) {
-  const summary = summarizeProposal(proposal, players);
+  const summary = summarizeProposal(proposal, votingPlayers);
   const proposer = players.find((player) => player.id === proposal.proposedBy);
   const voteStarter = players.find((player) => player.id === proposal.voteStartedBy);
   const ownVote = proposal.votes.find((vote) => vote.playerId === currentGeot?.id);
   const resultTone = summary.finished ? (summary.passed ? "green" : "red") : summary.started ? "gold" : "blue";
-  const lifecycle = getGeotingLifecycle(proposal, players);
+  const lifecycle = getGeotingLifecycle(proposal, votingPlayers);
   const constitutionChange = getConstitutionChangeParts(proposal.body);
   const partyMechanics = getProposalPartyMechanics(proposal, players);
   const actionLabel = summary.finished ? "Les protokoll" : summary.started ? "Åpne og stem" : "Åpne geo-ed";
@@ -113,12 +130,13 @@ function ProposalCard({
   return (
     <details
       id={`sak-${proposal.id}`}
-      className="geotia-frame group rounded"
+      className="geotia-frame group rounded transition-shadow hover:shadow-[0_0_0_2px_rgba(196,154,60,0.22)] focus-within:ring-2 focus-within:ring-[#c49a3c]"
+      data-geoting-accordion-item
       data-testid="geoting-case"
       open={defaultOpen}
     >
-      <summary className="cursor-pointer list-none p-4 outline-none transition hover:bg-[#fff7e6]/55 focus-visible:ring-2 focus-visible:ring-[#c49a3c] sm:p-5 [&::-webkit-details-marker]:hidden">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(240px,380px)_auto] lg:items-center">
+      <summary className="cursor-pointer list-none p-4 outline-none transition hover:bg-[#fff7e6]/55 active:bg-[#c49a3c]/10 sm:p-5 [&::-webkit-details-marker]:hidden">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(240px,380px)] lg:items-center">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
               {proposalStatusLabels[proposal.status]} · {ruleTypeLabels[proposal.ruleType]} · {dateLabel(proposal.createdAt.slice(0, 10))}
@@ -135,11 +153,7 @@ function ProposalCard({
             <CompactCaseMetric label="Blankt" value={summary.blankVotes} tone="gold" />
           </div>
 
-          <div className="flex items-center justify-between gap-3 rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm font-semibold text-[#062b40] lg:min-w-[138px]">
-            <span className="group-open:hidden">{actionLabel}</span>
-            <span className="hidden group-open:inline">Lukk sak</span>
-            <ChevronDown className="h-4 w-4 transition group-open:rotate-180" aria-hidden="true" />
-          </div>
+          <GeotingSummaryActionStrip actionLabel={actionLabel} />
         </div>
       </summary>
 
@@ -185,17 +199,28 @@ function ProposalCard({
               Tingvitne: {tingvitner.map((player) => player.shortName).join(", ")} følger saken fra benken.
             </p>
           ) : null}
+
         </div>
 
         <div className="border-t border-[#c49a3c]/35 bg-[#061d2b] p-4 text-[#fff7e6] xl:border-l xl:border-t-0">
-          <PartyPositionPanel currentCanVote={currentCanVote} currentGeot={currentGeot} proposal={proposal} summary={summary} />
+          <PartyPositionPanel
+            currentCanSetPartyPosition={currentCanSetPartyPosition}
+            currentGeot={currentGeot}
+            proposal={proposal}
+            summary={summary}
+          />
           <ActionPanel
+            currentCanStartVote={currentCanStartVote}
             currentCanVote={currentCanVote}
+            currentOrderSummary={currentOrderSummary}
             ownVote={ownVote?.vote}
             proposal={proposal}
             summary={summary}
           />
         </div>
+      </div>
+      <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+        <GeotingCloseStrip />
       </div>
       </article>
     </details>
@@ -297,7 +322,7 @@ function StatusPanel({
           {summary.finished ? (
             <p>Resultatet er synlig og protokollført i riksarkivet.</p>
           ) : (
-            <p>Resultatet vises etter 24 timer, eller straks alle syv har stemt.</p>
+            <p>Resultatet vises etter 24 timer, eller straks alle stemmeberettigede har stemt.</p>
           )}
         </div>
       ) : (
@@ -424,17 +449,17 @@ function VoteMap({
 }
 
 function PartyPositionPanel({
-  currentCanVote,
+  currentCanSetPartyPosition,
   currentGeot,
   proposal,
   summary,
 }: {
-  currentCanVote: boolean;
+  currentCanSetPartyPosition: boolean;
   currentGeot: Player | null;
   proposal: GeotingProposal;
   summary: ReturnType<typeof summarizeProposal>;
 }) {
-  if (!currentCanVote || !currentGeot?.partyId || summary.finished || proposal.status === "archived") return null;
+  if (!currentCanSetPartyPosition || !currentGeot?.partyId || summary.finished || proposal.status === "archived") return null;
 
   const ownPosition = proposal.partyPositions?.find((position) => position.partyId === currentGeot.partyId);
 
@@ -470,12 +495,16 @@ function PartyPositionPanel({
 }
 
 function ActionPanel({
+  currentCanStartVote,
   currentCanVote,
+  currentOrderSummary,
   ownVote,
   proposal,
   summary,
 }: {
+  currentCanStartVote: boolean;
   currentCanVote: boolean;
+  currentOrderSummary: string;
   ownVote?: VoteValue;
   proposal: GeotingProposal;
   summary: ReturnType<typeof summarizeProposal>;
@@ -487,13 +516,27 @@ function ActionPanel({
           Tingvitnebenken
         </p>
         <p className="mt-2">
-          Du kan lese, mumle og sende inn forslag. Geo-ed, stemmeurne og partistiftelse venter til ordensveien har gjort deg farlig nok.
+          Du kan lese, mumle og eventuelt sende forslag etter rang. {currentOrderSummary}
         </p>
       </div>
     );
   }
 
   if (!summary.started) {
+    if (!currentCanStartVote) {
+      return (
+        <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/10 p-4 text-sm leading-6 text-[#eadcbd]">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#e1c06c]">
+            Geo-eden står over deg
+          </p>
+          <p className="mt-2">
+            Du kan stemme når urnen er åpnet, men bare nivå 5 og oppover kan
+            løfte lokket og late som det er rutine.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <form action={startGeotingVoteAction} className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/10 p-4">
         <input type="hidden" name="proposalId" value={proposal.id} />

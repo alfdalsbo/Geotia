@@ -1,6 +1,8 @@
-import { ChevronDown, FileText, Gavel, ScrollText, ShieldCheck } from "lucide-react";
+import { FileText, Gavel, ScrollText, ShieldCheck } from "lucide-react";
 
 import { updateGeotingProposalAction, withdrawGeotingProposalAction } from "@/app/actions";
+import { GeotingAccordion } from "@/components/geoting-accordion";
+import { GeotingCloseStrip, GeotingSummaryActionStrip } from "@/components/geoting-action-strip";
 import { GeotingSubnav } from "@/components/geoting-subnav";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Section } from "@/components/section";
@@ -71,43 +73,48 @@ export default async function GeotingPergamentsPage({
 
       <PergamentStatus status={params.status} error={params.error} />
 
-      <Section
-        title="Levende tingpergamenter"
-        eyebrow={canEdit ? "Kollegiet kan rette blekket" : "Offentlig lesesal"}
-        action={
-          canEdit ? (
-            <span className="inline-flex h-10 items-center gap-2 rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
-              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-              Tredje Kollegium
-            </span>
-          ) : null
-        }
-      >
-        {proposals.length ? (
-          <div className="grid gap-4">
-            {proposals.map((proposal) => (
-              <PergamentCard
-                key={proposal.id}
-                canEdit={canEdit}
-                defaultOpen={proposal.id === params.sak}
-                players={state.players}
-                proposal={proposal}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded border border-dashed border-[#c49a3c] bg-[#c49a3c]/10 p-5 text-sm leading-6 text-[#60553f]">
-            Ingen nye tingpergamenter er ført ennå.
-          </div>
-        )}
-      </Section>
+      <GeotingAccordion className="space-y-6">
+        <Section
+          title="Levende tingpergamenter"
+          eyebrow={canEdit ? "Kollegiet kan rette blekket" : "Offentlig lesesal"}
+          action={
+            canEdit ? (
+              <span className="inline-flex h-10 items-center gap-2 rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
+                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                Tredje Kollegium
+              </span>
+            ) : null
+          }
+        >
+          {proposals.length ? (
+            <div className="grid gap-4">
+              {proposals.map((proposal) => (
+                <PergamentCard
+                  key={proposal.id}
+                  canEdit={canEdit}
+                  defaultOpen={proposal.id === params.sak}
+                  players={state.players}
+                  proposal={proposal}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded border border-dashed border-[#c49a3c] bg-[#c49a3c]/10 p-5 text-sm leading-6 text-[#60553f]">
+              Ingen nye tingpergamenter er ført ennå.
+            </div>
+          )}
+        </Section>
 
       <Section title="Grunnpergamentene" eyebrow="Historisk GeoTing-protokoll">
         <div className="grid gap-3 lg:grid-cols-2">
           {archive.geotingCases.map((item) => (
-            <details key={`${item.date}-${item.caseName}`} className="group rounded border border-[#d8ded0] bg-[#f7f8f5]">
-              <summary className="cursor-pointer list-none p-4 outline-none transition hover:bg-[#fff7e6]/70 focus-visible:ring-2 focus-visible:ring-[#c49a3c] [&::-webkit-details-marker]:hidden">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <details
+              key={`${item.date}-${item.caseName}`}
+              className="group rounded border border-[#d8ded0] bg-[#f7f8f5] transition-shadow hover:shadow-[0_0_0_2px_rgba(196,154,60,0.2)] focus-within:ring-2 focus-within:ring-[#c49a3c]"
+              data-geoting-accordion-item
+            >
+              <summary className="cursor-pointer list-none p-4 outline-none transition hover:bg-[#fff7e6]/70 active:bg-[#c49a3c]/10 [&::-webkit-details-marker]:hidden">
+                <div className="grid gap-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
                       {item.date} · {item.caseNumber ?? "Sak uten nummer"} · {item.status}
@@ -117,11 +124,7 @@ export default async function GeotingPergamentsPage({
                     </h2>
                     <p className="mt-1 text-sm font-semibold text-[#4f412b]">{item.decision}</p>
                   </div>
-                  <div className="inline-flex items-center justify-between gap-3 rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm font-semibold text-[#062b40] sm:min-w-[118px]">
-                    <span className="group-open:hidden">Åpne</span>
-                    <span className="hidden group-open:inline">Lukk</span>
-                    <ChevronDown className="h-4 w-4 transition group-open:rotate-180" aria-hidden="true" />
-                  </div>
+                  <GeotingSummaryActionStrip actionLabel="Les grunnpergament" openLabel="Lukk grunnpergament" />
                 </div>
               </summary>
               <div className="border-t border-[#d8ded0] p-4">
@@ -137,11 +140,13 @@ export default async function GeotingPergamentsPage({
                     {item.comment}
                   </p>
                 ) : null}
+                <GeotingCloseStrip label="Lukk grunnpergament" />
               </div>
             </details>
           ))}
         </div>
       </Section>
+      </GeotingAccordion>
     </div>
   );
 }
@@ -192,12 +197,13 @@ function PergamentCard({
   return (
     <details
       id={`sak-${proposal.id}`}
-      className="group rounded border border-[#d8c48c] bg-[#fff7e6] shadow-sm"
+      className="group rounded border border-[#d8c48c] bg-[#fff7e6] shadow-sm transition-shadow hover:shadow-[0_0_0_2px_rgba(196,154,60,0.22)] focus-within:ring-2 focus-within:ring-[#c49a3c]"
+      data-geoting-accordion-item
       data-testid="geoting-pergament"
       open={defaultOpen}
     >
-      <summary className="cursor-pointer list-none p-4 outline-none transition hover:bg-white/50 focus-visible:ring-2 focus-visible:ring-[#c49a3c] [&::-webkit-details-marker]:hidden">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(220px,420px)_auto] lg:items-center">
+      <summary className="cursor-pointer list-none p-4 outline-none transition hover:bg-white/50 active:bg-[#c49a3c]/10 [&::-webkit-details-marker]:hidden">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(220px,420px)] lg:items-center">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
               {proposalStatusLabels[proposal.status]} · {dateTimeLabel(proposal.createdAt)}
@@ -213,11 +219,7 @@ function PergamentCard({
             <PergamentFact label="Vedtak" value={summary.label} />
           </dl>
 
-          <div className="flex items-center justify-between gap-3 rounded border border-[#c49a3c]/35 bg-white px-3 py-2 text-sm font-semibold text-[#062b40] lg:min-w-[118px]">
-            <span className="group-open:hidden">Åpne</span>
-            <span className="hidden group-open:inline">Lukk</span>
-            <ChevronDown className="h-4 w-4 transition group-open:rotate-180" aria-hidden="true" />
-          </div>
+          <GeotingSummaryActionStrip actionLabel="Åpne pergament" openLabel="Lukk pergament" />
         </div>
       </summary>
 
@@ -375,6 +377,7 @@ function PergamentCard({
           ) : null}
         </div>
       ) : null}
+      <GeotingCloseStrip label="Lukk pergament" />
       </article>
     </details>
   );

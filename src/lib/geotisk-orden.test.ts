@@ -10,7 +10,7 @@ import {
   geoticOrderRanks,
 } from "@/lib/geotisk-orden";
 import { players } from "@/lib/seed";
-import type { Standing } from "@/lib/types";
+import type { Player, Standing } from "@/lib/types";
 
 describe("Den Geotiske Orden", () => {
   it("uses time, rounds, points and hidden trust to find eligible rank", () => {
@@ -88,6 +88,63 @@ describe("Den Geotiske Orden", () => {
     expect(rows[0].rank.id).toBe("anerkjent_borger");
     expect(rows[0].trustScore).toBe(700);
     expect(rows[0].status.publicLabel).toBe("På prøve");
+  });
+
+  it("does not promote visible rank automatically when raw thresholds are met", () => {
+    const candidate: Player = {
+      id: "testgeot",
+      name: "Test Geot",
+      shortName: "Test",
+      partyId: "",
+      role: "geot",
+      color: "#123456",
+      title: "Prøvegeot",
+      specialty: "Test",
+      strengths: "Møter opp",
+      weaknesses: "Forstår for mye",
+      moment: "Ble nesten rangert",
+      mark: "T",
+    };
+    const standing: Standing = {
+      rank: 1,
+      player: candidate,
+      totalPoints: 140,
+      totalKattometer: 0,
+      lockedRounds: 45,
+      roundsPlayed: 45,
+      wins: 0,
+      top3: 0,
+      lastPlaces: 0,
+      absences: 0,
+      invalids: 0,
+      averagePoints: 3,
+      averageKattometer: 0,
+      bestKm: null,
+      worstKm: null,
+      bestSinglePoints: 7,
+    };
+
+    const rows = getGeoticOrderRows(
+      [candidate],
+      [standing],
+      [
+        {
+          id: "trust-test",
+          playerId: "testgeot",
+          delta: 65,
+          category: "fellesskap",
+          title: "Testtillit",
+          reason: "Nok til rå terskel.",
+          createdAt: "2026-05-16T20:00:00.000Z",
+          createdBy: "alf",
+        },
+      ],
+      [],
+    );
+
+    expect(rows[0].rank.id).toBe("borger");
+    expect(rows[0].eligibleRank.id).toBe("geomentariker");
+    expect(rows[0].promotionReady).toBe(true);
   });
 
   it("keeps Danny on the order path before any party founding rights", () => {

@@ -16,7 +16,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { getCurrentGeot } from "@/lib/auth";
 import { geotiaMyGeotLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { getEarnedPlayerBadges, type GeotiaBadgeTone } from "@/lib/geotia-badges";
-import { getGeoticOrderRows } from "@/lib/geotisk-orden";
+import { getGeoticOrderRows, getOrderCapabilities } from "@/lib/geotisk-orden";
 import { getThirdCollegeSeat, isThirdCollegeMember } from "@/lib/kollegium";
 import { getPartyMechanic } from "@/lib/party-mechanics";
 import { getPlayerDossier } from "@/lib/player-dossier";
@@ -41,6 +41,7 @@ export default async function MyGeotPage() {
     state.geoticOrderAssessments,
   );
   const orderRow = orderRows.find((row) => row.player.id === player.id);
+  const orderCapabilities = getOrderCapabilities(orderRow ?? null);
   const lockedRounds = state.rounds
     .filter((round) => round.status === "locked")
     .map((round) => computeRound(round, state.players))
@@ -62,7 +63,9 @@ export default async function MyGeotPage() {
   const dossier = getPlayerDossier(player, state.players, state.rounds, standing);
   const orderProgressLabel = orderRow
     ? orderRow.nextRank
-      ? `${orderRow.progressToNext}% mot ${orderRow.nextRank.name}`
+      ? orderRow.promotionReady
+        ? "Kriterier oppfylt · protokollen føres"
+        : `${orderRow.progressToNext}% mot ${orderRow.nextRank.name}`
       : "Øverste rang fullført"
     : "Ikke ført";
 
@@ -182,6 +185,14 @@ export default async function MyGeotPage() {
               <div>
                 <p className="font-display text-3xl font-semibold text-[#062b40]">{orderRow.rank.name}</p>
                 <p className="mt-2 text-sm leading-6 text-[#60553f]">{orderRow.publicNote || orderRow.rank.description}</p>
+              </div>
+              <div className="rounded border border-[#c49a3c]/45 bg-[#fffaf0] p-3 text-sm leading-6 text-[#654517]">
+                <p className="font-semibold text-[#062b40]">{orderCapabilities.publicSummary}</p>
+                <p className="mt-1">
+                  {orderRow.promotionReady
+                    ? "Kriteriene er oppfylt. Protokollen føres videre før nye rettigheter åpnes."
+                    : orderCapabilities.lockedSummary}
+                </p>
               </div>
               <div>
                 <div className="flex items-center justify-between gap-3 text-sm font-semibold text-[#062b40]">

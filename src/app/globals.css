@@ -1920,6 +1920,10 @@ table.protocol td.right {
     max-height: 220px !important;
   }
 
+  .geo-hero-poster button[aria-label^="Vis større bilde"] img {
+    max-height: none !important;
+  }
+
   .geo-hero-actions {
     gap: 10px;
   }

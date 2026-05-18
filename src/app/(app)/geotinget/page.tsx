@@ -8,7 +8,9 @@ import { Section, StatTile } from "@/components/section";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { getCurrentGeot } from "@/lib/auth";
 import { geotiaGeotingLines, pickGeoticLine } from "@/lib/geotia-jargon";
-import { getGeotingState, resolveDueGeotingProposals } from "@/lib/store";
+import { getGeoticOrderRows, getOrderCapabilities } from "@/lib/geotisk-orden";
+import { computeStandings } from "@/lib/scoring";
+import { getAppState, resolveDueGeotingProposals } from "@/lib/store";
 
 export const metadata = {
   title: "GeoTinget",
@@ -21,8 +23,17 @@ export default async function GeotingPage({
 }) {
   const params = (await searchParams) ?? {};
   await resolveDueGeotingProposals();
-  const [state, currentGeot] = await Promise.all([getGeotingState(), getCurrentGeot()]);
+  const [state, currentGeot] = await Promise.all([getAppState(), getCurrentGeot()]);
   const proposals = state.geotingProposals;
+  const standings = computeStandings(state.players, state.rounds);
+  const orderRows = getGeoticOrderRows(
+    state.players,
+    standings,
+    state.geoterIndexAdjustments,
+    state.geoticOrderAssessments,
+  );
+  const currentOrderRow = orderRows.find((row) => row.player.id === currentGeot?.id) ?? null;
+  const currentCapabilities = getOrderCapabilities(currentOrderRow);
   const activeVotingProposals = proposals.filter((proposal) => proposal.status === "voting");
   const activeVotes = activeVotingProposals.length;
   const awaitingOath = proposals.filter((proposal) => proposal.status === "open").length;
@@ -67,12 +78,11 @@ export default async function GeotingPage({
         <StatTile label="Protokollført" value={resolvedVotes} detail={`${votesCast} stemmer ført`} tone="green" index={3} />
       </div>
 
-      {currentGeot?.role === "tingvitne" ? (
+      {!currentCapabilities.canSubmitBasicProposal ? (
         <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 text-sm leading-6 text-[#4f412b]">
-          <strong className="text-[#062b40]">Tingvitneprotokoll:</strong> Danny har
-          forslagsrett og kan sende saker til tingvollen, men har ikke stemmerett
-          og kan ikke åpne avstemning eller søke partistiftelse før ordensveien
-          har ført ham til nivå 7: Partigründer.
+          <strong className="text-[#062b40]">Ordensport:</strong>{" "}
+          {currentOrderRow?.rank.name ?? "Uført geot"} kan lese og mumle fra benken.{" "}
+          {currentCapabilities.lockedSummary}
         </div>
       ) : null}
 
@@ -81,37 +91,49 @@ export default async function GeotingPage({
       </div>
 
       <Section title="Send inn forslag" eyebrow="Innkomne saker">
-        <form action={submitGeotingProposalAction} className="geo-form grid gap-4 lg:grid-cols-[1fr_240px]">
-          <label>
-            <span>Tittel</span>
-            <input
-              name="title"
-              placeholder="F.eks. Lov om obligatorisk India-varsling"
-              required
-            />
-          </label>
-          <label>
-            <span>Sakstype</span>
-            <select name="ruleType" defaultValue="annet">
-              <option value="grunnlov">GeoGrunnlovsendring</option>
-              <option value="mindre">Mindre lovendring</option>
-              <option value="annet">Annet tingvedtak</option>
-            </select>
-          </label>
-          <label className="lg:col-span-2">
-            <span>Forslag / innhold</span>
-            <textarea
-              name="body"
-              className="min-h-32"
-              placeholder="Skriv forslaget slik at også motstanderne forstår hva de skal krangle med. For grunnlov: bruk gjerne Før: og Etter:."
-              required
-            />
-          </label>
-          <PendingSubmitButton className="btn btn-wax lg:col-span-2 lg:w-fit">
-            <Gavel className="h-4 w-4" aria-hidden="true" />
-            Send til GeoTinget
-          </PendingSubmitButton>
-        </form>
+        {currentCapabilities.canSubmitBasicProposal ? (
+          <form action={submitGeotingProposalAction} className="geo-form grid gap-4 lg:grid-cols-[1fr_240px]">
+            <label>
+              <span>Tittel</span>
+              <input
+                name="title"
+                placeholder="F.eks. Lov om obligatorisk India-varsling"
+                required
+              />
+            </label>
+            <label>
+              <span>Sakstype</span>
+              <select name="ruleType" defaultValue="annet">
+                <option value="grunnlov" disabled={!currentCapabilities.canSubmitLawProposal}>GeoGrunnlovsendring</option>
+                <option value="mindre" disabled={!currentCapabilities.canSubmitLawProposal}>Mindre lovendring</option>
+                <option value="annet">Annet tingvedtak</option>
+              </select>
+            </label>
+            <label className="lg:col-span-2">
+              <span>Forslag / innhold</span>
+              <textarea
+                name="body"
+                className="min-h-32"
+                placeholder="Skriv forslaget slik at også motstanderne forstår hva de skal krangle med. For grunnlov: bruk gjerne Før: og Etter:."
+                required
+              />
+            </label>
+            {!currentCapabilities.canSubmitLawProposal ? (
+              <p className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm text-[#654517] lg:col-span-2">
+                Din rang kan sende vanlige tingforslag. Lov- og grunnlovssaker åpner på nivå 5.
+              </p>
+            ) : null}
+            <PendingSubmitButton className="btn btn-wax lg:col-span-2 lg:w-fit">
+              <Gavel className="h-4 w-4" aria-hidden="true" />
+              Send til GeoTinget
+            </PendingSubmitButton>
+          </form>
+        ) : (
+          <div className="rounded border border-dashed border-[#c49a3c] bg-[#c49a3c]/10 p-5 text-sm leading-6 text-[#60553f]">
+            Forslagsluken er lukket for denne rangen. Det er lov å ha meninger,
+            men staten har ennå ikke gitt dem skjema.
+          </div>
+        )}
       </Section>
     </div>
   );
@@ -121,7 +143,7 @@ function GeotingStatus({ status, error }: { status?: string; error?: string }) {
   if (error === "tingvitne") {
     return (
       <div className="rounded border border-[#7c2430]/25 bg-[#7c2430]/10 px-4 py-3 text-sm font-medium text-[#7c2430]">
-        Tingvitnet er notert, men stemmeurnen åpnes først etter ordensvei til nivå 7 og godkjent partistiftelse.
+        Ordensporten stanset handlingen. Rangen må bære rettigheten før skjemaet bærer saken.
       </div>
     );
   }
@@ -129,6 +151,13 @@ function GeotingStatus({ status, error }: { status?: string; error?: string }) {
     return (
       <div className="rounded border border-[#7c2430]/25 bg-[#7c2430]/10 px-4 py-3 text-sm font-medium text-[#7c2430]">
         Geo-eden mangler. Ingen får åpne stemmeurnen med tørre lepper.
+      </div>
+    );
+  }
+  if (error === "ordensport") {
+    return (
+      <div className="rounded border border-[#7c2430]/25 bg-[#7c2430]/10 px-4 py-3 text-sm font-medium text-[#7c2430]">
+        Ordensporten stanset handlingen. Rangen din gir ikke den formen for tingmakt ennå.
       </div>
     );
   }

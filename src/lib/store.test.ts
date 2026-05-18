@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -123,7 +123,7 @@ describe("Geotia file store", () => {
 
     await upsertGeoticOrderAssessment({
       playerId: "danny",
-      rankId: "anerkjent_borger",
+      rankId: "borger",
       serviceWeeks: 4,
       hiddenCategory: "turist",
       status: "provetid",
@@ -136,8 +136,88 @@ describe("Geotia file store", () => {
 
     const state = await getAppState();
     expect(state.geoticOrderAssessments).toHaveLength(1);
-    expect(state.geoticOrderAssessments[0].rankId).toBe("anerkjent_borger");
+    expect(state.geoticOrderAssessments[0].rankId).toBe("borger");
     expect(state.geoticOrderAssessments[0].hiddenCategory).toBe("turist");
+  });
+
+  it("blocks direct order promotion and requires unanimous Third College approval", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    await writeFile(
+      process.env.GEOTIA_DATA_FILE,
+      JSON.stringify(
+        {
+          meta: {},
+          rounds: [],
+          gameSessions: [],
+          geotingProposals: [],
+          geoterIndexAdjustments: [],
+          geoticOrderAssessments: [],
+          geoticOrderPromotionCases: [
+            {
+              id: "promotion-danny-2",
+              playerId: "danny",
+              fromRankId: "borger",
+              targetRankId: "anerkjent_borger",
+              status: "pending",
+              snapshot: {
+                serviceWeeks: 4,
+                roundsPlayed: 10,
+                lifetimePoints: 25,
+                trustScore: 700,
+                eligibleRankId: "anerkjent_borger",
+              },
+              votes: [],
+              publicNote: "Kriteriene er oppfylt. Protokollen føres videre.",
+              internalNote: "Testsak.",
+              createdAt: "2026-05-16T20:00:00.000Z",
+              updatedAt: "2026-05-16T20:00:00.000Z",
+              resolvedAt: null,
+              openedBy: "system",
+            },
+          ],
+          geocodeCache: [],
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+    vi.resetModules();
+
+    const { getAppState, upsertGeoticOrderAssessment, voteGeoticOrderPromotionCase } = await import("@/lib/store");
+
+    const direct = await upsertGeoticOrderAssessment({
+      playerId: "danny",
+      rankId: "anerkjent_borger",
+      serviceWeeks: 4,
+      hiddenCategory: "turist",
+      status: "normal",
+      sponsor: "SS",
+      trial: "Direkte trapp",
+      publicNote: "",
+      internalNote: "",
+      updatedBy: "alf",
+    });
+    expect(direct.ok).toBe(false);
+
+    await voteGeoticOrderPromotionCase({ caseId: "promotion-danny-2", voterId: "alf", vote: "for", comment: "Arkivnikker." });
+    await voteGeoticOrderPromotionCase({ caseId: "promotion-danny-2", voterId: "steinar", vote: "for", comment: "Uro nikker." });
+    let state = await getAppState();
+    expect(state.geoticOrderAssessments).toHaveLength(0);
+    expect(state.geoticOrderPromotionCases[0].status).toBe("pending");
+
+    const approved = await voteGeoticOrderPromotionCase({
+      caseId: "promotion-danny-2",
+      voterId: "vegard",
+      vote: "for",
+      comment: "Paragrafen nikker.",
+    });
+    state = await getAppState();
+
+    expect(approved.ok).toBe(true);
+    expect(state.geoticOrderPromotionCases[0].status).toBe("approved");
+    expect(state.geoticOrderAssessments[0].rankId).toBe("anerkjent_borger");
   });
 
   it("creates a SlowGeo round, accepts a pin, and reveals due rounds", async () => {

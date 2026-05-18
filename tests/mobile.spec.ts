@@ -252,6 +252,7 @@ async function writeOpenSlowGeoFixture() {
         geotingProposals: [],
         geoterIndexAdjustments: [],
         geoticOrderAssessments: [],
+        geoticOrderPromotionCases: [],
         geocodeCache: [],
       },
       null,

@@ -4,7 +4,9 @@ import { GeotingVoteAlarm } from "@/components/geoting-vote-alarm";
 import { Section } from "@/components/section";
 import { getCurrentGeot } from "@/lib/auth";
 import { geotiaGeotingLines, pickGeoticLine } from "@/lib/geotia-jargon";
-import { getGeotingState, resolveDueGeotingProposals } from "@/lib/store";
+import { getGeoticOrderRows, getOrderCapabilities } from "@/lib/geotisk-orden";
+import { computeStandings } from "@/lib/scoring";
+import { getAppState, resolveDueGeotingProposals } from "@/lib/store";
 
 export const metadata = {
   title: "Stemmeurnen",
@@ -17,10 +19,18 @@ export default async function GeotingVotesPage({
 }) {
   const params = (await searchParams) ?? {};
   await resolveDueGeotingProposals();
-  const [state, currentGeot] = await Promise.all([getGeotingState(), getCurrentGeot()]);
-  const votingPlayers = state.players.filter((player) => player.canVote !== false);
-  const tingvitner = state.players.filter((player) => player.canVote === false);
-  const currentCanVote = Boolean(currentGeot && currentGeot.canVote !== false);
+  const [state, currentGeot] = await Promise.all([getAppState(), getCurrentGeot()]);
+  const standings = computeStandings(state.players, state.rounds);
+  const orderRows = getGeoticOrderRows(
+    state.players,
+    standings,
+    state.geoterIndexAdjustments,
+    state.geoticOrderAssessments,
+  );
+  const rowByPlayerId = new Map(orderRows.map((row) => [row.player.id, row]));
+  const votingPlayers = state.players.filter((player) => getOrderCapabilities(rowByPlayerId.get(player.id) ?? null).canVote);
+  const tingvitner = state.players.filter((player) => !getOrderCapabilities(rowByPlayerId.get(player.id) ?? null).canVote);
+  const currentCapabilities = getOrderCapabilities(currentGeot ? (rowByPlayerId.get(currentGeot.id) ?? null) : null);
   const proposals = state.geotingProposals;
   const activeVotingProposals = proposals.filter((proposal) => proposal.status === "voting");
   const activeVotes = activeVotingProposals.length;
@@ -53,8 +63,11 @@ export default async function GeotingVotesPage({
 
       <Section title="Saker i Stemmeurnen" eyebrow="Forslag, geo-ed og stemmer">
         <GeotingProposalList
-          currentCanVote={currentCanVote}
+          currentCanSetPartyPosition={currentCapabilities.canSetPartyPosition}
+          currentCanStartVote={currentCapabilities.canStartVote}
+          currentCanVote={currentCapabilities.canVote}
           currentGeot={currentGeot}
+          currentOrderSummary={currentCapabilities.lockedSummary}
           openProposalId={params.sak}
           players={state.players}
           proposals={proposals}
@@ -70,7 +83,7 @@ function GeotingVoteStatus({ status, error }: { status?: string; error?: string 
   if (error === "tingvitne") {
     return (
       <div className="rounded border border-[#7c2430]/25 bg-[#7c2430]/10 px-4 py-3 text-sm font-medium text-[#7c2430]">
-        Tingvitnet er notert, men stemmeurnen åpnes først etter ordensvei til nivå 7 og godkjent partistiftelse.
+        Ordensporten stanset handlingen. Stemmerett åpner på nivå 4, og geo-eden kan først løftes på nivå 5.
       </div>
     );
   }

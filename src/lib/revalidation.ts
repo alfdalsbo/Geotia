@@ -36,5 +36,5 @@ export function revalidateThirdCollegePaths() {
 }
 
 export function revalidateGeoticOrderPaths() {
-  revalidatePaths(["/tredje-kollegium", "/ordenen", "/"]);
+  revalidatePaths(["/tredje-kollegium", "/ordenen", "/min-geot", "/geotinget", "/geotinget/avstemninger", "/"]);
 }

@@ -3,9 +3,17 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 
 import { archive, competingPlayers, games, initialState, parties, players } from "@/lib/seed";
-import { canLockRound, emptyResults } from "@/lib/scoring";
+import { canLockRound, computeStandings, emptyResults } from "@/lib/scoring";
 import { addVotingWindow, GEO_OATH_TEXT, normalizeVoteValue, resolveProposalIfReady } from "@/lib/geoting";
 import { buildRoundMapSnapshot } from "@/lib/geo";
+import {
+  getDefaultHiddenOrderCategory,
+  getGeoticOrderRank,
+  getGeoticOrderRows,
+  getNextGeoticOrderRank,
+  getOrderCapabilities,
+} from "@/lib/geotisk-orden";
+import { THIRD_COLLEGIUM_MEMBER_IDS } from "@/lib/kollegium";
 import { finalizeSlowGeoRound, isSlowGeoOpenRound, shouldRevealSlowGeoRound } from "@/lib/slowgeo";
 import { createStreetViewChallenge, getSlowGeoMonthlyRoundCap } from "@/lib/streetview";
 import type {
@@ -18,6 +26,11 @@ import type {
   GeoterIndexCategory,
   GeoticOrderAssessment,
   GeoticOrderHiddenCategory,
+  GeoticOrderPromotionCase,
+  GeoticOrderPromotionSnapshot,
+  GeoticOrderPromotionStatus,
+  GeoticOrderPromotionVote,
+  GeoticOrderPromotionVoteValue,
   GeoticOrderRankId,
   GeoticOrderStatus,
   GeotingImplementationStatus,
@@ -132,6 +145,13 @@ type GeoticOrderAssessmentInput = {
   updatedBy: string;
 };
 
+type GeoticOrderPromotionVoteInput = {
+  caseId: string;
+  voterId: string;
+  vote: GeoticOrderPromotionVoteValue;
+  comment: string;
+};
+
 type StartVoteInput = {
   proposalId: string;
   playerId: string;
@@ -197,6 +217,22 @@ type DbGeoticOrderAssessmentRow = {
   updated_by: string;
 };
 
+type DbGeoticOrderPromotionCaseRow = {
+  id: string;
+  player_id: string;
+  from_rank_id: GeoticOrderRankId;
+  target_rank_id: GeoticOrderRankId;
+  status: GeoticOrderPromotionStatus;
+  snapshot_json: GeoticOrderPromotionSnapshot | string;
+  votes_json: GeoticOrderPromotionVote[] | string;
+  public_note: string | null;
+  internal_note: string | null;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
+  opened_by: string;
+};
+
 type GeocodeCacheEntry = {
   queryKey: string;
   location: GeoLocation | null;
@@ -224,6 +260,7 @@ type FileState = {
   geotingProposals: GeotingProposal[];
   geoterIndexAdjustments: GeoterIndexAdjustment[];
   geoticOrderAssessments: GeoticOrderAssessment[];
+  geoticOrderPromotionCases: GeoticOrderPromotionCase[];
   geocodeCache: GeocodeCacheEntry[];
 };
 
@@ -336,6 +373,32 @@ function normalizeProposal(proposal: GeotingProposal): GeotingProposal {
   };
 }
 
+function normalizeGeoticOrderPromotionCase(promotionCase: GeoticOrderPromotionCase): GeoticOrderPromotionCase {
+  return {
+    ...promotionCase,
+    status: promotionCase.status ?? "pending",
+    resolvedAt: promotionCase.resolvedAt ?? null,
+    publicNote: promotionCase.publicNote ?? "",
+    internalNote: promotionCase.internalNote ?? "",
+    openedBy: promotionCase.openedBy ?? "system",
+    snapshot: {
+      serviceWeeks: Math.max(0, Math.round(promotionCase.snapshot?.serviceWeeks ?? 0)),
+      roundsPlayed: Math.max(0, Math.round(promotionCase.snapshot?.roundsPlayed ?? 0)),
+      lifetimePoints: Math.max(0, Math.round(promotionCase.snapshot?.lifetimePoints ?? 0)),
+      trustScore: Math.max(0, Math.round(promotionCase.snapshot?.trustScore ?? 0)),
+      eligibleRankId: promotionCase.snapshot?.eligibleRankId ?? promotionCase.targetRankId,
+    },
+    votes: (promotionCase.votes ?? [])
+      .filter((vote) => vote.vote === "for" || vote.vote === "mot")
+      .map((vote) => ({
+        voterId: vote.voterId,
+        vote: vote.vote,
+        comment: vote.comment ?? "",
+        createdAt: vote.createdAt,
+      })),
+  };
+}
+
 async function ensureFileState() {
   try {
     await fs.access(dataFile);
@@ -351,6 +414,7 @@ async function ensureFileState() {
           geotingProposals: [],
           geoterIndexAdjustments: [],
           geoticOrderAssessments: [],
+          geoticOrderPromotionCases: [],
           geocodeCache: [],
         },
         null,
@@ -375,6 +439,7 @@ async function readFileState(): Promise<FileState> {
     geotingProposals: (parsed.geotingProposals ?? []).map(normalizeProposal),
     geoterIndexAdjustments: parsed.geoterIndexAdjustments ?? [],
     geoticOrderAssessments: parsed.geoticOrderAssessments ?? [],
+    geoticOrderPromotionCases: (parsed.geoticOrderPromotionCases ?? []).map(normalizeGeoticOrderPromotionCase),
     geocodeCache: parsed.geocodeCache ?? [],
   };
 }
@@ -574,6 +639,24 @@ async function setupSchema(sql: SqlClient): Promise<SqlClient> {
   `;
 
   await sql`
+    CREATE TABLE IF NOT EXISTS geotia_geotic_order_promotion_cases (
+      id text PRIMARY KEY,
+      player_id text NOT NULL,
+      from_rank_id text NOT NULL,
+      target_rank_id text NOT NULL,
+      status text NOT NULL,
+      snapshot_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+      votes_json jsonb NOT NULL DEFAULT '[]'::jsonb,
+      public_note text NOT NULL,
+      internal_note text NOT NULL,
+      created_at text NOT NULL,
+      updated_at text NOT NULL,
+      resolved_at text,
+      opened_by text NOT NULL
+    )
+  `;
+
+  await sql`
     CREATE TABLE IF NOT EXISTS geotia_geocode_cache (
       query_key text PRIMARY KEY,
       result_json jsonb,
@@ -584,6 +667,7 @@ async function setupSchema(sql: SqlClient): Promise<SqlClient> {
   await sql`CREATE INDEX IF NOT EXISTS geotia_rounds_slowgeo_deadline_idx ON geotia_rounds ((location_json ->> 'deadlineAt')) WHERE status = 'open'`;
   await sql`CREATE INDEX IF NOT EXISTS geotia_game_sessions_game_number_idx ON geotia_game_sessions (game_id, number DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS geotia_geoting_proposals_status_vote_ends_idx ON geotia_geoting_proposals (status, vote_ends_at)`;
+  await sql`CREATE INDEX IF NOT EXISTS geotia_order_promotion_cases_status_idx ON geotia_geotic_order_promotion_cases (status, updated_at DESC)`;
 
   schemaReady = true;
   return sql;
@@ -708,6 +792,33 @@ function parseDbGeoticOrderAssessment(row: DbGeoticOrderAssessmentRow): GeoticOr
     updatedAt: row.updated_at,
     updatedBy: row.updated_by,
   };
+}
+
+function parseDbGeoticOrderPromotionCase(row: DbGeoticOrderPromotionCaseRow): GeoticOrderPromotionCase {
+  const snapshot =
+    typeof row.snapshot_json === "string"
+      ? (JSON.parse(row.snapshot_json) as GeoticOrderPromotionSnapshot)
+      : row.snapshot_json;
+  const votes =
+    typeof row.votes_json === "string"
+      ? (JSON.parse(row.votes_json) as GeoticOrderPromotionVote[])
+      : row.votes_json;
+
+  return normalizeGeoticOrderPromotionCase({
+    id: row.id,
+    playerId: row.player_id,
+    fromRankId: row.from_rank_id,
+    targetRankId: row.target_rank_id,
+    status: row.status,
+    snapshot,
+    votes,
+    publicNote: row.public_note ?? "",
+    internalNote: row.internal_note ?? "",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    resolvedAt: row.resolved_at,
+    openedBy: row.opened_by || "system",
+  });
 }
 
 function parseDbGeocodeCache(row: DbGeocodeCacheRow): GeocodeCacheEntry {
@@ -1096,6 +1207,84 @@ async function upsertDbGeoticOrderAssessment(assessment: GeoticOrderAssessment) 
   return true;
 }
 
+async function readDbGeoticOrderPromotionCases(): Promise<GeoticOrderPromotionCase[] | null> {
+  const sql = await ensureSchema();
+  if (!sql) return null;
+
+  const rows = (await sql`
+    SELECT
+      id,
+      player_id,
+      from_rank_id,
+      target_rank_id,
+      status,
+      snapshot_json,
+      votes_json,
+      public_note,
+      internal_note,
+      created_at,
+      updated_at,
+      resolved_at,
+      opened_by
+    FROM geotia_geotic_order_promotion_cases
+    ORDER BY updated_at DESC
+  `) as DbGeoticOrderPromotionCaseRow[];
+
+  return rows.map(parseDbGeoticOrderPromotionCase);
+}
+
+async function upsertDbGeoticOrderPromotionCase(promotionCase: GeoticOrderPromotionCase) {
+  const sql = await ensureSchema();
+  if (!sql) return false;
+
+  await sql`
+    INSERT INTO geotia_geotic_order_promotion_cases (
+      id,
+      player_id,
+      from_rank_id,
+      target_rank_id,
+      status,
+      snapshot_json,
+      votes_json,
+      public_note,
+      internal_note,
+      created_at,
+      updated_at,
+      resolved_at,
+      opened_by
+    )
+    VALUES (
+      ${promotionCase.id},
+      ${promotionCase.playerId},
+      ${promotionCase.fromRankId},
+      ${promotionCase.targetRankId},
+      ${promotionCase.status},
+      ${JSON.stringify(promotionCase.snapshot)}::jsonb,
+      ${JSON.stringify(promotionCase.votes)}::jsonb,
+      ${promotionCase.publicNote},
+      ${promotionCase.internalNote},
+      ${promotionCase.createdAt},
+      ${promotionCase.updatedAt},
+      ${promotionCase.resolvedAt ?? null},
+      ${promotionCase.openedBy}
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      player_id = EXCLUDED.player_id,
+      from_rank_id = EXCLUDED.from_rank_id,
+      target_rank_id = EXCLUDED.target_rank_id,
+      status = EXCLUDED.status,
+      snapshot_json = EXCLUDED.snapshot_json,
+      votes_json = EXCLUDED.votes_json,
+      public_note = EXCLUDED.public_note,
+      internal_note = EXCLUDED.internal_note,
+      created_at = EXCLUDED.created_at,
+      updated_at = EXCLUDED.updated_at,
+      resolved_at = EXCLUDED.resolved_at,
+      opened_by = EXCLUDED.opened_by
+  `;
+  return true;
+}
+
 async function readDbGeocodeCache(queryKey: string): Promise<GeocodeCacheEntry | null> {
   const sql = await ensureSchema();
   if (!sql) return null;
@@ -1153,6 +1342,12 @@ async function readGeoticOrderAssessments(): Promise<GeoticOrderAssessment[]> {
   return (await readFileState()).geoticOrderAssessments;
 }
 
+async function readGeoticOrderPromotionCases(): Promise<GeoticOrderPromotionCase[]> {
+  const dbCases = await readDbGeoticOrderPromotionCases();
+  if (dbCases) return dbCases;
+  return (await readFileState()).geoticOrderPromotionCases;
+}
+
 async function saveRounds(rounds: Round[]) {
   const sql = await ensureSchema();
   if (sql) {
@@ -1202,6 +1397,16 @@ async function saveGeoticOrderAssessments(geoticOrderAssessments: GeoticOrderAss
   await writeFileState({ ...state, geoticOrderAssessments });
 }
 
+async function saveGeoticOrderPromotionCases(geoticOrderPromotionCases: GeoticOrderPromotionCase[]) {
+  const sql = await ensureSchema();
+  if (sql) {
+    await Promise.all(geoticOrderPromotionCases.map(upsertDbGeoticOrderPromotionCase));
+    return;
+  }
+  const state = await readFileState();
+  await writeFileState({ ...state, geoticOrderPromotionCases });
+}
+
 export async function getCachedGeocodeLocation(queryKey: string) {
   const dbEntry = await readDbGeocodeCache(queryKey);
   if (dbEntry) return dbEntry.location;
@@ -1235,7 +1440,12 @@ export async function setCachedGeocodeLocation(queryKey: string, location: GeoLo
 
 type PersistentState = Pick<
   FileState,
-  "rounds" | "gameSessions" | "geotingProposals" | "geoterIndexAdjustments" | "geoticOrderAssessments"
+  | "rounds"
+  | "gameSessions"
+  | "geotingProposals"
+  | "geoterIndexAdjustments"
+  | "geoticOrderAssessments"
+  | "geoticOrderPromotionCases"
 >;
 
 async function readPersistentState(): Promise<PersistentState> {
@@ -1248,21 +1458,38 @@ async function readPersistentState(): Promise<PersistentState> {
       geotingProposals: state.geotingProposals,
       geoterIndexAdjustments: state.geoterIndexAdjustments,
       geoticOrderAssessments: state.geoticOrderAssessments,
+      geoticOrderPromotionCases: state.geoticOrderPromotionCases,
     };
   }
 
-  const [rounds, gameSessions, geotingProposals, geoterIndexAdjustments, geoticOrderAssessments] = await Promise.all([
+  const [
+    rounds,
+    gameSessions,
+    geotingProposals,
+    geoterIndexAdjustments,
+    geoticOrderAssessments,
+    geoticOrderPromotionCases,
+  ] = await Promise.all([
     readRounds(),
     readGameSessions(),
     readProposals(),
     readGeoterIndexAdjustments(),
     readGeoticOrderAssessments(),
+    readGeoticOrderPromotionCases(),
   ]);
-  return { rounds, gameSessions, geotingProposals, geoterIndexAdjustments, geoticOrderAssessments };
+  return {
+    rounds,
+    gameSessions,
+    geotingProposals,
+    geoterIndexAdjustments,
+    geoticOrderAssessments,
+    geoticOrderPromotionCases,
+  };
 }
 
 export async function getAppState(): Promise<AppState> {
   const state = await readPersistentState();
+  const geoticOrderPromotionCases = await syncGeoticOrderPromotionCasesForState(state);
   return {
     ...initialState,
     players,
@@ -1270,6 +1497,7 @@ export async function getAppState(): Promise<AppState> {
     games,
     archive,
     ...state,
+    geoticOrderPromotionCases,
   };
 }
 
@@ -1393,31 +1621,179 @@ export async function getGeotingState() {
   return { players, parties, geotingProposals };
 }
 
+async function readEligibleGeotingVoters() {
+  const [rounds, geoterIndexAdjustments, geoticOrderAssessments] = await Promise.all([
+    readRounds(),
+    readGeoterIndexAdjustments(),
+    readGeoticOrderAssessments(),
+  ]);
+  const standings = computeStandings(players, rounds);
+  const rows = getGeoticOrderRows(players, standings, geoterIndexAdjustments, geoticOrderAssessments);
+  const rowByPlayerId = new Map(rows.map((row) => [row.player.id, row]));
+  return players.filter((player) => getOrderCapabilities(rowByPlayerId.get(player.id) ?? null).canVote);
+}
+
+function promotionSnapshotHasImproved(
+  current: GeoticOrderPromotionSnapshot,
+  previous: GeoticOrderPromotionSnapshot,
+) {
+  return (
+    current.serviceWeeks > previous.serviceWeeks ||
+    current.roundsPlayed > previous.roundsPlayed ||
+    current.lifetimePoints > previous.lifetimePoints ||
+    current.trustScore > previous.trustScore ||
+    getGeoticOrderRank(current.eligibleRankId).number > getGeoticOrderRank(previous.eligibleRankId).number
+  );
+}
+
+function buildPromotionSnapshot(row: ReturnType<typeof getGeoticOrderRows>[number]): GeoticOrderPromotionSnapshot {
+  return {
+    serviceWeeks: row.serviceWeeks,
+    roundsPlayed: row.roundsPlayed,
+    lifetimePoints: row.lifetimePoints,
+    trustScore: row.trustScore,
+    eligibleRankId: row.eligibleRank.id,
+  };
+}
+
+function promotionCaseBlocksNewCase(
+  promotionCase: GeoticOrderPromotionCase,
+  playerId: string,
+  targetRankId: GeoticOrderRankId,
+  snapshot: GeoticOrderPromotionSnapshot,
+) {
+  if (promotionCase.playerId !== playerId || promotionCase.targetRankId !== targetRankId) return false;
+  if (promotionCase.status === "pending" || promotionCase.status === "approved") return true;
+  if (promotionCase.status === "rejected") {
+    return !promotionSnapshotHasImproved(snapshot, promotionCase.snapshot);
+  }
+  return false;
+}
+
+async function syncGeoticOrderPromotionCasesForState({
+  geoterIndexAdjustments,
+  geoticOrderAssessments,
+  geoticOrderPromotionCases,
+  rounds,
+}: Pick<PersistentState, "geoterIndexAdjustments" | "geoticOrderAssessments" | "geoticOrderPromotionCases" | "rounds">) {
+  const standings = computeStandings(players, rounds);
+  const rows = getGeoticOrderRows(players, standings, geoterIndexAdjustments, geoticOrderAssessments);
+  const rowByPlayerId = new Map(rows.map((row) => [row.player.id, row]));
+  const timestamp = nowIso();
+  let changed = false;
+
+  const nextCases = geoticOrderPromotionCases.map((promotionCase) => {
+    if (promotionCase.status !== "pending") return promotionCase;
+    const row = rowByPlayerId.get(promotionCase.playerId);
+    const targetRank = getGeoticOrderRank(promotionCase.targetRankId);
+    if (!row || row.rank.number >= targetRank.number) {
+      changed = true;
+      return {
+        ...promotionCase,
+        status: "superseded" as const,
+        updatedAt: timestamp,
+        resolvedAt: timestamp,
+        internalNote: promotionCase.internalNote || "Saken ble innhentet av en nyere ordensføring.",
+      };
+    }
+    return promotionCase;
+  });
+
+  const createdCases: GeoticOrderPromotionCase[] = [];
+  for (const row of rows) {
+    const targetRank = getNextGeoticOrderRank(row.rank.id);
+    if (!targetRank || !row.promotionReady) continue;
+
+    const snapshot = buildPromotionSnapshot(row);
+    const blocked = nextCases.some((promotionCase) =>
+      promotionCaseBlocksNewCase(promotionCase, row.player.id, targetRank.id, snapshot),
+    );
+    if (blocked) continue;
+
+    createdCases.push({
+      id: randomUUID(),
+      playerId: row.player.id,
+      fromRankId: row.rank.id,
+      targetRankId: targetRank.id,
+      status: "pending",
+      snapshot,
+      votes: [],
+      publicNote: "Kriteriene er oppfylt. Protokollen føres videre.",
+      internalNote: "Automatisk reist sak: rå terskel er nådd, men rang krever 3/3 bifall.",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      resolvedAt: null,
+      openedBy: "system",
+    });
+  }
+
+  if (createdCases.length > 0) {
+    changed = true;
+  }
+
+  const promotionCases = [...createdCases, ...nextCases].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  if (changed) {
+    await saveGeoticOrderPromotionCases(promotionCases);
+  }
+  return promotionCases;
+}
+
+export async function syncGeoticOrderPromotionCases() {
+  const [rounds, geoterIndexAdjustments, geoticOrderAssessments, geoticOrderPromotionCases] = await Promise.all([
+    readRounds(),
+    readGeoterIndexAdjustments(),
+    readGeoticOrderAssessments(),
+    readGeoticOrderPromotionCases(),
+  ]);
+  return syncGeoticOrderPromotionCasesForState({
+    rounds,
+    geoterIndexAdjustments,
+    geoticOrderAssessments,
+    geoticOrderPromotionCases,
+  });
+}
+
 export async function getOrderState() {
   const sql = await getSql();
   if (!sql) {
     const state = await readFileState();
+    const geoticOrderPromotionCases = await syncGeoticOrderPromotionCasesForState(state);
     return {
       players,
       rounds: state.rounds,
       gameSessions: state.gameSessions,
       geoterIndexAdjustments: state.geoterIndexAdjustments,
       geoticOrderAssessments: state.geoticOrderAssessments,
+      geoticOrderPromotionCases,
     };
   }
 
-  const [rounds, gameSessions, geoterIndexAdjustments, geoticOrderAssessments] = await Promise.all([
+  const [rounds, gameSessions, geoterIndexAdjustments, geoticOrderAssessments, geoticOrderPromotionCases] = await Promise.all([
     readRounds(),
     readGameSessions(),
     readGeoterIndexAdjustments(),
     readGeoticOrderAssessments(),
+    readGeoticOrderPromotionCases(),
   ]);
-  return { players, rounds, gameSessions, geoterIndexAdjustments, geoticOrderAssessments };
+  const syncedPromotionCases = await syncGeoticOrderPromotionCasesForState({
+    rounds,
+    geoterIndexAdjustments,
+    geoticOrderAssessments,
+    geoticOrderPromotionCases,
+  });
+  return {
+    players,
+    rounds,
+    gameSessions,
+    geoterIndexAdjustments,
+    geoticOrderAssessments,
+    geoticOrderPromotionCases: syncedPromotionCases,
+  };
 }
 
 export async function resolveDueGeotingProposals(now = new Date()) {
-  const proposals = await readProposals();
-  const finalized = proposals.map((proposal) => resolveProposalIfReady(proposal, players, now));
+  const [proposals, eligibleVoters] = await Promise.all([readProposals(), readEligibleGeotingVoters()]);
+  const finalized = proposals.map((proposal) => resolveProposalIfReady(proposal, eligibleVoters, now));
   const ids = finalized.flatMap((proposal, index) =>
     JSON.stringify(proposal) === JSON.stringify(proposals[index]) ? [] : [proposal.id],
   );
@@ -1820,7 +2196,10 @@ export async function startGeotingVote(input: StartVoteInput) {
 }
 
 export async function saveGeotingVote(input: VoteInput) {
-  const proposals = await readProposals();
+  const [proposals, eligibleVoters] = await Promise.all([readProposals(), readEligibleGeotingVoters()]);
+  if (!eligibleVoters.some((player) => player.id === input.playerId)) {
+    return { ok: false, reason: "Ordensporten har ikke åpnet stemmerett for denne geoten." };
+  }
   const proposal = proposals.find((candidate) => candidate.id === input.proposalId);
   if (!proposal) {
     return { ok: false, reason: "Saken finnes ikke i GeoTingets protokoll." };
@@ -1832,7 +2211,7 @@ export async function saveGeotingVote(input: VoteInput) {
     return { ok: false, reason: "Avstemningen er avsluttet og protokollført." };
   }
   if (proposal.voteEndsAt && Date.now() >= new Date(proposal.voteEndsAt).getTime()) {
-    const resolved = resolveProposalIfReady(proposal, players);
+    const resolved = resolveProposalIfReady(proposal, eligibleVoters);
     await saveProposals(
       proposals.map((candidate) => (candidate.id === proposal.id ? resolved : candidate)),
     );
@@ -1850,7 +2229,7 @@ export async function saveGeotingVote(input: VoteInput) {
     updatedAt: vote.createdAt,
     votes: [...proposal.votes.filter((candidate) => candidate.playerId !== input.playerId), vote],
   };
-  const nextProposal = resolveProposalIfReady(votedProposal, players);
+  const nextProposal = resolveProposalIfReady(votedProposal, eligibleVoters);
 
   await saveProposals(
     proposals.map((candidate) => (candidate.id === proposal.id ? nextProposal : candidate)),
@@ -1875,9 +2254,120 @@ export async function addGeoterIndexAdjustment(input: GeoterIndexAdjustmentInput
   return adjustment;
 }
 
-export async function upsertGeoticOrderAssessment(input: GeoticOrderAssessmentInput) {
-  const existing = await readGeoticOrderAssessments();
+function thirdCollegeHasUnanimity(votes: GeoticOrderPromotionVote[]) {
+  return THIRD_COLLEGIUM_MEMBER_IDS.every((memberId) =>
+    votes.some((vote) => vote.voterId === memberId && vote.vote === "for"),
+  );
+}
+
+function thirdCollegeHasObjection(votes: GeoticOrderPromotionVote[]) {
+  return votes.some((vote) => THIRD_COLLEGIUM_MEMBER_IDS.includes(vote.voterId as (typeof THIRD_COLLEGIUM_MEMBER_IDS)[number]) && vote.vote === "mot");
+}
+
+export async function voteGeoticOrderPromotionCase(input: GeoticOrderPromotionVoteInput) {
+  if (!THIRD_COLLEGIUM_MEMBER_IDS.includes(input.voterId as (typeof THIRD_COLLEGIUM_MEMBER_IDS)[number])) {
+    return { ok: false, reason: "Bare en av de tre stolene kan føre opprykksvotum." };
+  }
+
+  const [promotionCases, assessments] = await Promise.all([
+    readGeoticOrderPromotionCases(),
+    readGeoticOrderAssessments(),
+  ]);
+  const promotionCase = promotionCases.find((candidate) => candidate.id === input.caseId);
+  if (!promotionCase) {
+    return { ok: false, reason: "Opprykkssaken finnes ikke i den lukkede protokollen." };
+  }
+  if (promotionCase.status !== "pending") {
+    return { ok: false, reason: "Saken er allerede ført og kan ikke stemmes på nytt." };
+  }
+
   const timestamp = nowIso();
+  const vote: GeoticOrderPromotionVote = {
+    voterId: input.voterId,
+    vote: input.vote,
+    comment: input.comment.trim().slice(0, 240),
+    createdAt: timestamp,
+  };
+  const votes = [
+    vote,
+    ...promotionCase.votes.filter((candidate) => candidate.voterId !== input.voterId),
+  ];
+  const approved = thirdCollegeHasUnanimity(votes);
+  const rejected = !approved && thirdCollegeHasObjection(votes);
+  const status: GeoticOrderPromotionStatus = approved ? "approved" : rejected ? "rejected" : "pending";
+  const resolvedAt = status === "pending" ? null : timestamp;
+  const updatedCase: GeoticOrderPromotionCase = {
+    ...promotionCase,
+    status,
+    votes,
+    updatedAt: timestamp,
+    resolvedAt,
+    internalNote:
+      status === "approved"
+        ? `${promotionCase.internalNote}\n\nVEDTAK: 3/3 bifall.`
+        : status === "rejected"
+          ? `${promotionCase.internalNote}\n\nVEDTAK: Mørk innsigelse er reist.`
+          : promotionCase.internalNote,
+  };
+
+  const nextCases = promotionCases.map((candidate) => (candidate.id === promotionCase.id ? updatedCase : candidate));
+
+  if (!approved) {
+    await saveGeoticOrderPromotionCases(nextCases);
+    return { ok: true, promotionCase: updatedCase };
+  }
+
+  const player = players.find((candidate) => candidate.id === promotionCase.playerId);
+  if (!player) {
+    await saveGeoticOrderPromotionCases(nextCases);
+    return { ok: false, reason: "Kandidaten finnes ikke i geotregisteret." };
+  }
+
+  const existingAssessment = assessments.find((assessment) => assessment.playerId === promotionCase.playerId);
+  const targetRank = getGeoticOrderRank(promotionCase.targetRankId);
+  const nextAssessment: GeoticOrderAssessment = {
+    playerId: promotionCase.playerId,
+    rankId: promotionCase.targetRankId,
+    serviceWeeks: Math.max(existingAssessment?.serviceWeeks ?? 0, promotionCase.snapshot.serviceWeeks),
+    hiddenCategory: existingAssessment?.hiddenCategory ?? getDefaultHiddenOrderCategory(player),
+    status: existingAssessment?.status ?? "normal",
+    sponsor: existingAssessment?.sponsor || "Tredje Kollegium",
+    trial: existingAssessment?.trial || `Enstemmig opprykk til ${targetRank.name}`,
+    publicNote: existingAssessment?.publicNote || "Kriteriene er oppfylt, og rangen er ført i protokollen.",
+    internalNote: [
+      existingAssessment?.internalNote,
+      `Opprykk til ${targetRank.name} godkjent med 3/3 bifall.`,
+    ].filter(Boolean).join("\n\n"),
+    updatedAt: timestamp,
+    updatedBy: input.voterId,
+  };
+
+  await saveGeoticOrderPromotionCases(nextCases);
+  await saveGeoticOrderAssessments([
+    nextAssessment,
+    ...assessments.filter((assessment) => assessment.playerId !== promotionCase.playerId),
+  ]);
+  return { ok: true, promotionCase: updatedCase, assessment: nextAssessment };
+}
+
+export async function upsertGeoticOrderAssessment(input: GeoticOrderAssessmentInput) {
+  const [existing, rounds, adjustments] = await Promise.all([
+    readGeoticOrderAssessments(),
+    readRounds(),
+    readGeoterIndexAdjustments(),
+  ]);
+  const timestamp = nowIso();
+  const standings = computeStandings(players, rounds);
+  const currentRows = getGeoticOrderRows(players, standings, adjustments, existing);
+  const currentRow = currentRows.find((row) => row.player.id === input.playerId);
+  const requestedRank = getGeoticOrderRank(input.rankId);
+  if (currentRow && requestedRank.number > currentRow.rank.number) {
+    return {
+      ok: false,
+      reason: "Opprykk må gjennom opprykksprotokollen med 3/3 bifall fra Tredje Kollegium.",
+    };
+  }
+
   const nextAssessment: GeoticOrderAssessment = {
     playerId: input.playerId,
     rankId: input.rankId,
@@ -1896,7 +2386,7 @@ export async function upsertGeoticOrderAssessment(input: GeoticOrderAssessmentIn
     nextAssessment,
     ...existing.filter((assessment) => assessment.playerId !== input.playerId),
   ]);
-  return nextAssessment;
+  return { ok: true, assessment: nextAssessment };
 }
 
 export async function lockRound(id: string) {
