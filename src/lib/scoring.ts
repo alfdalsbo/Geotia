@@ -222,6 +222,48 @@ export function getHallOfFame(standings: Standing[], rounds: Round[], players: P
   };
 }
 
+/**
+ * GeotStatus — operativ statusvurdering av en geots prestasjoner.
+ * Brukes som "stempel" i protokoll-tabellen.
+ *
+ *   SOLID       — over snittet i poeng, lavt kattometer
+ *   JEVN        — normal prestasjon
+ *   UROLIG      — store variasjoner (svært høyt verste-km)
+ *   INDIA-RISK  — flere absences/invalids eller verste-km > 5000 km
+ *
+ * Funksjonen er pure — tar bare en Standing og returnerer status.
+ * Ingen avhengighet til store eller andre runder.
+ */
+export type GeotStatus = "SOLID" | "JEVN" | "UROLIG" | "INDIA-RISK";
+
+export function geotStatus(standing: Standing): GeotStatus {
+  // For lite data — ingen ekstrem-vurdering ennå
+  if (standing.lockedRounds === 0) return "JEVN";
+
+  const absenceRatio = standing.absences / Math.max(1, standing.lockedRounds);
+  const invalidsRatio = standing.invalids / Math.max(1, standing.lockedRounds);
+  const worstKmHigh = (standing.worstKm ?? 0) > 5000;
+  const highDesertion = absenceRatio >= 0.3;
+  const manyInvalids = invalidsRatio >= 0.3;
+
+  // INDIA-RISK: kronisk desertering eller eksplosive enkelt-bommer
+  if (highDesertion || manyInvalids || worstKmHigh) {
+    return "INDIA-RISK";
+  }
+
+  // UROLIG: spillerens snitt ligger middels lavt OG verste-km er solid (1500+)
+  if (standing.averagePoints < 3 && (standing.worstKm ?? 0) > 1500) {
+    return "UROLIG";
+  }
+
+  // SOLID: høyt snitt og lav-til-middels kattometer
+  if (standing.averagePoints >= 4.5 && standing.averageKattometer < 1500) {
+    return "SOLID";
+  }
+
+  return "JEVN";
+}
+
 export function computeGameSession(
   session: GameSession,
   players: Player[],
