@@ -74,10 +74,10 @@ export default function ArchivePage() {
               key={section.slug}
               href={`/arkiv/${section.slug}`}
               prefetch={false}
-              className="geotia-panel group rounded p-5 transition hover:-translate-y-0.5 hover:border-[#c49a3c]"
+              className="archive-card group block transition hover:-translate-y-0.5"
             >
-              <div className="relative z-10 flex items-start justify-between gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded border border-[#c49a3c]/45 bg-[#062b40] text-[#e1c06c]">
+              <div className="flex items-start justify-between gap-4">
+                <div className="crown-icon">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <span className="flex items-center gap-2">
@@ -85,13 +85,14 @@ export default function ArchivePage() {
                   <LinkPendingIndicator />
                 </span>
               </div>
-              <p className="relative z-10 mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#7c2430]">
+              <p
+                className="mt-3 text-[10px] font-bold uppercase tracking-[0.32em] text-[#7e5a18]"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
                 {section.eyebrow}
               </p>
-              <h2 className="font-display relative z-10 mt-1 text-2xl font-semibold text-[#062b40]">
-                {section.title}
-              </h2>
-              <p className="relative z-10 mt-2 text-sm leading-6 text-[#60553f]">{section.description}</p>
+              <h3>{section.title}</h3>
+              <p className="lead-detail mt-2 text-sm">{section.description}</p>
             </Link>
           );
         })}
@@ -100,7 +101,7 @@ export default function ArchivePage() {
       <Section title="Hurtigoppslag" eyebrow="Fra leksikonet">
         <div className="grid gap-3 md:grid-cols-2">
           {archive.lexicon.slice(0, 8).map((entry) => (
-            <div key={entry.term} className="rounded border border-[#c49a3c]/30 bg-[#fff7e6] p-4">
+            <div key={entry.term} className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
               <p className="font-display text-xl font-semibold text-[#062b40]">{entry.term}</p>
               <p className="mt-1 text-sm leading-6 text-[#60553f]">{entry.definition}</p>
             </div>
