@@ -650,264 +650,223 @@ function GeoterIndexSection({
 }) {
   const playerById = new Map(players.map((player) => [player.id, player]));
   const categoryById = new Map(geoterIndexCategories.map((category) => [category.id, category]));
+  const indexSignals = [
+    { label: "Risiko", value: dossier.summary.risk },
+    { label: "Fall", value: dossier.summary.falling },
+    { label: "Løft", value: dossier.summary.rising },
+    { label: "Tomrom", value: dossier.summary.unobserved },
+  ];
 
   return (
-    <section className="overflow-hidden rounded border border-[#c49a3c]/70 bg-[#061d2b] text-[#fff7e6] shadow-[0_22px_48px_rgba(0,0,0,0.24)]">
-      <div className="grid gap-0 2xl:grid-cols-[minmax(0,1fr)_390px]">
-        <div className="p-5 sm:p-7">
-          <p className="inline-flex items-center gap-2 rounded border border-[#c49a3c]/55 bg-[#020b11]/45 px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#e1c06c]">
+    <section
+      className="overflow-hidden rounded border border-[#c49a3c]/70 bg-[#061d2b] text-[#fff7e6] shadow-[0_22px_48px_rgba(0,0,0,0.24)]"
+      data-testid="geoter-index-section"
+    >
+      <div className="p-4 sm:p-7">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-start">
+          <div className="min-w-0">
+            <p className="inline-flex max-w-full items-center gap-2 rounded border border-[#c49a3c]/55 bg-[#020b11] px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c] sm:tracking-[0.22em]">
             <BarChart3 className="h-4 w-4" aria-hidden="true" />
             GEO-OBS 3K · hemmelig indeks
-          </p>
-          <h2 className="font-display mt-4 text-4xl font-semibold leading-tight sm:text-5xl">
-            GEOTERINDEKSEN
-          </h2>
-          <p className="mt-3 max-w-4xl text-base leading-7 text-[#eadcbd]">
-            Geotias skjulte sosiale kredittsystem måler tillit, deltakelse,
-            initiativ, lojalitet, geografisk dømmekraft og evnen til å bygge
-            fellesskapet gjennom produktiv krangling. Den er ikke vedtatt, ikke
-            kjent, ikke diskutert og kan ikke klages på. Likevel avgjør den alt.
-          </p>
-          <div className="geotia-ornament mt-5 text-center text-sm font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
-            <span>{geoterIndexMotto}</span>
-          </div>
-
-          <div className="mt-6 rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8 p-4">
-            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
-                  Synlig for Kollegiet
-                </p>
-                <h3 className="font-display mt-1 text-2xl font-semibold">Alle geoter under observasjon</h3>
-              </div>
-              <p className="text-sm text-[#eadcbd]">
-                Grunnscore: <span className="font-semibold text-[#fff7e6]">700</span>. Fri, men ikke troverdig.
-              </p>
+            </p>
+            <h2 className="font-display mt-4 text-[2.65rem] font-semibold leading-[0.95] sm:text-5xl">
+              GEOTERINDEKSEN
+            </h2>
+            <p className="mt-3 max-w-4xl text-base leading-7 text-[#eadcbd]">
+              Geotias skjulte sosiale kredittsystem måler tillit, deltakelse,
+              initiativ, lojalitet, geografisk dømmekraft og evnen til å bygge
+              fellesskapet gjennom produktiv krangling.
+            </p>
+            <div className="geotia-ornament mt-5 text-center text-sm font-semibold uppercase tracking-[0.14em] text-[#e1c06c] sm:tracking-[0.16em]">
+              <span>{geoterIndexMotto}</span>
             </div>
-            <div className="mt-4 overflow-x-auto">
-              <table className="protocol protocol--dark w-full min-w-[880px]">
-                <thead>
-                  <tr>
-                    <th>Geot</th>
-                    <th className="right">Score</th>
-                    <th>Nivå</th>
-                    <th>Siste justering</th>
-                    <th>Historikk</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.player.id}>
-                      <td>
-                        <div className="geot-cell">
-                          <span className="geot-flag" style={{ background: row.player.color }} />
-                          <div className="min-w-0">
-                            <div className="geot-name">{row.player.shortName}</div>
-                            <div className="geot-title">{row.player.title}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="right">
-                        <span className="num-display text-3xl">{row.score}</span>
-                      </td>
-                      <td>
-                        <Stamp tone="brass">{row.tier.name}</Stamp>
-                        <p className="mt-1 max-w-xs text-xs leading-5 text-[#eadcbd]">{row.tier.description}</p>
-                      </td>
-                      <td className="text-[#eadcbd]">
-                        {row.lastAdjustment ? (
-                          <>
-                            <span className={row.lastAdjustment.delta > 0 ? "font-semibold text-[#97d9a8]" : "font-semibold text-[#ffb3a6]"}>
-                              {row.lastAdjustment.delta > 0 ? "+" : ""}
-                              {row.lastAdjustment.delta}
-                            </span>{" "}
-                            {row.lastAdjustment.title}
-                          </>
-                        ) : (
-                          <span className="italic" style={{ fontFamily: "var(--font-italic)" }}>
-                            Ingen justering. Mistanken hviler.
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        <IndexSparkline row={row} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="mt-5 grid grid-cols-2 gap-2 sm:max-w-xl">
+              {indexSignals.map((signal) => (
+                <IndexSignal key={signal.label} label={signal.label} value={signal.value} />
+              ))}
             </div>
           </div>
 
-          <div className="mt-6 rounded border border-[#c49a3c]/45 bg-[#020b11]/45 p-4">
-            <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
-                  Operativ vurdering
-                </p>
-                <h3 className="font-display mt-1 text-2xl font-semibold">Indeksens dagsorden</h3>
-              </div>
-              <div className="grid grid-cols-4 gap-2 text-center text-xs font-semibold uppercase tracking-[0.1em] text-[#eadcbd]">
-                <IndexSignal label="Risiko" value={dossier.summary.risk} />
-                <IndexSignal label="Fall" value={dossier.summary.falling} />
-                <IndexSignal label="Løft" value={dossier.summary.rising} />
-                <IndexSignal label="Tomrom" value={dossier.summary.unobserved} />
-              </div>
-            </div>
-            <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
-              <div className="grid gap-2 md:grid-cols-2">
-                {dossier.items.length ? (
-                  dossier.items.map((item) => (
-                    <div key={`${item.playerId}-${item.title}`} className={`rounded border px-3 py-2 text-sm ${indexDossierToneClasses[item.tone]}`}>
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em]">{item.playerName} · {item.title}</p>
-                      <p className="mt-1 leading-6">{item.detail}</p>
-                      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.1em]">{item.action}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="rounded border border-[#c49a3c]/30 bg-[#fff7e6]/8 px-3 py-2 text-sm text-[#eadcbd]">
-                    Ingen signaler. Det er enten fred eller dårlig observasjon.
-                  </p>
-                )}
-              </div>
-              <div className="rounded border border-[#c49a3c]/30 bg-[#fff7e6]/8 p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#e1c06c]">Mest ustabile kurver</p>
-                <div className="mt-3 grid gap-2">
-                  {dossier.volatile.map((item) => (
-                    <div key={item.playerId} className="rounded border border-[#c49a3c]/25 bg-[#020b11]/45 px-3 py-2 text-sm">
-                      <p className="flex items-center justify-between gap-3">
-                        <span className="font-semibold text-[#fff7e6]">{item.playerName}</span>
-                        <span className="font-mono text-[#e1c06c]">{item.weight}</span>
-                      </p>
-                      <p className="mt-1 text-xs leading-5 text-[#eadcbd]">{item.detail}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          <GeoterIndexAdjustmentForm currentGeot={currentGeot} players={players} />
+        </div>
 
-          <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="rounded border border-[#c49a3c]/45 bg-[#020b11]/45 p-4">
-              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
-                <History className="h-4 w-4" aria-hidden="true" />
-                Historisk utvikling
-              </p>
-              <IndexHistoryGraph rows={rows} />
-            </div>
-            <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8 p-4">
+        <div className="mt-5 rounded border border-[#c49a3c]/55 bg-[#102f3f] p-4 sm:p-5">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
-                Justeringslogg
+                Synlig for Kollegiet
               </p>
-              <div className="mt-3 max-h-[560px] space-y-3 overflow-y-auto pr-1">
-                {latestAdjustments.length ? (
-                  latestAdjustments.map((adjustment) => {
-                    const player = playerById.get(adjustment.playerId);
-                    const category = categoryById.get(adjustment.category);
-                    const operator = playerById.get(adjustment.createdBy);
-                    const trailPoint = getGeoterIndexAdjustmentTrail(adjustment.playerId, latestAdjustments).find(
-                      (point) => point.id === adjustment.id,
-                    );
-                    return (
-                      <div key={adjustment.id} className="rounded border border-[#c49a3c]/30 bg-[#020b11]/35 p-3 text-sm">
-                        <p className="flex items-center justify-between gap-3">
-                          <span className="font-semibold">{player?.shortName ?? adjustment.playerId}</span>
-                          <span className={adjustment.delta > 0 ? "text-[#97d9a8]" : "text-[#ffb3a6]"}>
-                            {adjustment.delta > 0 ? "+" : ""}
-                            {adjustment.delta}
-                          </span>
-                        </p>
-                        <p className="mt-1 text-[#eadcbd]">{adjustment.title}</p>
-                        <p className="mt-1 text-xs leading-5 text-[#cdbd97]">
-                          {category?.label ?? adjustment.category} · {dateTimeLabel(adjustment.createdAt)} · ført av{" "}
-                          {operator?.shortName ?? adjustment.createdBy}
-                        </p>
-                        {trailPoint ? (
-                          <p className="mt-2 rounded border border-[#c49a3c]/20 bg-[#fff7e6]/8 px-2 py-1 font-mono text-xs text-[#fff7e6]">
-                            {trailPoint.scoreBefore} → {trailPoint.scoreAfter}
-                          </p>
-                        ) : null}
-                        <p className="mt-2 text-xs leading-5 text-[#eadcbd]">
-                          {adjustment.reason || "Ingen begrunnelse ført. Mistenkelig, men lovlig."}
-                        </p>
+              <h3 className="font-display mt-1 text-2xl font-semibold">Alle geoter under observasjon</h3>
+            </div>
+            <p className="text-sm text-[#eadcbd]">
+              Grunnscore: <span className="font-semibold text-[#fff7e6]">700</span>. Fri, men ikke troverdig.
+            </p>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:hidden" data-testid="geoter-index-mobile-list">
+            {rows.map((row) => (
+              <MobileGeoterIndexCard key={row.player.id} row={row} />
+            ))}
+          </div>
+
+          <div className="mt-4 hidden overflow-x-auto md:block" data-testid="geoter-index-desktop-table">
+            <table className="protocol protocol--dark w-full min-w-[880px]">
+              <thead>
+                <tr>
+                  <th>Geot</th>
+                  <th className="right">Score</th>
+                  <th>Nivå</th>
+                  <th>Siste justering</th>
+                  <th>Historikk</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.player.id}>
+                    <td>
+                      <div className="geot-cell">
+                        <span className="geot-flag" style={{ background: row.player.color }} />
+                        <div className="min-w-0">
+                          <div className="geot-name">{row.player.shortName}</div>
+                          <div className="geot-title">{row.player.title}</div>
+                        </div>
                       </div>
-                    );
-                  })
-                ) : (
-                  <p className="text-sm leading-6 text-[#eadcbd]">
-                    Ingen justeringer er ført ennå. Dette er ikke rettferdighet. Det er bare et tomt regneark.
-                  </p>
-                )}
+                    </td>
+                    <td className="right">
+                      <span className="num-display text-3xl">{row.score}</span>
+                    </td>
+                    <td>
+                      <Stamp tone="brass">{row.tier.name}</Stamp>
+                      <p className="mt-1 max-w-xs text-xs leading-5 text-[#eadcbd]">{row.tier.description}</p>
+                    </td>
+                    <td className="text-[#eadcbd]">
+                      {row.lastAdjustment ? (
+                        <>
+                          <span className={row.lastAdjustment.delta > 0 ? "font-semibold text-[#97d9a8]" : "font-semibold text-[#ffb3a6]"}>
+                            {row.lastAdjustment.delta > 0 ? "+" : ""}
+                            {row.lastAdjustment.delta}
+                          </span>{" "}
+                          {row.lastAdjustment.title}
+                        </>
+                      ) : (
+                        <span className="italic" style={{ fontFamily: "var(--font-italic)" }}>
+                          Ingen justering. Mistanken hviler.
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <IndexSparkline row={row} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded border border-[#c49a3c]/55 bg-[#020b11] p-4 sm:p-5">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
+                Operativ vurdering
+              </p>
+              <h3 className="font-display mt-1 text-2xl font-semibold">Indeksens dagsorden</h3>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="grid gap-2 md:grid-cols-2">
+              {dossier.items.length ? (
+                dossier.items.map((item) => (
+                  <div key={`${item.playerId}-${item.title}`} className={`rounded border px-3 py-3 text-sm ${indexDossierToneClasses[item.tone]}`}>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em]">{item.playerName} · {item.title}</p>
+                    <p className="mt-1 leading-6">{item.detail}</p>
+                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.1em]">{item.action}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="rounded border border-[#c49a3c]/45 bg-[#102f3f] px-3 py-3 text-sm text-[#eadcbd]">
+                  Ingen signaler. Det er enten fred eller dårlig observasjon.
+                </p>
+              )}
+            </div>
+            <div className="rounded border border-[#c49a3c]/45 bg-[#102f3f] p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#e1c06c]">Mest ustabile kurver</p>
+              <div className="mt-3 grid gap-2">
+                {dossier.volatile.map((item) => (
+                  <div key={item.playerId} className="rounded border border-[#c49a3c]/35 bg-[#020b11] px-3 py-2 text-sm">
+                    <p className="flex items-center justify-between gap-3">
+                      <span className="font-semibold text-[#fff7e6]">{item.playerName}</span>
+                      <span className="font-mono text-[#e1c06c]">{item.weight}</span>
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-[#eadcbd]">{item.detail}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
 
-        <aside className="border-t border-[#c49a3c]/45 bg-[#020b11] p-5 2xl:border-l 2xl:border-t-0">
-          <form action={submitGeoterIndexAdjustmentAction} className="geo-form geo-form--dark rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8 p-4">
+        <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="rounded border border-[#c49a3c]/55 bg-[#061d2b] p-4 sm:p-5">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
-              <PlusCircle className="h-4 w-4" aria-hidden="true" />
-              Før skjult justering
+              <History className="h-4 w-4" aria-hidden="true" />
+              Historisk utvikling
             </p>
-            <p className="mt-2 text-sm leading-6 text-[#eadcbd]">
-              Operatør: {currentGeot.shortName}. Justeringer er synlige kun i dette rommet, men merkes i rikets sosiale lufttrykk.
+            <div className="mt-4 grid gap-3 md:hidden" data-testid="geoter-index-mobile-trends">
+              {rows.map((row) => (
+                <MobileIndexTrendCard key={row.player.id} row={row} />
+              ))}
+            </div>
+            <div className="hidden md:block">
+              <IndexHistoryGraph rows={rows} />
+            </div>
+          </div>
+          <div className="rounded border border-[#c49a3c]/55 bg-[#102f3f] p-4 sm:p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
+              Justeringslogg
             </p>
-            <label className="mt-4">
-              Geot
-              <select name="playerId" className="mt-2">
-                {players.map((player) => (
-                  <option key={player.id} value={player.id}>
-                    {player.shortName}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="mt-3">
-              Kategori
-              <select name="category" className="mt-2">
-                {geoterIndexCategories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="mt-3">
-              Poengjustering
-              <input
-                name="delta"
-                type="number"
-                min="-100"
-                max="100"
-                step="1"
-                defaultValue="10"
-                className="mt-2"
-                required
-              />
-            </label>
-            <label className="mt-3">
-              Tittel
-              <input
-                name="title"
-                className="mt-2"
-                placeholder="F.eks. Redning fra India"
-                required
-              />
-            </label>
-            <label className="mt-3">
-              Begrunnelse
-              <textarea
-                name="reason"
-                className="mt-2 min-h-24"
-                placeholder="Kort protokolltekst. Husk: ankeinstansen er Kollegiet selv i mørkere rom."
-              />
-            </label>
-            <PendingSubmitButton className="btn btn-wax mt-4 w-full justify-center">
-              <PlusCircle className="h-4 w-4" aria-hidden="true" />
-              Juster indeksen
-            </PendingSubmitButton>
-          </form>
-        </aside>
+            <div className="mt-3 max-h-[560px] space-y-3 overflow-y-auto pr-1">
+              {latestAdjustments.length ? (
+                latestAdjustments.map((adjustment) => {
+                  const player = playerById.get(adjustment.playerId);
+                  const category = categoryById.get(adjustment.category);
+                  const operator = playerById.get(adjustment.createdBy);
+                  const trailPoint = getGeoterIndexAdjustmentTrail(adjustment.playerId, latestAdjustments).find(
+                    (point) => point.id === adjustment.id,
+                  );
+                  return (
+                    <div key={adjustment.id} className="rounded border border-[#c49a3c]/40 bg-[#020b11] p-3 text-sm">
+                      <p className="flex items-center justify-between gap-3">
+                        <span className="font-semibold">{player?.shortName ?? adjustment.playerId}</span>
+                        <span className={adjustment.delta > 0 ? "text-[#97d9a8]" : "text-[#ffb3a6]"}>
+                          {adjustment.delta > 0 ? "+" : ""}
+                          {adjustment.delta}
+                        </span>
+                      </p>
+                      <p className="mt-1 text-[#eadcbd]">{adjustment.title}</p>
+                      <p className="mt-1 text-xs leading-5 text-[#cdbd97]">
+                        {category?.label ?? adjustment.category} · {dateTimeLabel(adjustment.createdAt)} · ført av{" "}
+                        {operator?.shortName ?? adjustment.createdBy}
+                      </p>
+                      {trailPoint ? (
+                        <p className="mt-2 rounded border border-[#c49a3c]/35 bg-[#102f3f] px-2 py-1 font-mono text-xs text-[#fff7e6]">
+                          {trailPoint.scoreBefore} → {trailPoint.scoreAfter}
+                        </p>
+                      ) : null}
+                      <p className="mt-2 text-xs leading-5 text-[#eadcbd]">
+                        {adjustment.reason || "Ingen begrunnelse ført. Mistenkelig, men lovlig."}
+                      </p>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-sm leading-6 text-[#eadcbd]">
+                  Ingen justeringer er ført ennå. Dette er ikke rettferdighet. Det er bare et tomt regneark.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       <details className="border-t border-[#c49a3c]/45 bg-[#f4e6c7] text-[#161713]">
@@ -936,7 +895,7 @@ function GeoterIndexSection({
             </p>
             <div className="mt-4 grid gap-2">
               {geoterIndexLaw.map((line) => (
-                <p key={line} className="rounded border border-[#d8c48c] bg-white/70 px-3 py-2 text-sm leading-6">
+                <p key={line} className="rounded border border-[#d8c48c] bg-[#fff7e6] px-3 py-2 text-sm leading-6">
                   {line}
                 </p>
               ))}
@@ -954,6 +913,167 @@ function GeoterIndexSection({
         </div>
       </details>
     </section>
+  );
+}
+
+function GeoterIndexAdjustmentForm({ currentGeot, players }: { currentGeot: Player; players: Player[] }) {
+  return (
+    <aside
+      className="geo-form geo-form--dark rounded border border-[#c49a3c]/65 bg-[#020b11] p-4 shadow-[0_18px_42px_rgba(0,0,0,0.24)] sm:p-5"
+      data-testid="geoter-index-adjustment-form"
+    >
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
+        Før skjult justering
+      </p>
+      <p className="mt-2 text-sm leading-6 text-[#eadcbd]">
+        Plasser geoten, sett utslaget og la protokollen gjøre resten.
+      </p>
+      <form action={submitGeoterIndexAdjustmentAction} className="mt-4 space-y-4">
+        <input type="hidden" name="createdBy" value={currentGeot.id} />
+        <label>
+          <span>Geot</span>
+          <select name="playerId" defaultValue={currentGeot.id} className="mt-2 min-h-11 text-base">
+            {players.map((player) => (
+              <option key={player.id} value={player.id}>
+                {player.shortName}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>Kategori</span>
+          <select name="category" defaultValue={geoterIndexCategories[0]?.id} className="mt-2 min-h-11 text-base">
+            {geoterIndexCategories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>Delta</span>
+          <input
+            name="delta"
+            type="number"
+            min="-100"
+            max="100"
+            step="1"
+            defaultValue="10"
+            className="mt-2 min-h-11 text-base"
+            required
+          />
+        </label>
+        <label>
+          <span>Tittel</span>
+          <input
+            name="title"
+            className="mt-2 min-h-11 text-base"
+            placeholder="F.eks. Reddet flokken fra India"
+          />
+        </label>
+        <label>
+          <span>Begrunnelse</span>
+          <textarea
+            name="reason"
+            className="mt-2 min-h-28 text-base"
+            placeholder="Hva så Kollegiet, og hvorfor skal det huskes?"
+          />
+        </label>
+        <PendingSubmitButton className="btn btn-wax w-full justify-center">
+          <PlusCircle className="h-4 w-4" aria-hidden="true" />
+          Før justering
+        </PendingSubmitButton>
+      </form>
+    </aside>
+  );
+}
+
+function MobileGeoterIndexCard({ row }: { row: GeoterIndexRow }) {
+  const last = row.lastAdjustment;
+
+  return (
+    <article
+      className="rounded border border-[#c49a3c]/60 bg-[#fff7e6] p-4 text-[#161713] shadow-[0_14px_32px_rgba(2,11,17,0.18)]"
+      data-testid="geoter-index-mobile-card"
+    >
+      <div className="flex min-w-0 items-start gap-3">
+        <span
+          className="mt-1 h-4 w-4 shrink-0 rounded-full border border-[#7c2430]/25"
+          style={{ background: row.player.color }}
+        />
+        <div className="min-w-0 flex-1">
+          <h4 className="hyphens-none text-lg font-semibold leading-tight text-[#062b40] [overflow-wrap:normal] [word-break:normal]">
+            {row.player.shortName}
+          </h4>
+          <p className="mt-1 text-sm leading-5 text-[#4f412b] [overflow-wrap:normal] [word-break:normal]">
+            {row.player.title}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-end justify-between gap-3 border-t border-[#d8c48c] pt-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#60553f]">Score</p>
+        <p className="font-display text-3xl font-semibold leading-none text-[#7c2430]">{row.score}</p>
+      </div>
+
+      <div className="mt-4">
+        <span className="inline-flex max-w-full rounded border border-[#c49a3c]/55 bg-[#fffaf0] px-2.5 py-1.5 text-[11px] font-semibold uppercase leading-tight tracking-[0.08em] text-[#7c2430]">
+          {row.tier.name}
+        </span>
+        <p className="mt-2 text-sm leading-6 text-[#4f412b]">{row.tier.description}</p>
+      </div>
+
+      <div className="mt-4 rounded border border-[#d8c48c] bg-[#fffaf0] p-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
+          Siste justering
+        </p>
+        {last ? (
+          <p className="mt-1 text-sm leading-6 text-[#2a2418]">
+            <span className={last.delta > 0 ? "font-semibold text-[#194832]" : "font-semibold text-[#7c2430]"}>
+              {formatIndexDelta(last.delta)}
+            </span>{" "}
+            {last.title}
+          </p>
+        ) : (
+          <p className="mt-1 text-sm italic leading-6 text-[#60553f]" style={{ fontFamily: "var(--font-italic)" }}>
+            Ingen justering. Mistanken hviler.
+          </p>
+        )}
+      </div>
+
+      <div className="mt-4 rounded border border-[#d8c48c] bg-[#061d2b] p-3">
+        <IndexSparkline row={row} className="h-14 w-full" />
+      </div>
+    </article>
+  );
+}
+
+function MobileIndexTrendCard({ row }: { row: GeoterIndexRow }) {
+  const startScore = row.history[0]?.score ?? 700;
+  const delta = row.score - startScore;
+  const last = row.lastAdjustment;
+
+  return (
+    <article className="rounded border border-[#c49a3c]/55 bg-[#020b11] p-3 text-[#fff7e6]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h4 className="break-normal text-base font-semibold leading-tight">{row.player.shortName}</h4>
+          <p className="mt-1 text-xs leading-5 text-[#cdbd97]">{row.tier.name}</p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="font-display text-2xl font-semibold leading-none text-[#e1c06c]">{row.score}</p>
+          <p className={delta >= 0 ? "mt-1 text-xs font-semibold text-[#97d9a8]" : "mt-1 text-xs font-semibold text-[#ffb3a6]"}>
+            {formatIndexDelta(delta)}
+          </p>
+        </div>
+      </div>
+      <div className="mt-3 rounded border border-[#c49a3c]/35 bg-[#061d2b] p-2">
+        <IndexSparkline row={row} className="h-12 w-full" />
+      </div>
+      <p className="mt-3 text-xs leading-5 text-[#eadcbd]">
+        {last ? `${formatIndexDelta(last.delta)} ${last.title}` : "Ingen ny føring siden grunnscore."}
+      </p>
+    </article>
   );
 }
 
@@ -1194,24 +1314,24 @@ function GeoticOrderControlSection({
 }
 
 const indexDossierToneClasses = {
-  blue: "border-[#203c62]/30 bg-[#203c62]/14 text-[#d9e8f5]",
-  green: "border-[#194832]/30 bg-[#194832]/18 text-[#dff3e4]",
-  gold: "border-[#c49a3c]/45 bg-[#c49a3c]/14 text-[#fff7e6]",
-  red: "border-[#7c2430]/35 bg-[#7c2430]/18 text-[#ffd8d0]",
+  blue: "border-[#6e9fbd] bg-[#0b3348] text-[#e6f1f7]",
+  green: "border-[#6ca67c] bg-[#113c2d] text-[#e6f5ea]",
+  gold: "border-[#c49a3c] bg-[#3b2c12] text-[#fff7e6]",
+  red: "border-[#b95c66] bg-[#451620] text-[#ffe2dc]",
 } as const;
 
 function IndexSignal({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded border border-[#c49a3c]/30 bg-[#fff7e6]/8 px-2 py-2">
-      <p className="font-display text-2xl font-semibold text-[#e1c06c]">{value}</p>
-      <p className="mt-1">{label}</p>
+    <div className="rounded border border-[#c49a3c]/55 bg-[#fff7e6] px-3 py-3 text-center text-[#062b40]">
+      <p className="font-display text-3xl font-semibold leading-none text-[#7c2430]">{value}</p>
+      <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em]">{label}</p>
     </div>
   );
 }
 
 function RulePanel({ title, items }: { title: string; items: string[] }) {
   return (
-    <div className="rounded border border-[#c49a3c]/45 bg-white/70 p-4">
+    <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4">
       <h4 className="font-display text-2xl font-semibold text-[#062b40]">{title}</h4>
       <div className="mt-3 grid gap-2">
         {items.map((item) => (
@@ -1224,7 +1344,11 @@ function RulePanel({ title, items }: { title: string; items: string[] }) {
   );
 }
 
-function IndexSparkline({ row }: { row: GeoterIndexRow }) {
+function formatIndexDelta(value: number) {
+  return value > 0 ? `+${value}` : String(value);
+}
+
+function IndexSparkline({ row, className = "h-12 w-40" }: { row: GeoterIndexRow; className?: string }) {
   const points = row.history;
   const width = 150;
   const height = 44;
@@ -1237,7 +1361,7 @@ function IndexSparkline({ row }: { row: GeoterIndexRow }) {
     .join(" ");
 
   return (
-    <svg aria-label={`Historikk for ${row.player.shortName}`} className="h-12 w-40" role="img" viewBox={`0 0 ${width} ${height}`}>
+    <svg aria-label={`Historikk for ${row.player.shortName}`} className={className} role="img" viewBox={`0 0 ${width} ${height}`}>
       <line stroke="rgba(225,192,108,0.28)" x1="0" x2={width} y1={height * 0.3} y2={height * 0.3} />
       <line stroke="rgba(225,192,108,0.18)" x1="0" x2={width} y1={height * 0.7} y2={height * 0.7} />
       <path d={path} fill="none" stroke={row.tier.tone} strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
@@ -1261,7 +1385,7 @@ function IndexHistoryGraph({ rows }: { rows: GeoterIndexRow[] }) {
   const yFor = (score: number) => plot.top + (1 - score / 1000) * plotHeight;
 
   return (
-    <div className="mt-4 overflow-x-auto rounded border border-[#c49a3c]/25 bg-[#020b11]/55 p-2">
+    <div className="mt-4 overflow-x-auto rounded border border-[#c49a3c]/35 bg-[#020b11] p-2">
       <svg aria-label="Samlet historikk for Geoterindeksen" className="min-w-[720px]" role="img" viewBox={`0 0 ${width} ${height}`}>
         <defs>
           <linearGradient id="indexGraphFade" x1="0" x2="1" y1="0" y2="0">

@@ -331,6 +331,33 @@ test("mobile forms and order progress use readable card layouts", async ({ page 
   await expectNoHorizontalOverflow(page);
 });
 
+test("Geoterindeksen is usable as mobile cards", async ({ page }) => {
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 320, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await login(page);
+    await page.goto("/tredje-kollegium", { waitUntil: "domcontentloaded" });
+
+    await expect(page.getByRole("heading", { name: "GEOTERINDEKSEN" })).toBeVisible();
+    await expect(page.getByTestId("geoter-index-adjustment-form")).toBeVisible();
+    await expect(page.getByTestId("geoter-index-mobile-list")).toBeVisible();
+    await expect(page.getByTestId("geoter-index-mobile-card").first()).toBeVisible();
+    await expect(page.getByTestId("geoter-index-mobile-trends")).toBeVisible();
+    await expect(page.getByTestId("geoter-index-desktop-table")).toBeHidden();
+
+    const minControlHeight = await page
+      .getByTestId("geoter-index-adjustment-form")
+      .locator('select, textarea, input:not([type="hidden"])')
+      .evaluateAll((elements) =>
+        Math.min(...elements.map((element) => Math.round(element.getBoundingClientRect().height))),
+      );
+    expect(minControlHeight).toBeGreaterThanOrEqual(44);
+    await expectNoHorizontalOverflow(page);
+  }
+});
+
 test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
   test.setTimeout(120_000);
   await mockGoogleMaps(page);
