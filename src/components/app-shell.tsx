@@ -2,22 +2,20 @@ import Link from "next/link";
 import { DoorOpen } from "lucide-react";
 
 import { logoutAction } from "@/app/actions";
-import { GeoGuessrTipToast } from "@/components/geo-guessr-tip-toast";
 import { GeotingGlobalAlert } from "@/components/geoting-global-alert";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { SlowGeoGlobalAlert } from "@/components/slowgeo-global-alert";
 import { RiksNav, type RiksNavItem } from "@/components/ui/riks-nav";
 import { RiksSegl } from "@/components/ui/riks-segl";
 import { getCurrentGeot } from "@/lib/auth";
-import { getGeoGuessrTipDaySeed, selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { getAppShellState, getStorageMode } from "@/lib/store";
 
 const NAV_ITEMS: readonly RiksNavItem[] = [
   { href: "/", label: "Kommandosentral" },
-  { href: "/spill", label: "Spill" },
-  { href: "/tabeller", label: "Tabeller" },
+  { href: "/spill/slowgeo", label: "SlowGeo" },
   { href: "/geotinget", label: "GeoTinget" },
-  { href: "/arkiv", label: "Oppslagsverk" },
+  { href: "/ordenen", label: "Ordenen" },
+  { href: "/arkiv", label: "Riksarkivet" },
   { href: "/min-geot", label: "Min geot" },
 ];
 
@@ -26,11 +24,6 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
     getCurrentGeot(),
     getAppShellState(),
   ]);
-  const toastTips = selectGeoGuessrTips({
-    placement: "global-toast",
-    seed: getGeoGuessrTipDaySeed(),
-    count: 12,
-  });
 
   return (
     <div className="geotia-civic-bg min-h-screen text-[#161713]">
@@ -73,7 +66,6 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
       <GeotingGlobalAlert proposals={appShellState.activeGeotingProposals} />
       <SlowGeoGlobalAlert rounds={appShellState.activeSlowGeoRounds} />
-      <GeoGuessrTipToast tips={toastTips} />
 
       <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
 

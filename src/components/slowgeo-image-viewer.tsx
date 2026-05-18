@@ -6,7 +6,14 @@ import { Loader2, Maximize2, Minus, Plus, RotateCcw, X } from "lucide-react";
 
 import { loadGoogleMaps, type GoogleMapsListener, type GoogleStreetViewPanorama } from "@/components/google-maps-loader";
 import type { SlowGeoStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
-import type { StreetViewStaticZoomImage } from "@/lib/streetview-url";
+import {
+  buildStreetViewStaticCrop,
+  buildStreetViewStaticCropUrlFromSource,
+  maxScaleForStreetViewStaticFov,
+  STREET_VIEW_STATIC_FULLSCREEN_IMAGE_SIZE,
+  type StreetViewStaticCrop,
+  type StreetViewStaticViewConfig,
+} from "@/lib/streetview-url";
 import { cn } from "@/lib/utils";
 
 type Point = {
@@ -20,7 +27,7 @@ type SlowGeoImageViewerProps = {
   sizes: string;
   className?: string;
   imageClassName?: string;
-  staticZoomImages?: StreetViewStaticZoomImage[];
+  staticViewConfig?: StreetViewStaticViewConfig | null;
   streetViewPanorama?: SlowGeoStreetViewPanoramaConfig | null;
   viewMode?: "static" | "panorama";
   priority?: boolean;
@@ -40,20 +47,13 @@ function distance(a: Point, b: Point) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-function selectStaticZoomImage(images: StreetViewStaticZoomImage[], scale: number) {
-  return images.reduce((selected, image) => {
-    if (image.scale <= scale + 0.001 && image.scale >= selected.scale) return image;
-    return selected;
-  }, images[0]);
-}
-
 export function SlowGeoImageViewer({
   src,
   alt,
   sizes,
   className,
   imageClassName,
-  staticZoomImages = [],
+  staticViewConfig,
   streetViewPanorama,
   viewMode = "static",
   priority = false,
@@ -70,15 +70,23 @@ export function SlowGeoImageViewer({
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 });
   const [interacting, setInteracting] = useState(false);
   const [panoramaStatus, setPanoramaStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [activeStaticCrop, setActiveStaticCrop] = useState<StreetViewStaticCrop | null>(null);
+  const [loadingStaticCrop, setLoadingStaticCrop] = useState(false);
   const panoramaEnabled = viewMode === "panorama" && Boolean(streetViewPanorama);
-  const orderedStaticZoomImages = useMemo(() => {
-    const images = [...staticZoomImages, { scale: 1, fov: 0, src }].sort((a, b) => a.scale - b.scale);
-    return images.filter((image, index) => index === 0 || image.scale > images[index - 1].scale + 0.001);
-  }, [src, staticZoomImages]);
-  const getStaticTransformScale = useCallback((nextScale: number) => {
-    const selectedImage = selectStaticZoomImage(orderedStaticZoomImages, nextScale);
-    return Math.max(1, nextScale / selectedImage.scale);
-  }, [orderedStaticZoomImages]);
+  const initialStaticCrop = useMemo(() => {
+    if (!staticViewConfig) return null;
+    return buildStreetViewStaticCrop({
+      ...staticViewConfig,
+      zoom: 1,
+      centerX: 0,
+      centerY: 0,
+    });
+  }, [staticViewConfig]);
+  const staticMaxScale = staticViewConfig
+    ? Math.min(maxScale, maxScaleForStreetViewStaticFov(staticViewConfig.fov))
+    : maxScale;
+  const committedStaticCrop = activeStaticCrop ?? initialStaticCrop;
+  const staticTransformScale = committedStaticCrop ? Math.max(1, scale / committedStaticCrop.zoom) : scale;
 
   const clampOffset = useCallback((nextOffset: Point, nextScale: number) => {
     const rect = viewportRef.current?.getBoundingClientRect();
@@ -90,26 +98,45 @@ export function SlowGeoImageViewer({
     };
   }, []);
 
+  const buildCropFromView = useCallback((nextScale: number, nextOffset: Point) => {
+    if (!staticViewConfig) return null;
+    const rect = viewportRef.current?.getBoundingClientRect();
+    const baseCrop = activeStaticCrop ?? initialStaticCrop;
+    const maxX = rect ? rect.width * Math.max(nextScale - 1, 0) * 0.5 : 0;
+    const maxY = rect ? rect.height * Math.max(nextScale - 1, 0) * 0.5 : 0;
+    const centerX = clamp((baseCrop?.centerX ?? 0) + (maxX > 0 ? -nextOffset.x / maxX : 0), -1, 1);
+    const centerY = clamp((baseCrop?.centerY ?? 0) + (maxY > 0 ? nextOffset.y / maxY : 0), -1, 1);
+
+    return buildStreetViewStaticCrop({
+      ...staticViewConfig,
+      zoom: nextScale,
+      centerX,
+      centerY,
+    });
+  }, [activeStaticCrop, initialStaticCrop, staticViewConfig]);
+
   const applyPanoramaZoom = useCallback((nextScale: number) => {
     if (!panoramaEnabled || !streetViewPanorama || !panoramaRef.current) return;
     panoramaRef.current.setZoom(clamp(streetViewPanorama.initialZoom + nextScale - 1, 0, maxPanoramaZoom));
   }, [panoramaEnabled, streetViewPanorama]);
 
   const setZoom = useCallback((nextScale: number) => {
-    const normalizedScale = clamp(nextScale, minScale, maxScale);
+    const normalizedScale = clamp(nextScale, minScale, staticMaxScale);
     setScale(normalizedScale);
     applyPanoramaZoom(normalizedScale);
-    setOffset((current) => clampOffset(current, getStaticTransformScale(normalizedScale)));
-  }, [applyPanoramaZoom, clampOffset, getStaticTransformScale]);
+    setOffset((current) => clampOffset(current, normalizedScale));
+  }, [applyPanoramaZoom, clampOffset, staticMaxScale]);
 
   const resetViewer = useCallback(() => {
     setScale(1);
     setOffset({ x: 0, y: 0 });
+    setActiveStaticCrop(initialStaticCrop);
+    setLoadingStaticCrop(false);
     if (panoramaEnabled && streetViewPanorama && panoramaRef.current) {
       panoramaRef.current.setPov(streetViewPanorama.pov);
       panoramaRef.current.setZoom(streetViewPanorama.initialZoom);
     }
-  }, [panoramaEnabled, streetViewPanorama]);
+  }, [initialStaticCrop, panoramaEnabled, streetViewPanorama]);
 
   const openViewer = useCallback(() => {
     resetViewer();
@@ -205,6 +232,42 @@ export function SlowGeoImageViewer({
     };
   }, [open, panoramaEnabled, streetViewPanorama]);
 
+  useEffect(() => {
+    if (!open || panoramaEnabled || !staticViewConfig || interacting) return;
+
+    const timer = window.setTimeout(() => {
+      const nextCrop = buildCropFromView(scale, offset);
+      if (!nextCrop) return;
+
+      const current = activeStaticCrop ?? initialStaticCrop;
+      const changed =
+        !current ||
+        Math.abs(current.zoom - nextCrop.zoom) > 0.001 ||
+        Math.abs(current.centerX - nextCrop.centerX) > 0.001 ||
+        Math.abs(current.centerY - nextCrop.centerY) > 0.001 ||
+        Math.abs(current.heading - nextCrop.heading) > 0.001 ||
+        Math.abs(current.pitch - nextCrop.pitch) > 0.001 ||
+        Math.abs(current.fov - nextCrop.fov) > 0.001;
+
+      if (!changed) return;
+      setLoadingStaticCrop(true);
+      setActiveStaticCrop(nextCrop);
+      setOffset({ x: 0, y: 0 });
+    }, 160);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    activeStaticCrop,
+    buildCropFromView,
+    initialStaticCrop,
+    interacting,
+    offset,
+    open,
+    panoramaEnabled,
+    scale,
+    staticViewConfig,
+  ]);
+
   function beginDrag(point: Point) {
     dragStartRef.current = {
       point,
@@ -214,7 +277,12 @@ export function SlowGeoImageViewer({
 
   function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
     if (panoramaEnabled && panoramaStatus !== "error") return;
-    event.currentTarget.setPointerCapture(event.pointerId);
+    event.preventDefault();
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Synthetic pointer events in tests do not always create an active capture target.
+    }
     pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     setInteracting(true);
 
@@ -237,6 +305,7 @@ export function SlowGeoImageViewer({
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
     if (panoramaEnabled && panoramaStatus !== "error") return;
     if (!pointersRef.current.has(event.pointerId)) return;
+    event.preventDefault();
     pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     const points = Array.from(pointersRef.current.values());
 
@@ -244,14 +313,14 @@ export function SlowGeoImageViewer({
       const nextScale = clamp(
         pinchStartRef.current.scale * (distance(points[0], points[1]) / pinchStartRef.current.distance),
         minScale,
-        maxScale,
+        staticMaxScale,
       );
       setScale(nextScale);
-      setOffset((current) => clampOffset(current, getStaticTransformScale(nextScale)));
+      setOffset((current) => clampOffset(current, nextScale));
       return;
     }
 
-    if (points.length === 1 && dragStartRef.current && getStaticTransformScale(scale) > 1) {
+    if (points.length === 1 && dragStartRef.current && scale > 1) {
       const delta = {
         x: points[0].x - dragStartRef.current.point.x,
         y: points[0].y - dragStartRef.current.point.y,
@@ -262,7 +331,7 @@ export function SlowGeoImageViewer({
             x: dragStartRef.current.offset.x + delta.x,
             y: dragStartRef.current.offset.y + delta.y,
           },
-          getStaticTransformScale(scale),
+          scale,
         ),
       );
     }
@@ -270,8 +339,13 @@ export function SlowGeoImageViewer({
 
   function handlePointerEnd(event: PointerEvent<HTMLDivElement>) {
     if (panoramaEnabled && panoramaStatus !== "error") return;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    event.preventDefault();
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      try {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      } catch {
+        // Ignore stale pointer capture after cancelled gestures.
+      }
     }
     pointersRef.current.delete(event.pointerId);
     const points = Array.from(pointersRef.current.values());
@@ -289,8 +363,14 @@ export function SlowGeoImageViewer({
 
   const usePanorama = Boolean(panoramaEnabled && panoramaStatus !== "error");
   const zoomControlsDisabled = usePanorama && panoramaStatus !== "ready";
-  const activeStaticImage = selectStaticZoomImage(orderedStaticZoomImages, scale);
-  const staticTransformScale = getStaticTransformScale(scale);
+  const activeStaticSrc =
+    staticViewConfig && committedStaticCrop
+      ? buildStreetViewStaticCropUrlFromSource({
+          sourceUrl: src,
+          crop: committedStaticCrop,
+          size: staticViewConfig.size ?? STREET_VIEW_STATIC_FULLSCREEN_IMAGE_SIZE,
+        })
+      : src;
 
   return (
     <>
@@ -349,7 +429,7 @@ export function SlowGeoImageViewer({
               <button
                 type="button"
                 onClick={() => setZoom(scale + zoomStep)}
-                disabled={zoomControlsDisabled || scale >= maxScale}
+                disabled={zoomControlsDisabled || scale >= staticMaxScale}
                 className="inline-flex h-11 w-11 items-center justify-center rounded border border-white/15 bg-white/10 text-white disabled:cursor-not-allowed disabled:opacity-45"
                 aria-label="Zoom inn"
               >
@@ -389,8 +469,8 @@ export function SlowGeoImageViewer({
               onDoubleClick={() => (scale === 1 ? setZoom(2) : resetViewer())}
             >
               <Image
-                key={activeStaticImage.src}
-                src={activeStaticImage.src}
+                key={activeStaticSrc}
+                src={activeStaticSrc}
                 alt={alt}
                 fill
                 sizes="100vw"
@@ -402,7 +482,14 @@ export function SlowGeoImageViewer({
                 referrerPolicy="no-referrer-when-downgrade"
                 unoptimized
                 priority
+                onLoad={() => setLoadingStaticCrop(false)}
+                onError={() => setLoadingStaticCrop(false)}
               />
+              {loadingStaticCrop ? (
+                <div className="pointer-events-none absolute bottom-3 left-3 rounded bg-black/65 px-3 py-2 text-xs font-semibold text-white">
+                  Laster skarpere utsnitt
+                </div>
+              ) : null}
             </div>
           )}
         </div>

@@ -1,11 +1,9 @@
-import Image from "next/image";
 import { FileText, Gavel, ScrollText, ShieldCheck } from "lucide-react";
 
 import { updateGeotingProposalAction, withdrawGeotingProposalAction } from "@/app/actions";
 import { GeotingSubnav } from "@/components/geoting-subnav";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
-import { Section, StatTile } from "@/components/section";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Section } from "@/components/section";
 import { Stamp, type StampTone } from "@/components/ui/stamp";
 import { getCurrentGeot } from "@/lib/auth";
 import { getGeotingLifecycle, geotingImplementationLabels, partyPositionLabels, summarizeProposal } from "@/lib/geoting";
@@ -56,39 +54,22 @@ export default async function GeotingPergamentsPage({
 
   return (
     <div className="space-y-6">
-      <section className="geo-hero">
-        <div className="geo-hero-grid">
-          <div className="geo-hero-text">
-            <Eyebrow>GeoTingets arkiv · protokoller · Kapittel IV</Eyebrow>
-            <h1 className="geo-hero-title">Tingpergamentene</h1>
-            <p className="geo-hero-lead geo-hero-lead-dropcap">
-              Her ligger GeoTingets innsendte saker, avstemninger, vedtak,
-              trukne forslag og gamle grunnpergamenter samlet i ett arkiv.
-            </p>
-          </div>
-          <div className="geo-hero-poster">
-            <Image
-              src="/illustrations/vapen-tinget.svg"
-              alt="Riksvåpen for GeoTinget"
-              width={300}
-              height={350}
-              priority
-              style={{ width: "auto", maxHeight: "440px" }}
-            />
-          </div>
-        </div>
+      <section className="geotia-frame rounded p-5 sm:p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
+          GeoTinget · Arkiv
+        </p>
+        <h1 className="font-display mt-2 text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
+          Tingpergamentene
+        </h1>
+        <p className="mt-3 max-w-3xl text-base leading-7 text-[#4f412b]">
+          Innsendte saker, vedtak og gamle grunnpergamenter. {proposals.length}
+          {" "}levende pergamenter, {activeCount} åpne og {resolvedCount} avgjort.
+        </p>
       </section>
 
       <GeotingSubnav active="pergamenter" />
 
       <PergamentStatus status={params.status} error={params.error} />
-
-      <div className="grid gap-3 md:grid-cols-4">
-        <StatTile label="Levende pergamenter" value={proposals.length} detail="Nye saker i embetsverket" tone="blue" index={0} />
-        <StatTile label="Åpne saker" value={activeCount} detail="Venter eller står i urnen" tone="gold" index={1} />
-        <StatTile label="Avgjort" value={resolvedCount} detail="Vedtatt eller forkastet" tone="green" index={2} />
-        <StatTile label="Historiske ark" value={archive.geotingCases.length} detail="Grunnpergamenter" tone="red" index={3} />
-      </div>
 
       <Section
         title="Levende tingpergamenter"

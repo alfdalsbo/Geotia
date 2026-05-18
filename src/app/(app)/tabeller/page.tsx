@@ -11,6 +11,7 @@ import { computeGameStandings, computeStandings, geotStatus, getHallOfFame } fro
 import { getScoreboardState } from "@/lib/store";
 import type { GameDefinition, GameStanding, Standing } from "@/lib/types";
 import { formatKm, formatNumber, formatScore } from "@/lib/utils";
+import { getVisibleGames } from "@/lib/visible-games";
 
 export const metadata = {
   title: "Tabeller",
@@ -24,7 +25,7 @@ export default async function TablesPage() {
   const kattometerLeader = standings
     .filter((standing) => standing.lockedRounds > 0)
     .sort((a, b) => a.totalKattometer - b.totalKattometer)[0];
-  const scoreGames = state.games.filter((game) => game.id !== "slowgeo");
+  const scoreGames = getVisibleGames(state.games).filter((game) => game.id !== "slowgeo");
   const oldSlowGeo = state.archive.oldSlowGeo;
   const oldPointLeader = [...oldSlowGeo].sort((a, b) => b.points - a.points)[0];
   const oldKattometerLeader = [...oldSlowGeo].sort((a, b) => a.kattometer - b.kattometer)[0];
@@ -37,9 +38,9 @@ export default async function TablesPage() {
             <Eyebrow>Poengmakt · kattometer · ære · Kapittel III</Eyebrow>
             <h1 className="geo-hero-title">Rikets tabeller</h1>
             <p className="geo-hero-lead geo-hero-lead-dropcap">
-              SlowGeo-tabellen, de nyere spilltabellene og Æreshallen er samlet
-              her, slik at toppnavigasjonen kan puste uten at staten mister
-              protokollen.
+              SlowGeo-tabellen, den gamle æraen og Æreshallen er samlet her,
+              slik at toppnavigasjonen kan puste uten at staten mister
+              protokollens lange hukommelse.
             </p>
           </div>
           <div className="geo-hero-poster">
@@ -157,12 +158,14 @@ export default async function TablesPage() {
         </Section>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        {scoreGames.map((game) => {
-          const gameStandings = computeGameStandings(state.players, state.gameSessions, game);
-          return <GameTable key={game.id} game={game} standings={gameStandings} />;
-        })}
-      </div>
+      {scoreGames.length ? (
+        <div className="grid gap-6 xl:grid-cols-2">
+          {scoreGames.map((game) => {
+            const gameStandings = computeGameStandings(state.players, state.gameSessions, game);
+            return <GameTable key={game.id} game={game} standings={gameStandings} />;
+          })}
+        </div>
+      ) : null}
 
       <Section
         title="Æreshallen"

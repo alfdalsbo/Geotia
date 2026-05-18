@@ -21,7 +21,7 @@ import { getSlowGeoRoundState, maybeRevealRound } from "@/lib/store";
 import { buildStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
 import {
   buildStreetViewImageUrl,
-  buildStreetViewStaticZoomImages,
+  buildStreetViewStaticViewConfig,
   STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
 } from "@/lib/streetview-url";
 import { formatKm } from "@/lib/utils";
@@ -109,11 +109,7 @@ export default async function SlowGeoSharePage({
     allowLocationFallback: round.status !== "open",
     size: STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
   });
-  const streetViewStaticZoomImages = buildStreetViewStaticZoomImages({
-    challenge: round.challenge,
-    apiKey: publicGoogleKey,
-    allowLocationFallback: round.status !== "open",
-  });
+  const streetViewStaticViewConfig = buildStreetViewStaticViewConfig(round.challenge);
   const streetViewPanorama = buildStreetViewPanoramaConfig({
     challenge: round.challenge,
     apiKey: publicGoogleKey,
@@ -227,7 +223,7 @@ export default async function SlowGeoSharePage({
             roundName={round.name}
             deadlineAt={round.deadlineAt ?? null}
             streetViewUrl={streetViewUrl}
-            streetViewStaticZoomImages={streetViewStaticZoomImages}
+            streetViewStaticViewConfig={streetViewStaticViewConfig}
             streetViewPanorama={streetViewPanorama}
             googleMapsApiKey={publicGoogleKey}
             existingGuess={existingGuess}
@@ -247,7 +243,7 @@ export default async function SlowGeoSharePage({
                   alt={`SlowGeo-bilde for ${round.name}`}
                   sizes="100vw"
                   className="aspect-[4/3] min-h-[320px] sm:aspect-video sm:min-h-[420px]"
-                  staticZoomImages={streetViewStaticZoomImages}
+                  staticViewConfig={streetViewStaticViewConfig}
                   streetViewPanorama={streetViewPanorama}
                   priority
                   title={round.name}

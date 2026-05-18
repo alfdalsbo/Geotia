@@ -13,7 +13,7 @@ import {
 import { SlowGeoImageViewer } from "@/components/slowgeo-image-viewer";
 import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
 import type { SlowGeoStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
-import type { StreetViewStaticZoomImage } from "@/lib/streetview-url";
+import type { StreetViewStaticViewConfig } from "@/lib/streetview-url";
 import {
   buildPersonalRevealedSlowGeoShareTextOptions,
   buildRevealedSlowGeoShareTextOptions,
@@ -33,7 +33,7 @@ type RevealMarker = {
 export function SlowGeoRevealMap({
   roundName,
   streetViewUrl,
-  streetViewStaticZoomImages,
+  streetViewStaticViewConfig,
   streetViewPanorama,
   googleMapsApiKey,
   markers,
@@ -47,7 +47,7 @@ export function SlowGeoRevealMap({
 }: {
   roundName: string;
   streetViewUrl: string | null;
-  streetViewStaticZoomImages: StreetViewStaticZoomImage[];
+  streetViewStaticViewConfig: StreetViewStaticViewConfig | null;
   streetViewPanorama: SlowGeoStreetViewPanoramaConfig | null;
   googleMapsApiKey: string;
   markers: RevealMarker[];
@@ -165,7 +165,7 @@ export function SlowGeoRevealMap({
               alt="SlowGeo-fasitbilde"
               sizes="(min-width: 1280px) 55vw, 100vw"
               className="aspect-[4/3] min-h-[320px] sm:aspect-video sm:min-h-[300px]"
-              staticZoomImages={streetViewStaticZoomImages}
+              staticViewConfig={streetViewStaticViewConfig}
               streetViewPanorama={streetViewPanorama}
               title={roundName}
             />

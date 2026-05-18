@@ -7,7 +7,6 @@ const competingPlayerIds = ["alf", "vegard", "jorgen", "steinar", "sverre", "fre
 
 const coreRoutes = [
   "/",
-  "/spill",
   "/spill/slowgeo",
   "/spill/registrer?game=geo",
   "/tabeller",
@@ -35,6 +34,15 @@ async function login(page: Page) {
   await page.getByLabel("Passord").fill("geotia");
   await page.getByRole("button", { name: "Åpne Geotia" }).click();
   await expect(logout).toBeVisible({ timeout: 15_000 });
+}
+
+async function expectInstitutionNav(page: Page) {
+  const mainNav = page.getByRole("navigation", { name: "Hovednavigasjon" });
+  for (const label of ["Kommandosentral", "SlowGeo", "GeoTinget", "Ordenen", "Riksarkivet", "Min geot"]) {
+    await expect(mainNav.getByRole("link", { name: label })).toBeVisible();
+  }
+  await expect(mainNav.getByRole("link", { name: "Tabeller" })).toHaveCount(0);
+  await expect(mainNav.getByRole("link", { name: "Spill", exact: true })).toHaveCount(0);
 }
 
 async function expectNoHorizontalOverflow(page: Page) {
@@ -236,10 +244,14 @@ test("core pages do not overflow horizontally on mobile", async ({ page }) => {
   ]) {
     await page.setViewportSize(viewport);
     await login(page);
+    await expectInstitutionNav(page);
 
     for (const route of coreRoutes) {
       await page.goto(route, { waitUntil: "domcontentloaded" });
-      await expect(page.getByRole("button", { name: "Forlat embetsverket" })).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Forlat embetsverket" }),
+        `Expected authenticated app shell on ${route}; current URL: ${page.url()}`,
+      ).toBeVisible({ timeout: 15_000 });
       await expectNoHorizontalOverflow(page);
     }
   }
@@ -252,6 +264,29 @@ test("mobile forms and order progress use readable card layouts", async ({ page 
   await page.goto("/runder", { waitUntil: "domcontentloaded" });
   await expect(page.locator("table.responsive-protocol").first()).toBeVisible();
   await expect(page.locator('td[data-label="Km fra fasit"]').first()).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Samlet stilling" })).toHaveCount(0);
+  await expect(page.getByText("MapTap")).toHaveCount(0);
+  await expect(page.getByText("Satle")).toHaveCount(0);
+  await expect(page.getByText("Globle")).toHaveCount(0);
+  await expectNoHorizontalOverflow(page);
+
+  await page.goto("/spill", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/spill\/slowgeo$/);
+  await expect(page.getByRole("heading", { name: "SlowGeo", exact: true })).toBeVisible();
+  await expect(page.getByText("MapTap")).toHaveCount(0);
+  await expect(page.getByText("Satle")).toHaveCount(0);
+  await expect(page.getByText("Globle")).toHaveCount(0);
+  await expectNoHorizontalOverflow(page);
+
+  await page.goto("/tabeller", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "SlowGeo-tabell" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Geo-tabell", exact: true })).toHaveCount(0);
+  await expect(page.getByText("MapTap")).toHaveCount(0);
+  await expect(page.getByText("Satle")).toHaveCount(0);
+  await expect(page.getByText("Globle")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
 
   await page.goto("/spill/registrer?game=geo", { waitUntil: "domcontentloaded" });
@@ -310,6 +345,36 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
   await imageDialog.getByRole("button", { name: "Zoom inn" }).click();
   await expect(imageDialog.getByText("150%")).toBeVisible();
   await expect(fullscreenImage).toHaveAttribute("src", /fov=60/);
+  const imageViewport = imageDialog.getByTestId("slowgeo-image-viewport");
+  await imageViewport.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const startX = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    const init = {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+    };
+
+    element.dispatchEvent(new PointerEvent("pointerdown", { ...init, clientX: startX, clientY: y, button: 0, buttons: 1 }));
+    element.dispatchEvent(new PointerEvent("pointermove", { ...init, clientX: rect.left + 2, clientY: y, button: 0, buttons: 1 }));
+    element.dispatchEvent(new PointerEvent("pointerup", { ...init, clientX: rect.left + 2, clientY: y, button: 0, buttons: 0 }));
+  });
+  await expect
+    .poll(async () => {
+      const src = await fullscreenImage.getAttribute("src");
+      return src ? new URL(src).searchParams.get("heading") : null;
+    }, { timeout: 10_000 })
+    .toBe("79");
+  await expect
+    .poll(async () => {
+      const src = await fullscreenImage.getAttribute("src");
+      return src ? new URL(src).searchParams.get("fov") : null;
+    }, { timeout: 10_000 })
+    .toBe("60");
   await expectNoHorizontalOverflow(page);
   await imageDialog.getByRole("button", { name: "Lukk bilde" }).click();
   await expect(imageDialog).toBeHidden();

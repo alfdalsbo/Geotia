@@ -11,7 +11,7 @@ import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-butt
 import { SlowGeoTipPanel } from "@/components/slowgeo-tip-panel";
 import type { GeoGuessrTip } from "@/lib/geoguessr-tips";
 import type { SlowGeoStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
-import type { StreetViewStaticZoomImage } from "@/lib/streetview-url";
+import type { StreetViewStaticViewConfig } from "@/lib/streetview-url";
 import { buildOpenSlowGeoShareTextOptions } from "@/lib/slowgeo-share";
 import { dateTimeLabel } from "@/lib/utils";
 
@@ -26,7 +26,7 @@ type SlowGeoPlayProps = {
   roundName: string;
   deadlineAt: string | null;
   streetViewUrl: string | null;
-  streetViewStaticZoomImages: StreetViewStaticZoomImage[];
+  streetViewStaticViewConfig: StreetViewStaticViewConfig | null;
   streetViewPanorama: SlowGeoStreetViewPanoramaConfig | null;
   googleMapsApiKey: string;
   existingGuess: (Guess & { updatedAt?: string | null }) | null;
@@ -47,7 +47,7 @@ export function SlowGeoPlay({
   roundName,
   deadlineAt,
   streetViewUrl,
-  streetViewStaticZoomImages,
+  streetViewStaticViewConfig,
   streetViewPanorama,
   googleMapsApiKey,
   existingGuess,
@@ -209,7 +209,7 @@ export function SlowGeoPlay({
               alt="SlowGeo-bilde"
               sizes={imageSizes}
               className={imageClass}
-              staticZoomImages={streetViewStaticZoomImages}
+              staticViewConfig={streetViewStaticViewConfig}
               streetViewPanorama={streetViewPanorama}
               title={roundName}
             />

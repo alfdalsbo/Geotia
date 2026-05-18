@@ -7,10 +7,21 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await page.getByLabel("Passord").fill("geotia");
   await page.getByRole("button", { name: "Åpne Geotia" }).click();
 
-  await expect(page.getByRole("heading", { name: "Geotia" })).toBeVisible();
-  await page.getByRole("button", { name: /Vis større bilde: Partikort for SS/ }).click();
-  await expect(page.getByRole("dialog")).toBeVisible();
-  await page.getByRole("button", { name: "Lukk større bilde" }).click();
+  await expect(page.getByRole("heading", { name: "Geotia", exact: true })).toBeVisible();
+  const mainNav = page.getByRole("navigation", { name: "Hovednavigasjon" });
+  await expect(mainNav.getByRole("link", { name: "Kommandosentral" })).toBeVisible();
+  await expect(mainNav.getByRole("link", { name: "SlowGeo" })).toBeVisible();
+  await expect(mainNav.getByRole("link", { name: "GeoTinget" })).toBeVisible();
+  await expect(mainNav.getByRole("link", { name: "Ordenen" })).toBeVisible();
+  await expect(mainNav.getByRole("link", { name: "Riksarkivet" })).toBeVisible();
+  await expect(mainNav.getByRole("link", { name: "Min geot" })).toBeVisible();
+  await expect(mainNav.getByRole("link", { name: "Tabeller" })).toHaveCount(0);
+  await expect(mainNav.getByRole("link", { name: "Spill", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Samlet stilling" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Vis større bilde: Partikort for SS/ })).toHaveCount(0);
+  await expect(page.getByText("MapTap")).toHaveCount(0);
+  await expect(page.getByText("Satle")).toHaveCount(0);
+  await expect(page.getByText("Globle")).toHaveCount(0);
   await page.goto("/runder");
 
   await page.getByLabel("Rundenavn").fill("Playwright-protokollen");
@@ -37,16 +48,20 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await page.getByRole("button", { name: "Lås" }).first().click();
   await expect(page.getByText("Protokollen er låst. Kattometeret har talt.")).toBeVisible();
 
-  await page.getByRole("link", { name: "Tabeller", exact: true }).click();
+  await page.goto("/tabeller");
   await expect(page.getByRole("cell", { name: /Alf Kåre/ }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Rikets tabeller" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "SlowGeo-tabell" })).toBeVisible();
 
-  await page.getByRole("link", { name: "Spill" }).click();
-  await expect(page.getByRole("heading", { name: "Spillkammer" })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Åpne SlowGeo/ })).toBeVisible();
+  await page.goto("/spill/slowgeo");
+  await expect(page.getByRole("heading", { name: "SlowGeo", exact: true })).toBeVisible();
+  await page.goto("/spill");
+  await expect(page).toHaveURL(/\/spill\/slowgeo$/);
+  await expect(page.getByText("MapTap")).toHaveCount(0);
+  await expect(page.getByText("Satle")).toHaveCount(0);
+  await expect(page.getByText("Globle")).toHaveCount(0);
   await expect(page.getByText("Før ny spilløkt")).toHaveCount(0);
-  await page.locator('a[href="/spill/registrer?game=geo"]').first().click();
+  await page.goto("/spill/registrer?game=geo");
   await page.getByLabel("Spill").selectOption("geo");
   await page.getByLabel("Navn på økt").fill("Geo-fellesprotokoll");
   await page.locator('select[name="status_alf"]').selectOption("deltatt");
@@ -55,11 +70,14 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await page.locator('input[name="score_vegard"]').fill("23000");
   await page.getByRole("button", { name: "Før spilløkt" }).click();
   await expect(page.getByText("Spilløkten er ført.")).toBeVisible();
-  await page.getByRole("link", { name: "Tabeller", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Geo-tabell", exact: true })).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByRole("cell", { name: "24 000 poeng" }).first()).toBeVisible();
+  await page.goto("/tabeller");
+  await expect(page.getByRole("heading", { name: "SlowGeo-tabell" })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: "Geo-tabell", exact: true })).toHaveCount(0);
+  await expect(page.getByText("MapTap")).toHaveCount(0);
+  await expect(page.getByText("Satle")).toHaveCount(0);
+  await expect(page.getByText("Globle")).toHaveCount(0);
 
-  await page.getByRole("link", { name: "GeoTinget" }).click();
+  await mainNav.getByRole("link", { name: "GeoTinget" }).click();
   await expect(page.getByRole("link", { name: "Tingvollen" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Stemmeurnen" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Tingpergamentene" })).toBeVisible();
@@ -92,7 +110,7 @@ test("Danny logs in as Tingvitne without voting power", async ({ page }) => {
   await page.getByRole("button", { name: "Åpne Geotia" }).click();
 
   await expect(page.getByText("Innlogget som Danny — Tingvitne")).toBeVisible();
-  await page.getByRole("link", { name: "GeoTinget" }).click();
+  await page.getByRole("navigation", { name: "Hovednavigasjon" }).getByRole("link", { name: "GeoTinget" }).click();
   await expect(page.getByRole("link", { name: "Tingvollen" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Stemmeurnen" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Tingpergamentene" })).toBeVisible();

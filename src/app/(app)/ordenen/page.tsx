@@ -207,39 +207,53 @@ export default async function GeoticOrderPage() {
         </Section>
       ) : null}
 
-      <section id="ordensstigen" className="space-y-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
-              Den synlige rangstigen
+      <details id="ordensstigen" className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+        <summary className="cursor-pointer list-none">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
+                Den synlige rangstigen
+              </p>
+              <h2 className="font-display mt-1 text-3xl font-semibold text-[#062b40]">
+                Veien opp gjennom Geotia
+              </h2>
+            </div>
+            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#7e5a18]">
+              Åpne rangstigen
             </p>
-            <h2 className="font-display mt-1 text-3xl font-semibold text-[#062b40]">
-              Veien opp gjennom Geotia
-            </h2>
           </div>
+        </summary>
+        <div className="mt-4 space-y-4">
           <p className="max-w-xl text-sm leading-6 text-[#60553f]">
             Rang er ikke vern mot hån. Rang er bare en større blink, båret med
             mer ansvar og bedre protokollføring.
           </p>
-        </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          {geoticOrderRanks.map((rank) => (
-            <RankCard key={rank.id} rank={rank} current={rank.id === currentRow?.rank.id} />
-          ))}
-        </div>
-      </section>
-
-      <section id="protokollen" className="space-y-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
-              Rikets ordensprotokoll
-            </p>
-            <h2 className="font-display mt-1 text-3xl font-semibold text-[#062b40]">
-              Geotenes nåværende rang
-            </h2>
+          <div className="grid gap-4 lg:grid-cols-2">
+            {geoticOrderRanks.map((rank) => (
+              <RankCard key={rank.id} rank={rank} current={rank.id === currentRow?.rank.id} />
+            ))}
           </div>
+        </div>
+      </details>
+
+      <details id="protokollen" className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+        <summary className="cursor-pointer list-none">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
+                Rikets ordensprotokoll
+              </p>
+              <h2 className="font-display mt-1 text-3xl font-semibold text-[#062b40]">
+                Geotenes nåværende rang
+              </h2>
+            </div>
+            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#7e5a18]">
+              Åpne protokollen
+            </p>
+          </div>
+        </summary>
+        <div className="mt-4 space-y-4">
           <Link
             href="/stilling"
             className="inline-flex h-10 items-center justify-center gap-2 rounded border border-[#062b40]/30 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40] transition hover:border-[#c49a3c]"
@@ -247,39 +261,56 @@ export default async function GeoticOrderPage() {
             Se poenggrunnlaget
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
-        </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          {rows.map((row) => (
-            <OrderPersonCard key={row.player.id} row={row} current={row.player.id === currentGeot?.id} />
-          ))}
-        </div>
-      </section>
-
-      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <Section title="Ritualene" eyebrow="Løfter som virker fordi de nesten ikke gjør det">
-          <div className="grid gap-3">
-            {geoticOrderRanks.slice(0, 6).map((rank) => (
-              <div key={rank.id} className="rounded border border-[#d8c48c] bg-white/72 p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
-                  {rank.name}
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[#4f412b]">“{rank.ritual}”</p>
-              </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            {rows.map((row) => (
+              <OrderPersonCard key={row.player.id} row={row} current={row.player.id === currentGeot?.id} />
             ))}
           </div>
-        </Section>
+        </div>
+      </details>
 
-        <Section title="Partiprøvene" eyebrow="Aspirantens syv dører">
-          <div className="grid gap-3 md:grid-cols-2">
-            {partyTrials.map((trial) => (
-              <div key={trial} className="rounded border border-[#d8c48c] bg-white/72 p-3 text-sm leading-6 text-[#4f412b]">
-                {trial}
-              </div>
-            ))}
+      <details className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+        <summary className="cursor-pointer list-none">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
+                Ordensstoff
+              </p>
+              <h2 className="font-display mt-1 text-3xl font-semibold text-[#062b40]">
+                Ritualer og partiprøver
+              </h2>
+            </div>
+            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#7e5a18]">
+              Åpne prøvene
+            </p>
           </div>
-        </Section>
-      </div>
+        </summary>
+        <div className="mt-4 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+          <Section title="Ritualene" eyebrow="Løfter som virker fordi de nesten ikke gjør det">
+            <div className="grid gap-3">
+              {geoticOrderRanks.slice(0, 6).map((rank) => (
+                <div key={rank.id} className="rounded border border-[#d8c48c] bg-white/72 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
+                    {rank.name}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-[#4f412b]">“{rank.ritual}”</p>
+                </div>
+              ))}
+            </div>
+          </Section>
+
+          <Section title="Partiprøvene" eyebrow="Aspirantens syv dører">
+            <div className="grid gap-3 md:grid-cols-2">
+              {partyTrials.map((trial) => (
+                <div key={trial} className="rounded border border-[#d8c48c] bg-white/72 p-3 text-sm leading-6 text-[#4f412b]">
+                  {trial}
+                </div>
+              ))}
+            </div>
+          </Section>
+        </div>
+      </details>
     </div>
   );
 }

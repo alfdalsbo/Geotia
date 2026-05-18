@@ -11,10 +11,11 @@ async function login(page: Page, username: string) {
 test("Den Geotiske Orden is public without revealing the Third College", async ({ page }) => {
   await login(page, "Danny");
 
-  await expect(page.getByRole("link", { name: "Ordenen" })).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "Hovednavigasjon" }).getByRole("link", { name: "Ordenen" })).toBeVisible();
   await page.goto("/ordenen");
   await expect(page.getByRole("heading", { name: "Den Geotiske Orden" })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("heading", { name: "Veien opp gjennom Geotia" })).toBeVisible({ timeout: 15_000 });
+  await page.locator("#ordensstigen summary").click();
   await expect(page.getByRole("heading", { name: "Borger av Geotia" }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Partistiftelse er nivå 7" })).toBeVisible();
   await expect(page.getByText("Nytt parti er en søknad om opprettelse")).toBeVisible();

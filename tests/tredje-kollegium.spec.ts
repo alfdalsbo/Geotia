@@ -13,7 +13,7 @@ for (const username of ["SS", "PKK", "IRA"]) {
     await login(page, username);
 
     await expect(page.getByRole("link", { name: "Tredje Kollegium" })).toHaveCount(0);
-    await page.getByRole("link", { name: "Min geot" }).click();
+    await page.getByRole("navigation", { name: "Hovednavigasjon" }).getByRole("link", { name: "Min geot" }).click();
     await expect(page.getByRole("heading", { name: /Alf Kåre|Steinar|Vegard/ })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("link", { name: "Tredje Kollegium" })).toBeVisible();
     await page.getByRole("link", { name: "Tredje Kollegium" }).click();
@@ -21,8 +21,7 @@ for (const username of ["SS", "PKK", "IRA"]) {
     await expect(page.getByRole("heading", { name: "Tredje Kollegium" })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("heading", { name: "GEOTERINDEKSEN" })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Åpne poengsystemet")).toBeVisible();
-    await page.getByLabel("Vis større bilde: Seglet til Tredje Kollegium").click();
-    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByLabel("Vis større bilde: Seglet til Tredje Kollegium")).toBeVisible();
   });
 }
 
@@ -32,7 +31,7 @@ test("Tredje Kollegium stays invisible for every non-member", async ({ page }) =
     await login(page, username);
 
     await expect(page.getByRole("link", { name: "Tredje Kollegium" })).toHaveCount(0);
-    await page.getByRole("link", { name: "Min geot" }).click();
+    await page.getByRole("navigation", { name: "Hovednavigasjon" }).getByRole("link", { name: "Min geot" }).click();
     await expect(page.getByRole("link", { name: "Tredje Kollegium" })).toHaveCount(0);
     await expect(page.getByText("GEOTERINDEKSEN")).toHaveCount(0);
     const pageResponse = await page.goto("/tredje-kollegium");

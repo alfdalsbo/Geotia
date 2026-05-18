@@ -3,9 +3,13 @@ import { describe, expect, it } from "vitest";
 import { buildStreetViewPanoramaConfig, streetViewZoomFromFov } from "@/lib/streetview-panorama";
 import {
   buildStreetViewImageUrl,
-  buildStreetViewStaticZoomImages,
+  buildStreetViewStaticCrop,
+  buildStreetViewStaticCropUrl,
+  buildStreetViewStaticCropUrlFromSource,
+  maxScaleForStreetViewStaticFov,
   normalizeStreetViewStaticFov,
   streetViewStaticFovForZoom,
+  STREET_VIEW_STATIC_FULLSCREEN_IMAGE_SIZE,
   STREET_VIEW_STATIC_IMAGE_SIZE,
   STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
 } from "@/lib/streetview-url";
@@ -45,28 +49,108 @@ describe("Street View display helpers", () => {
     expect(url).toContain(`size=${STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE}`);
   });
 
-  it("builds static zoom variants with narrower fov and max Static API size", () => {
-    const variants = buildStreetViewStaticZoomImages({
-      challenge,
-      apiKey: "public-key",
+  it("builds a static crop with narrower fov and bounded heading or pitch", () => {
+    expect(
+      buildStreetViewStaticCrop({
+        heading: 64,
+        pitch: 1,
+        fov: 90,
+        zoom: 2,
+        centerX: 1,
+        centerY: 0,
+      }),
+    ).toMatchObject({
+      zoom: 2,
+      centerX: 1,
+      centerY: 0,
+      heading: 86.5,
+      pitch: 1,
+      fov: 45,
     });
 
-    expect(variants.map((variant) => variant.scale)).toEqual([1, 1.5, 2, 3, 4]);
-    expect(variants.map((variant) => variant.fov)).toEqual([90, 60, 45, 30, 22.5]);
-    expect(variants.every((variant) => variant.src.includes(`size=${STREET_VIEW_STATIC_IMAGE_SIZE}`))).toBe(true);
-    expect(variants[1].src).toContain("fov=60");
+    expect(
+      buildStreetViewStaticCrop({
+        heading: 64,
+        pitch: 1,
+        fov: 90,
+        zoom: 2,
+        centerX: -1,
+        centerY: 0,
+      }).heading,
+    ).toBe(41.5);
+    expect(
+      buildStreetViewStaticCrop({
+        heading: 64,
+        pitch: 1,
+        fov: 90,
+        zoom: 2,
+        centerX: 0,
+        centerY: 1,
+      }).pitch,
+    ).toBe(23.5);
+    expect(
+      buildStreetViewStaticCrop({
+        heading: 64,
+        pitch: 1,
+        fov: 90,
+        zoom: 2,
+        centerX: 0,
+        centerY: -1,
+      }).pitch,
+    ).toBe(-21.5);
   });
 
-  it("clamps static zoom fov before it invents more static detail", () => {
+  it("builds static crop urls with max Static API size and the crop view", () => {
+    const crop = buildStreetViewStaticCrop({
+      heading: 64,
+      pitch: 1,
+      fov: 90,
+      zoom: 2,
+      centerX: 1,
+      centerY: 0,
+    });
+    const url = buildStreetViewStaticCropUrl({
+      challenge,
+      apiKey: "public-key",
+      crop,
+    });
+
+    expect(url).not.toBeNull();
+    const params = new URL(url ?? "").searchParams;
+    expect(params.get("size")).toBe(STREET_VIEW_STATIC_FULLSCREEN_IMAGE_SIZE);
+    expect(params.get("heading")).toBe("86.5");
+    expect(params.get("pitch")).toBe("1");
+    expect(params.get("fov")).toBe("45");
+
+    const sourceUrl = buildStreetViewImageUrl({
+      challenge,
+      apiKey: "public-key",
+      size: STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
+    });
+    const croppedSourceUrl = buildStreetViewStaticCropUrlFromSource({
+      sourceUrl: sourceUrl ?? "",
+      crop,
+    });
+    const sourceParams = new URL(croppedSourceUrl).searchParams;
+    expect(sourceParams.get("size")).toBe(STREET_VIEW_STATIC_FULLSCREEN_IMAGE_SIZE);
+    expect(sourceParams.get("heading")).toBe("86.5");
+    expect(sourceParams.get("fov")).toBe("45");
+  });
+
+  it("clamps static crop fov before it invents more static detail", () => {
     expect(normalizeStreetViewStaticFov(200)).toBe(120);
     expect(streetViewStaticFovForZoom(60, 4)).toBe(20);
+    expect(maxScaleForStreetViewStaticFov(60)).toBe(3);
     expect(
-      buildStreetViewStaticZoomImages({
-        challenge: { ...challenge, fov: 60 },
-        apiKey: "public-key",
-        zoomFactors: [1, 2, 3, 4],
-      }).map((variant) => variant.scale),
-    ).toEqual([1, 2, 3]);
+      buildStreetViewStaticCrop({
+        heading: 64,
+        pitch: 1,
+        fov: 60,
+        zoom: 4,
+        centerX: 0,
+        centerY: 0,
+      }),
+    ).toMatchObject({ zoom: 3, fov: 20 });
   });
 
   it("maps Static API fov to an equivalent Street View panorama zoom", () => {

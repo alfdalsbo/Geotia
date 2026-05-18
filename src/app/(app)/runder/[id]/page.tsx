@@ -18,7 +18,7 @@ import { getRoundsState, maybeRevealRound } from "@/lib/store";
 import { buildStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
 import {
   buildStreetViewImageUrl,
-  buildStreetViewStaticZoomImages,
+  buildStreetViewStaticViewConfig,
   STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
 } from "@/lib/streetview-url";
 import type { Round, RoundStatus } from "@/lib/types";
@@ -96,13 +96,7 @@ export default async function RoundDetailPage({
         size: STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
       })
     : null;
-  const streetViewStaticZoomImages = round.challenge
-    ? buildStreetViewStaticZoomImages({
-        challenge: round.challenge,
-        apiKey: publicGoogleKey,
-        allowLocationFallback: round.status !== "open",
-      })
-    : [];
+  const streetViewStaticViewConfig = round.challenge ? buildStreetViewStaticViewConfig(round.challenge) : null;
   const streetViewPanorama = round.challenge
     ? buildStreetViewPanoramaConfig({
         challenge: round.challenge,
@@ -218,7 +212,7 @@ export default async function RoundDetailPage({
           roundName={round.name}
           deadlineAt={round.deadlineAt ?? null}
           streetViewUrl={streetViewUrl}
-          streetViewStaticZoomImages={streetViewStaticZoomImages}
+          streetViewStaticViewConfig={streetViewStaticViewConfig}
           streetViewPanorama={streetViewPanorama}
           googleMapsApiKey={publicGoogleKey}
           existingGuess={existingGuess}
@@ -232,7 +226,7 @@ export default async function RoundDetailPage({
         <SlowGeoRevealMap
           roundName={round.name}
           streetViewUrl={streetViewUrl}
-          streetViewStaticZoomImages={streetViewStaticZoomImages}
+          streetViewStaticViewConfig={streetViewStaticViewConfig}
           streetViewPanorama={streetViewPanorama}
           googleMapsApiKey={publicGoogleKey}
           markers={revealMarkers}

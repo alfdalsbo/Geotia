@@ -11,6 +11,13 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    "coverage/**",
+    "node_modules/**",
+    ".artifacts/**",
+    ".data/**",
+    ".vercel/**",
+    "test-results/**",
+    "tsconfig.tsbuildinfo",
     "next-env.d.ts",
   ]),
 ]);

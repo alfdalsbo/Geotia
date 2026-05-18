@@ -150,14 +150,22 @@ export default async function MyGeotPage() {
       </Section>
 
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <Section title="Profil" eyebrow="Geotisk identitet">
-          <div className="grid gap-4 md:grid-cols-2">
+        <details className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+          <summary className="cursor-pointer list-none">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
+              Geotisk identitet
+            </p>
+            <h2 className="font-display mt-1 text-3xl font-semibold text-[#062b40]">
+              Profil og særpreg
+            </h2>
+          </summary>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
             <InfoBlock icon={<ShieldCheck className="h-4 w-4" aria-hidden="true" />} title="Styrker" text={player.strengths} />
             <InfoBlock icon={<Gavel className="h-4 w-4" aria-hidden="true" />} title="Svakheter" text={player.weaknesses} />
             <InfoBlock icon={<BadgeCheck className="h-4 w-4" aria-hidden="true" />} title="Øyeblikk" text={player.moment} />
             <InfoBlock icon={<Crown className="h-4 w-4" aria-hidden="true" />} title="Merke" text={player.mark} />
           </div>
-        </Section>
+        </details>
 
         <Section
           title="Ordensvei"
@@ -194,24 +202,33 @@ export default async function MyGeotPage() {
         </Section>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <Section title="Merker" eyebrow="Fase 3-forberedelse">
-          {badges.length ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {badges.map((badge) => (
-                <article key={badge.id} className={`rounded border p-4 ${badgeToneClasses[badge.tone]}`}>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em]">{badge.detail}</p>
-                  <h2 className="font-display mt-1 text-2xl font-semibold">{badge.title}</h2>
-                  <p className="mt-2 text-sm leading-6">{badge.description}</p>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded border border-dashed border-[#c49a3c] bg-[#c49a3c]/10 p-5 text-sm leading-6 text-[#60553f]">
-              Ingen merker er utløst ennå. Det er nesten mistenkelig ryddig.
-            </div>
-          )}
-        </Section>
+      <details className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+        <summary className="cursor-pointer list-none">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
+            Dypere riksmappe
+          </p>
+          <h2 className="font-display mt-1 text-3xl font-semibold text-[#062b40]">
+            Merker og partipass
+          </h2>
+        </summary>
+        <div className="mt-4 grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <Section title="Merker" eyebrow="Fase 3-forberedelse">
+            {badges.length ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {badges.map((badge) => (
+                  <article key={badge.id} className={`rounded border p-4 ${badgeToneClasses[badge.tone]}`}>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em]">{badge.detail}</p>
+                    <h2 className="font-display mt-1 text-2xl font-semibold">{badge.title}</h2>
+                    <p className="mt-2 text-sm leading-6">{badge.description}</p>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded border border-dashed border-[#c49a3c] bg-[#c49a3c]/10 p-5 text-sm leading-6 text-[#60553f]">
+                Ingen merker er utløst ennå. Det er nesten mistenkelig ryddig.
+              </div>
+            )}
+          </Section>
 
         <article className="personal-poster">
           <div
@@ -286,57 +303,68 @@ export default async function MyGeotPage() {
             ) : null}
           </div>
         </article>
-      </div>
+        </div>
+      </details>
 
-      <Section title="Siste SlowGeo-spor" eyebrow="Personlig protokoll">
-        {latestResults.length ? (
-          <>
-          <div className="grid gap-3 md:hidden">
-            {latestResults.map(({ round, result }) => (
-              <article key={round.id} className="rounded border border-[#d8ded0] bg-white p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8e3030]">{dateLabel(round.date)}</p>
-                <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{round.name}</h2>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                  <Metric label="Km" value={formatKm(result.actualKm)} />
-                  <Metric label="Poeng" value={result.points} />
-                  <Metric label="Svar" value={result.guessText || "-"} />
-                  <Metric label="Runde" value={`#${round.number}`} />
-                </div>
-              </article>
-            ))}
-          </div>
-          <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="border-b border-[#d8ded0] text-xs uppercase tracking-[0.12em] text-[#5b6257]">
-                <tr>
-                  <th className="py-2 pr-3">Runde</th>
-                  <th className="py-2 pr-3">Dato</th>
-                  <th className="py-2 pr-3 text-right">Km</th>
-                  <th className="py-2 pr-3 text-right">Poeng</th>
-                  <th className="py-2">Svar</th>
-                </tr>
-              </thead>
-              <tbody>
-                {latestResults.map(({ round, result }) => (
-                  <tr key={round.id} className="border-b border-[#eef1eb] last:border-b-0">
-                    <td className="py-3 pr-3 font-semibold text-[#203c62]">{round.name}</td>
-                    <td className="py-3 pr-3">{dateLabel(round.date)}</td>
-                    <td className="py-3 pr-3 text-right">{formatKm(result.actualKm)}</td>
-                    <td className="py-3 pr-3 text-right font-semibold">{result.points}</td>
-                    <td className="py-3">{result.guessText || "-"}</td>
+      <details className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+        <summary className="cursor-pointer list-none">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
+            Personlig protokoll
+          </p>
+          <h2 className="font-display mt-1 text-3xl font-semibold text-[#062b40]">
+            Siste SlowGeo-spor
+          </h2>
+        </summary>
+        <div className="mt-4">
+          {latestResults.length ? (
+            <>
+            <div className="grid gap-3 md:hidden">
+              {latestResults.map(({ round, result }) => (
+                <article key={round.id} className="rounded border border-[#d8ded0] bg-white p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8e3030]">{dateLabel(round.date)}</p>
+                  <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{round.name}</h2>
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                    <Metric label="Km" value={formatKm(result.actualKm)} />
+                    <Metric label="Poeng" value={result.points} />
+                    <Metric label="Svar" value={result.guessText || "-"} />
+                    <Metric label="Runde" value={`#${round.number}`} />
+                  </div>
+                </article>
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[760px] text-left text-sm">
+                <thead className="border-b border-[#d8ded0] text-xs uppercase tracking-[0.12em] text-[#5b6257]">
+                  <tr>
+                    <th className="py-2 pr-3">Runde</th>
+                    <th className="py-2 pr-3">Dato</th>
+                    <th className="py-2 pr-3 text-right">Km</th>
+                    <th className="py-2 pr-3 text-right">Poeng</th>
+                    <th className="py-2">Svar</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          </>
-        ) : (
-          <div className="rounded border border-dashed border-[#b8892f] bg-[#b8892f]/8 p-5">
-            <p className="font-display text-2xl font-semibold text-[#654517]">Ingen låste spor ennå.</p>
-            <p className="mt-2 text-sm text-[#5b6257]">Når riket starter på nytt, blir første protokoll straks en del av mappen din.</p>
-          </div>
-        )}
-      </Section>
+                </thead>
+                <tbody>
+                  {latestResults.map(({ round, result }) => (
+                    <tr key={round.id} className="border-b border-[#eef1eb] last:border-b-0">
+                      <td className="py-3 pr-3 font-semibold text-[#203c62]">{round.name}</td>
+                      <td className="py-3 pr-3">{dateLabel(round.date)}</td>
+                      <td className="py-3 pr-3 text-right">{formatKm(result.actualKm)}</td>
+                      <td className="py-3 pr-3 text-right font-semibold">{result.points}</td>
+                      <td className="py-3">{result.guessText || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            </>
+          ) : (
+            <div className="rounded border border-dashed border-[#b8892f] bg-[#b8892f]/8 p-5">
+              <p className="font-display text-2xl font-semibold text-[#654517]">Ingen låste spor ennå.</p>
+              <p className="mt-2 text-sm text-[#5b6257]">Når riket starter på nytt, blir første protokoll straks en del av mappen din.</p>
+            </div>
+          )}
+        </div>
+      </details>
     </div>
   );
 }
