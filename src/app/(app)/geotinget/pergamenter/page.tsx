@@ -1,9 +1,11 @@
+import Image from "next/image";
 import { FileText, Gavel, ScrollText, ShieldCheck } from "lucide-react";
 
 import { updateGeotingProposalAction, withdrawGeotingProposalAction } from "@/app/actions";
 import { GeotingSubnav } from "@/components/geoting-subnav";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Section, StatTile } from "@/components/section";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { Stamp, type StampTone } from "@/components/ui/stamp";
 import { getCurrentGeot } from "@/lib/auth";
 import { getGeotingLifecycle, geotingImplementationLabels, partyPositionLabels, summarizeProposal } from "@/lib/geoting";
@@ -54,17 +56,27 @@ export default async function GeotingPergamentsPage({
 
   return (
     <div className="space-y-6">
-      <section className="geotia-frame geotia-temple rounded p-5 sm:p-7">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7c2430] sm:tracking-[0.22em]">
-          GeoTingets arkiv · pergamenter · protokoller
-        </p>
-        <h1 className="font-display mt-2 text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
-          Tingpergamentene
-        </h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-[#4f412b] sm:text-base sm:leading-7">
-          Her ligger GeoTingets innsendte saker, avstemninger, vedtak,
-          trukne forslag og gamle grunnpergamenter samlet i ett arkiv.
-        </p>
+      <section className="geo-hero">
+        <div className="geo-hero-grid">
+          <div className="geo-hero-text">
+            <Eyebrow>GeoTingets arkiv · protokoller · Kapittel IV</Eyebrow>
+            <h1 className="geo-hero-title">Tingpergamentene</h1>
+            <p className="geo-hero-lead geo-hero-lead-dropcap">
+              Her ligger GeoTingets innsendte saker, avstemninger, vedtak,
+              trukne forslag og gamle grunnpergamenter samlet i ett arkiv.
+            </p>
+          </div>
+          <div className="geo-hero-poster">
+            <Image
+              src="/illustrations/vapen-tinget.svg"
+              alt="Riksvåpen for GeoTinget"
+              width={300}
+              height={350}
+              priority
+              style={{ width: "auto", maxHeight: "440px" }}
+            />
+          </div>
+        </div>
       </section>
 
       <GeotingSubnav active="pergamenter" />
