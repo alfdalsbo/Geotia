@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "check": "npm run lint && npm run test && npm run build",
+    "finish": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/finish.ps1",
+    "ship": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ship.ps1",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
