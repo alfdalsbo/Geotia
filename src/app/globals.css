@@ -318,10 +318,22 @@ textarea {
   max-width: 1320px;
   margin: 0 auto;
   padding: 18px 32px;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 24px;
+  display: flex;
   align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.rikshead-identity {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.rikshead-identity > .rikshead-text {
+  min-width: 0;
 }
 
 .seal-frame {
@@ -362,7 +374,6 @@ textarea {
 
 @media (max-width: 900px) {
   .rikshead-inner {
-    grid-template-columns: auto 1fr;
     gap: 16px;
     padding: 16px 20px;
   }
@@ -375,7 +386,7 @@ textarea {
     height: 60px;
   }
   .geo-nav {
-    grid-column: 1 / -1;
+    flex: 1 1 100%;
     justify-content: flex-start;
   }
 }
