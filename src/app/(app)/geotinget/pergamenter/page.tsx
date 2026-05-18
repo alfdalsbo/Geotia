@@ -4,6 +4,7 @@ import { updateGeotingProposalAction, withdrawGeotingProposalAction } from "@/ap
 import { GeotingSubnav } from "@/components/geoting-subnav";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Section, StatTile } from "@/components/section";
+import { Stamp, type StampTone } from "@/components/ui/stamp";
 import { getCurrentGeot } from "@/lib/auth";
 import { getGeotingLifecycle, geotingImplementationLabels, partyPositionLabels, summarizeProposal } from "@/lib/geoting";
 import { isThirdCollegeMember } from "@/lib/kollegium";
@@ -28,6 +29,14 @@ const proposalStatusLabels = {
   passed: "Vedtatt",
   rejected: "Forkastet",
   archived: "Trukket",
+};
+
+const proposalStatusStamp: Record<keyof typeof proposalStatusLabels, { tone: StampTone; label: string }> = {
+  open: { tone: "alarm", label: "VENTER GEO-ED" },
+  voting: { tone: "alarm", label: "ÅPEN URNE" },
+  passed: { tone: "signal", label: "VEDTATT" },
+  rejected: { tone: "navy", label: "FORKASTET" },
+  archived: { tone: "navy", label: "TRUKKET" },
 };
 
 export default async function GeotingPergamentsPage({
@@ -63,10 +72,10 @@ export default async function GeotingPergamentsPage({
       <PergamentStatus status={params.status} error={params.error} />
 
       <div className="grid gap-3 md:grid-cols-4">
-        <StatTile label="Levende pergamenter" value={proposals.length} detail="Nye saker i embetsverket" tone="blue" />
-        <StatTile label="Åpne saker" value={activeCount} detail="Venter eller står i urnen" tone="gold" />
-        <StatTile label="Avgjort" value={resolvedCount} detail="Vedtatt eller forkastet" tone="green" />
-        <StatTile label="Historiske ark" value={archive.geotingCases.length} detail="Grunnpergamenter" tone="red" />
+        <StatTile label="Levende pergamenter" value={proposals.length} detail="Nye saker i embetsverket" tone="blue" index={0} />
+        <StatTile label="Åpne saker" value={activeCount} detail="Venter eller står i urnen" tone="gold" index={1} />
+        <StatTile label="Avgjort" value={resolvedCount} detail="Vedtatt eller forkastet" tone="green" index={2} />
+        <StatTile label="Historiske ark" value={archive.geotingCases.length} detail="Grunnpergamenter" tone="red" index={3} />
       </div>
 
       <Section
@@ -172,7 +181,7 @@ function PergamentCard({
 
   return (
     <article className="rounded border border-[#d8c48c] bg-[#fff7e6] p-4 shadow-sm">
-      <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
             {proposalStatusLabels[proposal.status]} · {dateTimeLabel(proposal.createdAt)}
@@ -182,9 +191,12 @@ function PergamentCard({
           </h2>
           <p className="mt-2 text-sm leading-6 text-[#4f412b]">{proposal.body}</p>
         </div>
-        <span className="w-fit rounded border border-[#c49a3c]/35 bg-white px-2 py-1 text-xs font-semibold text-[#654517]">
-          {proposalRuleLabels[proposal.ruleType]}
-        </span>
+        <div className="flex flex-wrap items-start gap-2">
+          <Stamp tone={proposalStatusStamp[proposal.status].tone}>
+            {proposalStatusStamp[proposal.status].label}
+          </Stamp>
+          <Stamp tone="brass">{proposalRuleLabels[proposal.ruleType]}</Stamp>
+        </div>
       </div>
 
       <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">

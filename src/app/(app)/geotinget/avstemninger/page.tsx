@@ -63,10 +63,10 @@ export default async function GeotingVotesPage({
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">
-        <StatTile label="Innlogget embete" value={currentGeot?.shortName ?? "-"} detail={currentGeot?.title} tone="blue" />
-        <StatTile label="Venter på geo-ed" value={awaitingOath} detail="Kan åpnes av partiene" tone="gold" />
-        <StatTile label="Åpne urner" value={activeVotes} detail="24 timers tingfrist" tone="red" />
-        <StatTile label="Protokollført" value={resolvedVotes} detail={`${votesCast} stemmer ført`} tone="green" />
+        <StatTile label="Innlogget embete" value={currentGeot?.shortName ?? "-"} detail={currentGeot?.title} tone="blue" index={0} />
+        <StatTile label="Venter på geo-ed" value={awaitingOath} detail="Kan åpnes av partiene" tone="gold" index={1} />
+        <StatTile label="Åpne urner" value={activeVotes} detail="24 timers tingfrist" tone="red" index={2} />
+        <StatTile label="Protokollført" value={resolvedVotes} detail={`${votesCast} stemmer ført`} tone="green" index={3} />
       </div>
 
       <Section title="Saker i Stemmeurnen" eyebrow="Forslag, geo-ed og stemmer">
