@@ -20,9 +20,11 @@ import { Section, StatTile } from "@/components/section";
 import { buttonClass } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Ornament } from "@/components/ui/ornament";
+import { RankMark } from "@/components/ui/rank-mark";
+import { Stamp } from "@/components/ui/stamp";
 import { getGeoGuessrTipDaySeed, selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { geotiaDashboardLines, geotiaTipLines, pickGeoticLine } from "@/lib/geotia-jargon";
-import { computeGameStandings, getHallOfFame, computeRound, computeStandings } from "@/lib/scoring";
+import { computeGameStandings, geotStatus, getHallOfFame, computeRound, computeStandings } from "@/lib/scoring";
 import { getAppState } from "@/lib/store";
 import { dateLabel, formatKm, formatNumber } from "@/lib/utils";
 
@@ -197,50 +199,66 @@ export default async function DashboardPage() {
           }
         >
           <div className="grid gap-3 md:hidden">
-            {standings.map((standing) => (
-              <article key={standing.player.id} className="rounded border border-[#d8ded0] bg-white p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8e3030]">#{standing.rank}</p>
-                <h3 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{standing.player.shortName}</h3>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                  <MobileMetric label="Poeng" value={standing.totalPoints} />
-                  <MobileMetric label="Kattometer" value={formatKm(standing.totalKattometer)} />
-                  <MobileMetric label="Seire" value={standing.wins} />
-                  <MobileMetric label="Topp 3" value={standing.top3} />
-                </div>
-              </article>
-            ))}
+            {standings.map((standing) => {
+              const status = geotStatus(standing);
+              const stampTone = status === "SOLID" || status === "JEVN" ? "signal" : "alarm";
+              return (
+                <article key={standing.player.id} className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <RankMark rank={standing.rank} />
+                    <div className="min-w-0 flex-1">
+                      <div className="geot-name">{standing.player.shortName}</div>
+                      <div className="geot-title">{standing.player.title}</div>
+                    </div>
+                    <Stamp tone={stampTone}>{status}</Stamp>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                    <MobileMetric label="Poeng" value={standing.totalPoints} />
+                    <MobileMetric label="Kattometer" value={formatKm(standing.totalKattometer)} />
+                    <MobileMetric label="Seire" value={standing.wins} />
+                    <MobileMetric label="Topp 3" value={standing.top3} />
+                  </div>
+                </article>
+              );
+            })}
           </div>
           <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[680px] text-left text-sm">
-              <thead className="border-b border-[#c49a3c]/35 text-xs uppercase tracking-[0.12em] text-[#60553f]">
+            <table className="protocol w-full min-w-[720px]">
+              <thead>
                 <tr>
-                  <th className="py-2 pr-3">Rang</th>
-                  <th className="py-2 pr-3">Geot</th>
-                  <th className="py-2 pr-3 text-right">Poeng</th>
-                  <th className="py-2 pr-3 text-right">Kattometer</th>
-                  <th className="py-2 pr-3 text-right">Seire</th>
-                  <th className="py-2 text-right">Topp 3</th>
+                  <th>Rang</th>
+                  <th>Geot</th>
+                  <th className="right">Poeng</th>
+                  <th className="right">Kattometer</th>
+                  <th className="right">Seire</th>
+                  <th className="right">Topp 3</th>
+                  <th className="right">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {standings.map((standing) => (
-                  <tr key={standing.player.id} className="border-b border-[#c49a3c]/20 last:border-0">
-                    <td className="py-3 pr-3 font-mono text-[#7c2430]">{standing.rank}</td>
-                    <td className="py-3 pr-3">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="h-3 w-3 rounded-sm"
-                          style={{ background: standing.player.color }}
-                        />
-                        <span className="font-semibold">{standing.player.shortName}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 pr-3 text-right font-semibold">{standing.totalPoints}</td>
-                    <td className="py-3 pr-3 text-right">{formatKm(standing.totalKattometer)}</td>
-                    <td className="py-3 pr-3 text-right">{standing.wins}</td>
-                    <td className="py-3 text-right">{standing.top3}</td>
-                  </tr>
-                ))}
+                {standings.map((standing) => {
+                  const status = geotStatus(standing);
+                  const stampTone = status === "SOLID" || status === "JEVN" ? "signal" : "alarm";
+                  return (
+                    <tr key={standing.player.id}>
+                      <td><RankMark rank={standing.rank} /></td>
+                      <td>
+                        <div className="geot-cell">
+                          <span className="geot-flag" style={{ background: standing.player.color }} />
+                          <div className="min-w-0">
+                            <div className="geot-name">{standing.player.shortName}</div>
+                            <div className="geot-title">{standing.player.title}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="right"><span className="num-display">{standing.totalPoints}</span></td>
+                      <td className="right">{formatKm(standing.totalKattometer)}</td>
+                      <td className="right">{standing.wins}</td>
+                      <td className="right">{standing.top3}</td>
+                      <td className="right"><Stamp tone={stampTone}>{status}</Stamp></td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
