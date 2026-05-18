@@ -1,6 +1,10 @@
+import Image from "next/image";
 import { Medal, Shield, Sparkles, Trophy } from "lucide-react";
 
 import { Section } from "@/components/section";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { RankMark } from "@/components/ui/rank-mark";
+import { Stamp } from "@/components/ui/stamp";
 import { computeStandings, getHallOfFame } from "@/lib/scoring";
 import { getRoundsState } from "@/lib/store";
 import { dateLabel, formatKm, formatNumber } from "@/lib/utils";
@@ -16,18 +20,28 @@ export default async function HallOfFamePage() {
 
   return (
     <div className="space-y-6">
-      <div className="geotia-frame rounded p-5 sm:p-7">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
-          De ærverdige annaler
-        </p>
-        <h1 className="font-display mt-2 text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
-          Æreshallen
-        </h1>
-        <p className="mt-3 max-w-3xl text-[#60553f]">
-          Her heves bragdene frem, og her føres skammen med samme presisjon som
-          poengene. Ingen medalje uten protokoll.
-        </p>
-      </div>
+      <section className="geo-hero">
+        <div className="geo-hero-grid">
+          <div className="geo-hero-text">
+            <Eyebrow tone="gold">De ærverdige annaler · Kapittel VIII</Eyebrow>
+            <h1 className="geo-hero-title">Æreshallen</h1>
+            <p className="geo-hero-lead geo-hero-lead-dropcap">
+              Her heves bragdene frem, og her føres skammen med samme presisjon
+              som poengene. Ingen medalje uten protokoll.
+            </p>
+          </div>
+          <div className="geo-hero-poster">
+            <Image
+              src="/illustrations/vapen-tabeller.svg"
+              alt="Riksvåpen for Tabellene"
+              width={300}
+              height={350}
+              priority
+              style={{ width: "auto", maxHeight: "440px" }}
+            />
+          </div>
+        </div>
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Podium
@@ -132,22 +146,26 @@ function Podium({
           {rows.map((row, index) => (
             <div
               key={`${row.name}-${row.value}`}
-              className="flex items-center justify-between rounded border border-[#d8ded0] bg-[#f7f8f5] p-4"
+              className="flex items-center justify-between gap-3 rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm"
             >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded bg-white text-[#8e3030] shadow-sm">
-                  {icon}
-                </div>
-                <div>
-                  <p className="font-semibold text-[#161713]">
-                    {index + 1}. {row.name}
-                  </p>
-                  <p className="text-sm text-[#5b6257]">{row.detail}</p>
+              <div className="flex min-w-0 items-center gap-3">
+                <RankMark rank={index + 1} />
+                <div className="min-w-0">
+                  <p className="geot-name">{row.name}</p>
+                  <p className="geot-title">{row.detail}</p>
                 </div>
               </div>
-              <p className="text-lg font-semibold text-[#203c62]">{row.value}</p>
+              <div className="flex items-center gap-3">
+                <span className="num-display">{row.value}</span>
+                <span className="hidden text-[#7e5a18] sm:inline-flex" aria-hidden="true">
+                  {icon}
+                </span>
+              </div>
             </div>
           ))}
+          <div className="pt-1 text-center">
+            <Stamp tone="brass">REKORDER ARKIVERT</Stamp>
+          </div>
         </div>
       ) : (
         <EmptyRecord text="Æreshallen avventer første låste runde." />
@@ -173,13 +191,18 @@ function RecordBlock({
     <div
       className={
         tone === "green"
-          ? "rounded border border-[#285c45]/25 bg-[#285c45]/8 p-5"
-          : "rounded border border-[#8e3030]/25 bg-[#8e3030]/8 p-5"
+          ? "rounded border border-[#285c45]/35 bg-[#fff7e6] p-5 shadow-sm"
+          : "rounded border border-[#8e3030]/35 bg-[#fff7e6] p-5 shadow-sm"
       }
     >
-      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#5b6257]">{name}</p>
-      <p className="mt-2 text-4xl font-semibold tracking-normal text-[#161713]">{value}</p>
-      <p className="mt-3 text-sm text-[#5b6257]">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#5b6257]">{name}</p>
+        <Stamp tone={tone === "green" ? "brass" : "alarm"}>
+          {tone === "green" ? "ÆRE FØRT" : "EVIG REGISTRERT"}
+        </Stamp>
+      </div>
+      <p className="font-display mt-2 text-4xl font-semibold tracking-normal text-[#062b40]">{value}</p>
+      <p className="mt-3 text-sm font-italic-serif text-[#5b6257]">
         {round} · {date}
       </p>
     </div>
