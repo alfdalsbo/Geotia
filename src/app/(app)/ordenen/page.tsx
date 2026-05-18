@@ -17,6 +17,8 @@ import {
 import { Section, StatTile } from "@/components/section";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Ornament } from "@/components/ui/ornament";
+import { RankMark } from "@/components/ui/rank-mark";
+import { Stamp } from "@/components/ui/stamp";
 import { getCurrentGeot } from "@/lib/auth";
 import {
   geoticOrderFoundingGate,
@@ -142,15 +144,16 @@ export default async function GeoticOrderPage() {
 
       <Section title={geoticOrderFoundingGate.title} eyebrow="Ingen snarvei til eget parti">
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div>
-            <p className="text-lg leading-8 text-[#eadcbd]">{geoticOrderFoundingGate.body}</p>
-            <p className="mt-4 rounded border border-[#c49a3c]/40 bg-[#fff7e6]/10 px-4 py-3 text-sm font-semibold text-[#e1c06c]">
+          <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-5 shadow-sm">
+            <p className="text-lg leading-8 text-[#4f412b]">{geoticOrderFoundingGate.body}</p>
+            <p className="mt-4 rounded border border-[#c49a3c]/55 bg-[#061d2b] px-4 py-3 text-sm font-semibold text-[#fff7e6]">
               {orderLine}
             </p>
           </div>
           <div className="grid gap-3">
             {geoticOrderFoundingGate.requirements.map((requirement) => (
-              <p key={requirement} className="rounded border border-[#c49a3c]/35 bg-[#020b11]/35 p-3 text-sm leading-6 text-[#eadcbd]">
+              <p key={requirement} className="flex items-start gap-2 rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-3 text-sm leading-6 text-[#4f412b] shadow-sm">
+                <ShieldCheck className="mt-0.5 h-4 w-4 flex-none text-[#194832]" aria-hidden="true" />
                 {requirement}
               </p>
             ))}
@@ -161,20 +164,20 @@ export default async function GeoticOrderPage() {
       {currentPath ? (
         <Section title="Prøvestien" eyebrow="Onboarding uten skjema">
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <div>
+            <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-5 shadow-sm">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7c2430]">
                     {currentRow.player.shortName}
                   </p>
-                  <h2 className="font-display mt-1 text-3xl font-semibold text-[#fff7e6]">
+                  <h2 className="font-display mt-1 text-3xl font-semibold text-[#062b40]">
                     {currentPath.nextStep ? `Neste: ${currentPath.nextStep.title}` : "Prøvestien er fullført"}
                   </h2>
                 </div>
-                <p className="font-display text-4xl font-semibold text-[#e1c06c]">{currentPath.progress}%</p>
+                <p className="font-display text-4xl font-semibold text-[#7c2430]">{currentPath.progress}%</p>
               </div>
-              <div className="mt-4 h-2 overflow-hidden rounded bg-[#fff7e6]/12">
-                <div className="h-full rounded bg-[#e1c06c]" style={{ width: `${currentPath.progress}%` }} />
+              <div className="mt-4 h-2 overflow-hidden rounded bg-[#d8c48c]/45">
+                <div className="h-full rounded bg-[#7c2430]" style={{ width: `${currentPath.progress}%` }} />
               </div>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {currentPath.steps.map((step) => (
@@ -182,7 +185,7 @@ export default async function GeoticOrderPage() {
                 ))}
               </div>
             </div>
-            <aside className="rounded border border-[#c49a3c]/45 bg-[#020b11]/45 p-4">
+            <aside className="rounded border border-[#c49a3c]/55 bg-[#061d2b] p-4 text-[#fff7e6] shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
                 Aspirantens prøvedør
               </p>
@@ -191,12 +194,12 @@ export default async function GeoticOrderPage() {
               </p>
               <div className="mt-4 grid gap-2">
                 {candidatePaths.slice(0, 4).map(({ row, path }) => (
-                  <div key={row.player.id} className="rounded border border-[#c49a3c]/30 bg-[#fff7e6]/8 px-3 py-2 text-sm">
+                  <div key={row.player.id} className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 py-2 text-sm text-[#4f412b]">
                     <p className="flex items-center justify-between gap-3">
-                      <span className="font-semibold text-[#fff7e6]">{row.player.shortName}</span>
-                      <span className="text-[#e1c06c]">{path.completed}/{path.total}</span>
+                      <span className="font-semibold text-[#062b40]">{row.player.shortName}</span>
+                      <span className="font-semibold text-[#7c2430]">{path.completed}/{path.total}</span>
                     </p>
-                    <p className="mt-1 text-xs leading-5 text-[#eadcbd]">
+                    <p className="mt-1 text-xs leading-5 text-[#60553f]">
                       {path.nextStep ? path.nextStep.title : "Klar for videre rang"}
                     </p>
                   </div>
@@ -318,48 +321,34 @@ export default async function GeoticOrderPage() {
 function PersonalPathCard({ row }: { row: OrderRow }) {
   const nextRank = row.nextRank;
   return (
-    <div className="mt-6 rounded border border-[#c49a3c]/40 bg-[#020b11]/45 p-4" data-testid="personal-order-path">
-      <div className="flex items-center justify-between gap-4">
+    <div className="rounded border border-[#c49a3c]/55 bg-[#fff7e6] p-5 shadow-sm" data-testid="personal-order-path">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
             Neste steg
           </p>
-          <p className="font-display mt-1 text-2xl font-semibold">
+          <p className="font-display mt-1 text-3xl font-semibold text-[#062b40]">
             {nextRank?.name ?? "Ordensstigen er foreløpig toppet"}
           </p>
         </div>
-        <div className="text-right">
-          <p className="font-display text-3xl font-semibold text-[#e1c06c]">
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          <Stamp tone={nextRank ? "navy" : "brass"}>{nextRank ? "PÅ VEI" : "FULLFØRT"}</Stamp>
+          <p className="font-display text-3xl font-semibold text-[#7c2430]">
             {nextRank ? `${row.progressToNext}%` : "Fullført"}
-          </p>
-          <p className="text-xs uppercase tracking-[0.12em] text-[#eadcbd]">
-            {nextRank ? "mot neste rang" : "øverste rang"}
           </p>
         </div>
       </div>
-      <div className="mt-4 h-2 overflow-hidden rounded bg-[#fff7e6]/12">
+      <div className="mt-4 h-2 overflow-hidden rounded bg-[#d8c48c]/45">
         <div
-          className="h-full rounded bg-[#e1c06c]"
+          className="h-full rounded bg-[#7c2430]"
           style={{ width: `${nextRank ? row.progressToNext : 100}%` }}
         />
       </div>
-      <div className="mt-4 grid gap-2 text-sm text-[#eadcbd]">
-        <p className="flex items-center justify-between gap-3">
-          <span>Tjenestetid</span>
-          <span className="text-right font-semibold text-[#fff7e6]">{row.serviceTimeLabel}</span>
-        </p>
-        <p className="flex items-center justify-between gap-3">
-          <span>Tellende runder</span>
-          <span className="font-semibold text-[#fff7e6]">{row.roundsPlayed}</span>
-        </p>
-        <p className="flex items-center justify-between gap-3">
-          <span>Livstidspoeng</span>
-          <span className="font-semibold text-[#fff7e6]">{formatNumber(row.lifetimePoints)}</span>
-        </p>
-        <p className="flex items-center justify-between gap-3">
-          <span>Fellesskapstillit</span>
-          <span className="font-semibold text-[#fff7e6]">Vurderes i ordenen</span>
-        </p>
+      <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
+        <PathFact label="Tjenestetid" value={row.serviceTimeLabel} />
+        <PathFact label="Tellende runder" value={row.roundsPlayed} />
+        <PathFact label="Livstidspoeng" value={formatNumber(row.lifetimePoints)} />
+        <PathFact label="Fellesskapstillit" value="Vurderes i ordenen" />
       </div>
     </div>
   );
@@ -369,10 +358,11 @@ function OnboardingStepCard({ step }: { step: OnboardingStep }) {
   const Icon = step.status === "done" ? CheckCircle2 : step.status === "current" ? Clock : LockKeyhole;
   const classes =
     step.status === "done"
-      ? "border-[#194832]/30 bg-[#194832]/10 text-[#dff3e4]"
+      ? "border-[#194832]/35 bg-[#fff7e6] text-[#194832]"
       : step.status === "current"
-        ? "border-[#c49a3c]/45 bg-[#fff7e6]/10 text-[#fff7e6]"
-        : "border-[#d8c48c]/25 bg-[#020b11]/35 text-[#cdbd97]";
+        ? "border-[#7c2430]/45 bg-[#fff7e6] text-[#4f1d24] shadow-sm"
+        : "border-[#d8c48c] bg-[#fff7e6] text-[#60553f]";
+  const fill = step.status === "done" ? "bg-[#194832]" : step.status === "current" ? "bg-[#7c2430]" : "bg-[#c49a3c]";
 
   return (
     <article className={`rounded border p-4 ${classes}`}>
@@ -382,8 +372,8 @@ function OnboardingStepCard({ step }: { step: OnboardingStep }) {
       </p>
       <h3 className="font-display mt-2 text-2xl font-semibold">{step.title}</h3>
       <p className="mt-2 text-sm leading-6">{step.detail}</p>
-      <div className="mt-3 h-2 overflow-hidden rounded bg-[#fff7e6]/12">
-        <div className="h-full rounded bg-current" style={{ width: `${step.progress}%` }} />
+      <div className="mt-3 h-2 overflow-hidden rounded bg-[#d8c48c]/45">
+        <div className={`h-full rounded ${fill}`} style={{ width: `${step.progress}%` }} />
       </div>
     </article>
   );
@@ -399,14 +389,15 @@ function RankCard({ rank, current }: { rank: GeoticOrderRank; current: boolean }
       }
     >
       <div className="flex items-start gap-4 border-b border-[#d8c48c] bg-[#061d2b] p-4 text-[#fff7e6]">
-        <div className="flex h-12 w-12 flex-none items-center justify-center rounded border border-[#e1c06c]/60 bg-[#fff7e6]/10 font-display text-2xl font-semibold text-[#e1c06c]">
-          {rank.number}
-        </div>
+        <RankMark rank={rank.number} className="mt-1 flex-none" />
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
             Ordensrang
           </p>
-          <h3 className="font-display mt-1 text-2xl font-semibold leading-7">{rank.name}</h3>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <h3 className="font-display text-2xl font-semibold leading-7">{rank.name}</h3>
+            {current ? <Stamp tone="alarm">DIN RANG</Stamp> : null}
+          </div>
           <p className="mt-2 text-sm leading-6 text-[#eadcbd]">{rank.motto}</p>
         </div>
       </div>
@@ -437,50 +428,58 @@ function RankCard({ rank, current }: { rank: GeoticOrderRank; current: boolean }
 function OrderPersonCard({ row, current }: { row: OrderRow; current: boolean }) {
   const nextRank = row.nextRank;
   return (
-    <article className="geotia-panel rounded p-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <article
+      className={
+        current
+          ? "overflow-hidden rounded border-2 border-[#7c2430] bg-[#fff7e6] shadow-[0_18px_35px_rgba(124,36,48,0.16)]"
+          : "overflow-hidden rounded border border-[#c49a3c]/55 bg-[#fff7e6] shadow-sm"
+      }
+    >
+      <div className="flex flex-col gap-4 border-b border-[#c49a3c]/45 bg-[#061d2b] p-4 text-[#fff7e6] sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
-          <span className="mt-1 h-12 w-2 flex-none rounded-full" style={{ background: row.player.color }} />
+          <span className="mt-1 h-12 w-2 flex-none rounded-full border border-[#e1c06c]/45" style={{ background: row.player.color }} />
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
               {current ? "Din plass i ordenen" : "Ordensført geot"}
             </p>
-            <h3 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{row.player.shortName}</h3>
-            <p className="text-sm text-[#60553f]">{row.player.title}</p>
+            <h3 className="font-display mt-1 text-2xl font-semibold">{row.player.shortName}</h3>
+            <p className="text-sm text-[#eadcbd]">{row.player.title}</p>
           </div>
         </div>
-        <div className="rounded border border-[#c49a3c]/40 bg-[#061d2b] px-3 py-2 text-right text-[#fff7e6]">
-          <p className="text-xs uppercase tracking-[0.14em] text-[#e1c06c]">Rang</p>
-          <p className="font-display mt-1 text-xl font-semibold">{row.rank.name}</p>
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          <Stamp tone={current ? "alarm" : "navy"}>{current ? "DIN RANG" : row.status.publicLabel}</Stamp>
+          <p className="font-display text-xl font-semibold text-[#fff7e6]">{row.rank.name}</p>
         </div>
       </div>
 
-      <p className="mt-4 text-sm leading-6 text-[#4f412b]">
-        {row.publicNote || row.rank.description}
-      </p>
-
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
-        <Metric icon={<Footprints className="h-4 w-4" aria-hidden="true" />} label="Tjenestetid" value={row.serviceTimeLabel} />
-        <Metric icon={<Gavel className="h-4 w-4" aria-hidden="true" />} label="Runder" value={row.roundsPlayed} />
-        <Metric icon={<Crown className="h-4 w-4" aria-hidden="true" />} label="Poeng" value={formatNumber(row.lifetimePoints)} />
-      </div>
-
-      <div className="mt-4 rounded border border-[#d8c48c] bg-white/70 p-3">
-        <div className="flex items-center justify-between gap-3 text-sm">
-          <span className="font-semibold text-[#062b40]">
-            {nextRank ? `Neste: ${nextRank.name}` : "Står ved øverste synlige port"}
-          </span>
-          <span className="font-semibold text-[#7c2430]">{nextRank ? `${row.progressToNext}%` : "Fullført"}</span>
-        </div>
-        <div className="mt-2 h-2 overflow-hidden rounded bg-[#d8c48c]/45">
-          <div
-            className="h-full rounded bg-[#7c2430]"
-            style={{ width: `${nextRank ? row.progressToNext : 100}%` }}
-          />
-        </div>
-        <p className="mt-2 text-xs leading-5 text-[#60553f]">
-          Status: {row.status.publicLabel}. Fellesskapstillit inngår i opprykk, men føres ikke som offentlig tall.
+      <div className="p-4">
+        <p className="text-sm leading-6 text-[#4f412b]">
+          {row.publicNote || row.rank.description}
         </p>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          <Metric icon={<Footprints className="h-4 w-4" aria-hidden="true" />} label="Tjenestetid" value={row.serviceTimeLabel} />
+          <Metric icon={<Gavel className="h-4 w-4" aria-hidden="true" />} label="Runder" value={row.roundsPlayed} />
+          <Metric icon={<Crown className="h-4 w-4" aria-hidden="true" />} label="Poeng" value={formatNumber(row.lifetimePoints)} />
+        </div>
+
+        <div className="mt-4 rounded border border-[#d8c48c] bg-[#fff7e6] p-3">
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <span className="font-semibold text-[#062b40]">
+              {nextRank ? `Neste: ${nextRank.name}` : "Står ved øverste synlige port"}
+            </span>
+            <span className="font-semibold text-[#7c2430]">{nextRank ? `${row.progressToNext}%` : "100%"}</span>
+          </div>
+          <div className="mt-2 h-2 overflow-hidden rounded bg-[#d8c48c]/45">
+            <div
+              className="h-full rounded bg-[#7c2430]"
+              style={{ width: `${nextRank ? row.progressToNext : 100}%` }}
+            />
+          </div>
+          <p className="mt-2 text-xs leading-5 text-[#60553f]">
+            Status: {row.status.publicLabel}. Fellesskapstillit inngår i opprykk, men føres ikke som offentlig tall.
+          </p>
+        </div>
       </div>
     </article>
   );
@@ -488,7 +487,7 @@ function OrderPersonCard({ row, current }: { row: OrderRow; current: boolean }) 
 
 function MiniList({ icon, title, items }: { icon: React.ReactNode; title: string; items: string[] }) {
   return (
-    <div className="rounded border border-[#d8c48c] bg-white/70 p-3">
+    <div className="rounded border border-[#d8c48c] bg-[#fff7e6] p-3">
       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
         {icon}
         {title}
@@ -506,12 +505,21 @@ function MiniList({ icon, title, items }: { icon: React.ReactNode; title: string
 
 function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
-    <div className="mobile-metric rounded border border-[#d8c48c] bg-white/70 p-3">
+    <div className="mobile-metric rounded border border-[#d8c48c] bg-[#fff7e6] p-3">
       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
         {icon}
         {label}
       </p>
       <p className="mobile-metric-value font-display mt-1 text-2xl font-semibold text-[#062b40]">{value}</p>
+    </div>
+  );
+}
+
+function PathFact({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="rounded border border-[#d8c48c] bg-[#fffaf0] p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">{label}</p>
+      <p className="mt-1 text-sm font-semibold leading-5 text-[#062b40]">{value}</p>
     </div>
   );
 }
