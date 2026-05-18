@@ -60,6 +60,11 @@ export default async function MyGeotPage() {
   const dossierLine = pickGeoticLine(geotiaMyGeotLines, player.id);
   const partyMechanic = getPartyMechanic(player.partyId);
   const dossier = getPlayerDossier(player, state.players, state.rounds, standing);
+  const orderProgressLabel = orderRow
+    ? orderRow.nextRank
+      ? `${orderRow.progressToNext}% mot ${orderRow.nextRank.name}`
+      : "Øverste rang fullført"
+    : "Ikke ført";
 
   return (
     <div className="space-y-7">
@@ -116,7 +121,7 @@ export default async function MyGeotPage() {
         <StatTile label="SlowGeo-rang" value={standing ? `#${standing.rank}` : "-"} detail={`${standing?.totalPoints ?? 0} poeng`} tone="blue" index={0} />
         <StatTile label="Kattometer" value={formatKm(standing?.totalKattometer)} detail={`${standing?.roundsPlayed ?? 0} runder spilt`} tone="red" index={1} />
         <StatTile label="Seire" value={standing?.wins ?? 0} detail={`${standing?.top3 ?? 0} topp 3`} tone="gold" index={2} />
-        <StatTile label="Ordensrang" value={orderRow?.rank.name ?? "-"} detail={orderRow ? `${orderRow.progressToNext}% mot neste` : "Ikke ført"} tone="green" index={3} />
+        <StatTile label="Ordensrang" value={orderRow?.rank.name ?? "-"} detail={orderProgressLabel} tone="green" index={3} />
       </div>
 
       <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-4 py-3 text-sm font-semibold text-[#654517]">
@@ -170,8 +175,14 @@ export default async function MyGeotPage() {
                 <p className="font-display text-3xl font-semibold text-[#062b40]">{orderRow.rank.name}</p>
                 <p className="mt-2 text-sm leading-6 text-[#60553f]">{orderRow.publicNote || orderRow.rank.description}</p>
               </div>
-              <div className="h-2 overflow-hidden rounded bg-[#d8c48c]/45">
-                <div className="h-full rounded bg-[#7c2430]" style={{ width: `${orderRow.nextRank ? orderRow.progressToNext : 100}%` }} />
+              <div>
+                <div className="flex items-center justify-between gap-3 text-sm font-semibold text-[#062b40]">
+                  <span>{orderRow.nextRank ? `Neste: ${orderRow.nextRank.name}` : "Øverste synlige rang"}</span>
+                  <span className="text-[#7c2430]">{orderRow.nextRank ? `${orderRow.progressToNext}%` : "Fullført"}</span>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded bg-[#d8c48c]/45">
+                  <div className="h-full rounded bg-[#7c2430]" style={{ width: `${orderRow.nextRank ? orderRow.progressToNext : 100}%` }} />
+                </div>
               </div>
               <div className="grid gap-2 text-sm sm:grid-cols-3">
                 <Metric label="Tjenestetid" value={orderRow.serviceTimeLabel} />
@@ -351,9 +362,9 @@ function InfoBlock({ icon, title, text }: { icon: React.ReactNode; title: string
 
 function Metric({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded border border-[#d8c48c] bg-white/70 p-3">
+    <div className="mobile-metric rounded border border-[#d8c48c] bg-white/70 p-3">
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">{label}</p>
-      <p className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{value}</p>
+      <p className="mobile-metric-value font-display mt-1 text-2xl font-semibold text-[#062b40]">{value}</p>
     </div>
   );
 }

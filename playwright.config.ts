@@ -1,7 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
+import path from "node:path";
 
 const playwrightPort = process.env.PLAYWRIGHT_PORT ?? "3210";
 const baseURL = `http://127.0.0.1:${playwrightPort}`;
+const playwrightDataFile = path.join(process.cwd(), ".data", "playwright-geotia.json");
 
 export default defineConfig({
   testDir: "./tests",
@@ -20,7 +22,7 @@ export default defineConfig({
     env: {
       GEOTIA_PASSCODE: "geotia",
       AUTH_SECRET: "playwright-geotia-secret",
-      GEOTIA_DATA_FILE: ".data/playwright-geotia.json",
+      GEOTIA_DATA_FILE: playwrightDataFile,
       GEOTIA_FORCE_FILE_STORAGE: "1",
       NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: "playwright-google-maps-key",
     },

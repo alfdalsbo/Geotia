@@ -21,8 +21,7 @@ for (const username of ["SS", "PKK", "IRA"]) {
     await expect(page.getByRole("heading", { name: "Tredje Kollegium" })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("heading", { name: "GEOTERINDEKSEN" })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Åpne poengsystemet")).toBeVisible();
-    await page.getByLabel("Vis større bilde: Seglet til Tredje Kollegium").click();
-    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByRole("img", { name: "Riksvåpen for Tredje Kollegium" })).toBeVisible();
   });
 }
 

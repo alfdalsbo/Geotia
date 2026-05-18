@@ -287,7 +287,7 @@ export default async function GeoticOrderPage() {
 function PersonalPathCard({ row }: { row: OrderRow }) {
   const nextRank = row.nextRank;
   return (
-    <div className="mt-6 rounded border border-[#c49a3c]/40 bg-[#020b11]/45 p-4">
+    <div className="mt-6 rounded border border-[#c49a3c]/40 bg-[#020b11]/45 p-4" data-testid="personal-order-path">
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
@@ -299,9 +299,11 @@ function PersonalPathCard({ row }: { row: OrderRow }) {
         </div>
         <div className="text-right">
           <p className="font-display text-3xl font-semibold text-[#e1c06c]">
-            {nextRank ? `${row.progressToNext}%` : "100%"}
+            {nextRank ? `${row.progressToNext}%` : "Fullført"}
           </p>
-          <p className="text-xs uppercase tracking-[0.12em] text-[#eadcbd]">ferd</p>
+          <p className="text-xs uppercase tracking-[0.12em] text-[#eadcbd]">
+            {nextRank ? "mot neste rang" : "øverste rang"}
+          </p>
         </div>
       </div>
       <div className="mt-4 h-2 overflow-hidden rounded bg-[#fff7e6]/12">
@@ -437,7 +439,7 @@ function OrderPersonCard({ row, current }: { row: OrderRow; current: boolean }) 
           <span className="font-semibold text-[#062b40]">
             {nextRank ? `Neste: ${nextRank.name}` : "Står ved øverste synlige port"}
           </span>
-          <span className="font-semibold text-[#7c2430]">{nextRank ? `${row.progressToNext}%` : "100%"}</span>
+          <span className="font-semibold text-[#7c2430]">{nextRank ? `${row.progressToNext}%` : "Fullført"}</span>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded bg-[#d8c48c]/45">
           <div
@@ -473,12 +475,12 @@ function MiniList({ icon, title, items }: { icon: React.ReactNode; title: string
 
 function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded border border-[#d8c48c] bg-white/70 p-3">
+    <div className="mobile-metric rounded border border-[#d8c48c] bg-white/70 p-3">
       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
         {icon}
         {label}
       </p>
-      <p className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{value}</p>
+      <p className="mobile-metric-value font-display mt-1 text-2xl font-semibold text-[#062b40]">{value}</p>
     </div>
   );
 }

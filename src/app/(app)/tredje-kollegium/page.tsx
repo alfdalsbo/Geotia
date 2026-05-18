@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -28,9 +29,12 @@ import {
   updateGeotingProposalAction,
   withdrawGeotingProposalAction,
 } from "@/app/actions";
-import { ExpandableImage } from "@/components/expandable-image";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Section, StatTile } from "@/components/section";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Ornament } from "@/components/ui/ornament";
+import { RankMark } from "@/components/ui/rank-mark";
+import { Stamp } from "@/components/ui/stamp";
 import { getCurrentGeot } from "@/lib/auth";
 import {
   geoterIndexCategories,
@@ -140,66 +144,79 @@ export default async function ThirdCollegePage({
 
   return (
     <div className="space-y-7">
-      <section className="overflow-hidden rounded border border-[#c49a3c]/70 bg-[#061d2b] text-[#fff7e6] shadow-[0_22px_48px_rgba(0,0,0,0.28)]">
-        <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.78fr)]">
-          <div className="p-5 sm:p-8 lg:p-10">
-            <div className="inline-flex items-center gap-2 rounded border border-[#c49a3c]/55 bg-[#020b11]/45 px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#e1c06c]">
-              <LockKeyhole className="h-4 w-4" aria-hidden="true" />
+      <section className="geo-hero geo-hero--dark">
+        <div className="geo-hero-grid">
+          <div className="geo-hero-text">
+            <Eyebrow>
+              <LockKeyhole className="h-3.5 w-3.5" aria-hidden="true" />
               Strengt internt · 3K
-            </div>
-            <h1 className="font-display mt-5 text-5xl font-semibold tracking-normal sm:text-7xl">
-              Tredje Kollegium
-            </h1>
-            <p className="mt-4 max-w-3xl text-lg leading-8 text-[#eadcbd]">
+            </Eyebrow>
+            <h1 className="geo-hero-title">Tredje Kollegium</h1>
+            <p className="geo-hero-lead geo-hero-lead-dropcap">
               Geotias dype stat er ikke et organ. Det er et blikk, tre stoler
               og en usedvanlig høytidelig mistanke om at riket trenger en sal
               bak salen. SS, PKK og IRA samles her når statsapparatet må vite
               mer enn det offisielt vet.
             </p>
-
-            <div className="geotia-ornament mt-7 text-center text-sm font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
-              <span>{thirdCollegeMotto}</span>
-            </div>
+            <Ornament>{thirdCollegeMotto}</Ornament>
 
             <div className="mt-7 grid gap-3 md:grid-cols-3 lg:grid-cols-1 2xl:grid-cols-3">
-              <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
+              <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/10 p-4">
+                <p
+                  className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#e1c06c]"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
                   Din stol
                 </p>
-                <p className="font-display mt-2 text-xl font-semibold leading-7 break-words 2xl:text-2xl">
+                <p
+                  className="mt-2 text-xl font-semibold leading-7 break-words text-[#fff7e6] 2xl:text-2xl"
+                  style={{ fontFamily: "var(--font-numerals)" }}
+                >
                   {currentSeat?.seal ?? "Skjult segl"}
                 </p>
                 <p className="mt-2 text-sm text-[#eadcbd]">{currentSeat?.office}</p>
               </div>
-              <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
+              <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/10 p-4">
+                <p
+                  className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#e1c06c]"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
                   Dekknavn
                 </p>
-                <p className="font-display mt-2 text-xl font-semibold leading-7 break-words 2xl:text-2xl">
+                <p
+                  className="mt-2 text-xl font-semibold leading-7 break-words text-[#fff7e6] 2xl:text-2xl"
+                  style={{ fontFamily: "var(--font-numerals)" }}
+                >
                   {currentSeat?.codename ?? "Ingen spor"}
                 </p>
                 <p className="mt-2 text-sm text-[#eadcbd]">Innlogget som {currentGeot.shortName}</p>
               </div>
-              <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
+              <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/10 p-4">
+                <p
+                  className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#e1c06c]"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
                   Synlighet
                 </p>
-                <p className="font-display mt-2 text-xl font-semibold leading-7 break-words 2xl:text-2xl">Null</p>
+                <p
+                  className="mt-2 text-xl font-semibold leading-7 break-words text-[#fff7e6] 2xl:text-2xl"
+                  style={{ fontFamily: "var(--font-numerals)" }}
+                >
+                  Null
+                </p>
                 <p className="mt-2 text-sm text-[#eadcbd]">For resten av riket finnes ikke fanen.</p>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-[#c49a3c]/35 bg-[#020b11] lg:border-l lg:border-t-0">
-            <ExpandableImage
-              src="/tredje-kollegium/segl"
-              alt="Seglet til Tredje Kollegium"
-              sizes="(min-width: 1024px) 42vw, 100vw"
-              className="relative aspect-square min-h-[420px] w-full"
-              imageClassName="object-cover"
-              caption="Tredje Kollegium · de som aldri tar feil"
+          <div className="geo-hero-poster">
+            <Image
+              src="/illustrations/vapen-kollegium.svg"
+              alt="Riksvåpen for Tredje Kollegium"
+              width={300}
+              height={350}
               priority
-              unoptimized
+              style={{ width: "auto", maxHeight: "440px" }}
             />
           </div>
         </div>
@@ -211,24 +228,28 @@ export default async function ThirdCollegePage({
           value={totalPoints > 0 ? `${collegePointShare}%` : "-"}
           detail={`${formatNumber(collegePoints)} av ${formatNumber(totalPoints)} førte poeng`}
           tone="gold"
+          index={0}
         />
         <StatTile
           label="Åpne saker"
           value={openProposals.length + votingProposals.length}
           detail={votingProposals.length ? `${votingProposals.length} sak i urnen` : "Ingen urne brenner"}
           tone="red"
+          index={1}
         />
         <StatTile
           label="Utkast under duken"
           value={draftRounds.length}
           detail="Runder som ennå kan formes i stillhet"
           tone="blue"
+          index={2}
         />
         <StatTile
           label="Ytre utfordrer"
           value={topNonCollege?.player.shortName ?? "-"}
           detail={topNonCollege ? `${topNonCollege.totalPoints} poeng utenfor salen` : "Ingen data"}
           tone="green"
+          index={3}
         />
       </div>
 
@@ -240,18 +261,21 @@ export default async function ThirdCollegePage({
           value={geoterIndexLeader?.player.shortName ?? "-"}
           detail={geoterIndexLeader ? `${geoterIndexLeader.score} · ${geoterIndexLeader.tier.name}` : "GEO-OBS venter"}
           tone="gold"
+          index={0}
         />
         <StatTile
           label="Indekssnitt"
           value={geoterIndexAverage || "-"}
           detail="Normaltilstand er 700"
           tone="blue"
+          index={1}
         />
         <StatTile
           label="Laveste tillitssone"
           value={geoterIndexRisk?.player.shortName ?? "-"}
           detail={geoterIndexRisk ? `${geoterIndexRisk.score} · ${geoterIndexRisk.tier.name}` : "Ingen mistenkt ennå"}
           tone="red"
+          index={2}
         />
       </div>
 
@@ -282,32 +306,33 @@ export default async function ThirdCollegePage({
             {memberRows.map(({ seat, player, party, standing }) => (
               <article
                 key={seat.playerId}
-                className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-4 shadow-sm"
+                className="archive-card relative"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
+                  <div className="min-w-0">
+                    <p
+                      className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#7c2430]"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
                       {seat.seal} · {seat.partyId.toUpperCase()}
                     </p>
-                    <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">
-                      {player?.shortName ?? seat.playerId}
-                    </h2>
+                    <h3 className="mt-1 break-words">{player?.shortName ?? seat.playerId}</h3>
                   </div>
                   <span
-                    className="h-10 w-2 rounded-full"
+                    className="h-10 w-2 flex-none rounded-full"
                     style={{ background: player?.color ?? party?.color ?? "#c49a3c" }}
                   />
                 </div>
-                <p className="mt-3 text-sm font-semibold text-[#161713]">{seat.office}</p>
-                <p className="mt-2 text-sm leading-6 text-[#60553f]">{seat.oversight}</p>
-                <div className="mt-4 grid gap-2 text-sm">
-                  <p className="flex items-center justify-between border-t border-[#c49a3c]/25 pt-3">
+                <p className="mt-3 text-sm font-semibold text-[#0a2b3f]">{seat.office}</p>
+                <p className="lead-detail">{seat.oversight}</p>
+                <div className="mt-4 grid gap-2 border-t border-[#c49a3c]/35 pt-3 text-sm">
+                  <p className="flex items-center justify-between">
                     <span className="text-[#60553f]">Rang</span>
-                    <span className="font-semibold">{standing ? `#${standing.rank}` : "-"}</span>
+                    {standing ? <RankMark rank={standing.rank} /> : <span>—</span>}
                   </p>
                   <p className="flex items-center justify-between">
                     <span className="text-[#60553f]">Poeng</span>
-                    <span className="font-semibold">{standing?.totalPoints ?? 0}</span>
+                    <span className="num-display text-lg">{standing?.totalPoints ?? 0}</span>
                   </p>
                   <p className="flex items-center justify-between">
                     <span className="text-[#60553f]">Kattometer</span>
@@ -581,9 +606,7 @@ function GeotingAdminSection({
                     />
                   </label>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center lg:col-span-2">
-                    <PendingSubmitButton
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
-                    >
+                    <PendingSubmitButton className="btn btn-brass btn-small">
                       <FileText className="h-4 w-4" aria-hidden="true" />
                       Lagre endring
                     </PendingSubmitButton>
@@ -593,9 +616,7 @@ function GeotingAdminSection({
                 {canWithdraw ? (
                   <form action={withdrawGeotingProposalAction} className="mt-3">
                     <input type="hidden" name="proposalId" value={proposal.id} />
-                    <PendingSubmitButton
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded border border-[#7c2430]/45 bg-[#7c2430]/10 px-3 text-sm font-semibold text-[#7c2430] transition hover:bg-[#7c2430]/15"
-                    >
+                    <PendingSubmitButton className="btn btn-wax btn-small">
                       <Gavel className="h-4 w-4" aria-hidden="true" />
                       Trekk forslag
                     </PendingSubmitButton>
@@ -664,38 +685,36 @@ function GeoterIndexSection({
               </p>
             </div>
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[880px] text-left text-sm">
-                <thead className="border-b border-[#c49a3c]/45 text-xs uppercase tracking-[0.12em] text-[#e1c06c]">
+              <table className="protocol protocol--dark w-full min-w-[880px]">
+                <thead>
                   <tr>
-                    <th className="py-3 pr-3">Geot</th>
-                    <th className="py-3 pr-3 text-right">Score</th>
-                    <th className="py-3 pr-3">Nivå</th>
-                    <th className="py-3 pr-3">Siste justering</th>
-                    <th className="py-3">Historikk</th>
+                    <th>Geot</th>
+                    <th className="right">Score</th>
+                    <th>Nivå</th>
+                    <th>Siste justering</th>
+                    <th>Historikk</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((row) => (
-                    <tr key={row.player.id} className="border-b border-[#c49a3c]/20 last:border-0">
-                      <td className="py-3 pr-3">
-                        <div className="flex items-center gap-3">
-                          <span className="h-9 w-2 rounded-full" style={{ background: row.player.color }} />
-                          <div>
-                            <p className="font-semibold text-[#fff7e6]">{row.player.shortName}</p>
-                            <p className="text-xs text-[#eadcbd]">{row.player.title}</p>
+                    <tr key={row.player.id}>
+                      <td>
+                        <div className="geot-cell">
+                          <span className="geot-flag" style={{ background: row.player.color }} />
+                          <div className="min-w-0">
+                            <div className="geot-name">{row.player.shortName}</div>
+                            <div className="geot-title">{row.player.title}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 pr-3 text-right font-display text-3xl font-semibold text-[#e1c06c]">
-                        {row.score}
+                      <td className="right">
+                        <span className="num-display text-3xl">{row.score}</span>
                       </td>
-                      <td className="py-3 pr-3">
-                        <span className="inline-flex rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 px-2 py-1 font-semibold">
-                          {row.tier.name}
-                        </span>
+                      <td>
+                        <Stamp tone="brass">{row.tier.name}</Stamp>
                         <p className="mt-1 max-w-xs text-xs leading-5 text-[#eadcbd]">{row.tier.description}</p>
                       </td>
-                      <td className="py-3 pr-3 text-[#eadcbd]">
+                      <td className="text-[#eadcbd]">
                         {row.lastAdjustment ? (
                           <>
                             <span className={row.lastAdjustment.delta > 0 ? "font-semibold text-[#97d9a8]" : "font-semibold text-[#ffb3a6]"}>
@@ -705,10 +724,12 @@ function GeoterIndexSection({
                             {row.lastAdjustment.title}
                           </>
                         ) : (
-                          "Ingen justering. Mistanken hviler."
+                          <span className="italic" style={{ fontFamily: "var(--font-italic)" }}>
+                            Ingen justering. Mistanken hviler.
+                          </span>
                         )}
                       </td>
-                      <td className="py-3">
+                      <td>
                         <IndexSparkline row={row} />
                       </td>
                     </tr>
@@ -881,9 +902,7 @@ function GeoterIndexSection({
                 placeholder="Kort protokolltekst. Husk: ankeinstansen er Kollegiet selv i mørkere rom."
               />
             </label>
-            <PendingSubmitButton
-              className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded bg-[#7c2430] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#641923]"
-            >
+            <PendingSubmitButton className="btn btn-wax mt-4 w-full justify-center">
               <PlusCircle className="h-4 w-4" aria-hidden="true" />
               Juster indeksen
             </PendingSubmitButton>
@@ -995,47 +1014,43 @@ function GeoticOrderControlSection({
             </div>
           </div>
 
-          <div className="mt-6 overflow-x-auto rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8">
-            <table className="w-full min-w-[980px] text-left text-sm">
-              <thead className="border-b border-[#c49a3c]/45 text-xs uppercase tracking-[0.12em] text-[#e1c06c]">
+          <div className="mt-6 overflow-x-auto rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8 p-2">
+            <table className="protocol protocol--dark w-full min-w-[980px]">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3">Geot</th>
-                  <th className="px-4 py-3">Synlig rang</th>
-                  <th className="px-4 py-3">Skjult type</th>
-                  <th className="px-4 py-3 text-right">Uker</th>
-                  <th className="px-4 py-3 text-right">Poeng</th>
-                  <th className="px-4 py-3 text-right">Indeks</th>
-                  <th className="px-4 py-3">Status</th>
+                  <th>Geot</th>
+                  <th>Synlig rang</th>
+                  <th>Skjult type</th>
+                  <th className="right">Uker</th>
+                  <th className="right">Poeng</th>
+                  <th className="right">Indeks</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row) => (
-                  <tr key={row.player.id} className="border-b border-[#c49a3c]/20 last:border-0">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <span className="h-9 w-2 rounded-full" style={{ background: row.player.color }} />
-                        <div>
-                          <p className="font-semibold text-[#fff7e6]">{row.player.shortName}</p>
-                          <p className="text-xs text-[#eadcbd]">{row.player.title}</p>
+                  <tr key={row.player.id}>
+                    <td>
+                      <div className="geot-cell">
+                        <span className="geot-flag" style={{ background: row.player.color }} />
+                        <div className="min-w-0">
+                          <div className="geot-name">{row.player.shortName}</div>
+                          <div className="geot-title">{row.player.title}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <p className="font-semibold text-[#fff7e6]">{row.rank.name}</p>
                       <p className="text-xs text-[#cdbd97]">Rå terskel: {row.eligibleRank.name}</p>
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <p className="font-semibold text-[#e1c06c]">{row.hiddenCategory.label}</p>
                       <p className="max-w-xs text-xs leading-5 text-[#eadcbd]">{row.hiddenCategory.description}</p>
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold">{row.serviceTimeLabel}</td>
-                    <td className="px-4 py-3 text-right font-semibold">{formatNumber(row.lifetimePoints)}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-[#e1c06c]">{row.trustScore}</td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 px-2 py-1 font-semibold">
-                        {row.status.label}
-                      </span>
-                    </td>
+                    <td className="right font-semibold">{row.serviceTimeLabel}</td>
+                    <td className="right"><span className="num-display">{formatNumber(row.lifetimePoints)}</span></td>
+                    <td className="right"><span className="num-display">{row.trustScore}</span></td>
+                    <td><Stamp tone="brass">{row.status.label}</Stamp></td>
                   </tr>
                 ))}
               </tbody>
@@ -1167,9 +1182,7 @@ function GeoticOrderControlSection({
                 placeholder="Det egentlige notatet. Her kan mistanken ha navn."
               />
             </label>
-            <PendingSubmitButton
-              className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded bg-[#7c2430] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#641923]"
-            >
+            <PendingSubmitButton className="btn btn-wax mt-4 w-full justify-center">
               <UserCog className="h-4 w-4" aria-hidden="true" />
               Før rang i ordenen
             </PendingSubmitButton>

@@ -3,14 +3,38 @@ import path from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
-const competingPlayerIds = ["alf", "vegard", "jorgen", "steinar", "sverre", "danny"];
+const competingPlayerIds = ["alf", "vegard", "jorgen", "steinar", "sverre", "fredrik", "ruben", "danny"];
+
+const coreRoutes = [
+  "/",
+  "/spill",
+  "/spill/slowgeo",
+  "/spill/registrer?game=geo",
+  "/tabeller",
+  "/stilling",
+  "/runder",
+  "/geotinget",
+  "/geotinget/avstemninger",
+  "/geotinget/pergamenter",
+  "/min-geot",
+  "/ordenen",
+  "/arkiv",
+  "/arkiv/partier",
+  "/hall-of-fame",
+  "/tredje-kollegium",
+];
 
 async function login(page: Page) {
   await page.goto("/");
+  const logout = page.getByRole("button", { name: "Forlat embetsverket" });
+  if (await logout.count()) {
+    await expect(logout).toBeVisible({ timeout: 15_000 });
+    return;
+  }
   await page.getByLabel("Brukernavn").fill("SS");
   await page.getByLabel("Passord").fill("geotia");
   await page.getByRole("button", { name: "Åpne Geotia" }).click();
-  await expect(page.getByRole("button", { name: "Forlat embetsverket" })).toBeVisible({ timeout: 15_000 });
+  await expect(logout).toBeVisible({ timeout: 15_000 });
 }
 
 async function expectNoHorizontalOverflow(page: Page) {
@@ -205,25 +229,44 @@ async function writeOpenSlowGeoFixture() {
 
 test("core pages do not overflow horizontally on mobile", async ({ page }) => {
   test.setTimeout(120_000);
+
+  for (const viewport of [
+    { width: 393, height: 900 },
+    { width: 320, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await login(page);
+
+    for (const route of coreRoutes) {
+      await page.goto(route, { waitUntil: "domcontentloaded" });
+      await expect(page.getByRole("button", { name: "Forlat embetsverket" })).toBeVisible();
+      await expectNoHorizontalOverflow(page);
+    }
+  }
+});
+
+test("mobile forms and order progress use readable card layouts", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
   await login(page);
 
-  for (const route of [
-    "/",
-    "/spill",
-    "/spill/slowgeo",
-    "/spill/registrer?game=geo",
-    "/tabeller",
-    "/geotinget",
-    "/geotinget/avstemninger",
-    "/geotinget/pergamenter",
-    "/min-geot",
-    "/ordenen",
-    "/arkiv",
-  ]) {
-    await page.goto(route, { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("button", { name: "Forlat embetsverket" })).toBeVisible();
-    await expectNoHorizontalOverflow(page);
-  }
+  await page.goto("/runder", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("table.responsive-protocol").first()).toBeVisible();
+  await expect(page.locator('td[data-label="Km fra fasit"]').first()).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+
+  await page.goto("/spill/registrer?game=geo", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("table.responsive-protocol").first()).toBeVisible();
+  await expect(page.locator('td[data-label="Score / forsøk"]').first()).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+
+  await page.goto("/min-geot", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("100% mot neste")).toHaveCount(0);
+  await expectNoHorizontalOverflow(page);
+
+  await page.goto("/ordenen", { waitUntil: "domcontentloaded" });
+  await expect(page.getByTestId("personal-order-path").getByText("100%")).toHaveCount(0);
+  await expect(page.getByText("ferd", { exact: true })).toHaveCount(0);
+  await expectNoHorizontalOverflow(page);
 });
 
 test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {

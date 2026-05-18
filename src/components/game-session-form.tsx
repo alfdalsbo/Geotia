@@ -50,8 +50,8 @@ export function GameSessionForm({ session }: { session: GameSession }) {
         </label>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="protocol w-full min-w-[900px]">
+      <div className="responsive-protocol-wrap overflow-x-auto">
+        <table className="protocol responsive-protocol w-full min-w-[900px]">
           <thead>
             <tr>
               <th>Geot</th>
@@ -65,7 +65,7 @@ export function GameSessionForm({ session }: { session: GameSession }) {
               const result = session.results.find((candidate) => candidate.playerId === player.id);
               return (
                 <tr key={player.id}>
-                  <td>
+                  <td data-label="Geot">
                     <div className="geot-cell">
                       <span className="geot-flag" style={{ background: player.color }} />
                       <div className="min-w-0">
@@ -74,7 +74,7 @@ export function GameSessionForm({ session }: { session: GameSession }) {
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Status">
                     <select name={`status_${player.id}`} defaultValue={result?.status ?? "ikke_deltatt"}>
                       {statusOptions.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -83,7 +83,7 @@ export function GameSessionForm({ session }: { session: GameSession }) {
                       ))}
                     </select>
                   </td>
-                  <td className="right">
+                  <td className="right" data-label="Score / forsøk">
                     <input
                       name={`score_${player.id}`}
                       type="number"
@@ -94,7 +94,7 @@ export function GameSessionForm({ session }: { session: GameSession }) {
                       placeholder="0"
                     />
                   </td>
-                  <td>
+                  <td data-label="Merknad">
                     <input
                       name={`note_${player.id}`}
                       defaultValue={result?.note ?? ""}

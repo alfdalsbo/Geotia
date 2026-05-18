@@ -253,8 +253,8 @@ export function RoundForm({ round }: { round: Round }) {
         ) : null}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="protocol w-full min-w-[1160px]">
+      <div className="responsive-protocol-wrap overflow-x-auto">
+        <table className="protocol responsive-protocol w-full min-w-[1160px]">
           <thead>
             <tr>
               <th>Geot</th>
@@ -274,7 +274,7 @@ export function RoundForm({ round }: { round: Round }) {
 
               return (
                 <tr key={player.id}>
-                  <td>
+                  <td data-label="Geot">
                     <div className="geot-cell">
                       <span className="geot-flag" style={{ background: player.color }} />
                       <div className="min-w-0">
@@ -283,7 +283,7 @@ export function RoundForm({ round }: { round: Round }) {
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Svar">
                     <input
                       name={`guess_text_${player.id}`}
                       value={guessTexts[player.id] ?? ""}
@@ -310,7 +310,7 @@ export function RoundForm({ round }: { round: Round }) {
                       <small className="mt-1 max-w-64 text-[#8e3030]">Ikke beregnet ennå</small>
                     ) : null}
                   </td>
-                  <td>
+                  <td data-label="Status">
                     <select
                       name={`status_${player.id}`}
                       value={statusValues[player.id] ?? "ikke_deltatt"}
@@ -323,7 +323,7 @@ export function RoundForm({ round }: { round: Round }) {
                       ))}
                     </select>
                   </td>
-                  <td className="right">
+                  <td className="right" data-label="Km fra fasit">
                     <input
                       name={`km_${player.id}`}
                       type="number"
@@ -341,13 +341,13 @@ export function RoundForm({ round }: { round: Round }) {
                       {distanceSources[player.id] === "auto" ? "Auto" : distanceSources[player.id] === "manual" ? "Manuell" : "Ikke satt"}
                     </small>
                   </td>
-                  <td className="right"><span className="num-display">{computedResult?.points ?? 0}</span></td>
-                  <td className="right">
+                  <td className="right" data-label="Poeng"><span className="num-display">{computedResult?.points ?? 0}</span></td>
+                  <td className="right" data-label="Tellende kattometer">
                     <span className={computedResult?.chargedReason === "kattometerstraff" ? "font-semibold text-[#8e3030]" : ""}>
                       {formatKm(computedResult?.chargedKm)}
                     </span>
                   </td>
-                  <td>
+                  <td data-label="Merknad">
                     <input
                       name={`note_${player.id}`}
                       defaultValue={result?.note ?? ""}
