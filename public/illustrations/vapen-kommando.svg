@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 280" role="img" aria-label="Riksvåpen for Kommandosentralen">
+  <title>Riksvåpen — Kommandosentralen</title>
+  <defs>
+    <linearGradient id="vk-shield" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0d3a55"/>
+      <stop offset="100%" stop-color="#061a26"/>
+    </linearGradient>
+    <linearGradient id="vk-shield-band" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5e1d27"/>
+      <stop offset="100%" stop-color="#3a0e15"/>
+    </linearGradient>
+    <linearGradient id="vk-gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e1c06c"/>
+      <stop offset="100%" stop-color="#b8892f"/>
+    </linearGradient>
+    <radialGradient id="vk-globe" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#3a8a5c"/>
+      <stop offset="100%" stop-color="#1e4632"/>
+    </radialGradient>
+    <path id="vk-shield-path" d="M 30 30 L 210 30 L 210 140 Q 210 220 120 260 Q 30 220 30 140 Z"/>
+  </defs>
+
+  <!-- Laurel wreath (simple stylized) -->
+  <g stroke="#7e5a18" stroke-width="1" fill="url(#vk-gold)" opacity="0.85">
+    <!-- Left branch -->
+    <g transform="translate(20 145) rotate(-12)">
+      <path d="M 0 0 Q -8 -14 -4 -28 Q 4 -42 0 -56 Q -8 -70 -2 -84"
+            fill="none" stroke="#7e5a18" stroke-width="1.5"/>
+      <ellipse cx="-8" cy="-14" rx="5" ry="11" transform="rotate(-30 -8 -14)"/>
+      <ellipse cx="2"  cy="-28" rx="5" ry="11" transform="rotate(30  2 -28)"/>
+      <ellipse cx="-8" cy="-42" rx="5" ry="11" transform="rotate(-30 -8 -42)"/>
+      <ellipse cx="2"  cy="-56" rx="5" ry="11" transform="rotate(30  2 -56)"/>
+      <ellipse cx="-8" cy="-70" rx="5" ry="11" transform="rotate(-30 -8 -70)"/>
+      <ellipse cx="2"  cy="-84" rx="4" ry="9"  transform="rotate(30  2 -84)"/>
+    </g>
+    <!-- Right branch mirrored -->
+    <g transform="translate(220 145) rotate(12) scale(-1 1)">
+      <path d="M 0 0 Q -8 -14 -4 -28 Q 4 -42 0 -56 Q -8 -70 -2 -84"
+            fill="none" stroke="#7e5a18" stroke-width="1.5"/>
+      <ellipse cx="-8" cy="-14" rx="5" ry="11" transform="rotate(-30 -8 -14)"/>
+      <ellipse cx="2"  cy="-28" rx="5" ry="11" transform="rotate(30  2 -28)"/>
+      <ellipse cx="-8" cy="-42" rx="5" ry="11" transform="rotate(-30 -8 -42)"/>
+      <ellipse cx="2"  cy="-56" rx="5" ry="11" transform="rotate(30  2 -56)"/>
+      <ellipse cx="-8" cy="-70" rx="5" ry="11" transform="rotate(-30 -8 -70)"/>
+      <ellipse cx="2"  cy="-84" rx="4" ry="9"  transform="rotate(30  2 -84)"/>
+    </g>
+  </g>
+
+  <!-- Shield -->
+  <use href="#vk-shield-path" fill="url(#vk-shield)" stroke="#b8892f" stroke-width="2"/>
+  <use href="#vk-shield-path" fill="none" stroke="#b8892f" stroke-width="0.6" opacity="0.5" transform="translate(0 0) scale(0.96) translate(2.5 2.5)" transform-origin="120 130"/>
+
+  <!-- Open book at base -->
+  <g transform="translate(120 200)">
+    <!-- Book pages -->
+    <path d="M -42 -10 Q -22 -16 0 -8 Q 22 -16 42 -10 L 42 14 Q 22 8 0 16 Q -22 8 -42 14 Z"
+          fill="#f5ead0" stroke="#7e5a18" stroke-width="1.2"/>
+    <!-- Spine crease -->
+    <line x1="0" y1="-8" x2="0" y2="16" stroke="#7e5a18" stroke-width="0.8" opacity="0.7"/>
+    <!-- Text lines -->
+    <g stroke="#594226" stroke-width="0.6" opacity="0.65">
+      <line x1="-34" y1="-4" x2="-8" y2="-2"/>
+      <line x1="-34" y1="0"  x2="-10" y2="2"/>
+      <line x1="-34" y1="4"  x2="-12" y2="6"/>
+      <line x1="8" y1="-2" x2="34" y2="-4"/>
+      <line x1="10" y1="2"  x2="34" y2="0"/>
+      <line x1="12" y1="6"  x2="34" y2="4"/>
+    </g>
+  </g>
+
+  <!-- Globe -->
+  <g transform="translate(120 130)">
+    <circle r="40" fill="url(#vk-globe)" stroke="#b8892f" stroke-width="1.5"/>
+    <!-- Meridians -->
+    <ellipse cx="0" cy="0" rx="40" ry="14" fill="none" stroke="#e1c06c" stroke-width="0.6" opacity="0.55"/>
+    <ellipse cx="0" cy="0" rx="14" ry="40" fill="none" stroke="#e1c06c" stroke-width="0.6" opacity="0.55"/>
+    <line x1="-40" y1="0" x2="40" y2="0" stroke="#e1c06c" stroke-width="0.5" opacity="0.45"/>
+    <line x1="0" y1="-40" x2="0" y2="40" stroke="#e1c06c" stroke-width="0.5" opacity="0.45"/>
+    <!-- Stylized continents -->
+    <path d="M -22 -8 Q -16 -16 -8 -12 Q -2 -6 -10 0 Q -18 4 -22 -8 Z" fill="#f5ead0" opacity="0.85"/>
+    <path d="M 4 -18 Q 14 -22 22 -14 Q 18 -8 10 -10 Q 4 -12 4 -18 Z" fill="#f5ead0" opacity="0.85"/>
+    <path d="M 6 8 Q 16 4 22 14 Q 18 22 8 20 Q 2 16 6 8 Z" fill="#f5ead0" opacity="0.85"/>
+    <path d="M -14 12 Q -8 6 -4 12 Q -8 20 -14 18 Z" fill="#f5ead0" opacity="0.85"/>
+  </g>
+
+  <!-- Compass star above globe (pin marker) -->
+  <g transform="translate(120 88)">
+    <path d="M 0 -22 L 5 -2 L 22 0 L 5 2 L 0 22 L -5 2 L -22 0 L -5 -2 Z"
+          fill="url(#vk-gold)" stroke="#7e5a18" stroke-width="0.6"/>
+    <circle r="3" fill="#5e1d27" stroke="#e1c06c" stroke-width="0.8"/>
+  </g>
+
+  <!-- Banner ribbon at bottom -->
+  <g transform="translate(120 250)">
+    <path d="M -76 0 L -88 8 L -88 22 L 88 22 L 88 8 L 76 0 L 70 6 L -70 6 Z"
+          fill="url(#vk-shield-band)" stroke="#b8892f" stroke-width="1"/>
+    <text x="0" y="17" text-anchor="middle"
+          font-family="'Cinzel', serif" font-weight="700" font-size="9"
+          fill="#f5d27a" letter-spacing="4">RIKETS · KOMMANDO</text>
+  </g>
+</svg>

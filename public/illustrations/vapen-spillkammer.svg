@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 280" role="img" aria-label="Riksvåpen for Spillkammeret">
+  <title>Riksvåpen — Spillkammeret</title>
+  <defs>
+    <linearGradient id="vs-shield" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0d3a55"/><stop offset="100%" stop-color="#061a26"/>
+    </linearGradient>
+    <linearGradient id="vs-band" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5e1d27"/><stop offset="100%" stop-color="#3a0e15"/>
+    </linearGradient>
+    <linearGradient id="vs-gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e1c06c"/><stop offset="100%" stop-color="#b8892f"/>
+    </linearGradient>
+    <path id="vs-shield-path" d="M 30 30 L 210 30 L 210 140 Q 210 220 120 260 Q 30 220 30 140 Z"/>
+  </defs>
+
+  <g stroke="#7e5a18" stroke-width="1" fill="url(#vs-gold)" opacity="0.85">
+    <g transform="translate(20 145) rotate(-12)">
+      <path d="M 0 0 Q -8 -14 -4 -28 Q 4 -42 0 -56 Q -8 -70 -2 -84" fill="none" stroke="#7e5a18" stroke-width="1.5"/>
+      <ellipse cx="-8" cy="-14" rx="5" ry="11" transform="rotate(-30 -8 -14)"/>
+      <ellipse cx="2" cy="-28" rx="5" ry="11" transform="rotate(30 2 -28)"/>
+      <ellipse cx="-8" cy="-42" rx="5" ry="11" transform="rotate(-30 -8 -42)"/>
+      <ellipse cx="2" cy="-56" rx="5" ry="11" transform="rotate(30 2 -56)"/>
+      <ellipse cx="-8" cy="-70" rx="5" ry="11" transform="rotate(-30 -8 -70)"/>
+      <ellipse cx="2" cy="-84" rx="4" ry="9" transform="rotate(30 2 -84)"/>
+    </g>
+    <g transform="translate(220 145) rotate(12) scale(-1 1)">
+      <path d="M 0 0 Q -8 -14 -4 -28 Q 4 -42 0 -56 Q -8 -70 -2 -84" fill="none" stroke="#7e5a18" stroke-width="1.5"/>
+      <ellipse cx="-8" cy="-14" rx="5" ry="11" transform="rotate(-30 -8 -14)"/>
+      <ellipse cx="2" cy="-28" rx="5" ry="11" transform="rotate(30 2 -28)"/>
+      <ellipse cx="-8" cy="-42" rx="5" ry="11" transform="rotate(-30 -8 -42)"/>
+      <ellipse cx="2" cy="-56" rx="5" ry="11" transform="rotate(30 2 -56)"/>
+      <ellipse cx="-8" cy="-70" rx="5" ry="11" transform="rotate(-30 -8 -70)"/>
+      <ellipse cx="2" cy="-84" rx="4" ry="9" transform="rotate(30 2 -84)"/>
+    </g>
+  </g>
+
+  <use href="#vs-shield-path" fill="url(#vs-shield)" stroke="#b8892f" stroke-width="2"/>
+
+  <!-- Stor kart-pin -->
+  <g transform="translate(120 160)">
+    <path d="M 0 -55 C -22 -55 -32 -38 -32 -22 C -32 -2 -10 18 0 38 C 10 18 32 -2 32 -22 C 32 -38 22 -55 0 -55 Z"
+          fill="#5e1d27" stroke="#b8892f" stroke-width="2"/>
+    <circle cx="0" cy="-22" r="12" fill="#f5ead0" stroke="#7e5a18" stroke-width="1.2"/>
+    <!-- Lite kryss på pin -->
+    <line x1="-6" y1="-22" x2="6" y2="-22" stroke="#5e1d27" stroke-width="1.5"/>
+    <line x1="0" y1="-28" x2="0" y2="-16" stroke="#5e1d27" stroke-width="1.5"/>
+  </g>
+
+  <!-- To terninger ved foten -->
+  <g transform="translate(80 220)">
+    <rect x="-12" y="-12" width="24" height="24" rx="3" fill="url(#vs-gold)" stroke="#7e5a18" stroke-width="1" transform="rotate(-12)"/>
+    <g transform="rotate(-12)" fill="#1c1408">
+      <circle cx="-5" cy="-5" r="1.5"/>
+      <circle cx="5" cy="-5" r="1.5"/>
+      <circle cx="-5" cy="5" r="1.5"/>
+      <circle cx="5" cy="5" r="1.5"/>
+    </g>
+  </g>
+  <g transform="translate(160 220)">
+    <rect x="-12" y="-12" width="24" height="24" rx="3" fill="url(#vs-gold)" stroke="#7e5a18" stroke-width="1" transform="rotate(14)"/>
+    <g transform="rotate(14)" fill="#1c1408">
+      <circle cx="0" cy="0" r="1.5"/>
+      <circle cx="-5" cy="-5" r="1.5"/>
+      <circle cx="5" cy="-5" r="1.5"/>
+      <circle cx="-5" cy="5" r="1.5"/>
+      <circle cx="5" cy="5" r="1.5"/>
+    </g>
+  </g>
+
+  <g transform="translate(120 250)">
+    <path d="M -76 0 L -88 8 L -88 22 L 88 22 L 88 8 L 76 0 L 70 6 L -70 6 Z" fill="url(#vs-band)" stroke="#b8892f" stroke-width="1"/>
+    <text x="0" y="17" text-anchor="middle" font-family="'Cinzel', serif" font-weight="700" font-size="9" fill="#f5d27a" letter-spacing="4">SPILL · KAMMERET</text>
+  </g>
+</svg>

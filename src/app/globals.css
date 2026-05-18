@@ -659,3 +659,429 @@ textarea {
   align-items: center;
   gap: 8px;
 }
+
+/* =============================================================
+   FASE 2 — Hero, Section, Shield, Eyebrow, Ornament, Archive cards
+   Kilde: _visuelle_proever/RIKSPROTOKOLLEN.css § 8–10, 11, 15, 16
+   ============================================================= */
+
+/* ----- § 8 — Hero ----- */
+.geo-hero {
+  position: relative;
+  border: 1px solid var(--gold);
+  background: linear-gradient(180deg, rgba(255, 247, 221, 0.95), rgba(238, 217, 168, 0.92));
+  box-shadow:
+    var(--shadow-frame),
+    inset 0 0 0 8px rgba(245, 234, 208, 0.5),
+    inset 0 0 0 10px var(--gold);
+  overflow: hidden;
+}
+
+.geo-hero::before,
+.geo-hero::after {
+  content: "";
+  position: absolute;
+  width: 84px;
+  height: 84px;
+  pointer-events: none;
+  opacity: 0.75;
+  background:
+    radial-gradient(circle at 12px 12px, var(--gold) 0 2px, transparent 3px),
+    conic-gradient(
+      from 0deg,
+      transparent 0deg 88deg,
+      var(--gold) 88deg 92deg,
+      transparent 92deg 180deg,
+      var(--gold) 180deg 184deg,
+      transparent 184deg
+    );
+}
+
+.geo-hero::before {
+  top: 0;
+  left: 0;
+}
+
+.geo-hero::after {
+  bottom: 0;
+  right: 0;
+  transform: rotate(180deg);
+}
+
+.geo-hero-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+}
+
+.geo-hero-text {
+  padding: 42px 48px 36px;
+}
+
+.geo-hero-title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 84px;
+  margin: 0;
+  color: var(--navy);
+  letter-spacing: 0.04em;
+  line-height: 0.95;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.geo-hero-lead {
+  font-family: var(--font-sans);
+  font-size: 19px;
+  line-height: 1.6;
+  max-width: 580px;
+  margin-top: 18px;
+  color: #3b2c12;
+}
+
+.geo-hero-lead.geo-hero-lead-dropcap::first-letter {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 46px;
+  color: var(--burgundy);
+  float: left;
+  line-height: 0.9;
+  padding: 6px 12px 0 0;
+}
+
+.geo-hero-poster {
+  background: var(--navy-deep);
+  position: relative;
+  border-left: 1px solid var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+  padding: 24px;
+}
+
+.geo-hero-poster > * {
+  position: relative;
+  z-index: 1;
+}
+
+.geo-hero-poster::after {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  pointer-events: none;
+  border: 1px solid rgba(184, 137, 47, 0.4);
+  z-index: 2;
+}
+
+.geo-hero-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+.geo-winner-band {
+  background: linear-gradient(90deg, var(--navy-deep), #0d3a55);
+  color: #f5ead0;
+  padding: 18px 24px;
+  border-top: 1px solid var(--gold);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: center;
+}
+
+.geo-winner-band .label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.32em;
+  color: #f5d27a;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.geo-winner-band .value {
+  font-family: var(--font-numerals);
+  font-weight: 600;
+  font-size: 26px;
+  margin: 6px 0 0;
+}
+
+@media (max-width: 900px) {
+  .geo-hero-grid {
+    grid-template-columns: 1fr;
+  }
+  .geo-hero-text {
+    padding: 28px 24px 24px;
+  }
+  .geo-hero-title {
+    font-size: 56px;
+  }
+  .geo-hero-poster {
+    min-height: 280px;
+    border-left: 0;
+    border-top: 1px solid var(--gold);
+  }
+}
+
+/* ----- § 9 — Eyebrow & Ornament ----- */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--burgundy);
+  font-size: 11px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border: 1px solid var(--gold);
+  background: rgba(255, 247, 221, 0.6);
+  border-radius: var(--radius-sharp);
+  margin-bottom: 18px;
+}
+
+.eyebrow .ico {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--gold);
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, var(--burgundy), #8a2f3a);
+  display: inline-block;
+  flex: none;
+}
+
+.eyebrow.tone-navy {
+  color: var(--navy);
+  border-color: var(--navy);
+}
+
+.eyebrow.tone-navy .ico {
+  background: var(--navy);
+}
+
+.eyebrow.tone-green {
+  color: var(--green-regent);
+  border-color: var(--green-regent);
+}
+
+.eyebrow.tone-green .ico {
+  background: var(--green-regent);
+}
+
+.eyebrow.tone-gold {
+  color: var(--gold-deep);
+  border-color: var(--gold-deep);
+}
+
+.eyebrow.tone-gold .ico {
+  background: linear-gradient(135deg, var(--gold-bright), var(--gold-deep));
+}
+
+.ornament {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--burgundy);
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.32em;
+  margin: 24px 0 6px;
+  text-transform: uppercase;
+}
+
+.ornament::before,
+.ornament::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  min-width: 1.75rem;
+}
+
+/* ----- § 10 — Shield (ny intern StatTile-impl) ----- */
+.shield {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 250, 228, 0.95), rgba(238, 217, 168, 0.92));
+  border: 1px solid var(--gold);
+  padding: 24px 18px 18px;
+  box-shadow: var(--shadow-shield);
+}
+
+.shield .num {
+  position: absolute;
+  top: -14px;
+  left: 18px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--navy) 60%, var(--navy-deep));
+  color: #f5d27a;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 13px;
+  border: 2px solid var(--gold);
+  z-index: 1;
+}
+
+.shield--green .num {
+  background: radial-gradient(circle, var(--green-regent) 60%, #122e1f);
+}
+
+.shield--red .num {
+  background: radial-gradient(circle, var(--burgundy) 60%, #3a0e15);
+}
+
+.shield--gold .num {
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold-deep));
+  color: #fff7e0;
+}
+
+.shield .label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--burgundy);
+  margin: 6px 0 8px;
+  text-transform: uppercase;
+}
+
+.shield .value {
+  font-family: var(--font-numerals);
+  font-weight: 700;
+  font-size: 34px;
+  color: var(--navy);
+  line-height: 1;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+.shield .detail {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--ink-muted);
+  margin-top: 6px;
+}
+
+/* ----- § 11 — Section + Banner ----- */
+.geo-section {
+  background:
+    linear-gradient(180deg, rgba(255, 247, 221, 0.96), rgba(244, 228, 190, 0.92)),
+    repeating-linear-gradient(0deg, rgba(126, 90, 24, 0.04) 0 1px, transparent 1px 8px);
+  border: 1px solid var(--gold);
+  box-shadow: var(--shadow-section);
+  position: relative;
+}
+
+.geo-banner {
+  margin: -1px -1px 0;
+  background: linear-gradient(180deg, var(--navy), var(--navy-deep));
+  color: #f5d27a;
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--gold);
+  position: relative;
+}
+
+.geo-banner::before,
+.geo-banner::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 34px;
+  height: 38px;
+  transform: translateY(-50%);
+  background: linear-gradient(180deg, var(--burgundy), #3a0e15);
+  clip-path: polygon(0 0, 100% 0, 80% 50%, 100% 100%, 0 100%);
+}
+
+.geo-banner::before {
+  left: -20px;
+}
+
+.geo-banner::after {
+  right: -20px;
+  transform: translateY(-50%) scaleX(-1);
+}
+
+.geo-banner h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.22em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #f5ead0;
+}
+
+.geo-banner .eyebrow-band {
+  font-family: var(--font-italic);
+  font-style: italic;
+  font-size: 13px;
+  color: #e8cf8a;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.geo-section > .geo-section-body {
+  padding: 24px 32px;
+}
+
+@media (max-width: 720px) {
+  .geo-banner {
+    padding: 12px 18px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .geo-banner::before,
+  .geo-banner::after {
+    width: 24px;
+    height: 28px;
+  }
+  .geo-section > .geo-section-body {
+    padding: 18px;
+  }
+}
+
+/* ----- § 16 — Quote strip ----- */
+.geo-quote-strip {
+  background:
+    linear-gradient(180deg, var(--navy-deep), #0d3a55),
+    repeating-linear-gradient(90deg, rgba(184, 137, 47, 0.15) 0 1px, transparent 1px 14px);
+  color: #f5ead0;
+  padding: 32px 36px;
+  border: 1px solid var(--gold);
+  text-align: center;
+  font-family: var(--font-italic);
+  font-style: italic;
+  font-size: 26px;
+  position: relative;
+}
+
+.geo-quote-strip::before {
+  content: "\201C";
+  position: absolute;
+  top: -28px;
+  left: 24px;
+  font-family: var(--font-numerals);
+  font-size: 120px;
+  color: rgba(245, 210, 122, 0.3);
+  line-height: 1;
+}
+
+.geo-quote-strip::after {
+  content: "\201D";
+  position: absolute;
+  bottom: -66px;
+  right: 24px;
+  font-family: var(--font-numerals);
+  font-size: 120px;
+  color: rgba(245, 210, 122, 0.3);
+  line-height: 1;
+}

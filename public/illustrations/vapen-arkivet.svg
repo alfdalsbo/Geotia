@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 280" role="img" aria-label="Riksvåpen for Arkivet">
+  <title>Riksvåpen — Arkivet</title>
+  <defs>
+    <linearGradient id="va-shield" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0d3a55"/><stop offset="100%" stop-color="#061a26"/>
+    </linearGradient>
+    <linearGradient id="va-band" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5e1d27"/><stop offset="100%" stop-color="#3a0e15"/>
+    </linearGradient>
+    <linearGradient id="va-gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e1c06c"/><stop offset="100%" stop-color="#b8892f"/>
+    </linearGradient>
+    <path id="va-shield-path" d="M 30 30 L 210 30 L 210 140 Q 210 220 120 260 Q 30 220 30 140 Z"/>
+  </defs>
+
+  <!-- Lauerkranser -->
+  <g stroke="#7e5a18" stroke-width="1" fill="url(#va-gold)" opacity="0.85">
+    <g transform="translate(20 145) rotate(-12)">
+      <path d="M 0 0 Q -8 -14 -4 -28 Q 4 -42 0 -56 Q -8 -70 -2 -84" fill="none" stroke="#7e5a18" stroke-width="1.5"/>
+      <ellipse cx="-8" cy="-14" rx="5" ry="11" transform="rotate(-30 -8 -14)"/>
+      <ellipse cx="2" cy="-28" rx="5" ry="11" transform="rotate(30 2 -28)"/>
+      <ellipse cx="-8" cy="-42" rx="5" ry="11" transform="rotate(-30 -8 -42)"/>
+      <ellipse cx="2" cy="-56" rx="5" ry="11" transform="rotate(30 2 -56)"/>
+      <ellipse cx="-8" cy="-70" rx="5" ry="11" transform="rotate(-30 -8 -70)"/>
+      <ellipse cx="2" cy="-84" rx="4" ry="9" transform="rotate(30 2 -84)"/>
+    </g>
+    <g transform="translate(220 145) rotate(12) scale(-1 1)">
+      <path d="M 0 0 Q -8 -14 -4 -28 Q 4 -42 0 -56 Q -8 -70 -2 -84" fill="none" stroke="#7e5a18" stroke-width="1.5"/>
+      <ellipse cx="-8" cy="-14" rx="5" ry="11" transform="rotate(-30 -8 -14)"/>
+      <ellipse cx="2" cy="-28" rx="5" ry="11" transform="rotate(30 2 -28)"/>
+      <ellipse cx="-8" cy="-42" rx="5" ry="11" transform="rotate(-30 -8 -42)"/>
+      <ellipse cx="2" cy="-56" rx="5" ry="11" transform="rotate(30 2 -56)"/>
+      <ellipse cx="-8" cy="-70" rx="5" ry="11" transform="rotate(-30 -8 -70)"/>
+      <ellipse cx="2" cy="-84" rx="4" ry="9" transform="rotate(30 2 -84)"/>
+    </g>
+  </g>
+
+  <use href="#va-shield-path" fill="url(#va-shield)" stroke="#b8892f" stroke-width="2"/>
+
+  <!-- To bøker krysset -->
+  <g transform="translate(120 130)">
+    <!-- Bok venstre (rotert) -->
+    <g transform="rotate(-22)">
+      <rect x="-50" y="-12" width="100" height="44" rx="2" fill="#5e1d27" stroke="#b8892f" stroke-width="1.2"/>
+      <rect x="-50" y="-12" width="100" height="8" fill="#7e2532"/>
+      <line x1="-45" y1="0" x2="45" y2="0" stroke="#e1c06c" stroke-width="0.7" opacity="0.6"/>
+      <line x1="-45" y1="6" x2="45" y2="6" stroke="#e1c06c" stroke-width="0.7" opacity="0.6"/>
+      <line x1="-45" y1="14" x2="45" y2="14" stroke="#e1c06c" stroke-width="0.7" opacity="0.6"/>
+      <line x1="-45" y1="22" x2="45" y2="22" stroke="#e1c06c" stroke-width="0.7" opacity="0.6"/>
+      <!-- Gravur G -->
+      <text x="0" y="13" text-anchor="middle" font-family="'Cinzel', serif" font-weight="900" font-size="20" fill="#e1c06c">G</text>
+    </g>
+    <!-- Bok høyre (motsatt) -->
+    <g transform="rotate(22)">
+      <rect x="-50" y="-12" width="100" height="44" rx="2" fill="#1e4632" stroke="#b8892f" stroke-width="1.2"/>
+      <rect x="-50" y="-12" width="100" height="8" fill="#286243"/>
+      <line x1="-45" y1="0" x2="45" y2="0" stroke="#e1c06c" stroke-width="0.7" opacity="0.6"/>
+      <line x1="-45" y1="6" x2="45" y2="6" stroke="#e1c06c" stroke-width="0.7" opacity="0.6"/>
+      <line x1="-45" y1="14" x2="45" y2="14" stroke="#e1c06c" stroke-width="0.7" opacity="0.6"/>
+      <line x1="-45" y1="22" x2="45" y2="22" stroke="#e1c06c" stroke-width="0.7" opacity="0.6"/>
+      <text x="0" y="13" text-anchor="middle" font-family="'Cinzel', serif" font-weight="900" font-size="20" fill="#e1c06c">A</text>
+    </g>
+  </g>
+
+  <!-- Fjærpenn over bøkene -->
+  <g transform="translate(120 80) rotate(-20)">
+    <path d="M 0 0 Q 5 -30 -2 -60 Q 5 -50 12 -50 Q 18 -30 8 -10 Z" fill="url(#va-gold)" stroke="#7e5a18" stroke-width="0.8"/>
+    <line x1="0" y1="-2" x2="3" y2="20" stroke="#7e5a18" stroke-width="1"/>
+  </g>
+
+  <!-- Banderol -->
+  <g transform="translate(120 250)">
+    <path d="M -76 0 L -88 8 L -88 22 L 88 22 L 88 8 L 76 0 L 70 6 L -70 6 Z" fill="url(#va-band)" stroke="#b8892f" stroke-width="1"/>
+    <text x="0" y="17" text-anchor="middle" font-family="'Cinzel', serif" font-weight="700" font-size="9" fill="#f5d27a" letter-spacing="4">RIKETS · ARKIV</text>
+  </g>
+</svg>

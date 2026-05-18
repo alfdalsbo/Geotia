@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -8,13 +9,14 @@ import {
   Footprints,
   Gavel,
   LockKeyhole,
-  Milestone,
   ScrollText,
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
 
 import { Section, StatTile } from "@/components/section";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Ornament } from "@/components/ui/ornament";
 import { getCurrentGeot } from "@/lib/auth";
 import {
   geoticOrderFoundingGate,
@@ -57,57 +59,55 @@ export default async function GeoticOrderPage() {
 
   return (
     <div className="space-y-7">
-      <section className="overflow-hidden rounded border border-[#c49a3c]/70 bg-[#061d2b] text-[#fff7e6] shadow-[0_22px_48px_rgba(0,0,0,0.22)]">
-        <div className="grid lg:grid-cols-[minmax(0,1fr)_390px]">
-          <div className="p-5 sm:p-8 lg:p-10">
-            <div className="inline-flex items-center gap-2 rounded border border-[#c49a3c]/55 bg-[#020b11]/45 px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#e1c06c]">
-              <Milestone className="h-4 w-4" aria-hidden="true" />
-              Fra borger til ordensmakt
-            </div>
-            <h1 className="font-display mt-5 text-5xl font-semibold tracking-normal sm:text-7xl">
-              Den Geotiske Orden
-            </h1>
-            <p className="mt-4 max-w-3xl text-lg leading-8 text-[#eadcbd]">
+      <section className="geo-hero">
+        <div className="geo-hero-grid">
+          <div className="geo-hero-text">
+            <Eyebrow>Fra borger til ordensmakt · Kapittel VI</Eyebrow>
+            <h1 className="geo-hero-title">Den Geotiske Orden</h1>
+            <p className="geo-hero-lead geo-hero-lead-dropcap">
               Geotia er ikke bare et rom man går inn i. Det er en kultur man
               opptas i, prøves av og langsomt blir farlig nok til å forvalte.
               Nye deltakere starter som Borgere og kan arbeide seg oppover
               gjennom tid, spill, poeng, engasjement og fellesskap.
             </p>
-            <div className="geotia-ornament mt-7 text-center text-sm font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
-              <span>{geoticOrderMotto}</span>
-            </div>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <a
-                href="#ordensstigen"
-                className="inline-flex h-11 items-center gap-2 rounded bg-[#e1c06c] px-4 text-sm font-semibold text-[#062b40] shadow-sm transition hover:bg-[#f0d78f]"
-              >
+            <Ornament>{geoticOrderMotto}</Ornament>
+            <div className="geo-hero-actions">
+              <a href="#ordensstigen" className="btn btn-wax">
                 Se rangstigen
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
-              <a
-                href="#protokollen"
-                className="inline-flex h-11 items-center gap-2 rounded border border-[#e1c06c]/45 bg-[#fff7e6]/10 px-4 text-sm font-semibold text-[#fff7e6] transition hover:bg-[#fff7e6]/16"
-              >
+              <a href="#protokollen" className="btn btn-quiet">
                 Se geotenes vei
                 <UsersRound className="h-4 w-4" aria-hidden="true" />
               </a>
             </div>
           </div>
-
-          <div className="border-t border-[#c49a3c]/35 bg-[#020b11] p-5 lg:border-l lg:border-t-0">
-            <div className="flex h-full flex-col justify-between rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8 p-5">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
-                  Din ordensvei
-                </p>
-                <h2 className="font-display mt-2 text-3xl font-semibold">{currentRow?.rank.name}</h2>
-                <p className="mt-3 text-sm leading-6 text-[#eadcbd]">{currentRow?.rank.motto}</p>
-              </div>
-              {currentRow ? <PersonalPathCard row={currentRow} /> : null}
-            </div>
+          <div className="geo-hero-poster">
+            <Image
+              src="/illustrations/vapen-ordenen.svg"
+              alt="Riksvåpen for Den Geotiske Orden"
+              width={300}
+              height={350}
+              priority
+              style={{ width: "auto", maxHeight: "440px" }}
+            />
           </div>
         </div>
+        {currentRow ? (
+          <div className="geo-winner-band">
+            <div>
+              <p className="label">Din ordensvei</p>
+              <p className="value">{currentRow.rank.name} — {currentRow.rank.motto}</p>
+            </div>
+          </div>
+        ) : null}
       </section>
+
+      {currentRow ? (
+        <Section title="Din personlige sti" eyebrow="Hva som mangler før neste rang">
+          <PersonalPathCard row={currentRow} />
+        </Section>
+      ) : null}
 
       <div className="grid gap-3 md:grid-cols-4">
         <StatTile
@@ -115,24 +115,28 @@ export default async function GeoticOrderPage() {
           value={geoticOrderRanks.length}
           detail="Fra Borger til Partigründer"
           tone="gold"
+          index={0}
         />
         <StatTile
           label="Ordensborgere"
           value={rows.length}
           detail="Ført i den synlige protokollen"
           tone="blue"
+          index={1}
         />
         <StatTile
           label="Under herding"
           value={candidates}
           detail="Borger, Anerkjent Borger eller Aspirant"
           tone="green"
+          index={2}
         />
         <StatTile
           label="Partigründere"
           value={topRanks}
           detail="Farlige nok til å starte sin egen orden"
           tone="red"
+          index={3}
         />
       </div>
 

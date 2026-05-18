@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -12,9 +13,10 @@ import {
   Users,
 } from "lucide-react";
 
-import { ExpandableImage } from "@/components/expandable-image";
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { Section } from "@/components/section";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Ornament } from "@/components/ui/ornament";
 import { archiveSections } from "@/lib/archive";
 import { archive } from "@/lib/seed";
 
@@ -39,33 +41,26 @@ const iconBySlug = {
 export default function ArchivePage() {
   return (
     <div className="space-y-7">
-      <section className="geotia-frame rounded">
-        <div className="grid gap-0 lg:grid-cols-[1fr_420px]">
-          <div className="p-5 sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
-              Oppslagsverk · riksarkiv · propaganda med fotnoter
-            </p>
-            <h1 className="font-display mt-2 text-5xl font-semibold tracking-normal text-[#062b40]">
-              Geotias riksarkiv
-            </h1>
-            <p className="mt-4 max-w-3xl text-base leading-7 text-[#4f412b]">
+      <section className="geo-hero">
+        <div className="geo-hero-grid">
+          <div className="geo-hero-text">
+            <Eyebrow>Riksarkivet · propaganda med fotnoter · Kapittel V</Eyebrow>
+            <h1 className="geo-hero-title">Riksarkivet</h1>
+            <p className="geo-hero-lead geo-hero-lead-dropcap">
               Lore, grunnlov, språk, merkedager og historikk samlet i ett
               ærverdig arkiv for små geografiske feil som vokste opp og ble
               nasjonale hendelser.
             </p>
-            <div className="geotia-ornament mt-6 text-center text-sm font-semibold uppercase tracking-[0.18em] text-[#194832]">
-              <span>Sannhet · orden · forvirrelse</span>
-            </div>
+            <Ornament>Sannhet · orden · forvirrelse</Ornament>
           </div>
-          <div className="border-t border-[#c49a3c]/35 bg-[#061d2b] lg:border-l lg:border-t-0">
-            <ExpandableImage
-              src="/geotia-assets/party-overview.png"
-              alt="Geotia partioversikt"
-              sizes="(min-width: 1024px) 420px, 100vw"
-              className="relative min-h-[330px] w-full"
-              imageClassName="object-cover object-top"
-              caption="Geotia partioversikt"
+          <div className="geo-hero-poster">
+            <Image
+              src="/illustrations/vapen-arkivet.svg"
+              alt="Riksvåpen for Arkivet"
+              width={300}
+              height={350}
               priority
+              style={{ width: "auto", maxHeight: "440px" }}
             />
           </div>
         </div>

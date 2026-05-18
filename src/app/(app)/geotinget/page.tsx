@@ -1,9 +1,11 @@
+import Image from "next/image";
 import { Gavel } from "lucide-react";
 
 import { submitGeotingProposalAction } from "@/app/actions";
 import { GeotingSubnav } from "@/components/geoting-subnav";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Section, StatTile } from "@/components/section";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { getCurrentGeot } from "@/lib/auth";
 import { geotiaGeotingLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { getGeotingState, resolveDueGeotingProposals } from "@/lib/store";
@@ -30,18 +32,28 @@ export default async function GeotingPage({
 
   return (
     <div className="space-y-6">
-      <section className="geotia-frame geotia-agora rounded p-5 sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430] sm:tracking-[0.22em]">
-          GeoTinget · tingvoll · agora · kranglekammer
-        </p>
-        <h1 className="font-display mt-2 text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
-          GeoTinget
-        </h1>
-        <p className="mt-4 max-w-4xl text-base leading-7 text-[#4f412b]">
-          Tingvollen er inngangen til GeoTinget: legg frem nye saker, se om urnen
-          er åpen, og gå videre til avstemninger eller Tingpergamentene uten å
-          måtte lete gjennom en lang side.
-        </p>
+      <section className="geo-hero">
+        <div className="geo-hero-grid">
+          <div className="geo-hero-text">
+            <Eyebrow>Tingvollen · agora · kranglekammer · Kapittel IV</Eyebrow>
+            <h1 className="geo-hero-title">GeoTinget</h1>
+            <p className="geo-hero-lead geo-hero-lead-dropcap">
+              Tingvollen er inngangen til GeoTinget: legg frem nye saker, se om
+              urnen er åpen, og gå videre til avstemninger eller
+              Tingpergamentene uten å måtte lete gjennom en lang side.
+            </p>
+          </div>
+          <div className="geo-hero-poster">
+            <Image
+              src="/illustrations/vapen-tinget.svg"
+              alt="Riksvåpen for GeoTinget"
+              width={300}
+              height={350}
+              priority
+              style={{ width: "auto", maxHeight: "440px" }}
+            />
+          </div>
+        </div>
       </section>
 
       <GeotingSubnav active="tingvollen" />
@@ -49,10 +61,10 @@ export default async function GeotingPage({
       <GeotingStatus status={params.status} error={params.error} />
 
       <div className="grid gap-3 md:grid-cols-4">
-        <StatTile label="Innlogget embete" value={currentGeot?.shortName ?? "-"} detail={currentGeot?.title} tone="blue" />
-        <StatTile label="Venter på geo-ed" value={awaitingOath} detail="Forslag på tingvollen" tone="gold" />
-        <StatTile label="Åpne urner" value={activeVotes} detail="Vises i Stemmeurnen" tone="red" />
-        <StatTile label="Protokollført" value={resolvedVotes} detail={`${votesCast} stemmer ført`} tone="green" />
+        <StatTile label="Innlogget embete" value={currentGeot?.shortName ?? "-"} detail={currentGeot?.title} tone="blue" index={0} />
+        <StatTile label="Venter på geo-ed" value={awaitingOath} detail="Forslag på tingvollen" tone="gold" index={1} />
+        <StatTile label="Åpne urner" value={activeVotes} detail="Vises i Stemmeurnen" tone="red" index={2} />
+        <StatTile label="Protokollført" value={resolvedVotes} detail={`${votesCast} stemmer ført`} tone="green" index={3} />
       </div>
 
       {currentGeot?.role === "tingvitne" ? (

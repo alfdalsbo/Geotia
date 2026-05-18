@@ -1,11 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
   BookOpen,
   Crown,
   Gavel,
-  Landmark,
-  Milestone,
   ScrollText,
   TableProperties,
   Trophy,
@@ -16,9 +15,11 @@ import { DashboardGameGrid, DashboardPartyGrid } from "@/components/dashboard-se
 import { GeoGuessrTipTicker } from "@/components/geo-guessr-tip-ticker";
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { RotatingGeotiaQuote } from "@/components/rotating-geotia-quote";
-import { ExpandableImage } from "@/components/expandable-image";
 import { SarajevoVideo } from "@/components/sarajevo-video";
 import { Section, StatTile } from "@/components/section";
+import { buttonClass } from "@/components/ui/button";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Ornament } from "@/components/ui/ornament";
 import { getGeoGuessrTipDaySeed, selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { geotiaDashboardLines, geotiaTipLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { computeGameStandings, getHallOfFame, computeRound, computeStandings } from "@/lib/scoring";
@@ -73,32 +74,25 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-7">
-      <section className="geotia-frame rounded">
-        <div className="grid xl:grid-cols-[1.05fr_0.95fr]">
-          <div className="p-5 sm:p-8 lg:p-10">
-            <div className="inline-flex items-center gap-2 rounded border border-[#c49a3c]/50 bg-[#062b40] px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#fff7e6]">
-              <Landmark className="h-4 w-4 text-[#e1c06c]" aria-hidden="true" />
-              Rikets kommandosentral
-            </div>
-            <h1 className="font-display mt-5 text-5xl font-semibold tracking-normal text-[#062b40] sm:text-7xl">
-              Geotia
-            </h1>
-            <p className="mt-4 max-w-3xl text-lg leading-8 text-[#4f412b]">
+      <section className="geo-hero">
+        <div className="geo-hero-grid">
+          <div className="geo-hero-text">
+            <Eyebrow>Rikets kommandosentral · Kapittel I</Eyebrow>
+            <h1 className="geo-hero-title">Geotia</h1>
+            <p className="geo-hero-lead geo-hero-lead-dropcap">
               Et geotisk mikrounivers bygget på geografispill, brutal
               sannhetssøken og et statsapparat som fører riket med alvorlig
               smil. Her føres kilometer, ære, desertering og partipropaganda
               med høytidelig hånd i Geotias statsarkiv.
             </p>
 
-            <div className="geotia-ornament mt-6 text-center text-sm font-semibold uppercase tracking-[0.18em] text-[#7c2430]">
-              <span>{dashboardLine}</span>
-            </div>
+            <Ornament>{dashboardLine}</Ornament>
 
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="geo-hero-actions">
               <Link
                 href="/spill/slowgeo"
                 prefetch={false}
-                className="inline-flex h-11 items-center gap-2 rounded bg-[#7c2430] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#641923]"
+                className={buttonClass({ variant: "wax" })}
               >
                 Start SlowGeo
                 <TableProperties className="h-4 w-4" aria-hidden="true" />
@@ -107,7 +101,7 @@ export default async function DashboardPage() {
               <Link
                 href="/arkiv"
                 prefetch={false}
-                className="inline-flex h-11 items-center gap-2 rounded border border-[#062b40]/30 bg-[#fff7e6] px-4 text-sm font-semibold text-[#062b40] shadow-sm transition hover:border-[#c49a3c]"
+                className={buttonClass({ variant: "quiet" })}
               >
                 Åpne statsarkivet
                 <BookOpen className="h-4 w-4" aria-hidden="true" />
@@ -116,63 +110,65 @@ export default async function DashboardPage() {
               <Link
                 href="/ordenen"
                 prefetch={false}
-                className="inline-flex h-11 items-center gap-2 rounded border border-[#062b40]/30 bg-[#fff7e6] px-4 text-sm font-semibold text-[#062b40] shadow-sm transition hover:border-[#c49a3c]"
+                className={buttonClass({ variant: "quiet" })}
               >
                 Gå ordensveien
-                <Milestone className="h-4 w-4" aria-hidden="true" />
                 <LinkPendingIndicator />
               </Link>
             </div>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <StatTile
-                label="Tellende runder"
-                value={lockedRounds.length}
-                detail={drafts ? "Utkast i protokollen" : "Alle starter rent"}
-                tone="blue"
-              />
-              <StatTile
-                label="Poengleder"
-                value={leader ? leader.player.shortName : "-"}
-                detail={leader ? `${leader.totalPoints} poeng` : "Embetsverket venter"}
-                tone="green"
-              />
-              <StatTile
-                label="Kattometerleder"
-                value={kattometerLeader ? kattometerLeader.player.shortName : "-"}
-                detail={kattometerLeader ? formatKm(kattometerLeader.totalKattometer) : "Ingen bom ført"}
-                tone="gold"
-              />
-              <StatTile
-                label="Åpne ting-saker"
-                value={openGeotingCases}
-                detail="GeoTinget venter"
-                tone="red"
-              />
-            </div>
           </div>
 
-          <div className="border-t border-[#c49a3c]/35 bg-[#061d2b] xl:border-l xl:border-t-0">
-            <ExpandableImage
-              src="/geotia-assets/party-overview.png"
-              alt="Partioversikt for Geotia"
-              sizes="(min-width: 1280px) 580px, 100vw"
-              className="relative min-h-[440px] w-full sm:min-h-[560px] xl:min-h-[620px]"
-              imageClassName="object-contain p-4"
-              caption="Partioversikt for Geotia"
+          <div className="geo-hero-poster">
+            <Image
+              src="/illustrations/vapen-kommando.svg"
+              alt="Riksvåpen for Kommandosentralen"
+              width={300}
+              height={350}
               priority
+              style={{ width: "auto", maxHeight: "440px" }}
             />
-            <div className="border-t border-[#c49a3c]/35 bg-[#061d2b] p-5 text-[#fff7e6]">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#e1c06c]">
-                Siste SlowGeo-vinner
-              </p>
-              <p className="font-display mt-2 text-xl font-semibold leading-7">
-                {computedLatest?.winnerNames.join(", ") || "Ingen låst runde ennå"}
-              </p>
-            </div>
+          </div>
+        </div>
+        <div className="geo-winner-band">
+          <div>
+            <p className="label">Siste SlowGeo-vinner — protokollført med høytid</p>
+            <p className="value">
+              {computedLatest?.winnerNames.join(", ") || "Ingen låst runde ennå"}
+            </p>
           </div>
         </div>
       </section>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatTile
+          label="Tellende runder"
+          value={lockedRounds.length}
+          detail={drafts ? "Utkast i protokollen" : "Alle starter rent"}
+          tone="blue"
+          index={0}
+        />
+        <StatTile
+          label="Poengleder"
+          value={leader ? leader.player.shortName : "-"}
+          detail={leader ? `${leader.totalPoints} poeng` : "Embetsverket venter"}
+          tone="green"
+          index={1}
+        />
+        <StatTile
+          label="Kattometerleder"
+          value={kattometerLeader ? kattometerLeader.player.shortName : "-"}
+          detail={kattometerLeader ? formatKm(kattometerLeader.totalKattometer) : "Ingen bom ført"}
+          tone="gold"
+          index={2}
+        />
+        <StatTile
+          label="Åpne ting-saker"
+          value={openGeotingCases}
+          detail="GeoTinget venter"
+          tone="red"
+          index={3}
+        />
+      </div>
 
       <RotatingGeotiaQuote quotes={knowledgeQuotes} />
 

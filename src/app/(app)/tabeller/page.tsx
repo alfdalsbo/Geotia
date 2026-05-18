@@ -1,8 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Medal, Shield, Sparkles, TableProperties, Trophy } from "lucide-react";
 
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { Section, StatTile } from "@/components/section";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { computeGameStandings, computeStandings, getHallOfFame } from "@/lib/scoring";
 import { getScoreboardState } from "@/lib/store";
 import type { GameDefinition, GameStanding, Standing } from "@/lib/types";
@@ -27,23 +29,34 @@ export default async function TablesPage() {
 
   return (
     <div className="space-y-7">
-      <section className="geotia-frame rounded p-5 sm:p-7">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430] sm:tracking-[0.22em]">
-          Poengmakt · kattometer · ære
-        </p>
-        <h1 className="font-display mt-2 break-words text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
-          Rikets tabeller
-        </h1>
-        <p className="mt-3 max-w-3xl text-[#60553f]">
-          SlowGeo-tabellen, de nyere spilltabellene og Æreshallen er samlet her,
-          slik at toppnavigasjonen kan puste uten at staten mister protokollen.
-        </p>
+      <section className="geo-hero">
+        <div className="geo-hero-grid">
+          <div className="geo-hero-text">
+            <Eyebrow>Poengmakt · kattometer · ære · Kapittel III</Eyebrow>
+            <h1 className="geo-hero-title">Rikets tabeller</h1>
+            <p className="geo-hero-lead geo-hero-lead-dropcap">
+              SlowGeo-tabellen, de nyere spilltabellene og Æreshallen er samlet
+              her, slik at toppnavigasjonen kan puste uten at staten mister
+              protokollen.
+            </p>
+          </div>
+          <div className="geo-hero-poster">
+            <Image
+              src="/illustrations/vapen-tabeller.svg"
+              alt="Riksvåpen for Tabellene"
+              width={300}
+              height={350}
+              priority
+              style={{ width: "auto", maxHeight: "440px" }}
+            />
+          </div>
+        </div>
       </section>
 
       <div className="grid gap-3 md:grid-cols-3">
-        <StatTile label="Poengleder" value={leader?.player.shortName ?? "-"} detail={`${leader?.totalPoints ?? 0} poeng`} tone="blue" />
-        <StatTile label="Lavest kattometer" value={kattometerLeader?.player.shortName ?? "-"} detail={formatKm(kattometerLeader?.totalKattometer)} tone="green" />
-        <StatTile label="Tellende runder" value={standings[0]?.lockedRounds ?? 0} detail="SlowGeo-protokollen" tone="gold" />
+        <StatTile label="Poengleder" value={leader?.player.shortName ?? "-"} detail={`${leader?.totalPoints ?? 0} poeng`} tone="blue" index={0} />
+        <StatTile label="Lavest kattometer" value={kattometerLeader?.player.shortName ?? "-"} detail={formatKm(kattometerLeader?.totalKattometer)} tone="green" index={1} />
+        <StatTile label="Tellende runder" value={standings[0]?.lockedRounds ?? 0} detail="SlowGeo-protokollen" tone="gold" index={2} />
       </div>
 
       <Section
