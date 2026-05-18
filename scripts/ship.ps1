@@ -3,7 +3,8 @@ param(
   [Parameter(Mandatory = $true)]
   [string]$Message,
   [switch]$SkipE2E,
-  [switch]$NoDeploy
+  [switch]$NoDeploy,
+  [switch]$StageAll
 )
 
 $ErrorActionPreference = "Stop"
@@ -39,18 +40,32 @@ function Invoke-CheckedCommand {
 $npx = Resolve-LocalCommand "npx"
 $branch = (git rev-parse --abbrev-ref HEAD).Trim()
 
+if (-not $StageAll) {
+  git diff --quiet
+  $hasUnstagedTrackedChanges = $LASTEXITCODE -ne 0
+  $untrackedChanges = git ls-files --others --exclude-standard
+  if ($hasUnstagedTrackedChanges -or $untrackedChanges) {
+    git status --short --branch
+    throw "Ship refuses unstaged/untracked files by default. Stage intended files first, or rerun with -StageAll."
+  }
+}
+
 & (Join-Path $PSScriptRoot "finish.ps1") -SkipE2E:$SkipE2E
 if ($LASTEXITCODE -ne 0) {
   throw "finish.ps1 failed with exit code $LASTEXITCODE"
 }
 
-$changes = git status --porcelain
-if ($changes) {
+if ($StageAll) {
   Invoke-CheckedCommand "stage changes" "git" @("add", "-A")
+}
+
+git diff --cached --quiet
+$hasStagedChanges = $LASTEXITCODE -ne 0
+if ($hasStagedChanges) {
   Invoke-CheckedCommand "commit changes" "git" @("commit", "-m", $Message)
 } else {
   Write-Host ""
-  Write-Host "==> no local changes to commit"
+  Write-Host "==> no staged changes to commit"
 }
 
 Invoke-CheckedCommand "push $branch" "git" @("push", "origin", $branch)
