@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 280" role="img" aria-label="Riksvåpen for GeoTinget">
+  <title>Riksvåpen — GeoTinget</title>
+  <defs>
+    <linearGradient id="vt-shield" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0d3a55"/><stop offset="100%" stop-color="#061a26"/>
+    </linearGradient>
+    <linearGradient id="vt-band" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5e1d27"/><stop offset="100%" stop-color="#3a0e15"/>
+    </linearGradient>
+    <linearGradient id="vt-gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e1c06c"/><stop offset="100%" stop-color="#b8892f"/>
+    </linearGradient>
+    <path id="vt-shield-path" d="M 30 30 L 210 30 L 210 140 Q 210 220 120 260 Q 30 220 30 140 Z"/>
+  </defs>
+
+  <g stroke="#7e5a18" stroke-width="1" fill="url(#vt-gold)" opacity="0.85">
+    <g transform="translate(20 145) rotate(-12)">
+      <path d="M 0 0 Q -8 -14 -4 -28 Q 4 -42 0 -56 Q -8 -70 -2 -84" fill="none" stroke="#7e5a18" stroke-width="1.5"/>
+      <ellipse cx="-8" cy="-14" rx="5" ry="11" transform="rotate(-30 -8 -14)"/>
+      <ellipse cx="2" cy="-28" rx="5" ry="11" transform="rotate(30 2 -28)"/>
+      <ellipse cx="-8" cy="-42" rx="5" ry="11" transform="rotate(-30 -8 -42)"/>
+      <ellipse cx="2" cy="-56" rx="5" ry="11" transform="rotate(30 2 -56)"/>
+      <ellipse cx="-8" cy="-70" rx="5" ry="11" transform="rotate(-30 -8 -70)"/>
+      <ellipse cx="2" cy="-84" rx="4" ry="9" transform="rotate(30 2 -84)"/>
+    </g>
+    <g transform="translate(220 145) rotate(12) scale(-1 1)">
+      <path d="M 0 0 Q -8 -14 -4 -28 Q 4 -42 0 -56 Q -8 -70 -2 -84" fill="none" stroke="#7e5a18" stroke-width="1.5"/>
+      <ellipse cx="-8" cy="-14" rx="5" ry="11" transform="rotate(-30 -8 -14)"/>
+      <ellipse cx="2" cy="-28" rx="5" ry="11" transform="rotate(30 2 -28)"/>
+      <ellipse cx="-8" cy="-42" rx="5" ry="11" transform="rotate(-30 -8 -42)"/>
+      <ellipse cx="2" cy="-56" rx="5" ry="11" transform="rotate(30 2 -56)"/>
+      <ellipse cx="-8" cy="-70" rx="5" ry="11" transform="rotate(-30 -8 -70)"/>
+      <ellipse cx="2" cy="-84" rx="4" ry="9" transform="rotate(30 2 -84)"/>
+    </g>
+  </g>
+
+  <use href="#vt-shield-path" fill="url(#vt-shield)" stroke="#b8892f" stroke-width="2"/>
+
+  <!-- Urne -->
+  <g transform="translate(120 180)">
+    <ellipse cx="0" cy="-2" rx="40" ry="6" fill="#3a0e15" stroke="#b8892f" stroke-width="1"/>
+    <path d="M -40 -2 Q -50 30 -30 60 L 30 60 Q 50 30 40 -2 Z"
+          fill="url(#vt-gold)" stroke="#7e5a18" stroke-width="1.2"/>
+    <rect x="-30" y="55" width="60" height="8" fill="#7e5a18" stroke="#5e1d27" stroke-width="0.6"/>
+    <!-- Slisse for stemmer -->
+    <rect x="-12" y="-5" width="24" height="4" fill="#1c1408" rx="1"/>
+    <!-- Stemmeseddel halvveis inn -->
+    <rect x="-3" y="-12" width="6" height="12" fill="#f5ead0" stroke="#594226" stroke-width="0.5" transform="rotate(8 0 -6)"/>
+  </g>
+
+  <!-- Tinghammer over urnen -->
+  <g transform="translate(120 90) rotate(-32)">
+    <!-- Skaft -->
+    <rect x="-4" y="-20" width="8" height="74" fill="#7e5a18" stroke="#5e1d27" stroke-width="0.6"/>
+    <!-- Hode -->
+    <rect x="-22" y="-32" width="44" height="22" fill="url(#vt-gold)" stroke="#7e5a18" stroke-width="1"/>
+    <rect x="-22" y="-32" width="44" height="4" fill="#b8892f"/>
+    <line x1="0" y1="-30" x2="0" y2="-14" stroke="#7e5a18" stroke-width="0.6"/>
+  </g>
+
+  <g transform="translate(120 250)">
+    <path d="M -76 0 L -88 8 L -88 22 L 88 22 L 88 8 L 76 0 L 70 6 L -70 6 Z" fill="url(#vt-band)" stroke="#b8892f" stroke-width="1"/>
+    <text x="0" y="17" text-anchor="middle" font-family="'Cinzel', serif" font-weight="700" font-size="9" fill="#f5d27a" letter-spacing="4">GEO · TINGET</text>
+  </g>
+</svg>

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 280" role="img" aria-label="Riksvåpen for Den Geotiske Orden">
+  <title>Riksvåpen — Den Geotiske Orden</title>
+  <defs>
+    <linearGradient id="vo-shield" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0d3a55"/><stop offset="100%" stop-color="#061a26"/>
+    </linearGradient>
+    <linearGradient id="vo-band" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5e1d27"/><stop offset="100%" stop-color="#3a0e15"/>
+    </linearGradient>
+    <linearGradient id="vo-gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e1c06c"/><stop offset="100%" stop-color="#b8892f"/>
+    </linearGradient>
+    <path id="vo-shield-path" d="M 30 30 L 210 30 L 210 140 Q 210 220 120 260 Q 30 220 30 140 Z"/>
+  </defs>
+
+  <g stroke="#7e5a18" stroke-width="1" fill="url(#vo-gold)" opacity="0.85">
+    <g transform="translate(20 145) rotate(-12)">
+      <path d="M 0 0 Q -8 -14 -4 -28 Q 4 -42 0 -56 Q -8 -70 -2 -84" fill="none" stroke="#7e5a18" stroke-width="1.5"/>
+      <ellipse cx="-8" cy="-14" rx="5" ry="11" transform="rotate(-30 -8 -14)"/>
+      <ellipse cx="2" cy="-28" rx="5" ry="11" transform="rotate(30 2 -28)"/>
+      <ellipse cx="-8" cy="-42" rx="5" ry="11" transform="rotate(-30 -8 -42)"/>
+      <ellipse cx="2" cy="-56" rx="5" ry="11" transform="rotate(30 2 -56)"/>
+      <ellipse cx="-8" cy="-70" rx="5" ry="11" transform="rotate(-30 -8 -70)"/>
+      <ellipse cx="2" cy="-84" rx="4" ry="9" transform="rotate(30 2 -84)"/>
+    </g>
+    <g transform="translate(220 145) rotate(12) scale(-1 1)">
+      <path d="M 0 0 Q -8 -14 -4 -28 Q 4 -42 0 -56 Q -8 -70 -2 -84" fill="none" stroke="#7e5a18" stroke-width="1.5"/>
+      <ellipse cx="-8" cy="-14" rx="5" ry="11" transform="rotate(-30 -8 -14)"/>
+      <ellipse cx="2" cy="-28" rx="5" ry="11" transform="rotate(30 2 -28)"/>
+      <ellipse cx="-8" cy="-42" rx="5" ry="11" transform="rotate(-30 -8 -42)"/>
+      <ellipse cx="2" cy="-56" rx="5" ry="11" transform="rotate(30 2 -56)"/>
+      <ellipse cx="-8" cy="-70" rx="5" ry="11" transform="rotate(-30 -8 -70)"/>
+      <ellipse cx="2" cy="-84" rx="4" ry="9" transform="rotate(30 2 -84)"/>
+    </g>
+  </g>
+
+  <use href="#vo-shield-path" fill="url(#vo-shield)" stroke="#b8892f" stroke-width="2"/>
+
+  <!-- Stige med syv trinn -->
+  <g transform="translate(120 90)">
+    <!-- Stiger -->
+    <line x1="-26" y1="0" x2="-26" y2="120" stroke="url(#vo-gold)" stroke-width="4" stroke-linecap="round"/>
+    <line x1="26" y1="0" x2="26" y2="120" stroke="url(#vo-gold)" stroke-width="4" stroke-linecap="round"/>
+    <!-- 7 trinn -->
+    <g stroke="#b8892f" stroke-width="3" stroke-linecap="round">
+      <line x1="-26" y1="14" x2="26" y2="14"/>
+      <line x1="-26" y1="30" x2="26" y2="30"/>
+      <line x1="-26" y1="46" x2="26" y2="46"/>
+      <line x1="-26" y1="62" x2="26" y2="62"/>
+      <line x1="-26" y1="78" x2="26" y2="78"/>
+      <line x1="-26" y1="94" x2="26" y2="94"/>
+      <line x1="-26" y1="110" x2="26" y2="110"/>
+    </g>
+    <!-- Stjerne på toppen -->
+    <g transform="translate(0 -8)">
+      <path d="M 0 -10 L 3 -3 L 10 -2 L 4 3 L 6 10 L 0 6 L -6 10 L -4 3 L -10 -2 L -3 -3 Z"
+            fill="url(#vo-gold)" stroke="#7e5a18" stroke-width="0.4"/>
+    </g>
+  </g>
+
+  <g transform="translate(120 250)">
+    <path d="M -76 0 L -88 8 L -88 22 L 88 22 L 88 8 L 76 0 L 70 6 L -70 6 Z" fill="url(#vo-band)" stroke="#b8892f" stroke-width="1"/>
+    <text x="0" y="17" text-anchor="middle" font-family="'Cinzel', serif" font-weight="700" font-size="9" fill="#f5d27a" letter-spacing="4">DEN · GEOTISKE · ORDEN</text>
+  </g>
+</svg>

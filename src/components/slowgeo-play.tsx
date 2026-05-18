@@ -234,7 +234,7 @@ export function SlowGeoPlay({
           </div>
         </div>
 
-        <form action={submitSlowGeoGuessAction} className="flex min-h-[420px] min-w-0 flex-col gap-4 p-4 sm:p-5">
+        <form action={submitSlowGeoGuessAction} className="geo-form flex min-h-[420px] min-w-0 flex-col gap-4 p-4 sm:p-5">
           <input type="hidden" name="round_id" value={roundId} />
           <input type="hidden" name="return_to" value={returnTo ?? `/runder/${roundId}`} />
           {hasMap ? (

@@ -46,9 +46,10 @@ export function SlowGeoThreadShareButton({
           className={cn(
             "max-w-xl rounded border px-3 py-2 text-sm leading-6",
             tone === "dark"
-              ? "border-white/15 bg-white/10 text-[#f5ead3]"
-              : "border-[#d8ded0] bg-white/70 text-[#4f412b]",
+              ? "border-[#c49a3c]/60 bg-[#020b11]/60 text-[#f5ead3]"
+              : "border-[#c49a3c]/45 bg-[#fff7e6] text-[#4f412b]",
           )}
+          style={{ fontFamily: "var(--font-italic)", fontStyle: "italic" }}
         >
           {activeText}
         </p>
@@ -69,12 +70,7 @@ export function SlowGeoThreadShareButton({
           <button
             type="button"
             onClick={() => setIndex((current) => (current + 1) % safeTexts.length)}
-            className={cn(
-              "inline-flex h-10 items-center justify-center gap-2 rounded px-3 text-sm font-semibold transition",
-              tone === "dark"
-                ? "border border-white/20 bg-transparent text-white hover:bg-white/10"
-                : "border border-[#d8ded0] bg-[#f7f8f5] text-[#203c62] hover:border-[#203c62]/35 hover:bg-white",
-            )}
+            className="btn btn-quiet btn-small"
           >
             <RotateCcw className="h-4 w-4" aria-hidden="true" />
             Ny trådtekst

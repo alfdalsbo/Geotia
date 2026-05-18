@@ -1,9 +1,10 @@
-import { Vote } from "lucide-react";
+import Image from "next/image";
 
 import { GeotingProposalList } from "@/components/geoting-proposal-list";
 import { GeotingSubnav } from "@/components/geoting-subnav";
 import { GeotingVoteAlarm } from "@/components/geoting-vote-alarm";
 import { Section, StatTile } from "@/components/section";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { getCurrentGeot } from "@/lib/auth";
 import { geotiaGeotingLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { getGeotingState, resolveDueGeotingProposals } from "@/lib/store";
@@ -37,19 +38,28 @@ export default async function GeotingVotesPage({
 
   return (
     <div className="space-y-6">
-      <section className="geotia-frame geotia-agora rounded p-5 sm:p-7">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430] sm:tracking-[0.22em]">
-          GeoTinget · stemmeurne · geo-ed
-        </p>
-        <h1 className="font-display mt-2 flex items-center gap-3 text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
-          <Vote className="h-9 w-9 text-[#7c2430]" aria-hidden="true" />
-          Stemmeurnen
-        </h1>
-        <p className="mt-4 max-w-4xl text-base leading-7 text-[#4f412b]">
-          Her åpnes GeoTingets urne, stemmer føres, og levende tingfrister
-          telles ned. Tingvollen holder nye forslag samlet, mens ferdige og
-          trukne saker finnes i Tingpergamentene.
-        </p>
+      <section className="geo-hero">
+        <div className="geo-hero-grid">
+          <div className="geo-hero-text">
+            <Eyebrow>Stemmeurne · geo-ed · Kapittel IV</Eyebrow>
+            <h1 className="geo-hero-title">Stemmeurnen</h1>
+            <p className="geo-hero-lead geo-hero-lead-dropcap">
+              Her åpnes GeoTingets urne, stemmer føres, og levende tingfrister
+              telles ned. Tingvollen holder nye forslag samlet, mens ferdige
+              og trukne saker finnes i Tingpergamentene.
+            </p>
+          </div>
+          <div className="geo-hero-poster">
+            <Image
+              src="/illustrations/vapen-tinget.svg"
+              alt="Riksvåpen for GeoTinget"
+              width={300}
+              height={350}
+              priority
+              style={{ width: "auto", maxHeight: "440px" }}
+            />
+          </div>
+        </div>
       </section>
 
       <GeotingSubnav active="avstemninger" />
@@ -63,10 +73,10 @@ export default async function GeotingVotesPage({
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">
-        <StatTile label="Innlogget embete" value={currentGeot?.shortName ?? "-"} detail={currentGeot?.title} tone="blue" />
-        <StatTile label="Venter på geo-ed" value={awaitingOath} detail="Kan åpnes av partiene" tone="gold" />
-        <StatTile label="Åpne urner" value={activeVotes} detail="24 timers tingfrist" tone="red" />
-        <StatTile label="Protokollført" value={resolvedVotes} detail={`${votesCast} stemmer ført`} tone="green" />
+        <StatTile label="Innlogget embete" value={currentGeot?.shortName ?? "-"} detail={currentGeot?.title} tone="blue" index={0} />
+        <StatTile label="Venter på geo-ed" value={awaitingOath} detail="Kan åpnes av partiene" tone="gold" index={1} />
+        <StatTile label="Åpne urner" value={activeVotes} detail="24 timers tingfrist" tone="red" index={2} />
+        <StatTile label="Protokollført" value={resolvedVotes} detail={`${votesCast} stemmer ført`} tone="green" index={3} />
       </div>
 
       <Section title="Saker i Stemmeurnen" eyebrow="Forslag, geo-ed og stemmer">

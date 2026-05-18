@@ -23,36 +23,27 @@ export function SlowGeoRoundLauncher() {
   const defaultTime = defaultDeadlineTime();
 
   return (
-    <form action={createSlowGeoRoundAction} className="grid gap-4 lg:grid-cols-[1fr_200px_auto]">
-      <label className="space-y-2">
-        <span className="text-sm font-semibold text-[#273125]">Tittel på bildet</span>
-        <input
-          name="title"
-          className="h-11 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
-          placeholder="F.eks. Kveldsbilde for grunnloven"
-        />
+    <form action={createSlowGeoRoundAction} className="geo-form grid gap-4 lg:grid-cols-[1fr_200px_auto]">
+      <label>
+        <span>Tittel på bildet</span>
+        <input name="title" placeholder="F.eks. Kveldsbilde for grunnloven" />
       </label>
-      <label className="space-y-2">
-        <span className="text-sm font-semibold text-[#273125]">Fristklokkeslett</span>
-        <input
-          name="deadline_time"
-          type="time"
-          defaultValue={defaultTime}
-          className="h-11 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
-          required
-        />
+      <label>
+        <span>Fristklokkeslett</span>
+        <input name="deadline_time" type="time" defaultValue={defaultTime} required />
       </label>
       <div className="flex items-end">
-        <PendingSubmitButton
-          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded bg-[#203c62] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b] lg:w-auto"
-        >
+        <PendingSubmitButton className="btn btn-wax w-full lg:w-auto">
           <Satellite className="h-4 w-4" aria-hidden="true" />
           Åpne SlowGeo
         </PendingSubmitButton>
       </div>
-      <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm leading-6 text-[#4f412b] lg:col-span-3">
-        <span className="inline-flex items-center gap-2 font-semibold text-[#203c62]">
-          <MapPinned className="h-4 w-4" aria-hidden="true" />
+      <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 py-3 text-sm leading-6 text-[#4f412b] shadow-sm lg:col-span-3">
+        <span
+          className="mr-1 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[#7c2430]"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          <MapPinned className="h-3.5 w-3.5" aria-hidden="true" />
           Street View-pool
         </span>{" "}
         {monthlyCap > 0 ? `Månedstak: ${monthlyCap} runder.` : "Månedstak er av."}{" "}

@@ -1,24 +1,71 @@
 @import "tailwindcss";
 
+/* =============================================================
+   RIKSPROTOKOLLEN — Geotia v2 designsystem
+   Kanonisk kilde: _visuelle_proever/RIKSPROTOKOLLEN.css
+   ============================================================= */
+
 :root {
-  --background: #f3ead8;
-  --foreground: #161713;
-  --panel: #fff7e6;
-  --panel-muted: #efe3c7;
-  --line: #c7a45a;
-  --ink-muted: #60553f;
-  --regent-blue: #062b40;
-  --regent-green: #194832;
-  --regent-red: #7c2430;
-  --regent-gold: #c49a3c;
-  --regent-brown: #4b2e18;
+  /* --- Pergament & blekk (nye, Riksprotokollen v2) --- */
+  --paper:           #f5ead0;
+  --paper-2:         #ecdcb1;
+  --paper-deep:      #e2cf9c;
+  --ink:             #1c1408;
+  --ink-muted:       #594226;
+
+  /* --- Riksfarger (nye) --- */
+  --gold:            #b8892f;
+  --gold-bright:     #e1c06c;
+  --gold-deep:       #7e5a18;
+  --navy:            #0a2b3f;
+  --navy-deep:       #061a26;
+  --burgundy:        #5e1d27;
+  --burgundy-bright: #8a2f3a;
+  --green-regent:    #1e4632;
+  --green-bright:    #3a8a5c;
+  --brown-regent:    #4b2e18;
+
+  /* --- Operativ-aksent (Pakke 2-elementer, brukes sparsomt) --- */
+  --signal:          #3a9e64;
+  --signal-glow:     rgba(58, 158, 100, 0.55);
+  --alarm:           #b2333f;
+  --alarm-glow:      rgba(255, 107, 120, 0.5);
+
+  /* --- Linjer --- */
+  --line:            rgba(126, 90, 24, 0.35);
+
+  /* --- Radius --- */
+  --radius-sharp:    2px;
+  --radius-frame:    3px;
+
+  /* --- Skygger --- */
+  --shadow-frame:    0 22px 60px rgba(40, 25, 8, 0.18);
+  --shadow-section:  0 14px 30px rgba(40, 25, 8, 0.10);
+  --shadow-shield:   0 8px 20px rgba(40, 25, 8, 0.10);
+  --shadow-card:     0 10px 22px rgba(40, 25, 8, 0.10);
+
+  /* --- Bakoverkompatibilitet med v1 (alias) --- */
+  --background:      var(--paper);
+  --foreground:      var(--ink);
+  --panel:           #fff7e6;
+  --panel-muted:     #efe3c7;
+  --regent-blue:     var(--navy);
+  --regent-green:    var(--green-regent);
+  --regent-red:      var(--burgundy);
+  --regent-gold:     var(--gold);
+  --regent-brown:    var(--brown-regent);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+
+  /* Nye font-tokens (variabler settes av next/font/google i layout.tsx) */
+  --font-display: var(--font-display-cinzel), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-body-eb-garamond), Georgia, "Times New Roman", serif;
+  --font-numerals: var(--font-numerals-cormorant), Georgia, "Times New Roman", serif;
+  --font-italic: var(--font-italic-im-fell), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-mono-dm-mono), "Geist Mono", ui-monospace, monospace;
 }
 
 body {
@@ -28,7 +75,7 @@ body {
     linear-gradient(180deg, #fbf3df 0%, #e9dcc0 100%);
   background-size: 46px 46px, 46px 46px, auto;
   color: var(--foreground);
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-feature-settings:
     "liga" 1,
     "kern" 1;
@@ -79,8 +126,22 @@ textarea {
 }
 
 .font-display {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display);
 }
+
+.font-numerals {
+  font-family: var(--font-numerals);
+}
+
+.font-italic-serif {
+  font-family: var(--font-italic);
+  font-style: italic;
+}
+
+/* =============================================================
+   Eksisterende rammer (v1) — beholdes for bakoverkompatibilitet
+   Migreres til nye Section/Shield i Fase 2.
+   ============================================================= */
 
 .geotia-frame {
   position: relative;
@@ -209,4 +270,1168 @@ textarea {
 
 .archive-prose li {
   margin-block: 0.35rem;
+}
+
+/* =============================================================
+   FASE 1 — Riksprotokollen v2: nye komponenter
+   Se _visuelle_proever/RIKSPROTOKOLLEN.css for kanonisk kilde.
+   ============================================================= */
+
+/* ----- § 3 — Animasjoner ----- */
+@keyframes pulse-pip {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 120, 0.6);
+    transform: scale(0.92);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(255, 107, 120, 0);
+    transform: scale(1.05);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 120, 0);
+    transform: scale(0.92);
+  }
+}
+
+/* ----- § 4 — RiksHead ----- */
+.geo-rikshead {
+  background:
+    linear-gradient(90deg, var(--navy-deep), #0d3a55 50%, var(--burgundy)),
+    radial-gradient(circle at 50% 100%, rgba(184, 137, 47, 0.35), transparent 60%);
+  color: #f5ead0;
+  border-bottom: 6px double var(--gold);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  position: relative;
+}
+
+.geo-rikshead::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 6px;
+  background: repeating-linear-gradient(90deg, var(--gold) 0 18px, transparent 18px 36px);
+}
+
+.rikshead-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.rikshead-identity {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.rikshead-identity > .rikshead-text {
+  min-width: 0;
+}
+
+.seal-frame {
+  width: 78px;
+  height: 78px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--navy);
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(184, 137, 47, 0.4);
+}
+
+.rikshead-title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 36px;
+  letter-spacing: 0.18em;
+  margin: 0;
+  color: #f8efd6;
+  text-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.4),
+    0 0 18px rgba(184, 137, 47, 0.3);
+  line-height: 1;
+}
+
+.rikshead-sub {
+  font-family: var(--font-italic);
+  font-style: italic;
+  color: #e8cf8a;
+  letter-spacing: 0.06em;
+  margin: 6px 0 0;
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  .rikshead-inner {
+    gap: 16px;
+    padding: 16px 20px;
+  }
+  .rikshead-title {
+    font-size: 28px;
+    letter-spacing: 0.14em;
+  }
+  .seal-frame {
+    width: 60px;
+    height: 60px;
+  }
+  .geo-nav {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* ----- § 5 — RiksNav ----- */
+.geo-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.geo-nav a,
+.geo-nav button {
+  color: #f5ead0;
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  border: 1px solid rgba(184, 137, 47, 0.45);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.18));
+  border-radius: var(--radius-sharp);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.geo-nav a:hover,
+.geo-nav button:hover {
+  border-color: var(--gold-bright);
+  background: linear-gradient(180deg, rgba(184, 137, 47, 0.12), rgba(184, 137, 47, 0.04));
+}
+
+.geo-nav a::before,
+.geo-nav a::after,
+.geo-nav button::before,
+.geo-nav button::after {
+  content: "";
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border: 1px solid var(--gold);
+}
+
+.geo-nav a::before,
+.geo-nav button::before {
+  top: -2px;
+  left: -2px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.geo-nav a::after,
+.geo-nav button::after {
+  bottom: -2px;
+  right: -2px;
+  border-left: none;
+  border-top: none;
+}
+
+.geo-nav a.active {
+  background: linear-gradient(180deg, rgba(184, 137, 47, 0.18), rgba(184, 137, 47, 0.08));
+}
+
+.geo-nav a.danger,
+.geo-nav button.danger {
+  background: linear-gradient(180deg, #6e2531, #4d1820);
+  border-color: rgba(255, 180, 120, 0.4);
+  color: #fff3da;
+}
+
+.geo-nav a.danger:hover,
+.geo-nav button.danger:hover {
+  background: linear-gradient(180deg, #8a2f3a, #5e1d27);
+  border-color: #ffb478;
+}
+
+/* ----- § 6 — LiveBar ----- */
+.live-bar {
+  background:
+    repeating-linear-gradient(135deg, rgba(0, 0, 0, 0) 0 12px, rgba(0, 0, 0, 0.08) 12px 13px),
+    linear-gradient(90deg, #421a1f, #5c1f27 50%, #421a1f);
+  color: #f5ead0;
+  border-bottom: 1px solid rgba(184, 137, 47, 0.5);
+}
+
+.live-bar-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 11px 32px;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 18px;
+  align-items: center;
+}
+
+@media (max-width: 720px) {
+  .live-bar-inner {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    gap: 10px 14px;
+    padding: 12px 20px;
+  }
+  .live-bar-timer,
+  .live-bar-action {
+    grid-column: 1 / -1;
+  }
+  .live-bar-action {
+    justify-self: stretch;
+  }
+}
+
+.pulse-pip {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ff6b78;
+  box-shadow: 0 0 0 0 rgba(255, 107, 120, 0.7);
+  animation: pulse-pip 1.6s ease-in-out infinite;
+  flex: none;
+}
+
+.live-tag {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.32em;
+  color: #f5d27a;
+  text-transform: uppercase;
+}
+
+.live-case {
+  font-family: var(--font-numerals);
+  font-size: 21px;
+  color: #fff7e0;
+  font-weight: 600;
+  margin-top: 2px;
+  line-height: 1.2;
+}
+
+.live-case code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--gold-bright);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  margin-right: 8px;
+  letter-spacing: 0.04em;
+}
+
+.live-bar-timer {
+  font-family: var(--font-numerals);
+  font-size: 22px;
+  color: #f5d27a;
+  font-weight: 600;
+  border: 1px solid var(--gold);
+  padding: 6px 16px;
+  border-radius: var(--radius-sharp);
+  background: rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+/* ----- § 7 — Knapper ----- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 14px 22px;
+  border-radius: var(--radius-sharp);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+  border: 1px solid transparent;
+  line-height: 1;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-wax {
+  color: #fff7e0;
+  background: linear-gradient(180deg, #7e2532, var(--burgundy) 70%);
+  border-color: rgba(184, 137, 47, 0.55);
+  box-shadow:
+    0 6px 16px rgba(60, 12, 18, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  position: relative;
+}
+
+.btn-wax::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffd87a, var(--gold));
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+  flex: none;
+}
+
+.btn-quiet {
+  color: var(--navy);
+  background: rgba(255, 247, 221, 0.85);
+  border-color: var(--gold);
+}
+
+.btn-quiet:hover {
+  background: rgba(255, 247, 221, 1);
+  border-color: var(--gold-bright);
+}
+
+.btn-brass {
+  color: var(--navy-deep);
+  background: linear-gradient(180deg, var(--gold-bright), #a8841d);
+  border-color: var(--gold-deep);
+  box-shadow: 0 6px 14px rgba(168, 132, 29, 0.35);
+}
+
+.btn-small {
+  padding: 9px 14px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+}
+
+/* ----- § 17 — Footer ----- */
+.geo-footer {
+  margin-top: 40px;
+  padding: 24px 32px;
+  border-top: 6px double var(--gold);
+  background: linear-gradient(180deg, var(--navy-deep), #04111a);
+  color: #cfb87a;
+  font-family: var(--font-italic);
+  font-style: italic;
+  text-align: center;
+  font-size: 15px;
+}
+
+.geo-footer-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  display: flex;
+  gap: 16px 24px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+.geo-footer-inner span.accent {
+  color: var(--gold-bright);
+}
+
+.geo-footer-inner > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* =============================================================
+   FASE 2 — Hero, Section, Shield, Eyebrow, Ornament, Archive cards
+   Kilde: _visuelle_proever/RIKSPROTOKOLLEN.css § 8–10, 11, 15, 16
+   ============================================================= */
+
+/* ----- § 8 — Hero ----- */
+.geo-hero {
+  position: relative;
+  border: 1px solid var(--gold);
+  background: linear-gradient(180deg, rgba(255, 247, 221, 0.95), rgba(238, 217, 168, 0.92));
+  box-shadow:
+    var(--shadow-frame),
+    inset 0 0 0 8px rgba(245, 234, 208, 0.5),
+    inset 0 0 0 10px var(--gold);
+  overflow: hidden;
+}
+
+.geo-hero::before,
+.geo-hero::after {
+  content: "";
+  position: absolute;
+  width: 84px;
+  height: 84px;
+  pointer-events: none;
+  opacity: 0.75;
+  background:
+    radial-gradient(circle at 12px 12px, var(--gold) 0 2px, transparent 3px),
+    conic-gradient(
+      from 0deg,
+      transparent 0deg 88deg,
+      var(--gold) 88deg 92deg,
+      transparent 92deg 180deg,
+      var(--gold) 180deg 184deg,
+      transparent 184deg
+    );
+}
+
+.geo-hero::before {
+  top: 0;
+  left: 0;
+}
+
+.geo-hero::after {
+  bottom: 0;
+  right: 0;
+  transform: rotate(180deg);
+}
+
+.geo-hero-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+}
+
+.geo-hero-text {
+  padding: 42px 48px 36px;
+}
+
+.geo-hero-title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 76px;
+  margin: 0;
+  color: var(--navy);
+  letter-spacing: 0.04em;
+  line-height: 0.95;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+  hyphens: none;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.geo-hero-lead {
+  font-family: var(--font-sans);
+  font-size: 19px;
+  line-height: 1.6;
+  max-width: 580px;
+  margin-top: 18px;
+  color: #3b2c12;
+}
+
+.geo-hero-lead.geo-hero-lead-dropcap::first-letter {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 46px;
+  color: var(--burgundy);
+  float: left;
+  line-height: 0.9;
+  padding: 6px 12px 0 0;
+}
+
+.geo-hero-poster {
+  background: var(--navy-deep);
+  position: relative;
+  border-left: 1px solid var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+  padding: 24px;
+}
+
+.geo-hero-poster > * {
+  position: relative;
+  z-index: 1;
+}
+
+.geo-hero-poster::after {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  pointer-events: none;
+  border: 1px solid rgba(184, 137, 47, 0.4);
+  z-index: 2;
+}
+
+.geo-hero-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+.geo-winner-band {
+  background: linear-gradient(90deg, var(--navy-deep), #0d3a55);
+  color: #f5ead0;
+  padding: 18px 24px;
+  border-top: 1px solid var(--gold);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: center;
+}
+
+.geo-winner-band .label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.32em;
+  color: #f5d27a;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.geo-winner-band .value {
+  font-family: var(--font-numerals);
+  font-weight: 600;
+  font-size: 26px;
+  margin: 6px 0 0;
+}
+
+@media (max-width: 900px) {
+  .geo-hero-grid {
+    grid-template-columns: 1fr;
+  }
+  .geo-hero-text {
+    padding: 28px 24px 24px;
+  }
+  .geo-hero-title {
+    font-size: 56px;
+  }
+  .geo-hero-poster {
+    min-height: 280px;
+    border-left: 0;
+    border-top: 1px solid var(--gold);
+  }
+}
+
+/* ----- § 9 — Eyebrow & Ornament ----- */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--burgundy);
+  font-size: 11px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border: 1px solid var(--gold);
+  background: rgba(255, 247, 221, 0.6);
+  border-radius: var(--radius-sharp);
+  margin-bottom: 18px;
+}
+
+.eyebrow .ico {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--gold);
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, var(--burgundy), #8a2f3a);
+  display: inline-block;
+  flex: none;
+}
+
+.eyebrow.tone-navy {
+  color: var(--navy);
+  border-color: var(--navy);
+}
+
+.eyebrow.tone-navy .ico {
+  background: var(--navy);
+}
+
+.eyebrow.tone-green {
+  color: var(--green-regent);
+  border-color: var(--green-regent);
+}
+
+.eyebrow.tone-green .ico {
+  background: var(--green-regent);
+}
+
+.eyebrow.tone-gold {
+  color: var(--gold-deep);
+  border-color: var(--gold-deep);
+}
+
+.eyebrow.tone-gold .ico {
+  background: linear-gradient(135deg, var(--gold-bright), var(--gold-deep));
+}
+
+.ornament {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--burgundy);
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.32em;
+  margin: 24px 0 6px;
+  text-transform: uppercase;
+}
+
+.ornament::before,
+.ornament::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  min-width: 1.75rem;
+}
+
+/* ----- § 10 — Shield (ny intern StatTile-impl) ----- */
+.shield {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 250, 228, 0.95), rgba(238, 217, 168, 0.92));
+  border: 1px solid var(--gold);
+  padding: 24px 18px 18px;
+  box-shadow: var(--shadow-shield);
+}
+
+.shield .num {
+  position: absolute;
+  top: -14px;
+  left: 18px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--navy) 60%, var(--navy-deep));
+  color: #f5d27a;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 13px;
+  border: 2px solid var(--gold);
+  z-index: 1;
+}
+
+.shield--green .num {
+  background: radial-gradient(circle, var(--green-regent) 60%, #122e1f);
+}
+
+.shield--red .num {
+  background: radial-gradient(circle, var(--burgundy) 60%, #3a0e15);
+}
+
+.shield--gold .num {
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold-deep));
+  color: #fff7e0;
+}
+
+.shield .label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--burgundy);
+  margin: 6px 0 8px;
+  text-transform: uppercase;
+}
+
+.shield .value {
+  font-family: var(--font-numerals);
+  font-weight: 700;
+  font-size: 34px;
+  color: var(--navy);
+  line-height: 1;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+.shield .detail {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--ink-muted);
+  margin-top: 6px;
+}
+
+/* ----- § 11 — Section + Banner ----- */
+.geo-section {
+  background:
+    linear-gradient(180deg, rgba(255, 247, 221, 0.96), rgba(244, 228, 190, 0.92)),
+    repeating-linear-gradient(0deg, rgba(126, 90, 24, 0.04) 0 1px, transparent 1px 8px);
+  border: 1px solid var(--gold);
+  box-shadow: var(--shadow-section);
+  position: relative;
+}
+
+.geo-banner {
+  margin: -1px -1px 0;
+  background: linear-gradient(180deg, var(--navy), var(--navy-deep));
+  color: #f5d27a;
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--gold);
+  position: relative;
+}
+
+.geo-banner::before,
+.geo-banner::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 34px;
+  height: 38px;
+  transform: translateY(-50%);
+  background: linear-gradient(180deg, var(--burgundy), #3a0e15);
+  clip-path: polygon(0 0, 100% 0, 80% 50%, 100% 100%, 0 100%);
+}
+
+.geo-banner::before {
+  left: -20px;
+}
+
+.geo-banner::after {
+  right: -20px;
+  transform: translateY(-50%) scaleX(-1);
+}
+
+.geo-banner h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.22em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #f5ead0;
+}
+
+.geo-banner .eyebrow-band {
+  font-family: var(--font-italic);
+  font-style: italic;
+  font-size: 13px;
+  color: #e8cf8a;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.geo-section > .geo-section-body {
+  padding: 24px 32px;
+}
+
+@media (max-width: 720px) {
+  .geo-banner {
+    padding: 12px 18px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    overflow: hidden;
+  }
+  .geo-banner::before,
+  .geo-banner::after {
+    width: 24px;
+    height: 28px;
+  }
+  .geo-banner::before {
+    left: 0;
+  }
+  .geo-banner::after {
+    right: 0;
+  }
+  .geo-section > .geo-section-body {
+    padding: 18px;
+  }
+}
+
+/* ----- § 15 — Archive cards ----- */
+.archive-card {
+  position: relative;
+  display: block;
+  padding: 24px 22px 22px;
+  background: linear-gradient(180deg, rgba(255, 250, 228, 0.95), rgba(238, 217, 168, 0.85));
+  border: 1px solid var(--gold);
+  box-shadow: var(--shadow-card);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.archive-card h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.18em;
+  color: var(--navy);
+  margin: 4px 0 4px;
+  text-transform: uppercase;
+}
+
+.archive-card .crown-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #f6e3a8, var(--gold));
+  border: 1.5px solid var(--gold-deep);
+  display: grid;
+  place-items: center;
+  margin-bottom: 10px;
+  color: var(--burgundy);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.archive-card .lead-name {
+  font-family: var(--font-numerals);
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--navy);
+  line-height: 1.05;
+  margin: 6px 0 4px;
+  word-break: keep-all;
+}
+
+.archive-card .lead-detail {
+  font-family: var(--font-italic);
+  font-style: italic;
+  color: var(--ink-muted);
+  font-size: 14px;
+  margin: 4px 0;
+  line-height: 1.5;
+}
+
+/* Partikort med plakat-ramme */
+.party-poster-card {
+  border: 1px solid var(--gold);
+  border-radius: 0;
+  box-shadow:
+    0 16px 28px rgba(0, 0, 0, 0.18),
+    inset 0 0 0 1px rgba(255, 247, 230, 0.5);
+}
+
+.party-poster-card .poster-frame {
+  border-bottom: 1px solid var(--gold);
+  position: relative;
+}
+
+.party-poster-card .poster-frame::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(184, 137, 47, 0.4);
+  pointer-events: none;
+}
+
+/* ----- Personal partikort (Min geot) ----- */
+.personal-poster {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 228, 0.96), rgba(238, 217, 168, 0.92)),
+    repeating-linear-gradient(0deg, rgba(126, 90, 24, 0.04) 0 1px, transparent 1px 8px);
+  border: 1px solid var(--gold);
+  box-shadow: var(--shadow-section);
+  overflow: hidden;
+}
+
+.personal-poster-band {
+  padding: 12px 24px;
+  color: #fff7e0;
+  font-size: 13px;
+  letter-spacing: 0.32em;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--gold);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.personal-poster-body {
+  padding: 20px 24px 24px;
+}
+
+/* ----- Sarajevo film-frame ----- */
+.sarajevo-film-frame {
+  background: #000;
+  padding: 0;
+  position: relative;
+}
+
+.sarajevo-film-frame .film-perforation {
+  height: 18px;
+  background:
+    radial-gradient(ellipse 7px 5px at 14px 50%, #f5ead0 0 100%, transparent),
+    radial-gradient(ellipse 7px 5px at 42px 50%, #f5ead0 0 100%, transparent),
+    radial-gradient(ellipse 7px 5px at 70px 50%, #f5ead0 0 100%, transparent),
+    radial-gradient(ellipse 7px 5px at 98px 50%, #f5ead0 0 100%, transparent),
+    repeating-linear-gradient(90deg, #f5ead0 0 7px, transparent 7px 28px) 0 50% / 28px 10px no-repeat,
+    #1c1408;
+  background-blend-mode: normal;
+}
+
+.sarajevo-film-frame .film-perforation::before {
+  content: "";
+  display: block;
+  height: 100%;
+  background-image:
+    radial-gradient(ellipse 6px 4px at 14px 50%, #f5ead0 99%, transparent 100%);
+  background-size: 28px 100%;
+  background-repeat: repeat-x;
+}
+
+.sarajevo-film-frame .film-perforation.top {
+  border-bottom: 1px solid rgba(184, 137, 47, 0.5);
+}
+
+.sarajevo-film-frame .film-perforation.bottom {
+  border-top: 1px solid rgba(184, 137, 47, 0.5);
+}
+
+/* =============================================================
+   FASE 5 — Skjemaer (geo-form)
+   ============================================================= */
+
+/* Wrap forms i .geo-form for å få full Riksprotokollen-stil på alle
+   inputs/selects/textareas inni. Native form-elementer styles uten
+   ekstra komponenter — bare wrapping. */
+
+.geo-form {
+  /* gridding håndteres per skjema via Tailwind */
+  font-family: var(--font-sans);
+}
+
+.geo-form label {
+  display: block;
+}
+
+.geo-form .geo-label,
+.geo-form label > span:first-child {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--burgundy);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.geo-form input[type="text"],
+.geo-form input[type="email"],
+.geo-form input[type="number"],
+.geo-form input[type="password"],
+.geo-form input[type="date"],
+.geo-form input[type="time"],
+.geo-form input[type="datetime-local"],
+.geo-form input[type="search"],
+.geo-form input[type="tel"],
+.geo-form input[type="url"],
+.geo-form input:not([type]),
+.geo-form select,
+.geo-form textarea,
+input.geo-input,
+select.geo-input,
+textarea.geo-input {
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--ink);
+  background: rgba(255, 247, 221, 0.92);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sharp);
+  padding: 10px 14px;
+  line-height: 1.4;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.geo-form input[type="text"]:focus,
+.geo-form input[type="email"]:focus,
+.geo-form input[type="number"]:focus,
+.geo-form input[type="password"]:focus,
+.geo-form input[type="date"]:focus,
+.geo-form input[type="time"]:focus,
+.geo-form input[type="datetime-local"]:focus,
+.geo-form input[type="search"]:focus,
+.geo-form input[type="tel"]:focus,
+.geo-form input[type="url"]:focus,
+.geo-form input:not([type]):focus,
+.geo-form select:focus,
+.geo-form textarea:focus,
+input.geo-input:focus,
+select.geo-input:focus,
+textarea.geo-input:focus {
+  outline: none;
+  border-color: var(--navy);
+  background: #fff;
+  box-shadow:
+    0 0 0 3px rgba(10, 43, 63, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.geo-form input:disabled,
+.geo-form select:disabled,
+.geo-form textarea:disabled {
+  background: rgba(126, 90, 24, 0.08);
+  color: var(--ink-muted);
+  cursor: not-allowed;
+}
+
+.geo-form input::placeholder,
+.geo-form textarea::placeholder {
+  color: rgba(89, 66, 38, 0.5);
+  font-style: italic;
+}
+
+.geo-form textarea {
+  min-height: 100px;
+  resize: vertical;
+  font-family: var(--font-sans);
+}
+
+.geo-form select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--gold-deep) 50%),
+    linear-gradient(135deg, var(--gold-deep) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 2px),
+    calc(100% - 13px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+.geo-form fieldset {
+  border: 1px dashed rgba(126, 90, 24, 0.45);
+  border-radius: var(--radius-sharp);
+  padding: 16px;
+  margin: 0;
+}
+
+.geo-form legend {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--gold-deep);
+  padding: 0 8px;
+}
+
+/* Checkbox + radio som mer ærverdige */
+.geo-form input[type="checkbox"],
+.geo-form input[type="radio"],
+input.geo-checkbox,
+input.geo-radio {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: rgba(255, 247, 221, 0.95);
+  border: 1.5px solid var(--gold);
+  margin-right: 8px;
+  cursor: pointer;
+  vertical-align: middle;
+  position: relative;
+  flex: none;
+}
+
+.geo-form input[type="radio"],
+input.geo-radio {
+  border-radius: 50%;
+}
+
+.geo-form input[type="checkbox"]:checked,
+input.geo-checkbox:checked {
+  background: var(--burgundy);
+  border-color: var(--burgundy);
+}
+
+.geo-form input[type="checkbox"]:checked::after,
+input.geo-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 5px;
+  height: 9px;
+  border: solid #fff7e0;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.geo-form input[type="radio"]:checked,
+input.geo-radio:checked {
+  border-color: var(--burgundy);
+}
+
+.geo-form input[type="radio"]:checked::after,
+input.geo-radio:checked::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--burgundy);
+}
+
+/* En liten hjelpetekst-stil */
+.geo-form .geo-help,
+.geo-form small {
+  font-family: var(--font-italic);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-muted);
+  display: block;
+  margin-top: 4px;
+}
+
+/* ----- § 16 — Quote strip ----- */
+.geo-quote-strip {
+  background:
+    linear-gradient(180deg, var(--navy-deep), #0d3a55),
+    repeating-linear-gradient(90deg, rgba(184, 137, 47, 0.15) 0 1px, transparent 1px 14px);
+  color: #f5ead0;
+  padding: 32px 36px;
+  border: 1px solid var(--gold);
+  text-align: center;
+  font-family: var(--font-italic);
+  font-style: italic;
+  font-size: 26px;
+  position: relative;
+}
+
+.geo-quote-strip::before {
+  content: "\201C";
+  position: absolute;
+  top: -28px;
+  left: 24px;
+  font-family: var(--font-numerals);
+  font-size: 120px;
+  color: rgba(245, 210, 122, 0.3);
+  line-height: 1;
+}
+
+.geo-quote-strip::after {
+  content: "\201D";
+  position: absolute;
+  bottom: -66px;
+  right: 24px;
+  font-family: var(--font-numerals);
+  font-size: 120px;
+  color: rgba(245, 210, 122, 0.3);
+  line-height: 1;
 }

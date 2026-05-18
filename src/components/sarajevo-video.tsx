@@ -1,13 +1,30 @@
 import Link from "next/link";
 import { Flame, ScrollText } from "lucide-react";
 
+import { buttonClass } from "@/components/ui/button";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Stamp } from "@/components/ui/stamp";
+
+/**
+ * SarajevoVideo — filmplakat-innfatning rundt Sarajevodagens primærkilde.
+ *
+ * Designdetaljer (Pakke 1):
+ * - Geo-hero-stilen rundt videoen (gull-ramme, hjørne-arabesker)
+ * - Filmperforerte kanter rundt selve videoen (svarte hull i mørk navy-stripe)
+ * - "VISES I RIKSFORUM"-stempel rotert øverst til høyre
+ * - Cinzel-tittel + drop-cap + italic sitat
+ */
 export function SarajevoVideo() {
   return (
-    <section className="geotia-frame geotia-sarajevo rounded">
+    <section className="geo-hero relative">
+      <div className="absolute right-4 top-4 z-10">
+        <Stamp tone="alarm">VISES I RIKSFORUM</Stamp>
+      </div>
       <div className="grid gap-0 xl:grid-cols-[minmax(0,1.15fr)_0.85fr]">
-        <div className="bg-[#061d2b] p-3 sm:p-4">
+        <div className="sarajevo-film-frame">
+          <div className="film-perforation top" aria-hidden="true" />
           <video
-            className="aspect-video w-full rounded border border-[#c49a3c]/45 bg-black object-contain shadow-[0_18px_42px_rgba(0,0,0,0.28)]"
+            className="block aspect-video w-full bg-black object-contain"
             controls
             preload="metadata"
             poster="/geotia-assets/sarajevo-dagen-poster.jpg"
@@ -15,26 +32,38 @@ export function SarajevoVideo() {
             <source src="/geotia-assets/sarajevo-dagen.mp4" type="video/mp4" />
             Nettleseren nekter å avspille Sarajevodagens primærkilde.
           </video>
+          <div className="film-perforation bottom" aria-hidden="true" />
         </div>
         <div className="p-5 sm:p-7">
-          <div className="inline-flex items-center gap-2 rounded border border-[#7c2430]/25 bg-[#7c2430]/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#7c2430]">
-            <Flame className="h-4 w-4" aria-hidden="true" />
-            Sarajevodagen
-          </div>
-          <h2 className="font-display mt-4 text-4xl font-semibold tracking-normal text-[#062b40]">
+          <Eyebrow>
+            <Flame className="h-3.5 w-3.5" aria-hidden="true" />
+            Sarajevodagen · 26. mai
+          </Eyebrow>
+          <h2 className="font-display text-3xl font-semibold uppercase tracking-[0.05em] text-[#062b40] sm:text-4xl">
             Opphavet til dagen geo nesten døde
           </h2>
-          <p className="mt-4 text-sm leading-7 text-[#4f412b]">
-            Dette er Sarajevodagens primærkilde: et legendarisk klipp fra Geotias
-            mytiske forhistorie, ført her med den alvor situasjonen fortjener.
-            Klippet skal sees som arkiv, advarsel og nasjonal høytid i samme åndedrag.
+          <p className="mt-4 text-sm leading-7 text-[#3b2c12]" style={{ fontFamily: "var(--font-sans)" }}>
+            <span
+              className="float-left mr-2 mt-1 text-3xl font-bold leading-none text-[#5e1d27]"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              D
+            </span>
+            ette er Sarajevodagens primærkilde: et legendarisk klipp fra
+            Geotias mytiske forhistorie, ført her med den alvor situasjonen
+            fortjener. Klippet skal sees som arkiv, advarsel og nasjonal
+            høytid i samme åndedrag.
           </p>
-          <p className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-3 text-sm italic leading-6 text-[#654517]">
-            “Å ta en Sarajevo: være svært selvsikker, gå ekstremt høyt ut OG treffe blink.”
+          <p
+            className="mt-4 rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-3 text-sm leading-6 text-[#654517]"
+            style={{ fontFamily: "var(--font-italic)", fontStyle: "italic" }}
+          >
+            &ldquo;Å ta en Sarajevo: være svært selvsikker, gå ekstremt høyt ut
+            OG treffe blink.&rdquo;
           </p>
           <Link
             href="/arkiv/merkedager"
-            className="mt-5 inline-flex h-10 items-center gap-2 rounded bg-[#062b40] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0d3b4e]"
+            className={`${buttonClass({ variant: "wax", size: "small" })} mt-5`}
           >
             <ScrollText className="h-4 w-4" aria-hidden="true" />
             Se merkedagene

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { computeRound, computeStandings, computeWorstThreeAverage } from "@/lib/scoring";
+import { computeRound, computeStandings, computeWorstThreeAverage, geotStatus } from "@/lib/scoring";
+import type { Standing } from "@/lib/types";
 import { players } from "@/lib/seed";
 import type { Round } from "@/lib/types";
 
@@ -143,5 +144,70 @@ describe("SlowGeo scoring", () => {
     expect(standings[0].totalPoints).toBe(13);
     expect(standings[1].player.id).toBe("vegard");
     expect(standings[1].totalPoints).toBe(13);
+  });
+});
+
+function standing(overrides: Partial<Standing>): Standing {
+  const base: Standing = {
+    rank: 1,
+    player: {
+      id: "test",
+      shortName: "Test",
+      title: "",
+      specialty: "",
+      partyId: null,
+      color: "#000000",
+    },
+    totalPoints: 30,
+    totalKattometer: 1000,
+    lockedRounds: 6,
+    roundsPlayed: 6,
+    wins: 1,
+    top3: 4,
+    lastPlaces: 0,
+    absences: 0,
+    invalids: 0,
+    averagePoints: 5,
+    averageKattometer: 167,
+    bestKm: 5,
+    worstKm: 400,
+    bestSinglePoints: 7,
+  };
+  return { ...base, ...overrides };
+}
+
+describe("geotStatus", () => {
+  it("returnerer JEVN for spillere uten låste runder", () => {
+    expect(geotStatus(standing({ lockedRounds: 0 }))).toBe("JEVN");
+  });
+
+  it("returnerer SOLID for høyt snitt og lavt kattometer", () => {
+    expect(
+      geotStatus(standing({ averagePoints: 5.2, averageKattometer: 800 })),
+    ).toBe("SOLID");
+  });
+
+  it("returnerer JEVN for normal prestasjon", () => {
+    expect(
+      geotStatus(standing({ averagePoints: 3.5, averageKattometer: 2000, worstKm: 1200 })),
+    ).toBe("JEVN");
+  });
+
+  it("returnerer UROLIG for lavt snitt og solid verste-km", () => {
+    expect(
+      geotStatus(standing({ averagePoints: 2.5, averageKattometer: 2500, worstKm: 2200 })),
+    ).toBe("UROLIG");
+  });
+
+  it("returnerer INDIA-RISK for høy desertering", () => {
+    expect(
+      geotStatus(standing({ lockedRounds: 10, absences: 4, averagePoints: 3 })),
+    ).toBe("INDIA-RISK");
+  });
+
+  it("returnerer INDIA-RISK for ekstreme enkelt-bommer", () => {
+    expect(
+      geotStatus(standing({ averagePoints: 4, worstKm: 8000 })),
+    ).toBe("INDIA-RISK");
   });
 });

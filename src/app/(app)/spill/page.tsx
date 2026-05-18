@@ -1,7 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Gamepad2, MapPinned, TableProperties, Trophy } from "lucide-react";
 
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { computeGameStandings, computeStandings } from "@/lib/scoring";
 import { getGamesState } from "@/lib/store";
 import type { GameDefinition } from "@/lib/types";
@@ -26,17 +28,28 @@ export default async function GamesPage() {
 
   return (
     <div className="space-y-7">
-      <section className="geotia-frame geotia-temple rounded p-5 sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
-          Spillnasjonen · velg arena
-        </p>
-        <h1 className="font-display mt-2 text-5xl font-semibold tracking-normal text-[#062b40]">
-          Geotias spillkammer
-        </h1>
-        <p className="mt-4 max-w-4xl text-base leading-7 text-[#4f412b]">
-          Velg spillet først. SlowGeo har eget rom for Street View-bilde, pin-svar og
-          deling i krangletråden. De andre spillene føres i én rask protokoll.
-        </p>
+      <section className="geo-hero">
+        <div className="geo-hero-grid">
+          <div className="geo-hero-text">
+            <Eyebrow>Spillkammeret · velg arena · Kapittel II</Eyebrow>
+            <h1 className="geo-hero-title">Spillkammer</h1>
+            <p className="geo-hero-lead geo-hero-lead-dropcap">
+              Velg spillet først. SlowGeo har eget rom for Street View-bilde,
+              pin-svar og deling i krangletråden. De andre spillene føres i én
+              rask protokoll.
+            </p>
+          </div>
+          <div className="geo-hero-poster">
+            <Image
+              src="/illustrations/vapen-spillkammer.svg"
+              alt="Riksvåpen for Spillkammeret"
+              width={300}
+              height={350}
+              priority
+              style={{ width: "auto", maxHeight: "440px" }}
+            />
+          </div>
+        </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">

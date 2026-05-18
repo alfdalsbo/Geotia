@@ -1,11 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
   BookOpen,
   Crown,
   Gavel,
-  Landmark,
-  Milestone,
   ScrollText,
   TableProperties,
   Trophy,
@@ -16,14 +15,18 @@ import { DashboardGameGrid, DashboardPartyGrid } from "@/components/dashboard-se
 import { GeoGuessrTipTicker } from "@/components/geo-guessr-tip-ticker";
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { RotatingGeotiaQuote } from "@/components/rotating-geotia-quote";
-import { ExpandableImage } from "@/components/expandable-image";
 import { SarajevoVideo } from "@/components/sarajevo-video";
 import { Section, StatTile } from "@/components/section";
+import { buttonClass } from "@/components/ui/button";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Ornament } from "@/components/ui/ornament";
+import { RankMark } from "@/components/ui/rank-mark";
+import { Stamp } from "@/components/ui/stamp";
 import { getGeoGuessrTipDaySeed, selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { geotiaDashboardLines, geotiaTipLines, pickGeoticLine } from "@/lib/geotia-jargon";
-import { computeGameStandings, getHallOfFame, computeRound, computeStandings } from "@/lib/scoring";
+import { computeGameStandings, geotStatus, getHallOfFame, computeRound, computeStandings } from "@/lib/scoring";
 import { getAppState } from "@/lib/store";
-import { dateLabel, formatKm, formatNumber } from "@/lib/utils";
+import { cn, dateLabel, formatKm, formatNumber } from "@/lib/utils";
 
 export const metadata = {
   title: "Kommandosentral",
@@ -73,32 +76,25 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-7">
-      <section className="geotia-frame rounded">
-        <div className="grid xl:grid-cols-[1.05fr_0.95fr]">
-          <div className="p-5 sm:p-8 lg:p-10">
-            <div className="inline-flex items-center gap-2 rounded border border-[#c49a3c]/50 bg-[#062b40] px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#fff7e6]">
-              <Landmark className="h-4 w-4 text-[#e1c06c]" aria-hidden="true" />
-              Rikets kommandosentral
-            </div>
-            <h1 className="font-display mt-5 text-5xl font-semibold tracking-normal text-[#062b40] sm:text-7xl">
-              Geotia
-            </h1>
-            <p className="mt-4 max-w-3xl text-lg leading-8 text-[#4f412b]">
+      <section className="geo-hero">
+        <div className="geo-hero-grid">
+          <div className="geo-hero-text">
+            <Eyebrow>Rikets kommandosentral · Kapittel I</Eyebrow>
+            <h1 className="geo-hero-title">Geotia</h1>
+            <p className="geo-hero-lead geo-hero-lead-dropcap">
               Et geotisk mikrounivers bygget på geografispill, brutal
               sannhetssøken og et statsapparat som fører riket med alvorlig
               smil. Her føres kilometer, ære, desertering og partipropaganda
               med høytidelig hånd i Geotias statsarkiv.
             </p>
 
-            <div className="geotia-ornament mt-6 text-center text-sm font-semibold uppercase tracking-[0.18em] text-[#7c2430]">
-              <span>{dashboardLine}</span>
-            </div>
+            <Ornament>{dashboardLine}</Ornament>
 
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="geo-hero-actions">
               <Link
                 href="/spill/slowgeo"
                 prefetch={false}
-                className="inline-flex h-11 items-center gap-2 rounded bg-[#7c2430] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#641923]"
+                className={buttonClass({ variant: "wax" })}
               >
                 Start SlowGeo
                 <TableProperties className="h-4 w-4" aria-hidden="true" />
@@ -107,7 +103,7 @@ export default async function DashboardPage() {
               <Link
                 href="/arkiv"
                 prefetch={false}
-                className="inline-flex h-11 items-center gap-2 rounded border border-[#062b40]/30 bg-[#fff7e6] px-4 text-sm font-semibold text-[#062b40] shadow-sm transition hover:border-[#c49a3c]"
+                className={buttonClass({ variant: "quiet" })}
               >
                 Åpne statsarkivet
                 <BookOpen className="h-4 w-4" aria-hidden="true" />
@@ -116,63 +112,65 @@ export default async function DashboardPage() {
               <Link
                 href="/ordenen"
                 prefetch={false}
-                className="inline-flex h-11 items-center gap-2 rounded border border-[#062b40]/30 bg-[#fff7e6] px-4 text-sm font-semibold text-[#062b40] shadow-sm transition hover:border-[#c49a3c]"
+                className={buttonClass({ variant: "quiet" })}
               >
                 Gå ordensveien
-                <Milestone className="h-4 w-4" aria-hidden="true" />
                 <LinkPendingIndicator />
               </Link>
             </div>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <StatTile
-                label="Tellende runder"
-                value={lockedRounds.length}
-                detail={drafts ? "Utkast i protokollen" : "Alle starter rent"}
-                tone="blue"
-              />
-              <StatTile
-                label="Poengleder"
-                value={leader ? leader.player.shortName : "-"}
-                detail={leader ? `${leader.totalPoints} poeng` : "Embetsverket venter"}
-                tone="green"
-              />
-              <StatTile
-                label="Kattometerleder"
-                value={kattometerLeader ? kattometerLeader.player.shortName : "-"}
-                detail={kattometerLeader ? formatKm(kattometerLeader.totalKattometer) : "Ingen bom ført"}
-                tone="gold"
-              />
-              <StatTile
-                label="Åpne ting-saker"
-                value={openGeotingCases}
-                detail="GeoTinget venter"
-                tone="red"
-              />
-            </div>
           </div>
 
-          <div className="border-t border-[#c49a3c]/35 bg-[#061d2b] xl:border-l xl:border-t-0">
-            <ExpandableImage
-              src="/geotia-assets/party-overview.png"
-              alt="Partioversikt for Geotia"
-              sizes="(min-width: 1280px) 580px, 100vw"
-              className="relative min-h-[440px] w-full sm:min-h-[560px] xl:min-h-[620px]"
-              imageClassName="object-contain p-4"
-              caption="Partioversikt for Geotia"
+          <div className="geo-hero-poster">
+            <Image
+              src="/illustrations/vapen-kommando.svg"
+              alt="Riksvåpen for Kommandosentralen"
+              width={300}
+              height={350}
               priority
+              style={{ width: "auto", maxHeight: "440px" }}
             />
-            <div className="border-t border-[#c49a3c]/35 bg-[#061d2b] p-5 text-[#fff7e6]">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#e1c06c]">
-                Siste SlowGeo-vinner
-              </p>
-              <p className="font-display mt-2 text-xl font-semibold leading-7">
-                {computedLatest?.winnerNames.join(", ") || "Ingen låst runde ennå"}
-              </p>
-            </div>
+          </div>
+        </div>
+        <div className="geo-winner-band">
+          <div>
+            <p className="label">Siste SlowGeo-vinner — protokollført med høytid</p>
+            <p className="value">
+              {computedLatest?.winnerNames.join(", ") || "Ingen låst runde ennå"}
+            </p>
           </div>
         </div>
       </section>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatTile
+          label="Tellende runder"
+          value={lockedRounds.length}
+          detail={drafts ? "Utkast i protokollen" : "Alle starter rent"}
+          tone="blue"
+          index={0}
+        />
+        <StatTile
+          label="Poengleder"
+          value={leader ? leader.player.shortName : "-"}
+          detail={leader ? `${leader.totalPoints} poeng` : "Embetsverket venter"}
+          tone="green"
+          index={1}
+        />
+        <StatTile
+          label="Kattometerleder"
+          value={kattometerLeader ? kattometerLeader.player.shortName : "-"}
+          detail={kattometerLeader ? formatKm(kattometerLeader.totalKattometer) : "Ingen bom ført"}
+          tone="gold"
+          index={2}
+        />
+        <StatTile
+          label="Åpne ting-saker"
+          value={openGeotingCases}
+          detail="GeoTinget venter"
+          tone="red"
+          index={3}
+        />
+      </div>
 
       <RotatingGeotiaQuote quotes={knowledgeQuotes} />
 
@@ -201,50 +199,66 @@ export default async function DashboardPage() {
           }
         >
           <div className="grid gap-3 md:hidden">
-            {standings.map((standing) => (
-              <article key={standing.player.id} className="rounded border border-[#d8ded0] bg-white p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8e3030]">#{standing.rank}</p>
-                <h3 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{standing.player.shortName}</h3>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                  <MobileMetric label="Poeng" value={standing.totalPoints} />
-                  <MobileMetric label="Kattometer" value={formatKm(standing.totalKattometer)} />
-                  <MobileMetric label="Seire" value={standing.wins} />
-                  <MobileMetric label="Topp 3" value={standing.top3} />
-                </div>
-              </article>
-            ))}
+            {standings.map((standing) => {
+              const status = geotStatus(standing);
+              const stampTone = status === "SOLID" || status === "JEVN" ? "signal" : "alarm";
+              return (
+                <article key={standing.player.id} className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <RankMark rank={standing.rank} />
+                    <div className="min-w-0 flex-1">
+                      <div className="geot-name">{standing.player.shortName}</div>
+                      <div className="geot-title">{standing.player.title}</div>
+                    </div>
+                    <Stamp tone={stampTone}>{status}</Stamp>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                    <MobileMetric label="Poeng" value={standing.totalPoints} />
+                    <MobileMetric label="Kattometer" value={formatKm(standing.totalKattometer)} />
+                    <MobileMetric label="Seire" value={standing.wins} />
+                    <MobileMetric label="Topp 3" value={standing.top3} />
+                  </div>
+                </article>
+              );
+            })}
           </div>
           <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[680px] text-left text-sm">
-              <thead className="border-b border-[#c49a3c]/35 text-xs uppercase tracking-[0.12em] text-[#60553f]">
+            <table className="protocol w-full min-w-[720px]">
+              <thead>
                 <tr>
-                  <th className="py-2 pr-3">Rang</th>
-                  <th className="py-2 pr-3">Geot</th>
-                  <th className="py-2 pr-3 text-right">Poeng</th>
-                  <th className="py-2 pr-3 text-right">Kattometer</th>
-                  <th className="py-2 pr-3 text-right">Seire</th>
-                  <th className="py-2 text-right">Topp 3</th>
+                  <th>Rang</th>
+                  <th>Geot</th>
+                  <th className="right">Poeng</th>
+                  <th className="right">Kattometer</th>
+                  <th className="right">Seire</th>
+                  <th className="right">Topp 3</th>
+                  <th className="right">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {standings.map((standing) => (
-                  <tr key={standing.player.id} className="border-b border-[#c49a3c]/20 last:border-0">
-                    <td className="py-3 pr-3 font-mono text-[#7c2430]">{standing.rank}</td>
-                    <td className="py-3 pr-3">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="h-3 w-3 rounded-sm"
-                          style={{ background: standing.player.color }}
-                        />
-                        <span className="font-semibold">{standing.player.shortName}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 pr-3 text-right font-semibold">{standing.totalPoints}</td>
-                    <td className="py-3 pr-3 text-right">{formatKm(standing.totalKattometer)}</td>
-                    <td className="py-3 pr-3 text-right">{standing.wins}</td>
-                    <td className="py-3 text-right">{standing.top3}</td>
-                  </tr>
-                ))}
+                {standings.map((standing) => {
+                  const status = geotStatus(standing);
+                  const stampTone = status === "SOLID" || status === "JEVN" ? "signal" : "alarm";
+                  return (
+                    <tr key={standing.player.id}>
+                      <td><RankMark rank={standing.rank} /></td>
+                      <td>
+                        <div className="geot-cell">
+                          <span className="geot-flag" style={{ background: standing.player.color }} />
+                          <div className="min-w-0">
+                            <div className="geot-name">{standing.player.shortName}</div>
+                            <div className="geot-title">{standing.player.title}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="right"><span className="num-display">{standing.totalPoints}</span></td>
+                      <td className="right">{formatKm(standing.totalKattometer)}</td>
+                      <td className="right">{standing.wins}</td>
+                      <td className="right">{standing.top3}</td>
+                      <td className="right"><Stamp tone={stampTone}>{status}</Stamp></td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -301,64 +315,69 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Section title="Æreshallen" eyebrow="Automatiske rekorder">
-          <div className="space-y-3 text-sm">
-            <p className="flex items-center gap-2 font-semibold text-[#062b40]">
-              <Trophy className="h-4 w-4" aria-hidden="true" />
-              Flest poeng
-            </p>
-            <p>{hall.mostPoints[0]?.player.shortName ?? "-"} · {hall.mostPoints[0]?.totalPoints ?? 0} poeng</p>
-            <p className="flex items-center gap-2 font-semibold text-[#194832]">
-              <Crown className="h-4 w-4" aria-hidden="true" />
-              Flest seire
-            </p>
-            <p>{hall.mostWins[0]?.player.shortName ?? "-"} · {hall.mostWins[0]?.wins ?? 0} seire</p>
+        <article className="archive-card">
+          <div className="crown-icon">
+            <Trophy className="h-5 w-5" aria-hidden="true" />
           </div>
-        </Section>
-        <Section title="Skammens protokoll" eyebrow="Kattometer">
-          <div className="space-y-3 text-sm">
-            <p className="font-semibold text-[#7c2430]">Verste enkeltbom</p>
-            <p>
-              {hall.worstSingle
-                ? `${hall.worstSingle.result.player.shortName} · ${formatKm(hall.worstSingle.result.actualKm)}`
-                : "Ingen skam ført ennå"}
-            </p>
-            <p className="font-semibold text-[#654517]">Beste enkeltprestasjon</p>
-            <p>
-              {hall.bestSingle
-                ? `${hall.bestSingle.result.player.shortName} · ${formatKm(hall.bestSingle.result.actualKm)}`
-                : "Ingen udødelige øyeblikk ennå"}
-            </p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#7e5a18]" style={{ fontFamily: "var(--font-display)" }}>
+            Automatiske rekorder
+          </p>
+          <h3>Æreshallen</h3>
+          <p className="lead-name mt-3">{hall.mostPoints[0]?.player.shortName ?? "-"}</p>
+          <p className="lead-detail">Flest poeng · {hall.mostPoints[0]?.totalPoints ?? 0} poeng</p>
+          <p className="lead-detail">
+            <Crown className="mr-1 inline h-3 w-3 text-[#194832]" aria-hidden="true" />
+            Flest seire: {hall.mostWins[0]?.player.shortName ?? "-"} ({hall.mostWins[0]?.wins ?? 0})
+          </p>
+          <p className="mt-3"><Stamp tone="brass">REKORD ARKIVERT</Stamp></p>
+        </article>
+
+        <article className="archive-card">
+          <div className="crown-icon" style={{ background: "radial-gradient(circle, #f0b0b8, var(--burgundy))", color: "#fff7e0" }}>
+            <ScrollText className="h-5 w-5" aria-hidden="true" />
           </div>
-        </Section>
-        <Section
-          title="Oppslagsverket"
-          eyebrow="Leksikon"
-          action={
-            <Link href="/arkiv" prefetch={false} className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
-              Åpne
-              <BookOpen className="h-4 w-4" aria-hidden="true" />
-              <LinkPendingIndicator />
-            </Link>
-          }
-        >
-          <div className="space-y-3 text-sm">
-            <p className="flex items-center gap-2 font-semibold text-[#062b40]">
-              <UsersRound className="h-4 w-4" aria-hidden="true" />
-              Uttrykk i statsarkivet
-            </p>
-            <p>{formatNumber(state.archive.lexicon.length)} oppføringer</p>
-            <p className="flex items-center gap-2 font-semibold text-[#7c2430]">
-              <Gavel className="h-4 w-4" aria-hidden="true" />
-              Saker i GeoTinget
-            </p>
-            <p>{state.archive.geotingCases.length} protokollførte saker</p>
-            <p className="flex items-center gap-2 font-semibold text-[#654517]">
-              <ScrollText className="h-4 w-4" aria-hidden="true" />
-              Arkivet er ikke nøytralt. Det er bare pent ført.
-            </p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#7e5a18]" style={{ fontFamily: "var(--font-display)" }}>
+            Kattometer
+          </p>
+          <h3>Skammens protokoll</h3>
+          <p className="lead-name mt-3">
+            {hall.worstSingle ? hall.worstSingle.result.player.shortName : "-"}
+          </p>
+          <p className="lead-detail">
+            Verste enkeltbom: {hall.worstSingle ? formatKm(hall.worstSingle.result.actualKm) : "Ingen skam ført ennå"}
+          </p>
+          <p className="lead-detail">
+            Beste: {hall.bestSingle ? `${hall.bestSingle.result.player.shortName} · ${formatKm(hall.bestSingle.result.actualKm)}` : "Ingen udødelige øyeblikk ennå"}
+          </p>
+          <p className="mt-3"><Stamp tone="alarm">EVIG REGISTRERT</Stamp></p>
+        </article>
+
+        <article className="archive-card">
+          <div className="crown-icon">
+            <BookOpen className="h-5 w-5" aria-hidden="true" />
           </div>
-        </Section>
+          <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#7e5a18]" style={{ fontFamily: "var(--font-display)" }}>
+            Leksikon
+          </p>
+          <h3>Oppslagsverket</h3>
+          <p className="lead-name mt-3">{formatNumber(state.archive.lexicon.length)} oppføringer</p>
+          <p className="lead-detail">
+            <Gavel className="mr-1 inline h-3 w-3 text-[#7c2430]" aria-hidden="true" />
+            {state.archive.geotingCases.length} protokollførte saker
+          </p>
+          <p className="lead-detail">
+            <UsersRound className="mr-1 inline h-3 w-3 text-[#062b40]" aria-hidden="true" />
+            Arkivet er ikke nøytralt. Det er bare pent ført.
+          </p>
+          <Link
+            href="/arkiv"
+            prefetch={false}
+            className={cn(buttonClass({ variant: "quiet", size: "small" }), "mt-4")}
+          >
+            Åpne <BookOpen className="h-3 w-3" aria-hidden="true" />
+            <LinkPendingIndicator />
+          </Link>
+        </article>
       </div>
     </div>
   );
