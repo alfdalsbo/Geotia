@@ -5,7 +5,9 @@ import { ArrowRight, Medal, Shield, Sparkles, TableProperties, Trophy } from "lu
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { Section, StatTile } from "@/components/section";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { computeGameStandings, computeStandings, getHallOfFame } from "@/lib/scoring";
+import { RankMark } from "@/components/ui/rank-mark";
+import { Stamp } from "@/components/ui/stamp";
+import { computeGameStandings, computeStandings, geotStatus, getHallOfFame } from "@/lib/scoring";
 import { getScoreboardState } from "@/lib/store";
 import type { GameDefinition, GameStanding, Standing } from "@/lib/types";
 import { formatKm, formatNumber, formatScore } from "@/lib/utils";
@@ -72,48 +74,52 @@ export default async function TablesPage() {
       >
         <SlowGeoMobileCards standings={standings} />
         <div className="hidden overflow-x-auto md:block">
-          <table className="w-full min-w-[1120px] text-left text-sm">
-            <thead className="bg-[#203c62] text-xs uppercase tracking-[0.12em] text-white">
+          <table className="protocol w-full min-w-[1180px]">
+            <thead>
               <tr>
-                <th className="px-3 py-3">Rang</th>
-                <th className="px-3 py-3">Geot</th>
-                <th className="px-3 py-3 text-right">Poeng</th>
-                <th className="px-3 py-3 text-right">Kattometer</th>
-                <th className="px-3 py-3 text-right">Runder</th>
-                <th className="px-3 py-3 text-right">Seire</th>
-                <th className="px-3 py-3 text-right">Topp 3</th>
-                <th className="px-3 py-3 text-right">Sisteplasser</th>
-                <th className="px-3 py-3 text-right">Deserteringer</th>
-                <th className="px-3 py-3 text-right">Snitt p</th>
-                <th className="px-3 py-3 text-right">Snitt km</th>
-                <th className="px-3 py-3 text-right">Beste km</th>
-                <th className="px-3 py-3 text-right">Verste km</th>
+                <th>Rang</th>
+                <th>Geot</th>
+                <th className="right">Poeng</th>
+                <th className="right">Kattometer</th>
+                <th className="right">Runder</th>
+                <th className="right">Seire</th>
+                <th className="right">Topp 3</th>
+                <th className="right">Snitt p</th>
+                <th className="right">Snitt km</th>
+                <th className="right">Beste km</th>
+                <th className="right">Verste km</th>
+                <th className="right">Status</th>
               </tr>
             </thead>
             <tbody>
               {standings.map((standing) => (
-                <tr key={standing.player.id} className="border-b border-[#eef1eb] bg-white last:border-b-0">
-                  <td className="px-3 py-3 font-mono text-[#8e3030]">{standing.rank}</td>
-                  <td className="px-3 py-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="h-8 w-1 flex-none rounded-full" style={{ background: standing.player.color }} />
+                <tr key={standing.player.id}>
+                  <td><RankMark rank={standing.rank} /></td>
+                  <td>
+                    <div className="geot-cell">
+                      <span className="geot-flag" style={{ background: standing.player.color }} />
                       <div className="min-w-0">
-                        <p className="font-semibold text-[#161713]">{standing.player.shortName}</p>
-                        <p className="text-xs text-[#5b6257]">{standing.player.title}</p>
+                        <div className="geot-name">{standing.player.shortName}</div>
+                        <div className="geot-title">{standing.player.title}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-3 py-3 text-right font-semibold">{standing.totalPoints}</td>
-                  <td className="px-3 py-3 text-right">{formatKm(standing.totalKattometer)}</td>
-                  <td className="px-3 py-3 text-right">{standing.roundsPlayed}</td>
-                  <td className="px-3 py-3 text-right">{standing.wins}</td>
-                  <td className="px-3 py-3 text-right">{standing.top3}</td>
-                  <td className="px-3 py-3 text-right">{standing.lastPlaces}</td>
-                  <td className="px-3 py-3 text-right">{standing.absences}</td>
-                  <td className="px-3 py-3 text-right">{formatNumber(standing.averagePoints)}</td>
-                  <td className="px-3 py-3 text-right">{formatKm(standing.averageKattometer)}</td>
-                  <td className="px-3 py-3 text-right">{formatKm(standing.bestKm)}</td>
-                  <td className="px-3 py-3 text-right">{formatKm(standing.worstKm)}</td>
+                  <td className="right"><span className="num-display">{standing.totalPoints}</span></td>
+                  <td className="right">{formatKm(standing.totalKattometer)}</td>
+                  <td className="right">{standing.roundsPlayed}</td>
+                  <td className="right">{standing.wins}</td>
+                  <td className="right">{standing.top3}</td>
+                  <td className="right">{formatNumber(standing.averagePoints)}</td>
+                  <td className="right">{formatKm(standing.averageKattometer)}</td>
+                  <td className="right">{formatKm(standing.bestKm)}</td>
+                  <td className="right">{formatKm(standing.worstKm)}</td>
+                  <td className="right">
+                    {(() => {
+                      const status = geotStatus(standing);
+                      const tone = status === "SOLID" || status === "JEVN" ? "signal" : "alarm";
+                      return <Stamp tone={tone}>{status}</Stamp>;
+                    })()}
+                  </td>
                 </tr>
               ))}
             </tbody>
