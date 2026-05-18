@@ -230,7 +230,25 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
   test.setTimeout(120_000);
   await mockGoogleMaps(page);
   const roundId = await writeOpenSlowGeoFixture();
+
+  await page.goto(`/slowgeo/${roundId}`, { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("banner")).toBeVisible();
+  const openGeotiaLink = page.getByRole("link", { name: "Åpne Geotia" });
+  await expect(openGeotiaLink).toBeVisible();
+  await expect(openGeotiaLink).toHaveAttribute("href", "/");
+  await expect(page.getByRole("heading", { name: "Mobilkart-prøven" })).toBeVisible();
+  await expect(page.getByText("Sett pinnen")).toBeVisible();
+  await expect(page.getByTestId("slowgeo-map-surface")).toBeVisible();
+  await expect(page.getByText("Laster kart")).toHaveCount(0);
+  await expectNoHorizontalOverflow(page);
+
   await login(page);
+
+  await page.goto(`/slowgeo/${roundId}`, { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("Laster kart")).toHaveCount(0);
+  await page.getByTestId("slowgeo-map-surface").click({ position: { x: 160, y: 180 } });
+  await expect(page.getByText("59.91270, 10.74610")).toBeVisible();
+  await expectNoHorizontalOverflow(page);
 
   await page.goto(`/runder/${roundId}`, { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "Mobilkart-prøven" })).toBeVisible();
@@ -253,7 +271,7 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
   await imageDialog.getByRole("button", { name: "Lukk bilde" }).click();
   await expect(imageDialog).toBeHidden();
 
-  await page.getByRole("button", { name: "Sett pin i fullskjermkart" }).click();
+  await page.getByRole("button", { name: "Vis kart i fullskjerm" }).click();
   const dialog = page.getByRole("dialog", { name: "Sett pin i kart" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText("SlowGeo-kart")).toBeVisible();

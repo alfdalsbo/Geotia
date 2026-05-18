@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 
-import { createSession, destroySession, isCorrectPasscode, playerIdFromUsername, requireSession } from "@/lib/auth";
+import { createSession, destroySession, getSession, isCorrectPasscode, playerIdFromUsername, requireSession } from "@/lib/auth";
 import { GEO_OATH_TEXT } from "@/lib/geoting";
 import { haversineKm, parseGeoLocationJson } from "@/lib/geo";
 import { geoterIndexCategories } from "@/lib/geoterindeks";
@@ -222,13 +222,18 @@ export async function createSlowGeoRoundAction(formData: FormData) {
 }
 
 export async function submitSlowGeoGuessAction(formData: FormData) {
-  const session = await requireSession();
   const roundId = field(formData, "round_id");
+  const returnTo = safeRedirectPath(field(formData, "return_to") || (roundId ? `/runder/${roundId}` : "/runder"));
+  const session = await getSession();
+  if (!session) {
+    redirect(`/login?next=${encodeURIComponent(returnTo)}`);
+  }
+
   const lat = Number(field(formData, "guess_lat").replace(",", "."));
   const lon = Number(field(formData, "guess_lon").replace(",", "."));
 
   if (!roundId || !Number.isFinite(lat) || !Number.isFinite(lon)) {
-    redirect(`/runder/${roundId || ""}?error=${encodeURIComponent("Sett en pin på kartet før svaret sendes.")}`);
+    redirect(`${returnTo}?error=${encodeURIComponent("Sett en pin på kartet før svaret sendes.")}`);
   }
 
   const location: GeoLocation = {
@@ -248,10 +253,10 @@ export async function submitSlowGeoGuessAction(formData: FormData) {
   revalidateSlowGeoPaths(roundId);
 
   if (!result.ok) {
-    redirect(`/runder/${roundId}?error=${encodeURIComponent(result.reason ?? "Svaret ble ikke ført.")}`);
+    redirect(`${returnTo}?error=${encodeURIComponent(result.reason ?? "Svaret ble ikke ført.")}`);
   }
 
-  redirect(`/runder/${roundId}?status=${result.revealed ? "avslort" : "gjettet"}`);
+  redirect(`${returnTo}?status=${result.revealed ? "avslort" : "gjettet"}`);
 }
 
 function gameIdField(value: string): GameId {

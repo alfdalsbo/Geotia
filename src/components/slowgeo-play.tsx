@@ -33,6 +33,9 @@ type SlowGeoPlayProps = {
   existingNote?: string | null;
   shareUrl: string;
   tips?: GeoGuessrTip[];
+  returnTo?: string;
+  layout?: "split" | "stacked";
+  showShareButton?: boolean;
 };
 
 function guessLabel(lat: number, lon: number) {
@@ -51,6 +54,9 @@ export function SlowGeoPlay({
   existingNote,
   shareUrl,
   tips = [],
+  returnTo,
+  layout = "split",
+  showShareButton = true,
 }: SlowGeoPlayProps) {
   const mapElementRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<GoogleMap | null>(null);
@@ -180,20 +186,29 @@ export function SlowGeoPlay({
   }, [mapOpen, recenterMap]);
 
   const hasMap = Boolean(googleMapsApiKey);
+  const gridClass =
+    layout === "stacked"
+      ? "grid min-w-0 gap-0"
+      : "grid min-w-0 gap-0 xl:grid-cols-[minmax(0,1.18fr)_minmax(360px,0.82fr)]";
+  const imageSizes = layout === "stacked" ? "100vw" : "(min-width: 1280px) 58vw, 100vw";
+  const imageClass =
+    layout === "stacked"
+      ? "aspect-[4/3] min-h-[320px] w-full sm:aspect-video sm:min-h-[420px]"
+      : "aspect-[4/3] min-h-[320px] w-full sm:aspect-video sm:min-h-[300px]";
   const mapShellClass = mapOpen
     ? "fixed inset-0 z-[80] flex flex-col overflow-hidden bg-[#fff7e6] text-[#273125]"
     : "relative min-h-[280px] flex-1 overflow-hidden rounded border border-[#d8ded0] bg-[#e9dcc0] sm:min-h-[320px]";
 
   return (
-    <section className="overflow-hidden rounded border border-[#c49a3c]/55 bg-[#fff7e6] shadow-[0_16px_34px_rgba(38,26,12,0.12)]">
-      <div className="grid gap-0 xl:grid-cols-[minmax(0,1.18fr)_minmax(360px,0.82fr)]">
-        <div className="bg-[#061d2b]">
+    <section className="w-full min-w-0 overflow-hidden rounded border border-[#c49a3c]/55 bg-[#fff7e6] shadow-[0_16px_34px_rgba(38,26,12,0.12)]">
+      <div className={gridClass}>
+        <div className="min-w-0 bg-[#061d2b]">
           {streetViewUrl ? (
             <SlowGeoImageViewer
               src={streetViewUrl}
               alt="SlowGeo-bilde"
-              sizes="(min-width: 1280px) 58vw, 100vw"
-              className="aspect-[4/3] min-h-[320px] sm:aspect-video sm:min-h-[300px]"
+              sizes={imageSizes}
+              className={imageClass}
               staticZoomImages={streetViewStaticZoomImages}
               streetViewPanorama={streetViewPanorama}
               title={roundName}
@@ -205,20 +220,23 @@ export function SlowGeoPlay({
           )}
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3 text-xs text-[#eadcbd]">
             <span>Google Street View</span>
-            <SlowGeoThreadShareButton
-              title={`SlowGeo: ${roundName}`}
-              texts={openShareTexts}
-              url={shareUrl}
-              label="Del iMessage-tråden"
-              copiedLabel="Trådtekst kopiert"
-              tone="dark"
-              className="min-w-[260px]"
-            />
+            {showShareButton ? (
+              <SlowGeoThreadShareButton
+                title={`SlowGeo: ${roundName}`}
+                texts={openShareTexts}
+                url={shareUrl}
+                label="Del iMessage-tråden"
+                copiedLabel="Trådtekst kopiert"
+                tone="dark"
+                className="min-w-[260px]"
+              />
+            ) : null}
           </div>
         </div>
 
-        <form action={submitSlowGeoGuessAction} className="flex min-h-[420px] flex-col gap-4 p-4 sm:p-5">
+        <form action={submitSlowGeoGuessAction} className="flex min-h-[420px] min-w-0 flex-col gap-4 p-4 sm:p-5">
           <input type="hidden" name="round_id" value={roundId} />
+          <input type="hidden" name="return_to" value={returnTo ?? `/runder/${roundId}`} />
           {hasMap ? (
             <>
               <input type="hidden" name="guess_lat" value={guess?.lat ?? ""} />
@@ -241,14 +259,6 @@ export function SlowGeoPlay({
 
           {hasMap ? (
             <>
-              <button
-                type="button"
-                onClick={() => setMapOpen(true)}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded bg-[#203c62] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b] xl:hidden"
-              >
-                <Maximize2 className="h-4 w-4" aria-hidden="true" />
-                {answerLocked ? "Vis pin i fullskjermkart" : "Sett pin i fullskjermkart"}
-              </button>
               <div
                 className={mapShellClass}
                 role={mapOpen ? "dialog" : undefined}
@@ -325,6 +335,14 @@ export function SlowGeoPlay({
                   </div>
                 ) : null}
               </div>
+              <button
+                type="button"
+                onClick={() => setMapOpen(true)}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded bg-[#203c62] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b] xl:hidden"
+              >
+                <Maximize2 className="h-4 w-4" aria-hidden="true" />
+                {answerLocked ? "Vis pin i fullskjermkart" : "Vis kart i fullskjerm"}
+              </button>
             </>
           ) : (
             <div className="grid gap-3 rounded border border-[#d8ded0] bg-white p-3 sm:grid-cols-2">

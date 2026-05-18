@@ -4,9 +4,13 @@ import { notFound } from "next/navigation";
 import { ArrowRight, CheckCircle2, MessageCircle, Trophy } from "lucide-react";
 
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
+import { PublicGeotiaHeader } from "@/components/public-geotia-header";
 import { SlowGeoAftermath } from "@/components/slowgeo-aftermath";
 import { SlowGeoImageViewer } from "@/components/slowgeo-image-viewer";
+import { SlowGeoPlay } from "@/components/slowgeo-play";
 import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
+import { getCurrentGeot } from "@/lib/auth";
+import { selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { computeRound } from "@/lib/scoring";
 import { players } from "@/lib/seed";
 import {
@@ -20,7 +24,7 @@ import {
   buildStreetViewStaticZoomImages,
   STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
 } from "@/lib/streetview-url";
-import { dateTimeLabel, formatKm } from "@/lib/utils";
+import { formatKm } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -86,7 +90,7 @@ export default async function SlowGeoSharePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams?: Promise<{ created?: string }>;
+  searchParams?: Promise<{ created?: string; error?: string; status?: string }>;
 }) {
   const { id } = await params;
   const query = (await searchParams) ?? {};
@@ -97,6 +101,7 @@ export default async function SlowGeoSharePage({
   if (!round.challenge) notFound();
 
   const computed = computeRound(round, players);
+  const currentGeot = await getCurrentGeot();
   const publicGoogleKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
   const streetViewUrl = buildStreetViewImageUrl({
     challenge: round.challenge,
@@ -129,11 +134,31 @@ export default async function SlowGeoSharePage({
       });
   const shareText = shareTexts[0] ?? "";
   const highlightThreadShare = isOpen && query.created === "1";
+  const currentResult = currentGeot
+    ? round.results.find((result) => result.playerId === currentGeot.id)
+    : null;
+  const existingGuess = currentResult?.guessLocation
+    ? {
+        lat: currentResult.guessLocation.lat,
+        lon: currentResult.guessLocation.lon,
+        label: currentResult.guessLocation.label,
+        updatedAt: currentResult.guessUpdatedAt,
+      }
+    : null;
+  const openSlowGeoTips = isOpen
+    ? selectGeoGuessrTips({
+        placement: "slowgeo-open",
+        seed: round.id,
+        count: 3,
+      })
+    : [];
 
   return (
-    <main className="min-h-screen bg-[#f3ead7] px-4 py-5 text-[#273125] sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-6xl flex-col gap-5">
-        <header className="flex flex-col gap-4 rounded border border-[#d6b565]/55 bg-[#fff7e6] p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:p-6">
+    <div className="min-h-screen bg-[#f3ead7] text-[#273125]">
+      <PublicGeotiaHeader />
+      <main className="px-4 py-5 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-5">
+        <header className="flex min-w-0 flex-col gap-4 rounded border border-[#d6b565]/55 bg-[#fff7e6] p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:p-6">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7c2430]">
               SlowGeo #{round.number}
@@ -158,6 +183,21 @@ export default async function SlowGeoSharePage({
           />
         </header>
 
+        {query.error ? (
+          <div className="rounded border border-[#8e3030]/25 bg-[#8e3030]/8 px-4 py-3 text-sm font-medium text-[#8e3030]">
+            {query.error}
+          </div>
+        ) : null}
+        {query.status ? (
+          <div className="rounded border border-[#285c45]/25 bg-[#285c45]/8 px-4 py-3 text-sm font-medium text-[#285c45]">
+            {query.status === "gjettet"
+              ? "Pin-svaret er låst. Kranglingen kan fortsette uten at pinnen flytter seg."
+              : query.status === "avslort"
+                ? "Fasit er avslørt, protokollen er låst og runden ligger i arkivet."
+                : "SlowGeo er oppdatert."}
+          </div>
+        ) : null}
+
         {highlightThreadShare ? (
           <section className="flex flex-col gap-4 rounded border border-[#203c62]/20 bg-[#203c62] p-4 text-white shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div className="min-w-0">
@@ -181,51 +221,50 @@ export default async function SlowGeoSharePage({
           </section>
         ) : null}
 
-        <section className="overflow-hidden rounded border border-[#c49a3c]/55 bg-[#061d2b] shadow-[0_18px_40px_rgba(38,26,12,0.14)]">
-          {streetViewUrl ? (
-            <SlowGeoImageViewer
-              src={streetViewUrl}
-              alt={`SlowGeo-bilde for ${round.name}`}
-              sizes="100vw"
-              className="aspect-[4/3] min-h-[320px] sm:aspect-video sm:min-h-[420px]"
-              staticZoomImages={streetViewStaticZoomImages}
-              streetViewPanorama={streetViewPanorama}
-              priority
-              title={round.name}
-            />
-          ) : (
-            <div className="flex aspect-video min-h-[280px] items-center justify-center px-6 text-center text-sm font-semibold text-[#fff7e6]">
-              Street View-bildet kan ikke vises akkurat nå.
-            </div>
-          )}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3 text-xs text-[#eadcbd]">
-            {isOpen ? (
-              <span>Google Street View</span>
-            ) : (
-              <>
+        {isOpen ? (
+          <SlowGeoPlay
+            roundId={round.id}
+            roundName={round.name}
+            deadlineAt={round.deadlineAt ?? null}
+            streetViewUrl={streetViewUrl}
+            streetViewStaticZoomImages={streetViewStaticZoomImages}
+            streetViewPanorama={streetViewPanorama}
+            googleMapsApiKey={publicGoogleKey}
+            existingGuess={existingGuess}
+            existingNote={currentResult?.note ?? ""}
+            shareUrl={shareUrl}
+            tips={openSlowGeoTips}
+            returnTo={shareUrl}
+            layout="stacked"
+            showShareButton={false}
+          />
+        ) : (
+          <>
+            <section className="overflow-hidden rounded border border-[#c49a3c]/55 bg-[#061d2b] shadow-[0_18px_40px_rgba(38,26,12,0.14)]">
+              {streetViewUrl ? (
+                <SlowGeoImageViewer
+                  src={streetViewUrl}
+                  alt={`SlowGeo-bilde for ${round.name}`}
+                  sizes="100vw"
+                  className="aspect-[4/3] min-h-[320px] sm:aspect-video sm:min-h-[420px]"
+                  staticZoomImages={streetViewStaticZoomImages}
+                  streetViewPanorama={streetViewPanorama}
+                  priority
+                  title={round.name}
+                />
+              ) : (
+                <div className="flex aspect-video min-h-[280px] items-center justify-center px-6 text-center text-sm font-semibold text-[#fff7e6]">
+                  Street View-bildet kan ikke vises akkurat nå.
+                </div>
+              )}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3 text-xs text-[#eadcbd]">
                 <span>{round.challenge.imageDate ? `Street View ${round.challenge.imageDate}` : "Google Street View"}</span>
                 <span>{round.challenge.copyright ?? "© Google"}</span>
-              </>
-            )}
-          </div>
-        </section>
+              </div>
+            </section>
 
-        <section className="grid gap-4 lg:grid-cols-[1fr_320px]">
-          <div className="rounded border border-[#d8ded0] bg-white p-4 shadow-sm sm:p-5">
-            {isOpen ? (
-              <>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
-                  Åpen krangel
-                </p>
-                <h2 className="font-display mt-2 text-2xl font-semibold text-[#062b40]">
-                  Frist {dateTimeLabel(round.deadlineAt)}
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5b6257]">
-                  Bildet er låst til denne runden. Når du har satt pinnen i appen, er svaret låst.
-                </p>
-              </>
-            ) : (
-              <>
+            <section className="grid gap-4 lg:grid-cols-[1fr_320px]">
+              <div className="rounded border border-[#d8ded0] bg-white p-4 shadow-sm sm:p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
                   Fasit vist
                 </p>
@@ -237,25 +276,21 @@ export default async function SlowGeoSharePage({
                     ? `Vinner: ${computed.winnerNames.join(", ")}.`
                     : "Runden er avslørt."}
                 </p>
-              </>
-            )}
-          </div>
+              </div>
 
-          <Link
-            href={`/runder/${round.id}`}
-            prefetch={false}
-            className="inline-flex min-h-20 items-center justify-between gap-4 rounded bg-[#203c62] px-5 py-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
-          >
-            <span>{isOpen ? "Registrer pin-svar" : "Åpne protokollen"}</span>
-            <span className="flex flex-none items-center gap-2">
-              <ArrowRight className="h-5 w-5" aria-hidden="true" />
-              <LinkPendingIndicator className="text-white" />
-            </span>
-          </Link>
-        </section>
+              <Link
+                href={`/runder/${round.id}`}
+                prefetch={false}
+                className="inline-flex min-h-20 items-center justify-between gap-4 rounded bg-[#203c62] px-5 py-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
+              >
+                <span>Åpne protokollen</span>
+                <span className="flex flex-none items-center gap-2">
+                  <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                  <LinkPendingIndicator className="text-white" />
+                </span>
+              </Link>
+            </section>
 
-        {!isOpen ? (
-          <>
             <section className="rounded border border-[#d8ded0] bg-white p-4 shadow-sm sm:p-5">
               <div className="mb-3 flex items-center gap-2 text-[#203c62]">
                 <Trophy className="h-5 w-5" aria-hidden="true" />
@@ -283,8 +318,9 @@ export default async function SlowGeoSharePage({
             </section>
             <SlowGeoAftermath round={computed} />
           </>
-        ) : null}
-      </div>
-    </main>
+        )}
+        </div>
+      </main>
+    </div>
   );
 }
