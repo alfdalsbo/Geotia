@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -29,6 +28,7 @@ import {
   updateGeotingProposalAction,
   withdrawGeotingProposalAction,
 } from "@/app/actions";
+import { ExpandableImage } from "@/components/expandable-image";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Section, StatTile } from "@/components/section";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -210,13 +210,15 @@ export default async function ThirdCollegePage({
           </div>
 
           <div className="geo-hero-poster">
-            <Image
-              src="/illustrations/vapen-kollegium.svg"
-              alt="Riksvåpen for Tredje Kollegium"
-              width={300}
-              height={350}
+            <ExpandableImage
+              src="/tredje-kollegium/segl"
+              alt="Seglet til Tredje Kollegium"
+              sizes="(min-width: 1024px) 42vw, 100vw"
+              className="relative aspect-square min-h-[420px] w-full"
+              imageClassName="object-cover"
+              caption="Tredje Kollegium · de som aldri tar feil"
               priority
-              style={{ width: "auto", maxHeight: "440px" }}
+              unoptimized
             />
           </div>
         </div>
@@ -573,35 +575,33 @@ function GeotingAdminSection({
                   </span>
                 </div>
 
-                <form action={updateGeotingProposalAction} className="mt-4 grid gap-3 lg:grid-cols-[1fr_230px]">
+                <form action={updateGeotingProposalAction} className="geo-form mt-4 grid gap-3 lg:grid-cols-[1fr_230px]">
                   <input type="hidden" name="proposalId" value={proposal.id} />
-                  <label className="space-y-2">
-                    <span className="text-sm font-semibold text-[#273125]">Tittel</span>
+                  <label>
+                    <span>Tittel</span>
                     <input
                       name="title"
                       defaultValue={proposal.title}
-                      className="h-10 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
                       required
                     />
                   </label>
-                  <label className="space-y-2">
-                    <span className="text-sm font-semibold text-[#273125]">Sakstype</span>
+                  <label>
+                    <span>Sakstype</span>
                     <select
                       name="ruleType"
                       defaultValue={proposal.ruleType}
-                      className="h-10 w-full rounded border border-[#d8ded0] bg-white px-3 outline-none focus:border-[#203c62]"
                     >
                       <option value="grunnlov">GeoGrunnlovsendring</option>
                       <option value="mindre">Mindre lovendring</option>
                       <option value="annet">Annet tingvedtak</option>
                     </select>
                   </label>
-                  <label className="space-y-2 lg:col-span-2">
-                    <span className="text-sm font-semibold text-[#273125]">Forslag / innhold</span>
+                  <label className="lg:col-span-2">
+                    <span>Forslag / innhold</span>
                     <textarea
                       name="body"
                       defaultValue={proposal.body}
-                      className="min-h-28 w-full rounded border border-[#d8ded0] bg-white px-3 py-2 outline-none focus:border-[#203c62]"
+                      className="min-h-28"
                       required
                     />
                   </label>
@@ -844,7 +844,7 @@ function GeoterIndexSection({
         </div>
 
         <aside className="border-t border-[#c49a3c]/45 bg-[#020b11] p-5 2xl:border-l 2xl:border-t-0">
-          <form action={submitGeoterIndexAdjustmentAction} className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8 p-4">
+          <form action={submitGeoterIndexAdjustmentAction} className="geo-form geo-form--dark rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8 p-4">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
               <PlusCircle className="h-4 w-4" aria-hidden="true" />
               Før skjult justering
@@ -852,9 +852,9 @@ function GeoterIndexSection({
             <p className="mt-2 text-sm leading-6 text-[#eadcbd]">
               Operatør: {currentGeot.shortName}. Justeringer er synlige kun i dette rommet, men merkes i rikets sosiale lufttrykk.
             </p>
-            <label className="mt-4 block text-sm font-semibold text-[#fff7e6]">
+            <label className="mt-4">
               Geot
-              <select name="playerId" className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]">
+              <select name="playerId" className="mt-2">
                 {players.map((player) => (
                   <option key={player.id} value={player.id}>
                     {player.shortName}
@@ -862,9 +862,9 @@ function GeoterIndexSection({
                 ))}
               </select>
             </label>
-            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+            <label className="mt-3">
               Kategori
-              <select name="category" className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]">
+              <select name="category" className="mt-2">
                 {geoterIndexCategories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.label}
@@ -872,7 +872,7 @@ function GeoterIndexSection({
                 ))}
               </select>
             </label>
-            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+            <label className="mt-3">
               Poengjustering
               <input
                 name="delta"
@@ -881,24 +881,24 @@ function GeoterIndexSection({
                 max="100"
                 step="1"
                 defaultValue="10"
-                className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]"
+                className="mt-2"
                 required
               />
             </label>
-            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+            <label className="mt-3">
               Tittel
               <input
                 name="title"
-                className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]"
+                className="mt-2"
                 placeholder="F.eks. Redning fra India"
                 required
               />
             </label>
-            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+            <label className="mt-3">
               Begrunnelse
               <textarea
                 name="reason"
-                className="mt-2 min-h-24 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 py-2 text-[#161713]"
+                className="mt-2 min-h-24"
                 placeholder="Kort protokolltekst. Husk: ankeinstansen er Kollegiet selv i mørkere rom."
               />
             </label>
@@ -1090,7 +1090,7 @@ function GeoticOrderControlSection({
         </div>
 
         <aside className="border-t border-[#c49a3c]/45 bg-[#020b11] p-5 2xl:border-l 2xl:border-t-0">
-          <form action={submitGeoticOrderAssessmentAction} className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8 p-4">
+          <form action={submitGeoticOrderAssessmentAction} className="geo-form geo-form--dark rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8 p-4">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
               <UserCog className="h-4 w-4" aria-hidden="true" />
               Før ordensrang
@@ -1098,9 +1098,9 @@ function GeoticOrderControlSection({
             <p className="mt-2 text-sm leading-6 text-[#eadcbd]">
               Operatør: {currentGeot.shortName}. Dette endrer den synlige ordensveien uten å forklare hvem som vippet vekten.
             </p>
-            <label className="mt-4 block text-sm font-semibold text-[#fff7e6]">
+            <label className="mt-4">
               Geot
-              <select name="playerId" className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]">
+              <select name="playerId" className="mt-2">
                 {players.map((player) => (
                   <option key={player.id} value={player.id}>
                     {player.shortName}
@@ -1108,9 +1108,9 @@ function GeoticOrderControlSection({
                 ))}
               </select>
             </label>
-            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+            <label className="mt-3">
               Synlig rang
-              <select name="rankId" defaultValue={firstRow?.rank.id} className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]">
+              <select name="rankId" defaultValue={firstRow?.rank.id} className="mt-2">
                 {geoticOrderRanks.map((rank) => (
                   <option key={rank.id} value={rank.id}>
                     {rank.number}. {rank.name}
@@ -1118,7 +1118,7 @@ function GeoticOrderControlSection({
                 ))}
               </select>
             </label>
-            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+            <label className="mt-3">
               Tjenesteuker
               <input
                 name="serviceWeeks"
@@ -1126,13 +1126,13 @@ function GeoticOrderControlSection({
                 min="0"
                 max="999"
                 defaultValue={firstRow?.serviceWeeks ?? 0}
-                className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]"
+                className="mt-2"
                 required
               />
             </label>
-            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+            <label className="mt-3">
               Skjult kategori
-              <select name="hiddenCategory" defaultValue={firstRow?.hiddenCategory.id} className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]">
+              <select name="hiddenCategory" defaultValue={firstRow?.hiddenCategory.id} className="mt-2">
                 {geoticOrderHiddenCategories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.label}
@@ -1140,9 +1140,9 @@ function GeoticOrderControlSection({
                 ))}
               </select>
             </label>
-            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+            <label className="mt-3">
               Status
-              <select name="status" defaultValue={firstRow?.status.id} className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]">
+              <select name="status" defaultValue={firstRow?.status.id} className="mt-2">
                 {geoticOrderStatuses.map((status) => (
                   <option key={status.id} value={status.id}>
                     {status.label}
@@ -1150,35 +1150,35 @@ function GeoticOrderControlSection({
                 ))}
               </select>
             </label>
-            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+            <label className="mt-3">
               Sponsor / parti
               <input
                 name="sponsor"
-                className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]"
+                className="mt-2"
                 placeholder="F.eks. SS, PKK eller Vegard med hevet bryn"
               />
             </label>
-            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+            <label className="mt-3">
               Prøve / ritual
               <input
                 name="trial"
-                className="mt-2 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713]"
+                className="mt-2"
                 placeholder="F.eks. PKK-prøven gjennomført uten sosial kollaps"
               />
             </label>
-            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+            <label className="mt-3">
               Offentlig merknad
               <textarea
                 name="publicNote"
-                className="mt-2 min-h-20 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 py-2 text-[#161713]"
+                className="mt-2 min-h-20"
                 placeholder="Tekst som kan vises på ordenssiden uten å avsløre Kollegiet."
               />
             </label>
-            <label className="mt-3 block text-sm font-semibold text-[#fff7e6]">
+            <label className="mt-3">
               Intern merknad
               <textarea
                 name="internalNote"
-                className="mt-2 min-h-24 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 py-2 text-[#161713]"
+                className="mt-2 min-h-24"
                 placeholder="Det egentlige notatet. Her kan mistanken ha navn."
               />
             </label>
