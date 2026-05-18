@@ -209,16 +209,43 @@ async function writeOpenSlowGeoFixture() {
             status: "open",
             createdAt: timestamp,
             updatedAt: timestamp,
-            results: competingPlayerIds.map((playerId) => ({
-              playerId,
-              status: "ikke_deltatt",
-              actualKm: null,
-              guessText: "",
-              guessLocation: null,
-              guessUpdatedAt: null,
-              distanceSource: null,
-              note: "",
-            })),
+            results: competingPlayerIds.map((playerId) => {
+              const lockedGuesses: Record<string, { lat: number; lon: number; label: string; note: string }> = {
+                vegard: {
+                  lat: 60.3913,
+                  lon: 5.3221,
+                  label: "Bergen hemmelig pin",
+                  note: "hemmelig vegard-notat",
+                },
+                steinar: {
+                  lat: 63.4305,
+                  lon: 10.3951,
+                  label: "Trondheim hemmelig pin",
+                  note: "hemmelig steinar-notat",
+                },
+              };
+              const lockedGuess = lockedGuesses[playerId];
+
+              return {
+                playerId,
+                status: "ikke_deltatt",
+                actualKm: null,
+                guessText: "",
+                guessLocation: lockedGuess
+                  ? {
+                      lat: lockedGuess.lat,
+                      lon: lockedGuess.lon,
+                      label: lockedGuess.label,
+                      query: lockedGuess.label.toLowerCase().replaceAll(" ", "-"),
+                      country: "Norge",
+                      source: "manual",
+                    }
+                  : null,
+                guessUpdatedAt: lockedGuess ? timestamp : null,
+                distanceSource: null,
+                note: lockedGuess?.note ?? "",
+              };
+            }),
           },
         ],
         gameSessions: [],
@@ -316,6 +343,16 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
   await expect(openGeotiaLink).toHaveAttribute("href", "/");
   await expect(page.getByRole("heading", { name: "Mobilkart-prøven" })).toBeVisible();
   await expect(page.getByText("Sett pinnen")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hvem har svart" })).toBeVisible();
+  await expect(page.getByText("2/8 pin-svar låst")).toBeVisible();
+  await expect(page.getByText("Vegard")).toBeVisible();
+  await expect(page.getByText("Svar låst").first()).toBeVisible();
+  await expect(page.getByText("Alf Kåre")).toBeVisible();
+  await expect(page.getByText("Mangler pin").first()).toBeVisible();
+  await expect(page.getByText("Bergen hemmelig pin")).toHaveCount(0);
+  await expect(page.getByText("hemmelig vegard-notat")).toHaveCount(0);
+  await expect(page.getByText("60.39130")).toHaveCount(0);
+  await expect(page.getByText("Tromsøbrua, Tromsø")).toHaveCount(0);
   await expect(page.getByTestId("slowgeo-map-surface")).toBeVisible();
   await expect(page.getByText("Laster kart")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
@@ -330,6 +367,8 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
 
   await page.goto(`/runder/${roundId}`, { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "Mobilkart-prøven" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hvem har svart" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Rundestatus" })).toHaveCount(0);
   await expect(page.getByText("Google Street View", { exact: true })).toBeVisible();
   await expect(page.getByText("© 2024 Google")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);

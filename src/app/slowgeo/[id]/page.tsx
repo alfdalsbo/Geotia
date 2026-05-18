@@ -17,6 +17,7 @@ import {
   buildOpenSlowGeoShareTextOptions,
   buildRevealedSlowGeoShareTextOptions,
 } from "@/lib/slowgeo-share";
+import { buildSlowGeoAnswerStatusItems } from "@/lib/slowgeo-answer-status";
 import { getSlowGeoRoundState, maybeRevealRound } from "@/lib/store";
 import { buildStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
 import {
@@ -133,6 +134,7 @@ export default async function SlowGeoSharePage({
   const currentResult = currentGeot
     ? round.results.find((result) => result.playerId === currentGeot.id)
     : null;
+  const answerStatusItems = buildSlowGeoAnswerStatusItems(computed.results, currentGeot?.id);
   const existingGuess = currentResult?.guessLocation
     ? {
         lat: currentResult.guessLocation.lat,
@@ -233,6 +235,7 @@ export default async function SlowGeoSharePage({
             returnTo={shareUrl}
             layout="stacked"
             showShareButton={false}
+            answerStatusItems={answerStatusItems}
           />
         ) : (
           <>

@@ -6,10 +6,12 @@ import { Loader2, LockKeyhole, MapPin, Maximize2, RotateCcw, Send, X } from "luc
 import { submitSlowGeoGuessAction } from "@/app/actions";
 import { loadGoogleMaps, type GoogleMap, type GoogleMapsApi, type GoogleMarker } from "@/components/google-maps-loader";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
+import { SlowGeoAnswerStatus } from "@/components/slowgeo-answer-status";
 import { SlowGeoImageViewer } from "@/components/slowgeo-image-viewer";
 import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
 import { SlowGeoTipPanel } from "@/components/slowgeo-tip-panel";
 import type { GeoGuessrTip } from "@/lib/geoguessr-tips";
+import type { SlowGeoAnswerStatusItem } from "@/lib/slowgeo-answer-status";
 import type { SlowGeoStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
 import type { StreetViewStaticViewConfig } from "@/lib/streetview-url";
 import { buildOpenSlowGeoShareTextOptions } from "@/lib/slowgeo-share";
@@ -36,6 +38,7 @@ type SlowGeoPlayProps = {
   returnTo?: string;
   layout?: "split" | "stacked";
   showShareButton?: boolean;
+  answerStatusItems?: SlowGeoAnswerStatusItem[];
 };
 
 function guessLabel(lat: number, lon: number) {
@@ -57,6 +60,7 @@ export function SlowGeoPlay({
   returnTo,
   layout = "split",
   showShareButton = true,
+  answerStatusItems = [],
 }: SlowGeoPlayProps) {
   const mapElementRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<GoogleMap | null>(null);
@@ -378,6 +382,8 @@ export function SlowGeoPlay({
               {mapError}
             </p>
           ) : null}
+
+          <SlowGeoAnswerStatus items={answerStatusItems} />
 
           <SlowGeoTipPanel tips={tips} />
 

@@ -14,6 +14,7 @@ import { SlowGeoRevealMap } from "@/components/slowgeo-reveal-map";
 import { getCurrentGeot } from "@/lib/auth";
 import { selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { computeRound } from "@/lib/scoring";
+import { buildSlowGeoAnswerStatusItems } from "@/lib/slowgeo-answer-status";
 import { getRoundsState, maybeRevealRound } from "@/lib/store";
 import { buildStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
 import {
@@ -110,6 +111,7 @@ export default async function RoundDetailPage({
   const currentComputedResult = currentGeot
     ? computed.results.find((result) => result.playerId === currentGeot.id)
     : null;
+  const answerStatusItems = buildSlowGeoAnswerStatusItems(computed.results, currentGeot?.id);
   const existingGuess = currentResult?.guessLocation
     ? {
         lat: currentResult.guessLocation.lat,
@@ -219,6 +221,7 @@ export default async function RoundDetailPage({
           existingNote={currentResult?.note ?? ""}
           shareUrl={slowGeoShareUrl}
           tips={openSlowGeoTips}
+          answerStatusItems={answerStatusItems}
         />
       ) : null}
 
@@ -246,70 +249,64 @@ export default async function RoundDetailPage({
 
       {!isStreetViewRound ? <RoundMapProtocol snapshot={round.mapSnapshot} /> : null}
 
-      <Section
-        title={isOpenStreetViewRound ? "Rundestatus" : "Protokollføring"}
-        eyebrow={isOpenStreetViewRound ? "Svarfrist og innsendte pins" : "Km, deltakelse og kattometer"}
-        action={
-          <div className="flex flex-wrap gap-2">
-            {roundAction(round)}
-            <Link
-              href="/runder"
-              prefetch={false}
-              className="inline-flex h-10 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
-            >
-              <RotateCcw className="h-4 w-4" aria-hidden="true" />
-              Arkivet
-              <LinkPendingIndicator />
-            </Link>
-          </div>
-        }
-      >
-        {isStreetViewRound ? (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[920px] text-left text-sm">
-              <thead className="border-b border-[#d8ded0] text-xs uppercase tracking-[0.12em] text-[#5b6257]">
-                <tr>
-                  <th className="py-2 pr-3">Geot</th>
-                  <th className="py-2 pr-3">Svar</th>
-                  <th className="py-2 pr-3 text-right">Km</th>
-                  <th className="py-2 pr-3 text-right">Poeng</th>
-                  <th className="py-2 pr-3">Status</th>
-                  {round.status === "open" ? null : <th className="py-2 pr-3">Begrunnelse</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {computed.results.map((result) => (
-                  <tr key={result.playerId} className="border-b border-[#eef1eb] last:border-b-0">
-                    <td className="py-3 pr-3">
-                      <span className="inline-flex items-center gap-2 font-semibold text-[#203c62]">
-                        <span className="h-3 w-3 rounded-sm" style={{ background: result.player.color }} />
-                        {result.player.shortName}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-3">
-                      {round.status === "open"
-                        ? result.playerId === currentGeot?.id && result.guessLocation
-                          ? "Ditt pin-svar er låst"
-                          : result.guessLocation
-                            ? "Svar låst"
-                            : "-"
-                        : result.guessText || result.guessLocation?.label || "-"}
-                    </td>
-                    <td className="py-3 pr-3 text-right font-mono">{round.status === "open" ? "-" : formatKm(result.actualKm)}</td>
-                    <td className="py-3 pr-3 text-right font-mono">{round.status === "open" ? "-" : result.points}</td>
-                    <td className="py-3 pr-3">{result.status === "deltatt" ? "Deltatt" : result.guessLocation ? "Levert" : "Ikke levert"}</td>
-                    {round.status === "open" ? null : (
-                      <td className="max-w-xs py-3 pr-3 text-[#5b6257]">{result.note || "-"}</td>
-                    )}
+      {!isOpenStreetViewRound ? (
+        <Section
+          title="Protokollføring"
+          eyebrow="Km, deltakelse og kattometer"
+          action={
+            <div className="flex flex-wrap gap-2">
+              {roundAction(round)}
+              <Link
+                href="/runder"
+                prefetch={false}
+                className="inline-flex h-10 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
+              >
+                <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                Arkivet
+                <LinkPendingIndicator />
+              </Link>
+            </div>
+          }
+        >
+          {isStreetViewRound ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[920px] text-left text-sm">
+                <thead className="border-b border-[#d8ded0] text-xs uppercase tracking-[0.12em] text-[#5b6257]">
+                  <tr>
+                    <th className="py-2 pr-3">Geot</th>
+                    <th className="py-2 pr-3">Svar</th>
+                    <th className="py-2 pr-3 text-right">Km</th>
+                    <th className="py-2 pr-3 text-right">Poeng</th>
+                    <th className="py-2 pr-3">Status</th>
+                    <th className="py-2 pr-3">Begrunnelse</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <RoundForm round={round} />
-        )}
-      </Section>
+                </thead>
+                <tbody>
+                  {computed.results.map((result) => (
+                    <tr key={result.playerId} className="border-b border-[#eef1eb] last:border-b-0">
+                      <td className="py-3 pr-3">
+                        <span className="inline-flex items-center gap-2 font-semibold text-[#203c62]">
+                          <span className="h-3 w-3 rounded-sm" style={{ background: result.player.color }} />
+                          {result.player.shortName}
+                        </span>
+                      </td>
+                      <td className="py-3 pr-3">{result.guessText || result.guessLocation?.label || "-"}</td>
+                      <td className="py-3 pr-3 text-right font-mono">{formatKm(result.actualKm)}</td>
+                      <td className="py-3 pr-3 text-right font-mono">{result.points}</td>
+                      <td className="py-3 pr-3">
+                        {result.status === "deltatt" ? "Deltatt" : result.guessLocation ? "Levert" : "Ikke levert"}
+                      </td>
+                      <td className="max-w-xs py-3 pr-3 text-[#5b6257]">{result.note || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <RoundForm round={round} />
+          )}
+        </Section>
+      ) : null}
     </div>
   );
 }
