@@ -244,6 +244,7 @@ describe("Geotia file store", () => {
 
     expect(created.round.status).toBe("open");
     expect(created.round.slowGeoMode).toBe("static");
+    expect(created.round.slowGeoEraId).toBe("proveaeraen");
     expect(created.round.slowGeoStartedBy).toBe("alf");
     expect(created.round.slowGeoStartedAt).toBe(created.round.createdAt);
     expect(created.round.deadlineAt).toBe(explicitDeadline);
@@ -383,8 +384,47 @@ describe("Geotia file store", () => {
 
     const round = state.rounds.find((candidate) => candidate.id === "old-slowgeo");
     expect(round?.slowGeoMode).toBe("static");
+    expect(round?.slowGeoEraId).toBe("proveaeraen");
     expect(round?.slowGeoStartedBy).toBeNull();
     expect(round?.slowGeoStartedAt).toBe("2026-05-19T10:00:00.000Z");
+  });
+
+  it("deletes open and locked SlowGeo rounds from the protocol", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    process.env.GOOGLE_MAPS_SERVER_API_KEY = "";
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    vi.resetModules();
+
+    const { createSlowGeoRound, deleteSlowGeoRound, getAppState, revealDueSlowGeoRounds } = await import("@/lib/store");
+
+    const open = await createSlowGeoRound({
+      title: "Åpen sletteprøve",
+      deadlineAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    });
+    if (!open.ok || !open.round) throw new Error("Åpen SlowGeo ble ikke opprettet");
+
+    const deletedOpen = await deleteSlowGeoRound({ roundId: open.round.id });
+    let state = await getAppState();
+
+    expect(deletedOpen.ok).toBe(true);
+    expect(state.rounds.some((round) => round.id === open.round?.id)).toBe(false);
+
+    const locked = await createSlowGeoRound({
+      title: "Låst sletteprøve",
+      deadlineAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+    });
+    if (!locked.ok || !locked.round) throw new Error("Låst SlowGeo ble ikke opprettet");
+    await revealDueSlowGeoRounds();
+
+    state = await getAppState();
+    expect(state.rounds.find((round) => round.id === locked.round?.id)?.status).toBe("locked");
+
+    const deletedLocked = await deleteSlowGeoRound({ roundId: locked.round.id });
+    state = await getAppState();
+
+    expect(deletedLocked.ok).toBe(true);
+    expect(state.rounds.some((round) => round.id === locked.round?.id)).toBe(false);
   });
 
   it("retries a Panorama SlowGeo in the same round before any locked pin", async () => {

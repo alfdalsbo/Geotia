@@ -1,18 +1,22 @@
 import Link from "next/link";
-import { ArrowRight, Clock, MapPinned } from "lucide-react";
+import { ArrowRight, Clock, MapPinned, ShieldAlert, Trash2 } from "lucide-react";
 
+import { deleteSlowGeoRoundAction } from "@/app/actions";
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
-import { Section, StatTile } from "@/components/section";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
+import { Section } from "@/components/section";
 import { SlowGeoRoundLauncher } from "@/components/slowgeo-round-launcher";
 import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
 import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
-import { computeStandings } from "@/lib/scoring";
+import { getCurrentGeot } from "@/lib/auth";
 import { pickGeoticLine, slowGeoEmptyStateLines } from "@/lib/geotia-jargon";
+import { isThirdCollegeMember } from "@/lib/kollegium";
 import { getSlowGeoMode, slowGeoModeLabels } from "@/lib/slowgeo";
 import { buildOpenSlowGeoShareTextOptions } from "@/lib/slowgeo-share";
 import { getSlowGeoProgress, slowGeoDifficultyLabels } from "@/lib/slowgeo-insights";
 import { getSlowGeoState } from "@/lib/store";
-import { dateTimeLabel, formatKm } from "@/lib/utils";
+import type { Round } from "@/lib/types";
+import { dateTimeLabel } from "@/lib/utils";
 
 export const metadata = {
   title: "SlowGeo",
@@ -24,15 +28,11 @@ export default async function SlowGeoGamePage({
   searchParams?: Promise<{ error?: string; status?: string }>;
 }) {
   const params = (await searchParams) ?? {};
-  const state = await getSlowGeoState();
-  const standings = computeStandings(state.players, state.rounds);
+  const [state, currentGeot] = await Promise.all([getSlowGeoState(), getCurrentGeot()]);
+  const canManageSlowGeo = isThirdCollegeMember(currentGeot?.id);
   const activeRounds = state.rounds
     .filter((round) => round.challenge && round.status === "open")
-    .sort((a, b) => String(a.deadlineAt).localeCompare(String(b.deadlineAt)));
-  const leader = standings[0];
-  const kattometerLeader = standings
-    .filter((standing) => standing.lockedRounds > 0)
-    .sort((a, b) => a.totalKattometer - b.totalKattometer)[0];
+    .sort((a, b) => slowGeoStartStamp(a) - slowGeoStartStamp(b) || a.number - b.number);
   const emptyLine = pickGeoticLine(slowGeoEmptyStateLines, "slowgeo-empty");
 
   return (
@@ -61,7 +61,9 @@ export default async function SlowGeoGamePage({
         <div className="rounded border border-[#285c45]/25 bg-[#285c45]/8 px-4 py-3 text-sm font-medium text-[#285c45]">
           {params.status === "apnet"
             ? "SlowGeo-runden er åpnet."
-            : "SlowGeo-rommet er oppdatert."}
+            : params.status === "slowgeo-slettet"
+              ? "SlowGeo-runden er slettet av Tredje Kollegium."
+              : "SlowGeo-rommet er oppdatert."}
         </div>
       ) : null}
 
@@ -69,10 +71,9 @@ export default async function SlowGeoGamePage({
         <SlowGeoRoundLauncher />
       </Section>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <StatTile label="Åpne runder" value={activeRounds.length} detail="Klar for krangling" tone="green" />
-        <StatTile label="Poengleder" value={leader?.player.shortName ?? "-"} detail={`${leader?.totalPoints ?? 0} poeng`} tone="blue" />
-        <StatTile label="Lavest kattometer" value={kattometerLeader?.player.shortName ?? "-"} detail={formatKm(kattometerLeader?.totalKattometer)} tone="gold" />
+      <div className="rounded border border-[#d8ded0] bg-white px-4 py-3 text-sm leading-6 text-[#5b6257] shadow-sm">
+        <span className="font-semibold text-[#062b40]">{activeRounds.length} åpne runder.</span>{" "}
+        Ferdige SlowGeoer føres rett til Rundeprotokollen, uten resultatkø nederst i spillrommet.
       </div>
 
       <Section title="Aktive SlowGeo-runder" eyebrow="Pågår nå · fasit skjult">
@@ -133,6 +134,23 @@ export default async function SlowGeoGamePage({
                       copiedLabel="Trådtekst kopiert"
                     />
                   </div>
+                  {canManageSlowGeo ? (
+                    <form
+                      action={deleteSlowGeoRoundAction}
+                      className="mt-4 rounded border border-[#8e3030]/25 bg-[#8e3030]/8 p-3"
+                    >
+                      <input type="hidden" name="round_id" value={round.id} />
+                      <input type="hidden" name="return_to" value="/spill/slowgeo" />
+                      <p className="mb-2 flex items-start gap-2 text-xs font-semibold leading-5 text-[#8e3030]">
+                        <ShieldAlert className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+                        3K-nødrett: sletting fjerner runden helt fra spillrom, lenke og poenggrunnlag.
+                      </p>
+                      <PendingSubmitButton className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-[#8e3030] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#6f2424]">
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        Slett SlowGeo
+                      </PendingSubmitButton>
+                    </form>
+                  ) : null}
                 </article>
               );
             })}
@@ -150,4 +168,9 @@ export default async function SlowGeoGamePage({
 
     </div>
   );
+}
+
+function slowGeoStartStamp(round: Pick<Round, "slowGeoStartedAt" | "createdAt" | "number">) {
+  const stamp = new Date(round.slowGeoStartedAt ?? round.createdAt).getTime();
+  return Number.isFinite(stamp) ? stamp : round.number;
 }

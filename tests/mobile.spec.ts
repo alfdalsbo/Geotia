@@ -802,6 +802,9 @@ test("SlowGeo revealed rounds stay out of the active room and live in the protoc
     await login(page);
     await page.goto("/spill/slowgeo", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: "Aktive SlowGeo-runder" })).toBeVisible();
+    await expect(page.locator('input[name="slowgeo_mode"][value="panorama"]')).toBeChecked();
+    await expect(page.getByText("Poengleder")).toHaveCount(0);
+    await expect(page.getByText("Lavest kattometer")).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Felles fasitkort-prøven", level: 2 })).toHaveCount(0);
     await expect(page.getByText("SlowGeo #2 · Fasitkort")).toHaveCount(0);
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveCount(0);

@@ -1,7 +1,20 @@
 import { buildRoundMapSnapshot, haversineKm } from "@/lib/geo";
-import type { Player, Round, SlowGeoMode } from "@/lib/types";
+import { computeStandings } from "@/lib/scoring";
+import type { GeotiaEra, Player, Round, SlowGeoMode } from "@/lib/types";
 
 export const slowGeoModes: SlowGeoMode[] = ["static", "panorama"];
+
+export const DEFAULT_SLOWGEO_ERA_ID = "proveaeraen";
+
+export const slowGeoEras: GeotiaEra[] = [
+  {
+    id: DEFAULT_SLOWGEO_ERA_ID,
+    name: "Den store prøveæraen",
+    title: "Testperiodens høytidelige hvelv",
+    description: "Alle testpoeng og tidlige SlowGeo-spor samles her når riket senere starter på nytt.",
+    archivedAt: null,
+  },
+];
 
 export const slowGeoModeLabels: Record<SlowGeoMode, string> = {
   static: "Statisk",
@@ -14,6 +27,22 @@ export function normalizeSlowGeoMode(value: unknown): SlowGeoMode {
 
 export function getSlowGeoMode(round: Pick<Round, "slowGeoMode">): SlowGeoMode {
   return normalizeSlowGeoMode(round.slowGeoMode);
+}
+
+export function getActiveSlowGeoEra() {
+  return slowGeoEras[0];
+}
+
+export function getSlowGeoEraId(round: Pick<Round, "slowGeoEraId">) {
+  return round.slowGeoEraId || DEFAULT_SLOWGEO_ERA_ID;
+}
+
+export function filterSlowGeoRoundsForEra(rounds: Round[], eraId = getActiveSlowGeoEra().id) {
+  return rounds.filter((round) => isSlowGeoRound(round) && getSlowGeoEraId(round) === eraId);
+}
+
+export function computeStandingsForEra(players: Player[], rounds: Round[], eraId = getActiveSlowGeoEra().id) {
+  return computeStandings(players, filterSlowGeoRoundsForEra(rounds, eraId));
 }
 
 export function getSlowGeoStartedAt(round: Pick<Round, "slowGeoStartedAt" | "createdAt">) {

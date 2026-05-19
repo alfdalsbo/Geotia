@@ -16,8 +16,11 @@ import {
 import { THIRD_COLLEGIUM_MEMBER_IDS } from "@/lib/kollegium";
 import {
   finalizeSlowGeoRound,
+  getActiveSlowGeoEra,
+  getSlowGeoEraId,
   getSlowGeoMode,
   hasLockedSlowGeoGuess,
+  isSlowGeoRound,
   isSlowGeoOpenRound,
   normalizeSlowGeoMode,
   shouldRevealSlowGeoRound,
@@ -64,6 +67,7 @@ type RoundInput = {
   answerLocation?: GeoLocation | null;
   challenge?: SlowGeoChallenge | null;
   slowGeoMode?: SlowGeoMode;
+  slowGeoEraId?: string | null;
   slowGeoStartedBy?: string | null;
   slowGeoStartedAt?: string | null;
   deadlineAt?: string | null;
@@ -261,6 +265,7 @@ type RoundLocationData = {
   mapSnapshot: RoundMapSnapshot | null;
   challenge?: SlowGeoChallenge | null;
   slowGeoMode?: SlowGeoMode;
+  slowGeoEraId?: string | null;
   slowGeoStartedBy?: string | null;
   slowGeoStartedAt?: string | null;
   deadlineAt?: string | null;
@@ -334,12 +339,14 @@ function normalizeRound(round: Round): Round {
   });
   const answerLocation = round.answerLocation ?? null;
   const status = normalizeRoundStatus(round.status);
+  const challenge = round.challenge ?? null;
   return {
     ...round,
     status,
     answerLocation,
-    challenge: round.challenge ?? null,
+    challenge,
     slowGeoMode: normalizeSlowGeoMode(round.slowGeoMode),
+    slowGeoEraId: challenge ? getSlowGeoEraId(round) : (round.slowGeoEraId ?? null),
     slowGeoStartedBy: round.slowGeoStartedBy ?? null,
     slowGeoStartedAt: round.slowGeoStartedAt ?? round.createdAt,
     deadlineAt: round.deadlineAt ?? null,
@@ -697,6 +704,7 @@ function parseRoundLocationData(value: RoundLocationData | string | null | undef
       mapSnapshot: null,
       challenge: null,
       slowGeoMode: "static",
+      slowGeoEraId: null,
       deadlineAt: null,
       revealedAt: null,
     };
@@ -707,6 +715,7 @@ function parseRoundLocationData(value: RoundLocationData | string | null | undef
     mapSnapshot: parsed.mapSnapshot ?? null,
     challenge: parsed.challenge ?? null,
     slowGeoMode: normalizeSlowGeoMode(parsed.slowGeoMode),
+    slowGeoEraId: parsed.slowGeoEraId ?? null,
     slowGeoStartedBy: parsed.slowGeoStartedBy ?? null,
     slowGeoStartedAt: parsed.slowGeoStartedAt ?? null,
     deadlineAt: parsed.deadlineAt ?? null,
@@ -731,6 +740,7 @@ function parseDbRound(row: DbRoundRow): Round {
     mapSnapshot: locationData.mapSnapshot,
     challenge: locationData.challenge ?? null,
     slowGeoMode: locationData.slowGeoMode,
+    slowGeoEraId: locationData.slowGeoEraId,
     slowGeoStartedBy: locationData.slowGeoStartedBy,
     slowGeoStartedAt: locationData.slowGeoStartedAt,
     deadlineAt: locationData.deadlineAt ?? null,
@@ -901,7 +911,7 @@ async function readDbActiveSlowGeoRounds(): Promise<Round[] | null> {
     WHERE status = 'open'
       AND location_json -> 'challenge' IS NOT NULL
       AND location_json ->> 'deadlineAt' IS NOT NULL
-    ORDER BY location_json ->> 'deadlineAt' ASC
+    ORDER BY COALESCE(location_json ->> 'slowGeoStartedAt', created_at) ASC, number ASC
   `) as DbRoundRow[];
 
   return rows.map(parseDbRound);
@@ -933,6 +943,7 @@ async function upsertDbRound(round: Round) {
         mapSnapshot: round.mapSnapshot ?? null,
         challenge: round.challenge ?? null,
         slowGeoMode: getSlowGeoMode(round),
+        slowGeoEraId: round.challenge ? getSlowGeoEraId(round) : (round.slowGeoEraId ?? null),
         slowGeoStartedBy: round.slowGeoStartedBy ?? null,
         slowGeoStartedAt: round.slowGeoStartedAt ?? round.createdAt,
         deadlineAt: round.deadlineAt ?? null,
@@ -951,6 +962,14 @@ async function upsertDbRound(round: Round) {
       results_json = EXCLUDED.results_json,
       location_json = EXCLUDED.location_json
   `;
+  return true;
+}
+
+async function deleteDbRound(id: string) {
+  const sql = await ensureSchema();
+  if (!sql) return false;
+
+  await sql`DELETE FROM geotia_rounds WHERE id = ${id}`;
   return true;
 }
 
@@ -1551,7 +1570,7 @@ export async function getActiveSlowGeoRounds() {
   const rounds = await readRounds();
   return rounds
     .filter((round) => isSlowGeoOpenRound(round) && round.deadlineAt)
-    .sort((a, b) => String(a.deadlineAt).localeCompare(String(b.deadlineAt)));
+    .sort(slowGeoStartSort);
 }
 
 export async function getAppShellState() {
@@ -1563,7 +1582,7 @@ export async function getAppShellState() {
     );
     const activeSlowGeoRounds = state.rounds
       .filter((round) => isSlowGeoOpenRound(round) && round.deadlineAt)
-      .sort((a, b) => String(a.deadlineAt).localeCompare(String(b.deadlineAt)));
+      .sort(slowGeoStartSort);
     return { activeGeotingProposals, activeSlowGeoRounds };
   }
 
@@ -1895,6 +1914,10 @@ function monthKey(value: string) {
   return value.slice(0, 7);
 }
 
+function slowGeoStartSort(a: Round, b: Round) {
+  return String(a.slowGeoStartedAt ?? a.createdAt).localeCompare(String(b.slowGeoStartedAt ?? b.createdAt)) || a.number - b.number;
+}
+
 export async function createSlowGeoRound(
   input: { title?: string; deadlineMinutes?: number; deadlineAt?: string; mode?: SlowGeoMode; startedBy?: string | null } = {},
 ) {
@@ -1951,6 +1974,7 @@ export async function createSlowGeoRound(
     answerLocation,
     challenge,
     slowGeoMode,
+    slowGeoEraId: getActiveSlowGeoEra().id,
     slowGeoStartedBy: input.startedBy?.trim() || null,
     slowGeoStartedAt: timestamp,
     deadlineAt,
@@ -2030,6 +2054,27 @@ export async function replaceSlowGeoPanoramaRound(input: { roundId: string }) {
 
   await saveRounds(rounds.map((candidate) => (candidate.id === round.id ? replacement : candidate)));
   return { ok: true, round: replacement };
+}
+
+export async function deleteSlowGeoRound(input: { roundId: string }) {
+  const rounds = await readRounds();
+  const round = rounds.find((candidate) => candidate.id === input.roundId);
+  if (!round) {
+    return { ok: false, reason: "Runden finnes ikke i protokollen." };
+  }
+  if (!isSlowGeoRound(round)) {
+    return { ok: false, reason: "Bare SlowGeo-runder kan slettes fra SlowGeo-skuffen." };
+  }
+  if (round.status !== "open" && round.status !== "revealed" && round.status !== "locked") {
+    return { ok: false, reason: "Bare åpne og ferdige SlowGeo-runder kan slettes." };
+  }
+
+  const deletedInDb = await deleteDbRound(round.id);
+  if (!deletedInDb) {
+    await writeFileRounds(rounds.filter((candidate) => candidate.id !== round.id));
+  }
+
+  return { ok: true, round };
 }
 
 export async function submitSlowGeoGuess(input: {
@@ -2553,6 +2598,7 @@ export function makeEmptyRound(): Round {
     answerLocation: null,
     mapSnapshot: null,
     challenge: null,
+    slowGeoEraId: null,
     deadlineAt: null,
     revealedAt: null,
     country: "",

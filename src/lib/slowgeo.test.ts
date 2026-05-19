@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   allPlayersHaveSlowGeoGuesses,
+  computeStandingsForEra,
+  filterSlowGeoRoundsForEra,
   finalizeSlowGeoRound,
+  getSlowGeoEraId,
   isRoundPastDeadline,
   shouldRevealSlowGeoRound,
 } from "@/lib/slowgeo";
@@ -121,5 +124,57 @@ describe("SlowGeo reveal rules", () => {
     const legacy = openRound({ challenge: null, status: "draft" });
     expect(finalizeSlowGeoRound(legacy, players)).toBe(legacy);
     expect(shouldRevealSlowGeoRound(legacy, players, new Date("2026-05-16T12:01:00.000Z"))).toBe(false);
+  });
+
+  it("defaults legacy SlowGeo rounds into the test era and filters era standings", () => {
+    const legacyEraRound = finalizeSlowGeoRound(
+      openRound({
+        id: "legacy-era",
+        results: emptyResults(competingPlayers).map((result) =>
+          result.playerId === "alf"
+            ? {
+                ...result,
+                guessLocation: {
+                  lat: answerLocation.lat,
+                  lon: answerLocation.lon,
+                  label: "Blink",
+                  query: "pin",
+                  source: "manual",
+                },
+              }
+            : result,
+        ),
+      }),
+      players,
+      "2026-05-16T12:00:00.000Z",
+    );
+    const futureEraRound = finalizeSlowGeoRound(
+      openRound({
+        id: "future-era",
+        slowGeoEraId: "neste-aera",
+        results: emptyResults(competingPlayers).map((result) =>
+          result.playerId === "vegard"
+            ? {
+                ...result,
+                guessLocation: {
+                  lat: answerLocation.lat,
+                  lon: answerLocation.lon,
+                  label: "Blink 2",
+                  query: "pin",
+                  source: "manual",
+                },
+              }
+            : result,
+        ),
+      }),
+      players,
+      "2026-05-16T12:00:00.000Z",
+    );
+
+    expect(getSlowGeoEraId(legacyEraRound)).toBe("proveaeraen");
+    expect(filterSlowGeoRoundsForEra([legacyEraRound, futureEraRound], "proveaeraen").map((round) => round.id)).toEqual([
+      "legacy-era",
+    ]);
+    expect(computeStandingsForEra(players, [legacyEraRound, futureEraRound], "proveaeraen")[0].player.id).toBe("alf");
   });
 });

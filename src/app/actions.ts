@@ -29,6 +29,7 @@ import {
   addGeoterIndexAdjustment,
   createSlowGeoRound,
   createGeotingProposal,
+  deleteSlowGeoRound,
   getOrderState,
   lockRound,
   replaceSlowGeoPanoramaRound,
@@ -256,6 +257,29 @@ export async function replaceSlowGeoPanoramaAction(formData: FormData) {
   }
 
   redirect(`${returnTo}?status=panorama_nytt`);
+}
+
+export async function deleteSlowGeoRoundAction(formData: FormData) {
+  const session = await requireSession();
+  if (!isThirdCollegeMember(session.playerId)) {
+    redirect("/");
+  }
+
+  const roundId = field(formData, "round_id");
+  const returnTo = safeRedirectPath(field(formData, "return_to") || "/tredje-kollegium");
+  if (!roundId) {
+    redirect(`${returnTo}?error=${encodeURIComponent("SlowGeo-runden mangler i sletteprotokollen.")}`);
+  }
+
+  const result = await deleteSlowGeoRound({ roundId });
+  revalidateSlowGeoPaths(roundId);
+  revalidateThirdCollegePaths();
+
+  if (!result.ok) {
+    redirect(`${returnTo}?error=${encodeURIComponent(result.reason ?? "SlowGeo-runden kunne ikke slettes.")}`);
+  }
+
+  redirect(`${returnTo}?status=slowgeo-slettet`);
 }
 
 export async function submitSlowGeoGuessAction(formData: FormData) {

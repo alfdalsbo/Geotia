@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import {
   ArrowRight,
+  Archive,
+  AlertTriangle,
   BarChart3,
   BadgeCheck,
   Crown,
@@ -14,16 +16,19 @@ import {
   KeyRound,
   Landmark,
   LockKeyhole,
+  MapPinned,
   Milestone,
   PlusCircle,
   Scale,
   ScrollText,
   ShieldCheck,
   TableProperties,
+  Trash2,
   UserCog,
 } from "lucide-react";
 
 import {
+  deleteSlowGeoRoundAction,
   submitGeoterIndexAdjustmentAction,
   submitGeoticOrderAssessmentAction,
   updateGeotingProposalAction,
@@ -66,8 +71,17 @@ import {
   thirdCollegeSeats,
 } from "@/lib/kollegium";
 import { computeRound, computeStandings } from "@/lib/scoring";
+import {
+  computeStandingsForEra,
+  filterSlowGeoRoundsForEra,
+  getActiveSlowGeoEra,
+  getSlowGeoEraId,
+  getSlowGeoStartedAt,
+  getSlowGeoStarterLabel,
+  isSlowGeoRound,
+} from "@/lib/slowgeo";
 import { getAppState } from "@/lib/store";
-import type { GeoterIndexAdjustment, GeoticOrderPromotionCase, GeotingProposal, Player } from "@/lib/types";
+import type { GeoterIndexAdjustment, GeoticOrderPromotionCase, GeotingProposal, Player, Round } from "@/lib/types";
 import { dateLabel, dateTimeLabel, formatKm, formatNumber } from "@/lib/utils";
 
 export const metadata = {
@@ -136,6 +150,10 @@ export default async function ThirdCollegePage({
     state.geoterIndexAdjustments,
     state.geoticOrderAssessments,
   );
+  const activeSlowGeoEra = getActiveSlowGeoEra();
+  const slowGeoRounds = state.rounds.filter(isSlowGeoRound);
+  const eraRounds = filterSlowGeoRoundsForEra(state.rounds, activeSlowGeoEra.id);
+  const eraStandings = computeStandingsForEra(state.players, state.rounds, activeSlowGeoEra.id);
 
   const memberRows = thirdCollegeSeats.map((seat) => {
     const player = playerById.get(seat.playerId);
@@ -282,6 +300,14 @@ export default async function ThirdCollegePage({
           index={2}
         />
       </div>
+
+      <SlowGeoAdminSection
+        activeEra={activeSlowGeoEra}
+        eraRounds={eraRounds}
+        eraStandings={eraStandings}
+        players={state.players}
+        rounds={slowGeoRounds}
+      />
 
       <GeoterIndexSection
         currentGeot={currentGeot}
@@ -550,11 +576,139 @@ function ThirdCollegeStatus({ status, error }: { status?: string; error?: string
     );
   }
 
+  if (status === "slowgeo-slettet") {
+    return (
+      <div className="rounded border border-[#194832]/30 bg-[#194832]/10 px-4 py-3 text-sm font-semibold text-[#194832]">
+        SlowGeo-runden er slettet. Tabellen later som den aldri fikk stemplet.
+      </div>
+    );
+  }
+
   return null;
 }
 
 type GeoterIndexRow = ReturnType<typeof getGeoterIndexRows>[number];
 type GeoticOrderRow = ReturnType<typeof getGeoticOrderRows>[number];
+
+const slowGeoStatusLabels: Record<Round["status"], string> = {
+  draft: "Utkast",
+  open: "Åpen",
+  revealed: "Fasit vist",
+  locked: "Ferdig",
+};
+
+function SlowGeoAdminSection({
+  activeEra,
+  eraRounds,
+  eraStandings,
+  players,
+  rounds,
+}: {
+  activeEra: ReturnType<typeof getActiveSlowGeoEra>;
+  eraRounds: Round[];
+  eraStandings: ReturnType<typeof computeStandingsForEra>;
+  players: Player[];
+  rounds: Round[];
+}) {
+  const sortedRounds = [...rounds].sort((a, b) => {
+    const aStamp = new Date(a.slowGeoStartedAt ?? a.createdAt).getTime();
+    const bStamp = new Date(b.slowGeoStartedAt ?? b.createdAt).getTime();
+    return (Number.isFinite(bStamp) ? bStamp : b.number) - (Number.isFinite(aStamp) ? aStamp : a.number);
+  });
+  const leader = eraStandings[0];
+  const precisionLeader = [...eraStandings]
+    .filter((standing) => standing.lockedRounds > 0)
+    .sort((a, b) => a.totalKattometer - b.totalKattometer)[0];
+  const lockedEraRounds = eraRounds.filter((round) => round.status === "locked");
+
+  return (
+    <Section title="SlowGeo-skuffen" eyebrow="3K-nødrett og æraforberedelse">
+      <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+        <article className="rounded border border-[#c49a3c]/55 bg-[#fff7e6] p-4 shadow-sm">
+          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
+            <Archive className="h-4 w-4" aria-hidden="true" />
+            Æraforhåndsvisning
+          </p>
+          <h3 className="font-display mt-2 text-3xl font-semibold text-[#062b40]">
+            {activeEra.name}
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-[#60553f]">{activeEra.description}</p>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <EraFact label="Runder i æraen" value={eraRounds.length} />
+            <EraFact label="Tellende runder" value={lockedEraRounds.length} />
+            <EraFact label="Poengleder" value={leader ? `${leader.player.shortName} · ${leader.totalPoints} p` : "-"} />
+            <EraFact label="Lavest kattometer" value={precisionLeader ? `${precisionLeader.player.shortName} · ${formatKm(precisionLeader.totalKattometer)}` : "-"} />
+          </div>
+          <div className="mt-4 rounded border border-[#8e3030]/25 bg-[#8e3030]/8 p-3 text-sm leading-6 text-[#8e3030]">
+            <p className="flex items-start gap-2 font-semibold">
+              <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+              Nullstilling er ikke aktivert.
+            </p>
+            <p className="mt-1">
+              Dette er bare prøvehvelvet. Når ny æra faktisk skal åpnes, får staten en egen seremoni.
+            </p>
+          </div>
+        </article>
+
+        <article className="rounded border border-[#d8c48c] bg-white p-4 shadow-sm">
+          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
+            <MapPinned className="h-4 w-4" aria-hidden="true" />
+            Sletteprotokoll
+          </p>
+          <h3 className="font-display mt-2 text-3xl font-semibold text-[#062b40]">Runder under Kollegiets hånd</h3>
+          <p className="mt-2 text-sm leading-6 text-[#60553f]">
+            Hard sletting fjerner runden fra spillrom, fasitkort, Rundeprotokoll og poenggrunnlag.
+          </p>
+
+          {sortedRounds.length ? (
+            <div className="mt-4 grid gap-3">
+              {sortedRounds.map((round) => {
+                const starter = getSlowGeoStarterLabel(round, players);
+                const eraId = getSlowGeoEraId(round);
+                return (
+                  <div key={round.id} className="rounded border border-[#d8ded0] bg-[#f7f8f5] p-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
+                          #{round.number} · {slowGeoStatusLabels[round.status]} · {eraId}
+                        </p>
+                        <p className="mt-1 break-words text-base font-semibold text-[#062b40]">{round.name}</p>
+                        <p className="mt-1 text-xs leading-5 text-[#60553f]">
+                          Reist av {starter} · {dateTimeLabel(getSlowGeoStartedAt(round))}
+                        </p>
+                      </div>
+                      <form action={deleteSlowGeoRoundAction} className="flex-none">
+                        <input type="hidden" name="round_id" value={round.id} />
+                        <input type="hidden" name="return_to" value="/tredje-kollegium" />
+                        <PendingSubmitButton className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-[#8e3030] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#6f2424]">
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                          Slett
+                        </PendingSubmitButton>
+                      </form>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-4 rounded border border-dashed border-[#c49a3c] bg-[#c49a3c]/10 p-5 text-sm text-[#60553f]">
+              Ingen SlowGeo-runder ligger i skuffen akkurat nå.
+            </div>
+          )}
+        </article>
+      </div>
+    </Section>
+  );
+}
+
+function EraFact({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="rounded border border-[#d8ded0] bg-white p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">{label}</p>
+      <p className="mt-1 break-words text-sm font-semibold text-[#062b40]">{value}</p>
+    </div>
+  );
+}
 
 function GeotingAdminSection({
   players,
