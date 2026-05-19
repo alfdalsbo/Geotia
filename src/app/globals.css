@@ -372,6 +372,7 @@ textarea {
 .rikshead-sub {
   font-family: var(--font-italic);
   font-style: italic;
+  font-weight: 300;
   color: #e8cf8a;
   letter-spacing: 0.06em;
   margin: 6px 0 0;
