@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 import { GeotingProposalList } from "@/components/geoting-proposal-list";
 import { GeotingSubnav } from "@/components/geoting-subnav";
 import { GeotingVoteAlarm } from "@/components/geoting-vote-alarm";
@@ -5,6 +7,7 @@ import { Section } from "@/components/section";
 import { getCurrentGeot } from "@/lib/auth";
 import { geotiaGeotingLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { getGeoticOrderRows, getOrderCapabilities } from "@/lib/geotisk-orden";
+import { isLiveGeotingProposal, isResolvedGeotingProposal } from "@/lib/geoting";
 import { computeStandings } from "@/lib/scoring";
 import { getAppState, resolveDueGeotingProposals } from "@/lib/store";
 
@@ -32,7 +35,13 @@ export default async function GeotingVotesPage({
   const tingvitner = state.players.filter((player) => !getOrderCapabilities(rowByPlayerId.get(player.id) ?? null).canVote);
   const currentCapabilities = getOrderCapabilities(currentGeot ? (rowByPlayerId.get(currentGeot.id) ?? null) : null);
   const proposals = state.geotingProposals;
-  const activeVotingProposals = proposals.filter((proposal) => proposal.status === "voting");
+  const requestedProposal = params.sak ? proposals.find((proposal) => proposal.id === params.sak) : null;
+  if (requestedProposal && isResolvedGeotingProposal(requestedProposal)) {
+    redirect(`/geotinget/pergamenter?status=avgjort&sak=${encodeURIComponent(requestedProposal.id)}`);
+  }
+
+  const liveProposals = proposals.filter(isLiveGeotingProposal);
+  const activeVotingProposals = liveProposals.filter((proposal) => proposal.status === "voting");
   const activeVotes = activeVotingProposals.length;
   const geotingLine = pickGeoticLine(geotiaGeotingLines, `urnen:${currentGeot?.id ?? "ukjent"}:${activeVotes}`);
 
@@ -70,7 +79,7 @@ export default async function GeotingVotesPage({
           currentOrderSummary={currentCapabilities.lockedSummary}
           openProposalId={params.sak}
           players={state.players}
-          proposals={proposals}
+          proposals={liveProposals}
           tingvitner={tingvitner}
           votingPlayers={votingPlayers}
         />

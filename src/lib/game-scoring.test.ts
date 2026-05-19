@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { summarizeProposal } from "@/lib/geoting";
+import { isLiveGeotingProposal, isResolvedGeotingProposal, sortGeotingPergaments, summarizeProposal } from "@/lib/geoting";
 import { computeGameStandings } from "@/lib/scoring";
 import { games, players } from "@/lib/seed";
 import type { GameSession, GeotingProposal } from "@/lib/types";
@@ -45,6 +45,66 @@ describe("multi-game scoring", () => {
 });
 
 describe("GeoTinget", () => {
+  it("classifies live and resolved proposals for Stemmeurnen and Tingpergamentene", () => {
+    const proposals: GeotingProposal[] = [
+      {
+        id: "open-case",
+        title: "Åpent forslag",
+        body: "Lever i Stemmeurnen.",
+        ruleType: "annet",
+        proposedBy: "alf",
+        status: "open",
+        createdAt: "2026-05-16T08:00:00.000Z",
+        updatedAt: "2026-05-16T08:00:00.000Z",
+        votes: [],
+      },
+      {
+        id: "voting-case",
+        title: "Åpen urne",
+        body: "Lever i Stemmeurnen.",
+        ruleType: "mindre",
+        proposedBy: "alf",
+        status: "voting",
+        createdAt: "2026-05-16T09:00:00.000Z",
+        updatedAt: "2026-05-16T09:05:00.000Z",
+        voteStartedAt: "2026-05-16T09:05:00.000Z",
+        voteEndsAt: "2026-05-17T09:05:00.000Z",
+        votes: [],
+      },
+      {
+        id: "rejected-case",
+        title: "Forkastet sak",
+        body: "Skal ligge i Forkastelsesbunken.",
+        ruleType: "annet",
+        proposedBy: "alf",
+        status: "rejected",
+        createdAt: "2026-05-15T08:00:00.000Z",
+        updatedAt: "2026-05-17T10:00:00.000Z",
+        resolvedAt: "2026-05-17T10:00:00.000Z",
+        votes: [],
+      },
+      {
+        id: "passed-case",
+        title: "Vedtatt sak",
+        body: "Skal ligge i Vedtaksrullen.",
+        ruleType: "mindre",
+        proposedBy: "alf",
+        status: "passed",
+        createdAt: "2026-05-15T09:00:00.000Z",
+        updatedAt: "2026-05-18T10:00:00.000Z",
+        resolvedAt: "2026-05-18T10:00:00.000Z",
+        votes: [],
+      },
+    ];
+
+    expect(proposals.filter(isLiveGeotingProposal).map((proposal) => proposal.id)).toEqual(["open-case", "voting-case"]);
+    expect(proposals.filter(isResolvedGeotingProposal).map((proposal) => proposal.id)).toEqual(["rejected-case", "passed-case"]);
+    expect(sortGeotingPergaments(proposals.filter(isResolvedGeotingProposal)).map((proposal) => proposal.id)).toEqual([
+      "passed-case",
+      "rejected-case",
+    ]);
+  });
+
   it("requires consensus for constitutional changes", () => {
     const proposal: GeotingProposal = {
       id: "gt-test",

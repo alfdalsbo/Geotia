@@ -22,6 +22,27 @@ function nowTime(now = new Date()) {
   return now.getTime();
 }
 
+export function isLiveGeotingProposal(proposal: Pick<GeotingProposal, "status">) {
+  return proposal.status === "open" || proposal.status === "voting";
+}
+
+export function isResolvedGeotingProposal(proposal: Pick<GeotingProposal, "status">) {
+  return proposal.status === "passed" || proposal.status === "rejected";
+}
+
+function geotingPergamentSortKey(proposal: Pick<GeotingProposal, "resolvedAt" | "updatedAt" | "createdAt">) {
+  return proposal.resolvedAt ?? proposal.updatedAt ?? proposal.createdAt;
+}
+
+export function sortGeotingPergaments(proposals: GeotingProposal[]) {
+  return [...proposals].sort(
+    (a, b) =>
+      geotingPergamentSortKey(b).localeCompare(geotingPergamentSortKey(a)) ||
+      b.createdAt.localeCompare(a.createdAt) ||
+      b.id.localeCompare(a.id),
+  );
+}
+
 function proposalEndedByTime(proposal: GeotingProposal, now = new Date()) {
   return Boolean(proposal.voteEndsAt && nowTime(now) >= new Date(proposal.voteEndsAt).getTime());
 }

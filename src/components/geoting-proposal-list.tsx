@@ -64,10 +64,10 @@ export function GeotingProposalList({
     return (
       <div className="rounded border border-dashed border-[#c49a3c] bg-[#c49a3c]/10 p-5">
         <p className="font-display text-2xl font-semibold text-[#654517]">
-          Tingvollen er tom.
+          Stemmeurnen er tom.
         </p>
         <p className="mt-2 text-sm text-[#60553f]">
-          Første forslag vil trolig skape unødvendig, men verdifull uro.
+          Avgjorte saker ligger i Tingpergamentene.
         </p>
       </div>
     );

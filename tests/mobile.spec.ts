@@ -447,6 +447,7 @@ test("mobile shell keeps the rikssti and route families clear", async ({ page })
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
     const mainNav = page.getByRole("navigation", { name: "Hovednavigasjon" });
+    await expect(page.getByRole("heading", { name: "Geotia", exact: true })).toBeVisible({ timeout: 15_000 });
     await expect(mainNav.getByRole("link", { name: "Kommandosentral" })).toBeVisible();
     const commandText = await mainNav.getByRole("link", { name: "Kommandosentral" }).innerText();
     expect(commandText).not.toContain("\n");
@@ -482,6 +483,14 @@ test("mobile shell keeps the rikssti and route families clear", async ({ page })
     await expect(page.getByRole("heading", { name: "Stemmeurnen", exact: true })).toBeVisible();
     await expect(mainNav.getByRole("link", { name: "GeoTinget" })).toHaveAttribute("aria-current", "page");
     await expect(geotingSubnav.getByRole("link", { name: "Stemmeurnen" })).toHaveAttribute("aria-current", "page");
+    await expectOneVisibleH1(page);
+    await expectNoHorizontalOverflow(page);
+
+    await page.goto("/geotinget/pergamenter", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "Tingpergamentene" })).toBeVisible();
+    await expect(geotingSubnav.getByRole("link", { name: "Tingpergamentene" })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("heading", { name: "Vedtaksrullen", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Forkastelsesbunken", exact: true })).toBeVisible();
     await expectOneVisibleH1(page);
     await expectNoHorizontalOverflow(page);
   }

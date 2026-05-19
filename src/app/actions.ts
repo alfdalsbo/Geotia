@@ -529,7 +529,7 @@ export async function voteGeotingProposalAction(formData: FormData) {
   const sak = `&sak=${encodeURIComponent(proposalId)}`;
   redirect(
     proposal.status === "passed" || proposal.status === "rejected"
-      ? `/geotinget/avstemninger?status=avgjort${sak}`
+      ? `/geotinget/pergamenter?status=avgjort${sak}`
       : `/geotinget/avstemninger?status=stemt${sak}`,
   );
 }

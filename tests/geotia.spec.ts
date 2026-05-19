@@ -1,4 +1,126 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+
 import { expect, test } from "@playwright/test";
+
+async function writeGeotingRoutingFixture() {
+  const timestamp = new Date().toISOString();
+  const votingStartedAt = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const votingEndsAt = new Date(Date.now() + 23 * 60 * 60 * 1000).toISOString();
+  const dataDir = path.join(process.cwd(), ".data");
+  const proposals = [
+    {
+      id: "playwright-geoting-open",
+      title: "Lov om levende tingvoll",
+      body: "Denne saken skal vente på geo-ed i Stemmeurnen.",
+      ruleType: "annet",
+      proposedBy: "alf",
+      status: "open",
+      createdAt: "2026-05-18T08:00:00.000Z",
+      updatedAt: "2026-05-18T08:00:00.000Z",
+      votes: [],
+    },
+    {
+      id: "playwright-geoting-voting",
+      title: "Lov om åpen urne",
+      body: "Denne saken skal være aktiv avstemning i Stemmeurnen.",
+      ruleType: "mindre",
+      proposedBy: "alf",
+      status: "voting",
+      createdAt: "2026-05-18T09:00:00.000Z",
+      updatedAt: votingStartedAt,
+      voteStartedAt: votingStartedAt,
+      voteEndsAt: votingEndsAt,
+      voteStartedBy: "alf",
+      oathText: "Geo-eden er ført for testurnen.",
+      votes: [
+        {
+          playerId: "alf",
+          vote: "for",
+          comment: "",
+          createdAt: "2026-05-18T09:08:00.000Z",
+        },
+      ],
+    },
+    {
+      id: "playwright-geoting-passed",
+      title: "Lov om vedtaksrullen",
+      body: "Denne saken skal ligge i Vedtaksrullen.",
+      ruleType: "mindre",
+      proposedBy: "alf",
+      status: "passed",
+      createdAt: "2026-05-17T08:00:00.000Z",
+      updatedAt: "2026-05-18T10:00:00.000Z",
+      voteStartedAt: "2026-05-17T08:10:00.000Z",
+      voteEndsAt: "2026-05-18T08:10:00.000Z",
+      voteStartedBy: "alf",
+      resolvedAt: "2026-05-18T10:00:00.000Z",
+      votes: ["alf", "vegard", "jorgen", "steinar"].map((playerId) => ({
+        playerId,
+        vote: "for",
+        comment: "",
+        createdAt: "2026-05-17T09:00:00.000Z",
+      })),
+    },
+    {
+      id: "playwright-geoting-rejected",
+      title: "Lov om forkastelsesbunken",
+      body: "Denne saken skal ligge i Forkastelsesbunken.",
+      ruleType: "annet",
+      proposedBy: "vegard",
+      status: "rejected",
+      createdAt: "2026-05-16T08:00:00.000Z",
+      updatedAt: "2026-05-18T11:00:00.000Z",
+      voteStartedAt: "2026-05-16T08:10:00.000Z",
+      voteEndsAt: "2026-05-17T08:10:00.000Z",
+      voteStartedBy: "vegard",
+      resolvedAt: "2026-05-18T11:00:00.000Z",
+      votes: [
+        {
+          playerId: "alf",
+          vote: "for",
+          comment: "",
+          createdAt: "2026-05-16T09:00:00.000Z",
+        },
+        ...["vegard", "jorgen", "steinar", "sverre"].map((playerId) => ({
+          playerId,
+          vote: "mot",
+          comment: "",
+          createdAt: "2026-05-16T09:10:00.000Z",
+        })),
+      ],
+    },
+  ];
+
+  await mkdir(dataDir, { recursive: true });
+  await writeFile(
+    path.join(dataDir, "playwright-geotia.json"),
+    JSON.stringify(
+      {
+        meta: { schemaVersion: "2" },
+        rounds: [],
+        gameSessions: [],
+        geotingProposals: proposals,
+        geoterIndexAdjustments: [],
+        geoticOrderAssessments: [],
+        geoticOrderPromotionCases: [],
+        geocodeCache: [],
+        updatedAt: timestamp,
+      },
+      null,
+      2,
+    ),
+    "utf8",
+  );
+
+  return {
+    openTitle: proposals[0].title,
+    votingTitle: proposals[1].title,
+    passedId: proposals[2].id,
+    passedTitle: proposals[2].title,
+    rejectedTitle: proposals[3].title,
+  };
+}
 
 test("login, register a round, and lock the protocol", async ({ page }) => {
   await page.goto("/");
@@ -124,14 +246,44 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await expect(proposalCard).toHaveAttribute("open", "");
   await page.getByRole("link", { name: "Tingpergamentene" }).click();
   await expect(page.getByRole("heading", { name: "Tingpergamentene" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Vedtaksrullen", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Forkastelsesbunken", exact: true })).toBeVisible();
   const pergament = page.getByTestId("geoting-pergament").filter({ hasText: proposalTitle });
-  await expect(pergament.locator("summary")).toBeVisible();
-  await expect(pergament.getByTestId("geoting-action-strip").getByText("Åpne pergament")).toBeVisible();
-  await pergament.locator("summary").click();
-  await expect(pergament).toHaveAttribute("open", "");
-  await expect(pergament.getByTestId("geoting-action-strip").getByText("Lukk pergament")).toBeVisible();
-  await expect(pergament.getByRole("heading", { name: proposalTitle }).first()).toBeVisible();
-  await expect(pergament.getByText("Kollegiets redigering")).toBeVisible();
+  await expect(pergament).toHaveCount(0);
+  await page.getByRole("link", { name: "Stemmeurnen", exact: true }).click();
+  await expect(page.getByTestId("geoting-case").filter({ hasText: proposalTitle })).toBeVisible();
+});
+
+test("GeoTinget keeps live proposals in Stemmeurnen and resolved proposals in Tingpergamentene", async ({ page }) => {
+  const fixture = await writeGeotingRoutingFixture();
+
+  await page.goto("/");
+  await page.getByLabel("Brukernavn").fill("SS");
+  await page.getByLabel("Passord").fill("geotia");
+  await page.getByRole("button", { name: "Åpne Geotia" }).click();
+  await expect(page.getByRole("button", { name: "Forlat embetsverket" })).toBeVisible({ timeout: 15_000 });
+
+  await page.goto("/geotinget/avstemninger");
+  await expect(page.getByRole("heading", { name: "Stemmeurnen", exact: true })).toBeVisible();
+  await expect(page.getByTestId("geoting-case").filter({ hasText: fixture.openTitle })).toBeVisible();
+  await expect(page.getByTestId("geoting-case").filter({ hasText: fixture.votingTitle })).toBeVisible();
+  await expect(page.getByText(fixture.passedTitle)).toHaveCount(0);
+  await expect(page.getByText(fixture.rejectedTitle)).toHaveCount(0);
+
+  await page.goto(`/geotinget/avstemninger?sak=${fixture.passedId}`);
+  await expect(page).toHaveURL(new RegExp(`/geotinget/pergamenter\\?status=avgjort&sak=${fixture.passedId}$`));
+  await expect(page.getByText("Saken er avgjort og lagt i riktig pergamenthylle.")).toBeVisible();
+
+  const passedGroup = page.getByTestId("geoting-pergament-group-passed");
+  const rejectedGroup = page.getByTestId("geoting-pergament-group-rejected");
+  await expect(page.getByRole("heading", { name: "Vedtaksrullen", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Forkastelsesbunken", exact: true })).toBeVisible();
+  await expect(passedGroup.getByTestId("geoting-pergament").filter({ hasText: fixture.passedTitle })).toHaveCount(1);
+  await expect(rejectedGroup.getByTestId("geoting-pergament").filter({ hasText: fixture.rejectedTitle })).toHaveCount(1);
+  await expect(passedGroup.getByText(fixture.rejectedTitle)).toHaveCount(0);
+  await expect(rejectedGroup.getByText(fixture.passedTitle)).toHaveCount(0);
+  await expect(page.getByTestId("geoting-pergament").filter({ hasText: fixture.openTitle })).toHaveCount(0);
+  await expect(page.getByTestId("geoting-pergament").filter({ hasText: fixture.votingTitle })).toHaveCount(0);
 });
 
 test("Danny logs in as Tingvitne without voting power", async ({ page }) => {

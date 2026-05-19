@@ -8,7 +8,14 @@ import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Section } from "@/components/section";
 import { Stamp, type StampTone } from "@/components/ui/stamp";
 import { getCurrentGeot } from "@/lib/auth";
-import { getGeotingLifecycle, geotingImplementationLabels, partyPositionLabels, summarizeProposal } from "@/lib/geoting";
+import {
+  getGeotingLifecycle,
+  geotingImplementationLabels,
+  isResolvedGeotingProposal,
+  partyPositionLabels,
+  sortGeotingPergaments,
+  summarizeProposal,
+} from "@/lib/geoting";
 import { isThirdCollegeMember } from "@/lib/kollegium";
 import { archive } from "@/lib/seed";
 import { getGeotingState, resolveDueGeotingProposals } from "@/lib/store";
@@ -50,9 +57,17 @@ export default async function GeotingPergamentsPage({
   await resolveDueGeotingProposals();
   const [state, currentGeot] = await Promise.all([getGeotingState(), getCurrentGeot()]);
   const canEdit = isThirdCollegeMember(currentGeot?.id);
-  const proposals = [...state.geotingProposals].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  const resolvedCount = proposals.filter((proposal) => proposal.status === "passed" || proposal.status === "rejected").length;
-  const activeCount = proposals.filter((proposal) => proposal.status === "open" || proposal.status === "voting").length;
+  const proposals = sortGeotingPergaments(state.geotingProposals);
+  const resolvedProposals = proposals.filter(isResolvedGeotingProposal);
+  const passedProposals = resolvedProposals.filter((proposal) => proposal.status === "passed");
+  const rejectedProposals = resolvedProposals.filter((proposal) => proposal.status === "rejected");
+  const archivedProposals = proposals.filter((proposal) => proposal.status === "archived");
+  const collegeBadge = canEdit ? (
+    <span className="inline-flex h-10 items-center gap-2 rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
+      <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+      Tredje Kollegium
+    </span>
+  ) : null;
 
   return (
     <div className="space-y-6">
@@ -66,88 +81,137 @@ export default async function GeotingPergamentsPage({
           Tingpergamentene
         </h1>
         <p className="mt-3 max-w-3xl text-base leading-7 text-[#4f412b]">
-          Innsendte saker, vedtak og gamle grunnpergamenter. {proposals.length}
-          {" "}levende pergamenter, {activeCount} åpne og {resolvedCount} avgjort.
+          Avgjorte vedtak, forkastelser og gamle grunnpergamenter. {passedProposals.length}
+          {" "}i Vedtaksrullen og {rejectedProposals.length} i Forkastelsesbunken.
         </p>
       </section>
 
       <PergamentStatus status={params.status} error={params.error} />
 
       <GeotingAccordion className="space-y-6">
-        <Section
-          title="Levende tingpergamenter"
-          eyebrow={canEdit ? "Kollegiet kan rette blekket" : "Offentlig lesesal"}
-          action={
-            canEdit ? (
-              <span className="inline-flex h-10 items-center gap-2 rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
-                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-                Tredje Kollegium
-              </span>
-            ) : null
-          }
-        >
-          {proposals.length ? (
-            <div className="grid gap-4">
-              {proposals.map((proposal) => (
-                <PergamentCard
-                  key={proposal.id}
-                  canEdit={canEdit}
-                  defaultOpen={proposal.id === params.sak}
-                  players={state.players}
-                  proposal={proposal}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded border border-dashed border-[#c49a3c] bg-[#c49a3c]/10 p-5 text-sm leading-6 text-[#60553f]">
-              Ingen nye tingpergamenter er ført ennå.
-            </div>
-          )}
-        </Section>
+        <ProposalPergamentSection
+          action={collegeBadge}
+          canEdit={canEdit}
+          emptyText="Vedtaksrullen er tom. Ingen saker har fått rikets ja ennå."
+          eyebrow="Vedtatt og protokollført"
+          openProposalId={params.sak}
+          players={state.players}
+          proposals={passedProposals}
+          testId="passed"
+          title="Vedtaksrullen"
+        />
 
-      <Section title="Grunnpergamentene" eyebrow="Historisk GeoTing-protokoll">
-        <div className="grid gap-3 lg:grid-cols-2">
-          {archive.geotingCases.map((item) => (
-            <details
-              key={`${item.date}-${item.caseName}`}
-              className="group rounded border border-[#d8ded0] bg-[#f7f8f5] transition-shadow hover:shadow-[0_0_0_2px_rgba(196,154,60,0.2)] focus-within:ring-2 focus-within:ring-[#c49a3c]"
-              data-geoting-accordion-item
-            >
-              <summary className="cursor-pointer list-none p-4 outline-none transition hover:bg-[#fff7e6]/70 active:bg-[#c49a3c]/10 [&::-webkit-details-marker]:hidden">
-                <div className="grid gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
-                      {item.date} · {item.caseNumber ?? "Sak uten nummer"} · {item.status}
-                    </p>
-                    <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">
-                      {item.caseName}
-                    </h2>
-                    <p className="mt-1 text-sm font-semibold text-[#4f412b]">{item.decision}</p>
+        <ProposalPergamentSection
+          canEdit={canEdit}
+          emptyText="Forkastelsesbunken er tom. Motstanden har ikke vunnet noen endelig seier ennå."
+          eyebrow="Forkastet og protokollført"
+          openProposalId={params.sak}
+          players={state.players}
+          proposals={rejectedProposals}
+          testId="rejected"
+          title="Forkastelsesbunken"
+        />
+
+        {archivedProposals.length ? (
+          <ProposalPergamentSection
+            canEdit={canEdit}
+            emptyText=""
+            eyebrow="Trukket før dom"
+            openProposalId={params.sak}
+            players={state.players}
+            proposals={archivedProposals}
+            testId="archived"
+            title="Trukket skuff"
+          />
+        ) : null}
+
+        <Section title="Grunnpergamentene" eyebrow="Historisk GeoTing-protokoll">
+          <div className="grid gap-3 lg:grid-cols-2">
+            {archive.geotingCases.map((item) => (
+              <details
+                key={`${item.date}-${item.caseName}`}
+                className="group rounded border border-[#d8ded0] bg-[#f7f8f5] transition-shadow hover:shadow-[0_0_0_2px_rgba(196,154,60,0.2)] focus-within:ring-2 focus-within:ring-[#c49a3c]"
+                data-geoting-accordion-item
+              >
+                <summary className="cursor-pointer list-none p-4 outline-none transition hover:bg-[#fff7e6]/70 active:bg-[#c49a3c]/10 [&::-webkit-details-marker]:hidden">
+                  <div className="grid gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
+                        {item.date} · {item.caseNumber ?? "Sak uten nummer"} · {item.status}
+                      </p>
+                      <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">
+                        {item.caseName}
+                      </h2>
+                      <p className="mt-1 text-sm font-semibold text-[#4f412b]">{item.decision}</p>
+                    </div>
+                    <GeotingSummaryActionStrip actionLabel="Les grunnpergament" openLabel="Lukk grunnpergament" />
                   </div>
-                  <GeotingSummaryActionStrip actionLabel="Les grunnpergament" openLabel="Lukk grunnpergament" />
+                </summary>
+                <div className="border-t border-[#d8ded0] p-4">
+                  <p className="text-sm leading-6 text-[#273125]">{item.proposal}</p>
+                  <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+                    <PergamentFact label="Fremmet av" value={item.proposedBy} />
+                    <PergamentFact label="Vedtak" value={item.decision} />
+                    <PergamentFact label="Stemmer" value={item.votes} />
+                    <PergamentFact label="Status" value={item.status} />
+                  </dl>
+                  {item.comment ? (
+                    <p className="mt-3 rounded border border-[#c49a3c]/30 bg-[#fff7e6] px-3 py-2 text-sm leading-6 text-[#4f412b]">
+                      {item.comment}
+                    </p>
+                  ) : null}
+                  <GeotingCloseStrip label="Lukk grunnpergament" />
                 </div>
-              </summary>
-              <div className="border-t border-[#d8ded0] p-4">
-                <p className="text-sm leading-6 text-[#273125]">{item.proposal}</p>
-                <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
-                  <PergamentFact label="Fremmet av" value={item.proposedBy} />
-                  <PergamentFact label="Vedtak" value={item.decision} />
-                  <PergamentFact label="Stemmer" value={item.votes} />
-                  <PergamentFact label="Status" value={item.status} />
-                </dl>
-                {item.comment ? (
-                  <p className="mt-3 rounded border border-[#c49a3c]/30 bg-[#fff7e6] px-3 py-2 text-sm leading-6 text-[#4f412b]">
-                    {item.comment}
-                  </p>
-                ) : null}
-                <GeotingCloseStrip label="Lukk grunnpergament" />
-              </div>
-            </details>
-          ))}
-        </div>
-      </Section>
+              </details>
+            ))}
+          </div>
+        </Section>
       </GeotingAccordion>
     </div>
+  );
+}
+
+function ProposalPergamentSection({
+  action,
+  canEdit,
+  emptyText,
+  eyebrow,
+  openProposalId,
+  players,
+  proposals,
+  testId,
+  title,
+}: {
+  action?: React.ReactNode;
+  canEdit: boolean;
+  emptyText: string;
+  eyebrow: string;
+  openProposalId?: string;
+  players: Player[];
+  proposals: GeotingProposal[];
+  testId: string;
+  title: string;
+}) {
+  return (
+    <Section title={title} eyebrow={eyebrow} action={action}>
+      {proposals.length ? (
+        <div className="grid gap-4" data-testid={`geoting-pergament-group-${testId}`}>
+          {proposals.map((proposal) => (
+            <PergamentCard
+              key={proposal.id}
+              canEdit={canEdit}
+              defaultOpen={proposal.id === openProposalId}
+              players={players}
+              proposal={proposal}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded border border-dashed border-[#c49a3c] bg-[#c49a3c]/10 p-5 text-sm leading-6 text-[#60553f]">
+          {emptyText}
+        </div>
+      )}
+    </Section>
   );
 }
 
@@ -170,6 +234,13 @@ function PergamentStatus({ status, error }: { status?: string; error?: string })
     return (
       <div className="rounded border border-[#285c45]/25 bg-[#285c45]/8 px-4 py-3 text-sm font-medium text-[#285c45]">
         Pergamentet er trukket og lagt i lukket arkiv.
+      </div>
+    );
+  }
+  if (status === "avgjort") {
+    return (
+      <div className="rounded border border-[#285c45]/25 bg-[#285c45]/8 px-4 py-3 text-sm font-medium text-[#285c45]">
+        Saken er avgjort og lagt i riktig pergamenthylle.
       </div>
     );
   }
