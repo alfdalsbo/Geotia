@@ -60,4 +60,11 @@ describe("Street View challenge selection", () => {
     expect(challenge.candidateId).toBe(slowGeoCandidates[1].id);
     expect(challenge.panoId).toBe("safe-pano");
   });
+
+  it("requires metadata pano id when Panorama mode asks for one", async () => {
+    delete process.env.GOOGLE_MAPS_SERVER_API_KEY;
+    delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+    await expect(createStreetViewChallenge({ requirePanoId: true })).rejects.toThrow("Panorama-modus");
+  });
 });

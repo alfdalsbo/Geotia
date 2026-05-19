@@ -19,6 +19,8 @@ export type GeoLocation = {
 
 export type SlowGeoDifficulty = "lett" | "middels" | "hard" | "absurd";
 
+export type SlowGeoMode = "static" | "panorama";
+
 export type SlowGeoChallenge = {
   id: string;
   candidateId: string;
@@ -135,6 +137,7 @@ export type Round = {
   answerLocation?: GeoLocation | null;
   mapSnapshot?: RoundMapSnapshot | null;
   challenge?: SlowGeoChallenge | null;
+  slowGeoMode?: SlowGeoMode;
   deadlineAt?: string | null;
   revealedAt?: string | null;
   country: string;

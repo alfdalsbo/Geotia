@@ -17,6 +17,7 @@ import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-butt
 import type { SlowGeoRevealMarker, SlowGeoRevealResult } from "@/lib/slowgeo-reveal";
 import type { SlowGeoStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
 import type { StreetViewStaticViewConfig } from "@/lib/streetview-url";
+import type { SlowGeoMode } from "@/lib/types";
 import {
   buildPersonalRevealedSlowGeoShareTextOptions,
   buildRevealedSlowGeoShareTextOptions,
@@ -31,6 +32,7 @@ export function SlowGeoRevealMap({
   streetViewUrl,
   streetViewStaticViewConfig,
   streetViewPanorama,
+  slowGeoMode = "static",
   googleMapsApiKey,
   markers,
   results,
@@ -49,6 +51,7 @@ export function SlowGeoRevealMap({
   streetViewUrl: string | null;
   streetViewStaticViewConfig: StreetViewStaticViewConfig | null;
   streetViewPanorama: SlowGeoStreetViewPanoramaConfig | null;
+  slowGeoMode?: SlowGeoMode;
   googleMapsApiKey: string;
   markers: SlowGeoRevealMarker[];
   results: SlowGeoRevealResult[];
@@ -91,6 +94,7 @@ export function SlowGeoRevealMap({
   const bestResult = results.find((result) => result.rank === 1) ?? null;
   const submittedCount = results.filter((result) => result.guessLabel || result.actualKm !== null).length;
   const cardTitle = roundNumber ? `SlowGeo #${roundNumber}` : "SlowGeo";
+  const imageViewMode = slowGeoMode === "panorama" && streetViewPanorama ? "panorama" : "static";
 
   const fitMapToMarkers = useCallback(
     (mapsApi = mapsApiRef.current, map = mapRef.current) => {
@@ -271,16 +275,20 @@ export function SlowGeoRevealMap({
               className={imageClass}
               staticViewConfig={streetViewStaticViewConfig}
               streetViewPanorama={streetViewPanorama}
+              viewMode={imageViewMode}
               priority={variant === "full"}
               title={roundName}
             />
           ) : (
-            <div className="flex aspect-video min-h-[280px] items-center justify-center px-6 text-center text-sm font-semibold text-[#fff7e6]">
+            <div className="flex min-h-[280px] w-full items-center justify-center px-6 text-center text-sm font-semibold text-[#fff7e6]">
               Street View-bildet kan ikke vises akkurat nå.
             </div>
           )}
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3 text-xs text-[#eadcbd]">
-            <span>{imageDate ? `Street View ${imageDate}` : "Google Street View"}</span>
+            <span>
+              {imageDate ? `Street View ${imageDate}` : "Google Street View"} ·{" "}
+              {slowGeoMode === "panorama" ? "Panorama" : "Statisk"}
+            </span>
             <span>{copyright ?? "© Google"}</span>
           </div>
         </div>

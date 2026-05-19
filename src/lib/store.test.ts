@@ -8,11 +8,20 @@ import type { GeoLocation } from "@/lib/types";
 
 let tempDir: string | null = null;
 
+function metadataResponse(body: Record<string, unknown>) {
+  return {
+    ok: true,
+    json: async () => body,
+  } as Response;
+}
+
 afterEach(async () => {
   delete process.env.GEOTIA_DATA_FILE;
   delete process.env.GOOGLE_MAPS_SERVER_API_KEY;
   delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   delete process.env.SLOWGEO_MONTHLY_ROUND_CAP;
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   vi.resetModules();
   if (tempDir) {
     await rm(tempDir, { recursive: true, force: true });
@@ -234,6 +243,7 @@ describe("Geotia file store", () => {
     if (!created.ok || !created.round?.answerLocation) throw new Error("SlowGeo-runden ble ikke opprettet");
 
     expect(created.round.status).toBe("open");
+    expect(created.round.slowGeoMode).toBe("static");
     expect(created.round.deadlineAt).toBe(explicitDeadline);
     expect(created.round.answerLocation.source).toBe("google_street_view");
     expect(created.round.mapSnapshot).toBeNull();
@@ -290,6 +300,149 @@ describe("Geotia file store", () => {
     const backups = await readdir(path.join(tempDir, "backups"));
     expect(raw.meta?.schemaVersion).toBe("2");
     expect(backups.some((file) => file.startsWith("geotia-data-"))).toBe(true);
+  });
+
+  it("rejects Panorama SlowGeo creation when metadata cannot provide a pano id", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    process.env.GOOGLE_MAPS_SERVER_API_KEY = "";
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    vi.resetModules();
+
+    const { createSlowGeoRound } = await import("@/lib/store");
+    const created = await createSlowGeoRound({ title: "Panorama uten nøkkel", mode: "panorama" });
+
+    expect(created.ok).toBe(false);
+    expect(created.reason).toContain("Panorama-modus");
+  });
+
+  it("normalizes older SlowGeo rounds without a mode to static", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    const stateFile = path.join(tempDir, "state.json");
+    process.env.GEOTIA_DATA_FILE = stateFile;
+    await writeFile(
+      stateFile,
+      JSON.stringify({
+        meta: { schemaVersion: "2" },
+        rounds: [
+          {
+            id: "old-slowgeo",
+            number: 1,
+            date: "2026-05-19",
+            name: "Gammel SlowGeo",
+            answer: "Tromsøbrua, Tromsø",
+            answerLocation: {
+              lat: 69.6534,
+              lon: 18.975,
+              label: "Tromsøbrua, Tromsø",
+              query: "tromso-bridge",
+              country: "Norge",
+              source: "google_street_view",
+            },
+            mapSnapshot: null,
+            challenge: {
+              id: "old-challenge",
+              candidateId: "tromso-bridge",
+              source: "google_street_view",
+              lat: 69.6534,
+              lon: 18.975,
+              label: "Tromsøbrua, Tromsø",
+              country: "Norge",
+              continent: "Europa",
+              heading: 64,
+              pitch: 1,
+              fov: 90,
+              createdAt: "2026-05-19T10:00:00.000Z",
+            },
+            deadlineAt: "2026-05-19T20:00:00.000Z",
+            revealedAt: null,
+            country: "Norge",
+            continent: "Europa",
+            comment: "Google Street View",
+            status: "open",
+            createdAt: "2026-05-19T10:00:00.000Z",
+            updatedAt: "2026-05-19T10:00:00.000Z",
+            results: [],
+          },
+        ],
+        gameSessions: [],
+        geotingProposals: [],
+        geoterIndexAdjustments: [],
+        geoticOrderAssessments: [],
+        geoticOrderPromotionCases: [],
+        geocodeCache: [],
+      }),
+      "utf8",
+    );
+    vi.resetModules();
+
+    const { getAppState } = await import("@/lib/store");
+    const state = await getAppState();
+
+    expect(state.rounds.find((round) => round.id === "old-slowgeo")?.slowGeoMode).toBe("static");
+  });
+
+  it("retries a Panorama SlowGeo in the same round before any locked pin", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    process.env.GOOGLE_MAPS_SERVER_API_KEY = "unit-test-key";
+    delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(metadataResponse({ status: "OK", pano_id: "first-pano", date: "2024-01", copyright: "© Google" }))
+        .mockResolvedValueOnce(metadataResponse({ status: "OK", pano_id: "second-pano", date: "2024-02", copyright: "© Google" })) as unknown as typeof fetch,
+    );
+    vi.resetModules();
+
+    const { createSlowGeoRound, replaceSlowGeoPanoramaRound } = await import("@/lib/store");
+    const created = await createSlowGeoRound({ title: "Panorama-prøven", mode: "panorama" });
+    if (!created.ok || !created.round) throw new Error("Panorama-runden ble ikke opprettet");
+
+    const replaced = await replaceSlowGeoPanoramaRound({ roundId: created.round.id });
+    if (!replaced.ok || !replaced.round) throw new Error("Panorama-runden ble ikke byttet");
+
+    expect(created.round.slowGeoMode).toBe("panorama");
+    expect(created.round.challenge?.panoId).toBe("first-pano");
+    expect(replaced.round.id).toBe(created.round.id);
+    expect(replaced.round.number).toBe(created.round.number);
+    expect(replaced.round.slowGeoMode).toBe("panorama");
+    expect(replaced.round.challenge?.panoId).toBe("second-pano");
+    expect(replaced.round.results.every((result) => result.guessLocation === null)).toBe(true);
+  });
+
+  it("rejects Panorama retry after the first pin answer is locked", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    process.env.GOOGLE_MAPS_SERVER_API_KEY = "unit-test-key";
+    delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(metadataResponse({ status: "OK", pano_id: "locked-pano", date: "2024-01", copyright: "© Google" })) as unknown as typeof fetch,
+    );
+    vi.resetModules();
+
+    const { createSlowGeoRound, replaceSlowGeoPanoramaRound, submitSlowGeoGuess } = await import("@/lib/store");
+    const created = await createSlowGeoRound({ title: "Panorama med svar", mode: "panorama" });
+    if (!created.ok || !created.round?.answerLocation) throw new Error("Panorama-runden ble ikke opprettet");
+
+    const submitted = await submitSlowGeoGuess({
+      roundId: created.round.id,
+      playerId: "alf",
+      location: {
+        lat: created.round.answerLocation.lat,
+        lon: created.round.answerLocation.lon,
+        label: "Låst pin",
+        query: "pin",
+        source: "manual",
+      },
+    });
+    expect(submitted.ok).toBe(true);
+
+    const replaced = await replaceSlowGeoPanoramaRound({ roundId: created.round.id });
+    expect(replaced.ok).toBe(false);
+    expect(replaced.reason).toContain("pin-svar");
   });
 
   it("keeps generic reads side-effect free until SlowGeo reveal is explicit", async () => {

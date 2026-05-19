@@ -10,6 +10,7 @@ import { getCurrentGeot } from "@/lib/auth";
 import { selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { computeRound } from "@/lib/scoring";
 import { players } from "@/lib/seed";
+import { getSlowGeoMode, hasLockedSlowGeoGuess } from "@/lib/slowgeo";
 import {
   buildOpenSlowGeoShareTextOptions,
   buildRevealedSlowGeoShareTextOptions,
@@ -114,6 +115,8 @@ export default async function SlowGeoSharePage({
     allowLocationFallback: round.status !== "open",
   });
   const isOpen = round.status === "open";
+  const slowGeoMode = getSlowGeoMode(round);
+  const canReplacePanorama = isOpen && slowGeoMode === "panorama" && !hasLockedSlowGeoGuess(round);
   const answerLabel = round.answer || round.challenge.label;
   const submittedCount = round.results.filter((result) => result.guessLocation).length;
   const participantCount = round.results.length;
@@ -196,6 +199,8 @@ export default async function SlowGeoSharePage({
               ? "Pin-svaret er låst. Kranglingen kan fortsette uten at pinnen flytter seg."
               : query.status === "avslort"
                 ? "Fasit er avslørt, protokollen er låst og runden ligger i arkivet."
+                : query.status === "panorama_nytt"
+                  ? "Nytt panorama er hentet inn i samme SlowGeo-lenke."
                 : "SlowGeo er oppdatert."}
           </div>
         ) : null}
@@ -231,6 +236,8 @@ export default async function SlowGeoSharePage({
             streetViewUrl={streetViewUrl}
             streetViewStaticViewConfig={streetViewStaticViewConfig}
             streetViewPanorama={streetViewPanorama}
+            slowGeoMode={slowGeoMode}
+            canReplacePanorama={canReplacePanorama}
             googleMapsApiKey={publicGoogleKey}
             existingGuess={existingGuess}
             existingNote={currentResult?.note ?? ""}
@@ -248,6 +255,7 @@ export default async function SlowGeoSharePage({
             streetViewUrl={streetViewUrl}
             streetViewStaticViewConfig={streetViewStaticViewConfig}
             streetViewPanorama={streetViewPanorama}
+            slowGeoMode={slowGeoMode}
             googleMapsApiKey={publicGoogleKey}
             markers={revealMarkers}
             results={revealResults}

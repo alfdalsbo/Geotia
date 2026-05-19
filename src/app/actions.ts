@@ -31,6 +31,7 @@ import {
   createGeotingProposal,
   getOrderState,
   lockRound,
+  replaceSlowGeoPanoramaRound,
   saveGeotingVote,
   saveGeotingPartyPosition,
   startGeotingVote,
@@ -58,6 +59,7 @@ import type {
   PlayerResult,
   ProposalRuleType,
   ResultStatus,
+  SlowGeoMode,
   VoteValue,
 } from "@/lib/types";
 
@@ -141,6 +143,10 @@ function slowGeoDeadlineAt(formData: FormData) {
   return candidate.toISOString();
 }
 
+function slowGeoModeField(value: string): SlowGeoMode {
+  return value === "panorama" ? "panorama" : "static";
+}
+
 function statusField(value: string): ResultStatus {
   if (value === "deltatt" || value === "ikke_deltatt" || value === "ugyldig") return value;
   return "ikke_deltatt";
@@ -220,6 +226,7 @@ export async function createSlowGeoRoundAction(formData: FormData) {
   const result = await createSlowGeoRound({
     title,
     deadlineAt,
+    mode: slowGeoModeField(field(formData, "slowgeo_mode")),
   });
 
   revalidateSlowGeoPaths(result.ok ? result.round?.id : undefined);
@@ -229,6 +236,25 @@ export async function createSlowGeoRoundAction(formData: FormData) {
   }
 
   redirect(`/slowgeo/${result.round.id}?created=1`);
+}
+
+export async function replaceSlowGeoPanoramaAction(formData: FormData) {
+  await requireSession();
+  const roundId = field(formData, "round_id");
+  const returnTo = safeRedirectPath(field(formData, "return_to") || (roundId ? `/slowgeo/${roundId}` : "/spill/slowgeo"));
+
+  if (!roundId) {
+    redirect(`${returnTo}?error=${encodeURIComponent("Runden mangler i panoramabestillingen.")}`);
+  }
+
+  const result = await replaceSlowGeoPanoramaRound({ roundId });
+  revalidateSlowGeoPaths(roundId);
+
+  if (!result.ok) {
+    redirect(`${returnTo}?error=${encodeURIComponent(result.reason ?? "Panorama kunne ikke byttes akkurat nå.")}`);
+  }
+
+  redirect(`${returnTo}?status=panorama_nytt`);
 }
 
 export async function submitSlowGeoGuessAction(formData: FormData) {

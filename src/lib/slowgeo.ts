@@ -1,5 +1,20 @@
 import { buildRoundMapSnapshot, haversineKm } from "@/lib/geo";
-import type { Player, Round } from "@/lib/types";
+import type { Player, Round, SlowGeoMode } from "@/lib/types";
+
+export const slowGeoModes: SlowGeoMode[] = ["static", "panorama"];
+
+export const slowGeoModeLabels: Record<SlowGeoMode, string> = {
+  static: "Statisk",
+  panorama: "Panorama",
+};
+
+export function normalizeSlowGeoMode(value: unknown): SlowGeoMode {
+  return value === "panorama" ? "panorama" : "static";
+}
+
+export function getSlowGeoMode(round: Pick<Round, "slowGeoMode">): SlowGeoMode {
+  return normalizeSlowGeoMode(round.slowGeoMode);
+}
 
 export function isSlowGeoRound(round: Round) {
   return round.challenge?.source === "google_street_view";
@@ -21,6 +36,10 @@ export function allPlayersHaveSlowGeoGuesses(round: Round, players: Player[]) {
     const result = round.results.find((candidate) => candidate.playerId === playerId);
     return Boolean(result?.guessLocation);
   });
+}
+
+export function hasLockedSlowGeoGuess(round: Round) {
+  return round.results.some((result) => Boolean(result.guessLocation));
 }
 
 export function shouldRevealSlowGeoRound(round: Round, players: Player[], now = new Date()) {

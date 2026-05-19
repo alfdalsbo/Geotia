@@ -30,6 +30,7 @@ type SlowGeoImageViewerProps = {
   staticViewConfig?: StreetViewStaticViewConfig | null;
   streetViewPanorama?: SlowGeoStreetViewPanoramaConfig | null;
   viewMode?: "static" | "panorama";
+  onPanoramaUnavailable?: () => void;
   priority?: boolean;
   title?: string;
 };
@@ -56,6 +57,7 @@ export function SlowGeoImageViewer({
   staticViewConfig,
   streetViewPanorama,
   viewMode = "static",
+  onPanoramaUnavailable,
   priority = false,
   title = "SlowGeo-bilde",
 }: SlowGeoImageViewerProps) {
@@ -171,6 +173,12 @@ export function SlowGeoImageViewer({
   }, [closeViewer, open]);
 
   useEffect(() => {
+    if (viewMode === "panorama" && !streetViewPanorama) {
+      onPanoramaUnavailable?.();
+    }
+  }, [onPanoramaUnavailable, streetViewPanorama, viewMode]);
+
+  useEffect(() => {
     if (!open || !panoramaEnabled || !streetViewPanorama || !panoramaElementRef.current) return;
 
     let cancelled = false;
@@ -216,13 +224,17 @@ export function SlowGeoImageViewer({
           if (status && status !== "OK") {
             panoramaRef.current = null;
             setPanoramaStatus("error");
+            onPanoramaUnavailable?.();
           }
         });
         if (statusListener) listeners.push(statusListener);
         setPanoramaStatus("ready");
       })
       .catch(() => {
-        if (!cancelled) setPanoramaStatus("error");
+        if (!cancelled) {
+          setPanoramaStatus("error");
+          onPanoramaUnavailable?.();
+        }
       });
 
     return () => {
@@ -230,7 +242,7 @@ export function SlowGeoImageViewer({
       listeners.forEach((listener) => listener.remove());
       panoramaRef.current = null;
     };
-  }, [open, panoramaEnabled, streetViewPanorama]);
+  }, [onPanoramaUnavailable, open, panoramaEnabled, streetViewPanorama]);
 
   useEffect(() => {
     if (!open || panoramaEnabled || !staticViewConfig || interacting) return;
@@ -488,6 +500,11 @@ export function SlowGeoImageViewer({
               {loadingStaticCrop ? (
                 <div className="pointer-events-none absolute bottom-3 left-3 rounded bg-black/65 px-3 py-2 text-xs font-semibold text-white">
                   Laster skarpere utsnitt
+                </div>
+              ) : null}
+              {panoramaEnabled && panoramaStatus === "error" ? (
+                <div className="pointer-events-none absolute bottom-3 right-3 max-w-[min(22rem,calc(100%-1.5rem))] rounded bg-black/75 px-3 py-2 text-xs font-semibold leading-5 text-white">
+                  Panorama kunne ikke lastes. Statisk bilde vises.
                 </div>
               ) : null}
             </div>

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, LockKeyhole, MapPin, Maximize2, RotateCcw, Send, X } from "lucide-react";
 
-import { submitSlowGeoGuessAction } from "@/app/actions";
+import { replaceSlowGeoPanoramaAction, submitSlowGeoGuessAction } from "@/app/actions";
 import { loadGoogleMaps, type GoogleMap, type GoogleMapsApi, type GoogleMarker } from "@/components/google-maps-loader";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { SlowGeoAnswerStatus } from "@/components/slowgeo-answer-status";
@@ -15,6 +15,7 @@ import type { SlowGeoAnswerStatusItem } from "@/lib/slowgeo-answer-status";
 import type { SlowGeoStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
 import type { StreetViewStaticViewConfig } from "@/lib/streetview-url";
 import { buildOpenSlowGeoShareTextOptions } from "@/lib/slowgeo-share";
+import type { SlowGeoMode } from "@/lib/types";
 import { dateTimeLabel } from "@/lib/utils";
 
 type Guess = {
@@ -30,6 +31,8 @@ type SlowGeoPlayProps = {
   streetViewUrl: string | null;
   streetViewStaticViewConfig: StreetViewStaticViewConfig | null;
   streetViewPanorama: SlowGeoStreetViewPanoramaConfig | null;
+  slowGeoMode?: SlowGeoMode;
+  canReplacePanorama?: boolean;
   googleMapsApiKey: string;
   existingGuess: (Guess & { updatedAt?: string | null }) | null;
   existingNote?: string | null;
@@ -52,6 +55,8 @@ export function SlowGeoPlay({
   streetViewUrl,
   streetViewStaticViewConfig,
   streetViewPanorama,
+  slowGeoMode = "static",
+  canReplacePanorama = false,
   googleMapsApiKey,
   existingGuess,
   existingNote,
@@ -70,8 +75,12 @@ export function SlowGeoPlay({
   const [mapError, setMapError] = useState("");
   const [loadingMap, setLoadingMap] = useState(Boolean(googleMapsApiKey));
   const [mapOpen, setMapOpen] = useState(false);
+  const [panoramaLoadFailed, setPanoramaLoadFailed] = useState(false);
   const answerLocked = Boolean(existingGuess);
   const openShareTexts = buildOpenSlowGeoShareTextOptions(roundName, roundId);
+  const imageViewMode = slowGeoMode === "panorama" && streetViewPanorama ? "panorama" : "static";
+  const showPanoramaRetry = slowGeoMode === "panorama" && (!streetViewPanorama || panoramaLoadFailed);
+  const replacePanoramaReturnTo = returnTo ?? `/runder/${roundId}`;
 
   const placeMarker = useCallback((nextGuess: Guess, center = true) => {
     const mapsApi = mapsApiRef.current;
@@ -117,6 +126,12 @@ export function SlowGeoPlay({
     map.setCenter({ lat: 20, lng: 12 });
     map.setZoom(2);
   }, [guess]);
+
+  const handlePanoramaUnavailable = useCallback(() => {
+    if (slowGeoMode === "panorama") {
+      setPanoramaLoadFailed(true);
+    }
+  }, [slowGeoMode]);
 
   useEffect(() => {
     if (!googleMapsApiKey || !mapElementRef.current) {
@@ -215,15 +230,41 @@ export function SlowGeoPlay({
               className={imageClass}
               staticViewConfig={streetViewStaticViewConfig}
               streetViewPanorama={streetViewPanorama}
+              viewMode={imageViewMode}
+              onPanoramaUnavailable={handlePanoramaUnavailable}
               title={roundName}
             />
           ) : (
-            <div className="flex aspect-video min-h-[240px] items-center justify-center px-6 text-center text-sm font-semibold text-[#fff7e6] sm:min-h-[300px]">
+            <div className="flex min-h-[240px] w-full items-center justify-center px-6 text-center text-sm font-semibold text-[#fff7e6] sm:min-h-[300px]">
               Street View-bildet mangler pano-ID eller Google-nøkkel. Sett Google-miljøvariablene og opprett en ny runde.
             </div>
           )}
+          {slowGeoMode === "panorama" ? (
+            <div className="border-t border-white/10 bg-[#0b2838] px-4 py-3 text-sm leading-6 text-[#eadcbd]">
+              <span className="font-semibold text-white">Panorama-modus.</span>{" "}
+              {streetViewPanorama ? "360-visningen åpnes i fullskjerm." : "Panorama mangler for dette bildet."}
+            </div>
+          ) : null}
+          {showPanoramaRetry ? (
+            <form action={replaceSlowGeoPanoramaAction} className="grid gap-3 border-t border-white/10 bg-[#fff7e6] px-4 py-4 text-[#273125]">
+              <input type="hidden" name="round_id" value={roundId} />
+              <input type="hidden" name="return_to" value={replacePanoramaReturnTo} />
+              <p className="text-sm leading-6 text-[#4f412b]">
+                Panorama kunne ikke lastes for dette bildet.
+                {canReplacePanorama && !answerLocked
+                  ? " Du kan bytte til et nytt panorama før første pin-svar låses."
+                  : " Runden beholdes fordi minst ett pin-svar er låst."}
+              </p>
+              {canReplacePanorama && !answerLocked ? (
+                <PendingSubmitButton className="inline-flex h-11 w-full items-center justify-center gap-2 rounded bg-[#203c62] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b] sm:w-auto">
+                  <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                  Prøv nytt panorama
+                </PendingSubmitButton>
+              ) : null}
+            </form>
+          ) : null}
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3 text-xs text-[#eadcbd]">
-            <span>Google Street View</span>
+            <span>{slowGeoMode === "panorama" ? "Google Street View · Panorama" : "Google Street View · Statisk"}</span>
             {showShareButton ? (
               <SlowGeoThreadShareButton
                 title={`SlowGeo: ${roundName}`}

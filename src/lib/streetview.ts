@@ -386,13 +386,18 @@ async function fetchMetadata(candidate: StreetViewCandidate, apiKey: string) {
 
 export async function createStreetViewChallenge({
   excludeCandidateIds = [],
+  requirePanoId = false,
 }: {
   excludeCandidateIds?: string[];
+  requirePanoId?: boolean;
 } = {}) {
   const candidates = shuffledCandidates(excludeCandidateIds);
   const apiKey = googleMapsServerApiKey();
 
   if (!apiKey) {
+    if (requirePanoId) {
+      throw new Error("Panorama-modus krever Google Street View metadata og gyldig pano-ID.");
+    }
     return challengeFromCandidate(candidates[0], null);
   }
 

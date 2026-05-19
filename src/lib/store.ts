@@ -14,7 +14,14 @@ import {
   getOrderCapabilities,
 } from "@/lib/geotisk-orden";
 import { THIRD_COLLEGIUM_MEMBER_IDS } from "@/lib/kollegium";
-import { finalizeSlowGeoRound, isSlowGeoOpenRound, shouldRevealSlowGeoRound } from "@/lib/slowgeo";
+import {
+  finalizeSlowGeoRound,
+  getSlowGeoMode,
+  hasLockedSlowGeoGuess,
+  isSlowGeoOpenRound,
+  normalizeSlowGeoMode,
+  shouldRevealSlowGeoRound,
+} from "@/lib/slowgeo";
 import { createStreetViewChallenge, getSlowGeoMonthlyRoundCap } from "@/lib/streetview";
 import type {
   AppState,
@@ -45,6 +52,7 @@ import type {
   RoundMapSnapshot,
   RoundStatus,
   SlowGeoChallenge,
+  SlowGeoMode,
   VoteValue,
 } from "@/lib/types";
 
@@ -55,6 +63,7 @@ type RoundInput = {
   answer: string;
   answerLocation?: GeoLocation | null;
   challenge?: SlowGeoChallenge | null;
+  slowGeoMode?: SlowGeoMode;
   deadlineAt?: string | null;
   revealedAt?: string | null;
   country: string;
@@ -249,6 +258,7 @@ type RoundLocationData = {
   answerLocation: GeoLocation | null;
   mapSnapshot: RoundMapSnapshot | null;
   challenge?: SlowGeoChallenge | null;
+  slowGeoMode?: SlowGeoMode;
   deadlineAt?: string | null;
   revealedAt?: string | null;
 };
@@ -325,6 +335,7 @@ function normalizeRound(round: Round): Round {
     status,
     answerLocation,
     challenge: round.challenge ?? null,
+    slowGeoMode: normalizeSlowGeoMode(round.slowGeoMode),
     deadlineAt: round.deadlineAt ?? null,
     revealedAt: round.revealedAt ?? null,
     results,
@@ -674,12 +685,22 @@ async function setupSchema(sql: SqlClient): Promise<SqlClient> {
 }
 
 function parseRoundLocationData(value: RoundLocationData | string | null | undefined): RoundLocationData {
-  if (!value) return { answerLocation: null, mapSnapshot: null, challenge: null, deadlineAt: null, revealedAt: null };
+  if (!value) {
+    return {
+      answerLocation: null,
+      mapSnapshot: null,
+      challenge: null,
+      slowGeoMode: "static",
+      deadlineAt: null,
+      revealedAt: null,
+    };
+  }
   const parsed = typeof value === "string" ? (JSON.parse(value) as Partial<RoundLocationData>) : value;
   return {
     answerLocation: parsed.answerLocation ?? null,
     mapSnapshot: parsed.mapSnapshot ?? null,
     challenge: parsed.challenge ?? null,
+    slowGeoMode: normalizeSlowGeoMode(parsed.slowGeoMode),
     deadlineAt: parsed.deadlineAt ?? null,
     revealedAt: parsed.revealedAt ?? null,
   };
@@ -701,6 +722,7 @@ function parseDbRound(row: DbRoundRow): Round {
     answerLocation: locationData.answerLocation,
     mapSnapshot: locationData.mapSnapshot,
     challenge: locationData.challenge ?? null,
+    slowGeoMode: locationData.slowGeoMode,
     deadlineAt: locationData.deadlineAt ?? null,
     revealedAt: locationData.revealedAt ?? null,
     country: row.country,
@@ -900,6 +922,7 @@ async function upsertDbRound(round: Round) {
         answerLocation: round.answerLocation ?? null,
         mapSnapshot: round.mapSnapshot ?? null,
         challenge: round.challenge ?? null,
+        slowGeoMode: getSlowGeoMode(round),
         deadlineAt: round.deadlineAt ?? null,
         revealedAt: round.revealedAt ?? null,
       })}::jsonb
@@ -1823,6 +1846,7 @@ export async function upsertRound(input: RoundInput) {
     answer: input.answer,
     answerLocation: input.answerLocation ?? null,
     challenge: input.challenge ?? existing?.challenge ?? null,
+    slowGeoMode: input.slowGeoMode ?? existing?.slowGeoMode ?? "static",
     deadlineAt: input.deadlineAt ?? existing?.deadlineAt ?? null,
     revealedAt: input.revealedAt ?? existing?.revealedAt ?? null,
     country: input.country,
@@ -1857,9 +1881,12 @@ function monthKey(value: string) {
   return value.slice(0, 7);
 }
 
-export async function createSlowGeoRound(input: { title?: string; deadlineMinutes?: number; deadlineAt?: string } = {}) {
+export async function createSlowGeoRound(
+  input: { title?: string; deadlineMinutes?: number; deadlineAt?: string; mode?: SlowGeoMode } = {},
+) {
   const rounds = await readRounds();
   const timestamp = nowIso();
+  const slowGeoMode = normalizeSlowGeoMode(input.mode);
   const monthlyCap = getSlowGeoMonthlyRoundCap();
   const currentMonth = monthKey(timestamp);
   const slowGeoRoundsThisMonth = rounds.filter((round) => {
@@ -1874,12 +1901,21 @@ export async function createSlowGeoRound(input: { title?: string; deadlineMinute
     };
   }
 
-  const challenge = await createStreetViewChallenge({
-    excludeCandidateIds: rounds
-      .filter((round) => round.challenge)
-      .slice(-8)
-      .map((round) => round.challenge!.candidateId),
-  });
+  let challenge: SlowGeoChallenge;
+  try {
+    challenge = await createStreetViewChallenge({
+      excludeCandidateIds: rounds
+        .filter((round) => round.challenge)
+        .slice(-8)
+        .map((round) => round.challenge!.candidateId),
+      requirePanoId: slowGeoMode === "panorama",
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      reason: error instanceof Error ? error.message : "SlowGeo-bildet kunne ikke hentes akkurat nå.",
+    };
+  }
   const nextNumber = rounds.reduce((max, round) => Math.max(max, round.number), 0) + 1;
   const deadlineMinutes = clampDeadlineMinutes(input.deadlineMinutes);
   const deadlineAt = normalizeDeadlineAt(input.deadlineAt) ?? new Date(Date.now() + deadlineMinutes * 60 * 1000).toISOString();
@@ -1900,6 +1936,7 @@ export async function createSlowGeoRound(input: { title?: string; deadlineMinute
     answer: challenge.label,
     answerLocation,
     challenge,
+    slowGeoMode,
     deadlineAt,
     revealedAt: null,
     country: challenge.country,
@@ -1913,6 +1950,70 @@ export async function createSlowGeoRound(input: { title?: string; deadlineMinute
 
   await saveRounds([...rounds, round]);
   return { ok: true, round };
+}
+
+export async function replaceSlowGeoPanoramaRound(input: { roundId: string }) {
+  const rounds = await readRounds();
+  const round = rounds.find((candidate) => candidate.id === input.roundId);
+  if (!round) {
+    return { ok: false, reason: "Runden finnes ikke i protokollen." };
+  }
+  if (!isSlowGeoOpenRound(round)) {
+    return { ok: false, reason: "Bare åpne SlowGeo-runder kan få nytt panorama." };
+  }
+  if (getSlowGeoMode(round) !== "panorama") {
+    return { ok: false, reason: "Prøv nytt panorama gjelder bare Panorama-runder." };
+  }
+  if (hasLockedSlowGeoGuess(round)) {
+    return { ok: false, reason: "Panorama kan ikke byttes etter at et pin-svar er låst." };
+  }
+
+  const excluded = new Set<string>();
+  if (round.challenge?.candidateId) excluded.add(round.challenge.candidateId);
+  rounds
+    .filter((candidate) => candidate.id !== round.id && candidate.challenge)
+    .slice(-8)
+    .forEach((candidate) => excluded.add(candidate.challenge!.candidateId));
+
+  let challenge: SlowGeoChallenge;
+  try {
+    challenge = await createStreetViewChallenge({
+      excludeCandidateIds: [...excluded],
+      requirePanoId: true,
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      reason: error instanceof Error ? error.message : "Nytt panorama kunne ikke hentes akkurat nå.",
+    };
+  }
+  const timestamp = nowIso();
+  const answerLocation: GeoLocation = {
+    lat: challenge.lat,
+    lon: challenge.lon,
+    label: challenge.label,
+    query: challenge.candidateId,
+    country: challenge.country,
+    source: "google_street_view",
+  };
+  const replacement: Round = normalizeRound({
+    ...round,
+    answer: challenge.label,
+    answerLocation,
+    mapSnapshot: null,
+    challenge,
+    slowGeoMode: "panorama",
+    revealedAt: null,
+    country: challenge.country,
+    continent: challenge.continent,
+    comment: challenge.imageDate ? `Street View ${challenge.imageDate}` : "Google Street View",
+    status: "open",
+    updatedAt: timestamp,
+    results: emptyResults(competingPlayers),
+  });
+
+  await saveRounds(rounds.map((candidate) => (candidate.id === round.id ? replacement : candidate)));
+  return { ok: true, round: replacement };
 }
 
 export async function submitSlowGeoGuess(input: {

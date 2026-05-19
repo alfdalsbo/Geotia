@@ -171,10 +171,23 @@ async function mockGoogleMaps(page: Page) {
   });
 }
 
-async function writeOpenSlowGeoFixture() {
+type SlowGeoFixtureMode = "static" | "panorama";
+
+async function writeOpenSlowGeoFixture({
+  roundId = "playwright-mobile-slowgeo",
+  name = "Mobilkart-prøven",
+  mode = "static",
+  panoId = "playwright-pano",
+  includeLockedGuesses = true,
+}: {
+  roundId?: string;
+  name?: string;
+  mode?: SlowGeoFixtureMode;
+  panoId?: string | null;
+  includeLockedGuesses?: boolean;
+} = {}) {
   const timestamp = new Date().toISOString();
   const deadlineAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
-  const roundId = "playwright-mobile-slowgeo";
   const dataDir = path.join(process.cwd(), ".data");
   await mkdir(dataDir, { recursive: true });
   await writeFile(
@@ -187,7 +200,7 @@ async function writeOpenSlowGeoFixture() {
             id: roundId,
             number: 1,
             date: timestamp.slice(0, 10),
-            name: "Mobilkart-prøven",
+            name,
             answer: "Tromsøbrua, Tromsø",
             answerLocation: {
               lat: 69.6534,
@@ -198,6 +211,7 @@ async function writeOpenSlowGeoFixture() {
               source: "google_street_view",
             },
             mapSnapshot: null,
+            slowGeoMode: mode,
             challenge: {
               id: "challenge-mobile",
               candidateId: "tromso-bridge",
@@ -210,7 +224,7 @@ async function writeOpenSlowGeoFixture() {
               heading: 64,
               pitch: 1,
               fov: 90,
-              panoId: "playwright-pano",
+              panoId: panoId ?? undefined,
               imageDate: "2024-01",
               copyright: "© 2024 Google",
               difficulty: "lett",
@@ -228,20 +242,23 @@ async function writeOpenSlowGeoFixture() {
             createdAt: timestamp,
             updatedAt: timestamp,
             results: competingPlayerIds.map((playerId) => {
-              const lockedGuesses: Record<string, { lat: number; lon: number; label: string; note: string }> = {
-                vegard: {
-                  lat: 60.3913,
-                  lon: 5.3221,
-                  label: "Bergen hemmelig pin",
-                  note: "hemmelig vegard-notat",
-                },
-                steinar: {
-                  lat: 63.4305,
-                  lon: 10.3951,
-                  label: "Trondheim hemmelig pin",
-                  note: "hemmelig steinar-notat",
-                },
-              };
+              const lockedGuesses: Record<string, { lat: number; lon: number; label: string; note: string }> =
+                includeLockedGuesses
+                  ? {
+                      vegard: {
+                        lat: 60.3913,
+                        lon: 5.3221,
+                        label: "Bergen hemmelig pin",
+                        note: "hemmelig vegard-notat",
+                      },
+                      steinar: {
+                        lat: 63.4305,
+                        lon: 10.3951,
+                        label: "Trondheim hemmelig pin",
+                        note: "hemmelig steinar-notat",
+                      },
+                    }
+                  : {};
               const lockedGuess = lockedGuesses[playerId];
 
               return {
@@ -608,7 +625,7 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Mobilkart-prøven" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Hvem har svart" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Rundestatus" })).toHaveCount(0);
-  await expect(page.getByText("Google Street View", { exact: true })).toBeVisible();
+  await expect(page.getByText("Google Street View · Statisk")).toBeVisible();
   await expect(page.getByText("© 2024 Google")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
 
@@ -669,6 +686,54 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
 
   await dialog.getByRole("button", { name: "Lukk kart" }).click();
   await expect(dialog).toBeHidden();
+});
+
+test("SlowGeo Panorama mode opens 360 view in fullscreen on mobile", async ({ page }) => {
+  test.setTimeout(120_000);
+  await mockGoogleMaps(page);
+  const roundId = await writeOpenSlowGeoFixture({
+    roundId: "playwright-mobile-slowgeo-panorama",
+    name: "Panorama-prøven",
+    mode: "panorama",
+    includeLockedGuesses: false,
+  });
+
+  await login(page);
+  await page.goto(`/runder/${roundId}`, { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Panorama-prøven" })).toBeVisible();
+  await expect(page.getByText("Panorama-modus.")).toBeVisible();
+  await expect(page.getByText("Google Street View · Panorama")).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+
+  await page.getByRole("button", { name: "Åpne SlowGeo-bildet i fullskjerm" }).click();
+  const imageDialog = page.getByRole("dialog", { name: "SlowGeo-bilde i fullskjerm" });
+  await expect(imageDialog).toBeVisible();
+  await expect(imageDialog.getByTestId("slowgeo-panorama-viewport")).toBeVisible();
+  await expect(imageDialog.getByTestId("slowgeo-panorama-viewport")).toHaveText("Panorama mock");
+  await expect(imageDialog.getByTestId("slowgeo-image-viewport")).toHaveCount(0);
+  await expectNoHorizontalOverflow(page);
+
+  await imageDialog.getByRole("button", { name: "Lukk bilde" }).click();
+  await expect(imageDialog).toBeHidden();
+});
+
+test("SlowGeo Panorama retry is offered before the first locked pin", async ({ page }) => {
+  test.setTimeout(120_000);
+  await mockGoogleMaps(page);
+  const roundId = await writeOpenSlowGeoFixture({
+    roundId: "playwright-mobile-slowgeo-panorama-retry",
+    name: "Panoramafeil-prøven",
+    mode: "panorama",
+    panoId: null,
+    includeLockedGuesses: false,
+  });
+
+  await login(page);
+  await page.goto(`/slowgeo/${roundId}`, { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Panoramafeil-prøven" })).toBeVisible();
+  await expect(page.getByText("Panorama mangler for dette bildet.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Prøv nytt panorama" })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
 });
 
 test("SlowGeo revealed card shows the same map card on answer page and overview", async ({ page }) => {

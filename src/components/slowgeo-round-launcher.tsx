@@ -23,11 +23,34 @@ export function SlowGeoRoundLauncher() {
   const defaultTime = defaultDeadlineTime();
 
   return (
-    <form action={createSlowGeoRoundAction} className="geo-form grid gap-4 lg:grid-cols-[1fr_200px_auto]">
+    <form action={createSlowGeoRoundAction} className="geo-form grid gap-4 lg:grid-cols-[1fr_minmax(250px,0.9fr)_200px_auto]">
       <label>
         <span>Tittel på bildet</span>
         <input name="title" placeholder="F.eks. Kveldsbilde for grunnloven" />
       </label>
+      <fieldset className="min-w-0">
+        <legend className="mb-2 text-sm font-semibold text-[#273125]">Modus</legend>
+        <div className="grid grid-cols-2 gap-2 rounded border border-[#d8ded0] bg-[#f7f8f5] p-1">
+          <label className="min-w-0 cursor-pointer">
+            <input className="peer sr-only" type="radio" name="slowgeo_mode" value="static" defaultChecked />
+            <span className="flex min-h-11 items-center justify-center rounded px-3 text-center text-sm font-semibold text-[#5b6257] transition peer-checked:bg-white peer-checked:text-[#203c62] peer-checked:shadow-sm">
+              Statisk
+            </span>
+          </label>
+          <label className="min-w-0 cursor-pointer">
+            <input
+              className="peer sr-only"
+              type="radio"
+              name="slowgeo_mode"
+              value="panorama"
+              disabled={!hasServerKey}
+            />
+            <span className="flex min-h-11 items-center justify-center rounded px-3 text-center text-sm font-semibold text-[#5b6257] transition peer-checked:bg-white peer-checked:text-[#203c62] peer-checked:shadow-sm peer-disabled:cursor-not-allowed peer-disabled:opacity-45">
+              Panorama
+            </span>
+          </label>
+        </div>
+      </fieldset>
       <label>
         <span>Fristklokkeslett</span>
         <input name="deadline_time" type="time" defaultValue={defaultTime} required />
@@ -38,7 +61,7 @@ export function SlowGeoRoundLauncher() {
           Åpne SlowGeo
         </PendingSubmitButton>
       </div>
-      <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 py-3 text-sm leading-6 text-[#4f412b] shadow-sm lg:col-span-3">
+      <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 py-3 text-sm leading-6 text-[#4f412b] shadow-sm lg:col-span-4">
         <span
           className="mr-1 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[#7c2430]"
           style={{ fontFamily: "var(--font-display)" }}

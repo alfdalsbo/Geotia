@@ -9,6 +9,7 @@ import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
 import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
 import { computeRound, computeStandings } from "@/lib/scoring";
 import { pickGeoticLine, slowGeoEmptyStateLines } from "@/lib/geotia-jargon";
+import { getSlowGeoMode, slowGeoModeLabels } from "@/lib/slowgeo";
 import { buildOpenSlowGeoShareTextOptions } from "@/lib/slowgeo-share";
 import { buildSlowGeoRevealMarkers, buildSlowGeoRevealResults } from "@/lib/slowgeo-reveal";
 import { getSlowGeoProgress, getSlowGeoRoundInsights, slowGeoDifficultyLabels } from "@/lib/slowgeo-insights";
@@ -119,6 +120,7 @@ export default async function SlowGeoGamePage({
                 streetViewUrl={streetViewUrl}
                 streetViewStaticViewConfig={streetViewStaticViewConfig}
                 streetViewPanorama={streetViewPanorama}
+                slowGeoMode={getSlowGeoMode(latestResolvedRound)}
                 googleMapsApiKey={publicGoogleKey}
                 markers={revealMarkers}
                 results={revealResults}
@@ -141,13 +143,14 @@ export default async function SlowGeoGamePage({
             {activeRounds.map((round) => {
               const progress = getSlowGeoProgress(round);
               const shareUrl = `/slowgeo/${round.id}`;
+              const mode = getSlowGeoMode(round);
               const difficulty = round.challenge?.difficulty ? slowGeoDifficultyLabels[round.challenge.difficulty] : null;
               return (
                 <article key={round.id} className="rounded border border-[#d8ded0] bg-white p-4 shadow-sm">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8e3030]">
-                        Runde #{round.number}
+                        Runde #{round.number} · {slowGeoModeLabels[mode]}
                       </p>
                       <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">
                         {round.name}

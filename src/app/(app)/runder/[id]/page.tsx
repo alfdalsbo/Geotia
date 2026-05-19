@@ -15,6 +15,7 @@ import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
 import { getCurrentGeot } from "@/lib/auth";
 import { selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { computeRound } from "@/lib/scoring";
+import { getSlowGeoMode, hasLockedSlowGeoGuess } from "@/lib/slowgeo";
 import { buildSlowGeoAnswerStatusItems } from "@/lib/slowgeo-answer-status";
 import { buildSlowGeoRevealMarkers, buildSlowGeoRevealResults } from "@/lib/slowgeo-reveal";
 import { getRoundsState, maybeRevealRound } from "@/lib/store";
@@ -89,6 +90,8 @@ export default async function RoundDetailPage({
   const computed = computeRound(round, state.players);
   const isStreetViewRound = Boolean(round.challenge);
   const isOpenStreetViewRound = isStreetViewRound && round.status === "open";
+  const slowGeoMode = getSlowGeoMode(round);
+  const canReplacePanorama = isOpenStreetViewRound && slowGeoMode === "panorama" && !hasLockedSlowGeoGuess(round);
   const slowGeoShareUrl = `/slowgeo/${round.id}`;
   const publicGoogleKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
   const streetViewUrl = round.challenge
@@ -173,6 +176,8 @@ export default async function RoundDetailPage({
               ? "Pin-svaret er låst. Kranglingen kan fortsette uten at pinnen flytter seg."
               : query.status === "avslort"
                 ? "Fasit er avslørt, protokollen er låst og runden ligger i arkivet."
+                : query.status === "panorama_nytt"
+                  ? "Nytt panorama er hentet inn i samme SlowGeo-lenke."
                 : query.status === "apnet"
                   ? "SlowGeo-runden er åpnet."
                   : "Protokollen er oppdatert."}
@@ -212,6 +217,8 @@ export default async function RoundDetailPage({
           streetViewUrl={streetViewUrl}
           streetViewStaticViewConfig={streetViewStaticViewConfig}
           streetViewPanorama={streetViewPanorama}
+          slowGeoMode={slowGeoMode}
+          canReplacePanorama={canReplacePanorama}
           googleMapsApiKey={publicGoogleKey}
           existingGuess={existingGuess}
           existingNote={currentResult?.note ?? ""}
@@ -228,6 +235,7 @@ export default async function RoundDetailPage({
           streetViewUrl={streetViewUrl}
           streetViewStaticViewConfig={streetViewStaticViewConfig}
           streetViewPanorama={streetViewPanorama}
+          slowGeoMode={slowGeoMode}
           googleMapsApiKey={publicGoogleKey}
           markers={revealMarkers}
           results={revealResults}
