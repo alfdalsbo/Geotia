@@ -111,8 +111,10 @@ async function mockGoogleMaps(page: Page) {
           class Map {
             constructor(element, options) {
               this.element = element;
+              this.options = options;
               this.center = options.center;
               this.zoom = options.zoom;
+              element.dataset.mapGestureHandling = options.gestureHandling || "";
             }
             addListener(eventName, handler) {
               if (eventName !== "click") return { remove() {} };
@@ -610,6 +612,8 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
   await expect(page.getByText("60.39130")).toHaveCount(0);
   await expect(page.getByText("Tromsøbrua, Tromsø")).toHaveCount(0);
   await expect(page.getByTestId("slowgeo-map-surface")).toBeVisible();
+  await expect(page.getByTestId("slowgeo-map-surface")).toHaveAttribute("data-map-gesture-handling", "greedy");
+  await expect(page.getByTestId("slowgeo-map-surface")).toHaveCSS("touch-action", "none");
   await expect(page.getByText("Laster kart")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
 
@@ -627,6 +631,8 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Rundestatus" })).toHaveCount(0);
   await expect(page.getByText("Google Street View · Statisk")).toBeVisible();
   await expect(page.getByText("© 2024 Google")).toHaveCount(0);
+  await expect(page.getByTestId("slowgeo-map-surface")).toHaveAttribute("data-map-gesture-handling", "greedy");
+  await expect(page.getByTestId("slowgeo-map-surface")).toHaveCSS("touch-action", "none");
   await expectNoHorizontalOverflow(page);
 
   await page.getByRole("button", { name: "Åpne SlowGeo-bildet i fullskjerm" }).click();
@@ -678,6 +684,8 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
   const dialog = page.getByRole("dialog", { name: "Sett pin i kart" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText("SlowGeo-kart")).toBeVisible();
+  await expect(dialog.getByTestId("slowgeo-map-surface")).toHaveAttribute("data-map-gesture-handling", "greedy");
+  await expect(dialog.getByTestId("slowgeo-map-surface")).toHaveCSS("touch-action", "none");
 
   await dialog.getByTestId("slowgeo-map-surface").click({ position: { x: 160, y: 180 } });
   await expect(dialog.getByText("59.91270, 10.74610")).toBeVisible();
@@ -752,6 +760,8 @@ test("SlowGeo revealed card shows the same map card on answer page and overview"
     await expect(page.getByRole("heading", { name: "Felles fasitkort-prøven", level: 2 })).toBeVisible();
     await expect(page.getByText("Fasit: Tromsøbrua, Tromsø", { exact: true })).toBeVisible();
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toBeVisible();
+    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-map-gesture-handling", "greedy");
+    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveCSS("touch-action", "none");
     await expect(page.getByRole("heading", { name: "Resultat" })).toBeVisible();
     await expect(page.getByText("Tromsøbrua nesten på streken")).toBeVisible();
 
@@ -760,6 +770,8 @@ test("SlowGeo revealed card shows the same map card on answer page and overview"
     await expect(revealDialog).toBeVisible();
     await expect(revealDialog.getByText("SlowGeo-kart")).toBeVisible();
     await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toBeVisible();
+    await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-map-gesture-handling", "greedy");
+    await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toHaveCSS("touch-action", "none");
     await expectNoHorizontalOverflow(page);
     await revealDialog.getByRole("button", { name: "Lukk kart" }).click();
     await expect(revealDialog).toBeHidden();
@@ -770,6 +782,8 @@ test("SlowGeo revealed card shows the same map card on answer page and overview"
     await expect(page.getByRole("heading", { name: "Felles fasitkort-prøven", level: 2 })).toBeVisible();
     await expect(page.getByText("SlowGeo #2 · Fasitkort")).toBeVisible();
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toBeVisible();
+    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-map-gesture-handling", "greedy");
+    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveCSS("touch-action", "none");
     await expect(page.getByRole("link", { name: /Åpne fasitkort/ })).toHaveAttribute("href", `/slowgeo/${roundId}`);
     await expect(page.getByRole("link", { name: "Protokoll", exact: true })).toHaveCount(0);
     await expectNoHorizontalOverflow(page);

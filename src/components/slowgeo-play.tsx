@@ -67,6 +67,7 @@ export function SlowGeoPlay({
   showShareButton = true,
   answerStatusItems = [],
 }: SlowGeoPlayProps) {
+  const mapShellRef = useRef<HTMLDivElement | null>(null);
   const mapElementRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<GoogleMap | null>(null);
   const markerRef = useRef<GoogleMarker | null>(null);
@@ -148,6 +149,7 @@ export function SlowGeoPlay({
         const map = new mapsApi.Map(mapElementRef.current, {
           center: existingGuess ? { lat: existingGuess.lat, lng: existingGuess.lon } : { lat: 20, lng: 12 },
           zoom: existingGuess ? 7 : 2,
+          gestureHandling: "greedy",
           mapTypeControl: false,
           fullscreenControl: false,
           streetViewControl: false,
@@ -181,15 +183,30 @@ export function SlowGeoPlay({
   useEffect(() => {
     if (!mapOpen) return;
 
+    const mapShell = mapShellRef.current;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setMapOpen(false);
     };
+    const blockPageGesture = (event: Event) => {
+      event.preventDefault();
+    };
+    const blockPagePinch = (event: TouchEvent) => {
+      if (event.touches.length > 1) {
+        event.preventDefault();
+      }
+    };
     window.addEventListener("keydown", onKeyDown);
+    mapShell?.addEventListener("touchmove", blockPagePinch, { passive: false });
+    mapShell?.addEventListener("gesturestart", blockPageGesture, { passive: false });
+    mapShell?.addEventListener("gesturechange", blockPageGesture, { passive: false });
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKeyDown);
+      mapShell?.removeEventListener("touchmove", blockPagePinch);
+      mapShell?.removeEventListener("gesturestart", blockPageGesture);
+      mapShell?.removeEventListener("gesturechange", blockPageGesture);
     };
   }, [mapOpen]);
 
@@ -305,10 +322,12 @@ export function SlowGeoPlay({
           {hasMap ? (
             <>
               <div
+                ref={mapShellRef}
                 className={mapShellClass}
                 role={mapOpen ? "dialog" : undefined}
                 aria-modal={mapOpen ? "true" : undefined}
                 aria-label={mapOpen ? "Sett pin i kart" : undefined}
+                style={{ touchAction: "none", overscrollBehavior: mapOpen ? "none" : "contain" }}
               >
                 {mapOpen ? (
                   <div className="flex items-center justify-between gap-3 border-b border-[#d8ded0] bg-[#fff7e6] px-3 py-3 shadow-sm">
@@ -328,8 +347,16 @@ export function SlowGeoPlay({
                     </button>
                   </div>
                 ) : null}
-                <div className={mapOpen ? "relative min-h-0 flex-1" : "absolute inset-0"}>
-                  <div ref={mapElementRef} data-testid="slowgeo-map-surface" className="absolute inset-0" />
+                <div
+                  className={mapOpen ? "relative min-h-0 flex-1" : "absolute inset-0"}
+                  style={{ touchAction: "none", overscrollBehavior: "contain" }}
+                >
+                  <div
+                    ref={mapElementRef}
+                    data-testid="slowgeo-map-surface"
+                    className="absolute inset-0"
+                    style={{ touchAction: "none", overscrollBehavior: "contain" }}
+                  />
                   {loadingMap ? (
                     <div className="absolute inset-0 flex items-center justify-center bg-white/75 text-sm font-semibold text-[#203c62]">
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
