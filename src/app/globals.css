@@ -370,7 +370,7 @@ textarea {
 }
 
 .rikshead-sub {
-  font-family: var(--font-italic);
+  font-family: var(--font-numerals-cormorant);
   font-style: italic;
   font-weight: 300;
   color: #e8cf8a;

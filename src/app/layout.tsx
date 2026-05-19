@@ -21,7 +21,8 @@ const ebGaramond = EB_Garamond({
 const cormorant = Cormorant_Garamond({
   variable: "--font-numerals-cormorant",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["300", "500", "600", "700"],
+  style: ["normal", "italic"],
   display: "swap",
 });
 
