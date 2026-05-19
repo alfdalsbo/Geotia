@@ -1,26 +1,18 @@
 import Link from "next/link";
-import { Archive, ArrowRight, Clock, MapPinned } from "lucide-react";
+import { ArrowRight, Clock, MapPinned } from "lucide-react";
 
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { Section, StatTile } from "@/components/section";
-import { SlowGeoRevealMap } from "@/components/slowgeo-reveal-map";
 import { SlowGeoRoundLauncher } from "@/components/slowgeo-round-launcher";
 import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
 import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
-import { computeRound, computeStandings } from "@/lib/scoring";
+import { computeStandings } from "@/lib/scoring";
 import { pickGeoticLine, slowGeoEmptyStateLines } from "@/lib/geotia-jargon";
-import { getSlowGeoMode, getSlowGeoStartedAt, getSlowGeoStarterLabel, slowGeoModeLabels } from "@/lib/slowgeo";
+import { getSlowGeoMode, slowGeoModeLabels } from "@/lib/slowgeo";
 import { buildOpenSlowGeoShareTextOptions } from "@/lib/slowgeo-share";
-import { buildSlowGeoRevealMarkers, buildSlowGeoRevealResults } from "@/lib/slowgeo-reveal";
-import { getSlowGeoProgress, getSlowGeoRoundInsights, slowGeoDifficultyLabels } from "@/lib/slowgeo-insights";
+import { getSlowGeoProgress, slowGeoDifficultyLabels } from "@/lib/slowgeo-insights";
 import { getSlowGeoState } from "@/lib/store";
-import { buildStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
-import {
-  buildStreetViewImageUrl,
-  buildStreetViewStaticViewConfig,
-  STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
-} from "@/lib/streetview-url";
-import { dateLabel, dateTimeLabel, formatKm } from "@/lib/utils";
+import { dateTimeLabel, formatKm } from "@/lib/utils";
 
 export const metadata = {
   title: "SlowGeo",
@@ -33,17 +25,10 @@ export default async function SlowGeoGamePage({
 }) {
   const params = (await searchParams) ?? {};
   const state = await getSlowGeoState();
-  const publicGoogleKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
   const standings = computeStandings(state.players, state.rounds);
   const activeRounds = state.rounds
     .filter((round) => round.challenge && round.status === "open")
     .sort((a, b) => String(a.deadlineAt).localeCompare(String(b.deadlineAt)));
-  const resolvedRounds = state.rounds
-    .filter((round) => round.challenge && round.status !== "open")
-    .sort((a, b) => b.number - a.number);
-  const recentRounds = resolvedRounds.slice(0, 6);
-  const latestResolvedRound = resolvedRounds[0];
-  const olderRecentRounds = recentRounds.filter((round) => round.id !== latestResolvedRound?.id);
   const leader = standings[0];
   const kattometerLeader = standings
     .filter((standing) => standing.lockedRounds > 0)
@@ -88,37 +73,6 @@ export default async function SlowGeoGamePage({
         <StatTile label="Åpne runder" value={activeRounds.length} detail="Klar for krangling" tone="green" />
         <StatTile label="Poengleder" value={leader?.player.shortName ?? "-"} detail={`${leader?.totalPoints ?? 0} poeng`} tone="blue" />
         <StatTile label="Lavest kattometer" value={kattometerLeader?.player.shortName ?? "-"} detail={formatKm(kattometerLeader?.totalKattometer)} tone="gold" />
-      </div>
-
-      <div className="grid gap-3 lg:grid-cols-2">
-        <div className="rounded border border-[#285c45]/25 bg-[#285c45]/10 p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#285c45]">Pågår nå</p>
-          <h2 className="font-display mt-2 text-2xl font-semibold text-[#062b40]">Aktive SlowGeo-runder</h2>
-          <p className="mt-2 text-sm leading-6 text-[#4f412b]">
-            {activeRounds.length
-              ? `${activeRounds.length} runde${activeRounds.length === 1 ? "" : "r"} er åpen for pin-svar.`
-              : "Ingen aktive runder akkurat nå."}
-          </p>
-        </div>
-        <Link
-          href="/runder"
-          prefetch={false}
-          className="rounded border border-[#203c62]/20 bg-white p-4 text-[#203c62] shadow-sm transition hover:border-[#203c62]/45 hover:bg-[#fff7e6]"
-        >
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">Avsluttet</p>
-          <h2 className="font-display mt-2 flex items-center gap-2 text-2xl font-semibold">
-            Ferdige fasitkort
-            <Archive className="h-5 w-5" aria-hidden="true" />
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-[#4f412b]">
-            {resolvedRounds.length} avsluttede SlowGeo-runder ligger i Rundeprotokollen.
-          </p>
-          <span className="mt-3 inline-flex h-10 items-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white">
-            Åpne ferdige fasitkort
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            <LinkPendingIndicator className="text-white" />
-          </span>
-        </Link>
       </div>
 
       <Section title="Aktive SlowGeo-runder" eyebrow="Pågår nå · fasit skjult">
@@ -194,131 +148,6 @@ export default async function SlowGeoGamePage({
         )}
       </Section>
 
-      {latestResolvedRound ? (
-        <Section
-          title="Ferdig SlowGeo: siste fasitkort"
-          eyebrow="Avsluttet og arkivført"
-          action={
-            <Link
-              href="/runder"
-              prefetch={false}
-              className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
-            >
-              Alle ferdige
-              <Archive className="h-4 w-4" aria-hidden="true" />
-              <LinkPendingIndicator />
-            </Link>
-          }
-        >
-          {(() => {
-            const challenge = latestResolvedRound.challenge;
-            if (!challenge) return null;
-            const computed = computeRound(latestResolvedRound, state.players);
-            const streetViewUrl = buildStreetViewImageUrl({
-              challenge,
-              apiKey: publicGoogleKey,
-              allowLocationFallback: true,
-              size: STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
-            });
-            const streetViewStaticViewConfig = buildStreetViewStaticViewConfig(challenge);
-            const streetViewPanorama = buildStreetViewPanoramaConfig({
-              challenge,
-              apiKey: publicGoogleKey,
-              allowLocationFallback: true,
-            });
-            const revealMarkers = buildSlowGeoRevealMarkers(computed);
-            const revealResults = buildSlowGeoRevealResults(computed);
-            return (
-              <SlowGeoRevealMap
-                roundName={latestResolvedRound.name}
-                roundNumber={latestResolvedRound.number}
-                streetViewUrl={streetViewUrl}
-                streetViewStaticViewConfig={streetViewStaticViewConfig}
-                streetViewPanorama={streetViewPanorama}
-                slowGeoMode={getSlowGeoMode(latestResolvedRound)}
-                googleMapsApiKey={publicGoogleKey}
-                markers={revealMarkers}
-                results={revealResults}
-                shareUrl={`/slowgeo/${latestResolvedRound.id}`}
-                detailHref={`/slowgeo/${latestResolvedRound.id}`}
-                answerLabel={latestResolvedRound.answer || challenge.label}
-                startedByLabel={getSlowGeoStarterLabel(latestResolvedRound, state.players)}
-                startedAtLabel={dateTimeLabel(getSlowGeoStartedAt(latestResolvedRound))}
-                winnerNames={computed.winnerNames}
-                imageDate={challenge.imageDate}
-                copyright={challenge.copyright}
-                variant="summary"
-              />
-            );
-          })()}
-        </Section>
-      ) : null}
-
-      <Section
-        title="Flere ferdige fasitkort"
-        eyebrow="Avsluttet protokoll"
-        action={
-          <Link
-            href="/runder"
-            prefetch={false}
-            className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
-          >
-            Alle ferdige
-            <Archive className="h-4 w-4" aria-hidden="true" />
-            <LinkPendingIndicator />
-          </Link>
-        }
-      >
-        {olderRecentRounds.length ? (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {olderRecentRounds.map((round) => {
-              const computed = computeRound(round, state.players);
-              const winnerKm = computed.results.find((result) => result.rank === 1)?.actualKm;
-              const insight = getSlowGeoRoundInsights(computed).insightCards[0];
-              return (
-                <article key={round.id} className="rounded border border-[#d8ded0] bg-white p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8e3030]">
-                    {dateLabel(round.date)} · {round.status === "locked" ? "Låst" : "Fasit vist"}
-                  </p>
-                  <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">
-                    {round.name}
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-[#5b6257]">
-                    Vinner: {computed.winnerNames.join(", ") || "-"} · beste bom {formatKm(winnerKm)}
-                  </p>
-                  {insight ? (
-                    <p className="mt-3 rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm font-semibold text-[#654517]">
-                      {insight.title}
-                    </p>
-                  ) : null}
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Link
-                      href={`/slowgeo/${round.id}`}
-                      prefetch={false}
-                      className="inline-flex h-9 items-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
-                    >
-                      Fasitkort
-                      <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                      <LinkPendingIndicator className="text-white" />
-                    </Link>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="rounded border border-dashed border-[#b8892f] bg-[#b8892f]/8 p-5">
-            <p className="text-sm text-[#5b6257]">
-              Ingen eldre avslørte Street View-runder ennå. Første fasit blir stående over.
-            </p>
-          </div>
-        )}
-        {resolvedRounds.length === 0 ? null : (
-          <p className="mt-4 text-sm text-[#5b6257]">
-            {resolvedRounds.length} ferdige SlowGeo-fasitkort ligger i Rundeprotokollen.
-          </p>
-        )}
-      </Section>
     </div>
   );
 }

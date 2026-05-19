@@ -252,7 +252,7 @@ test("login and open the SlowGeo protocol archive", async ({ page }) => {
   const roundId = await writeSlowGeoProtocolFixture();
   await page.goto("/runder");
 
-  await expect(page.getByRole("heading", { name: "Ferdige SlowGeo-fasitkort" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Rundeprotokoll" })).toBeVisible();
   await expect(page.getByTestId("slowgeo-protocol-card")).toBeVisible();
   await expect(page.getByText("Protokollkortets prøverunde")).toBeVisible();
   await expect(page.getByText("Reist av: Alf Kåre")).toBeVisible();

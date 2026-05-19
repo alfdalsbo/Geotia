@@ -12,7 +12,7 @@ import type { ComputedRound, Round, RoundStatus } from "@/lib/types";
 import { cn, dateTimeLabel, formatKm } from "@/lib/utils";
 
 export const metadata = {
-  title: "Ferdige SlowGeo-fasitkort",
+  title: "Rundeprotokoll",
 };
 
 const statusLabel: Record<RoundStatus, string> = {
@@ -37,14 +37,14 @@ export default async function RoundsPage({
     <div className="space-y-6">
       <div className="geotia-frame rounded p-5 sm:p-7">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
-          Protokollhvelvet
+          Ferdige SlowGeo-fasitkort
         </p>
         <h1 className="font-display mt-2 text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
-          Ferdige SlowGeo-fasitkort
+          Rundeprotokoll
         </h1>
         <p className="mt-3 max-w-3xl text-[#60553f]">
-          Dette er arkivet for avsluttede SlowGeo-runder. Aktive runder bor i
-          Spillrommet; her ligger bare fasitkort, vinnere og ferdige kartspor.
+          Dette er hjemmet for alle ferdige SlowGeo-runder. Aktive runder bor i
+          Spillrommet; Rundeprotokollen viser bare fasitkort, vinnere og ferdige kartspor.
         </p>
         <p className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm leading-6 text-[#4f412b]">
           Nyeste fasit står først. Ingen startskjema, ingen manuell kontroll,
@@ -70,7 +70,7 @@ export default async function RoundsPage({
         </div>
       ) : null}
 
-      <Section title="Ferdige fasitkort" eyebrow="Avsluttede SlowGeo-runder">
+      <Section title="Alle ferdige fasitkort" eyebrow="Avsluttede SlowGeo-runder">
         {protocolRounds.length ? (
           <div className="grid gap-4 lg:grid-cols-2">
             {protocolRounds.map((round) => {
