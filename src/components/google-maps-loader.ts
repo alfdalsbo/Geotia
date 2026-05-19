@@ -55,6 +55,8 @@ export type GoogleMapsApi = {
   Polyline: new (options: Record<string, unknown>) => GooglePolyline;
   StreetViewPanorama?: new (element: HTMLElement, options: Record<string, unknown>) => GoogleStreetViewPanorama;
   LatLngBounds: new () => GoogleLatLngBounds;
+  Size?: new (width: number, height: number) => unknown;
+  Point?: new (x: number, y: number) => unknown;
   event?: {
     trigger(instance: unknown, eventName: string): void;
   };

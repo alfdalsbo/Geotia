@@ -130,6 +130,12 @@ async function mockGoogleMaps(page: Page) {
             constructor(options) {
               this.map = options.map;
               this.position = options.position;
+              this.options = options;
+              if (options.map?.element && String(options.title || "").startsWith("Fasit:")) {
+                options.map.element.dataset.answerMarkerIcon = options.icon?.url ? "custom" : "default";
+                options.map.element.dataset.answerMarkerLabel = options.label ? String(options.label) : "none";
+                options.map.element.dataset.answerMarkerZIndex = String(options.zIndex || "");
+              }
             }
             setMap(map) { this.map = map; }
             setPosition(point) { this.position = point; }
@@ -762,6 +768,9 @@ test("SlowGeo revealed card shows the same map card on answer page and overview"
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toBeVisible();
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-map-gesture-handling", "greedy");
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveCSS("touch-action", "none");
+    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-answer-marker-icon", "custom");
+    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-answer-marker-label", "none");
+    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-answer-marker-z-index", "1000");
     await expect(page.getByRole("heading", { name: "Resultat" })).toBeVisible();
     await expect(page.getByText("Tromsøbrua nesten på streken")).toBeVisible();
 
@@ -772,6 +781,8 @@ test("SlowGeo revealed card shows the same map card on answer page and overview"
     await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toBeVisible();
     await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-map-gesture-handling", "greedy");
     await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toHaveCSS("touch-action", "none");
+    await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-answer-marker-icon", "custom");
+    await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-answer-marker-label", "none");
     await expectNoHorizontalOverflow(page);
     await revealDialog.getByRole("button", { name: "Lukk kart" }).click();
     await expect(revealDialog).toBeHidden();
@@ -784,6 +795,8 @@ test("SlowGeo revealed card shows the same map card on answer page and overview"
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toBeVisible();
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-map-gesture-handling", "greedy");
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveCSS("touch-action", "none");
+    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-answer-marker-icon", "custom");
+    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-answer-marker-label", "none");
     await expect(page.getByRole("link", { name: /Åpne fasitkort/ })).toHaveAttribute("href", `/slowgeo/${roundId}`);
     await expect(page.getByRole("link", { name: "Protokoll", exact: true })).toHaveCount(0);
     await expectNoHorizontalOverflow(page);
