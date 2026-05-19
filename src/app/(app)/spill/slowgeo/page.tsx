@@ -9,7 +9,7 @@ import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
 import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
 import { computeRound, computeStandings } from "@/lib/scoring";
 import { pickGeoticLine, slowGeoEmptyStateLines } from "@/lib/geotia-jargon";
-import { getSlowGeoMode, slowGeoModeLabels } from "@/lib/slowgeo";
+import { getSlowGeoMode, getSlowGeoStartedAt, getSlowGeoStarterLabel, slowGeoModeLabels } from "@/lib/slowgeo";
 import { buildOpenSlowGeoShareTextOptions } from "@/lib/slowgeo-share";
 import { buildSlowGeoRevealMarkers, buildSlowGeoRevealResults } from "@/lib/slowgeo-reveal";
 import { getSlowGeoProgress, getSlowGeoRoundInsights, slowGeoDifficultyLabels } from "@/lib/slowgeo-insights";
@@ -127,6 +127,8 @@ export default async function SlowGeoGamePage({
                 shareUrl={`/slowgeo/${latestResolvedRound.id}`}
                 detailHref={`/slowgeo/${latestResolvedRound.id}`}
                 answerLabel={latestResolvedRound.answer || challenge.label}
+                startedByLabel={getSlowGeoStarterLabel(latestResolvedRound, state.players)}
+                startedAtLabel={dateTimeLabel(getSlowGeoStartedAt(latestResolvedRound))}
                 winnerNames={computed.winnerNames}
                 imageDate={challenge.imageDate}
                 copyright={challenge.copyright}

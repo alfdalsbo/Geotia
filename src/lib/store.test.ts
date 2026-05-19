@@ -239,11 +239,13 @@ describe("Geotia file store", () => {
     const { createSlowGeoRound, submitSlowGeoGuess, revealDueSlowGeoRounds, getAppState } = await import("@/lib/store");
 
     const explicitDeadline = new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString();
-    const created = await createSlowGeoRound({ title: "Street View-prøven", deadlineAt: explicitDeadline });
+    const created = await createSlowGeoRound({ title: "Street View-prøven", deadlineAt: explicitDeadline, startedBy: "alf" });
     if (!created.ok || !created.round?.answerLocation) throw new Error("SlowGeo-runden ble ikke opprettet");
 
     expect(created.round.status).toBe("open");
     expect(created.round.slowGeoMode).toBe("static");
+    expect(created.round.slowGeoStartedBy).toBe("alf");
+    expect(created.round.slowGeoStartedAt).toBe(created.round.createdAt);
     expect(created.round.deadlineAt).toBe(explicitDeadline);
     expect(created.round.answerLocation.source).toBe("google_street_view");
     expect(created.round.mapSnapshot).toBeNull();
@@ -379,7 +381,10 @@ describe("Geotia file store", () => {
     const { getAppState } = await import("@/lib/store");
     const state = await getAppState();
 
-    expect(state.rounds.find((round) => round.id === "old-slowgeo")?.slowGeoMode).toBe("static");
+    const round = state.rounds.find((candidate) => candidate.id === "old-slowgeo");
+    expect(round?.slowGeoMode).toBe("static");
+    expect(round?.slowGeoStartedBy).toBeNull();
+    expect(round?.slowGeoStartedAt).toBe("2026-05-19T10:00:00.000Z");
   });
 
   it("retries a Panorama SlowGeo in the same round before any locked pin", async () => {
@@ -397,7 +402,7 @@ describe("Geotia file store", () => {
     vi.resetModules();
 
     const { createSlowGeoRound, replaceSlowGeoPanoramaRound } = await import("@/lib/store");
-    const created = await createSlowGeoRound({ title: "Panorama-prøven", mode: "panorama" });
+    const created = await createSlowGeoRound({ title: "Panorama-prøven", mode: "panorama", startedBy: "vegard" });
     if (!created.ok || !created.round) throw new Error("Panorama-runden ble ikke opprettet");
 
     const replaced = await replaceSlowGeoPanoramaRound({ roundId: created.round.id });
@@ -408,6 +413,8 @@ describe("Geotia file store", () => {
     expect(replaced.round.id).toBe(created.round.id);
     expect(replaced.round.number).toBe(created.round.number);
     expect(replaced.round.slowGeoMode).toBe("panorama");
+    expect(replaced.round.slowGeoStartedBy).toBe("vegard");
+    expect(replaced.round.slowGeoStartedAt).toBe(created.round.slowGeoStartedAt);
     expect(replaced.round.challenge?.panoId).toBe("second-pano");
     expect(replaced.round.results.every((result) => result.guessLocation === null)).toBe(true);
   });

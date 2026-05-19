@@ -138,6 +138,8 @@ export type Round = {
   mapSnapshot?: RoundMapSnapshot | null;
   challenge?: SlowGeoChallenge | null;
   slowGeoMode?: SlowGeoMode;
+  slowGeoStartedBy?: string | null;
+  slowGeoStartedAt?: string | null;
   deadlineAt?: string | null;
   revealedAt?: string | null;
   country: string;

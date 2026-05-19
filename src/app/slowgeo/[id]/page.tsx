@@ -10,7 +10,7 @@ import { getCurrentGeot } from "@/lib/auth";
 import { selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { computeRound } from "@/lib/scoring";
 import { players } from "@/lib/seed";
-import { getSlowGeoMode, hasLockedSlowGeoGuess } from "@/lib/slowgeo";
+import { getSlowGeoMode, getSlowGeoStartedAt, getSlowGeoStarterLabel, hasLockedSlowGeoGuess } from "@/lib/slowgeo";
 import {
   buildOpenSlowGeoShareTextOptions,
   buildRevealedSlowGeoShareTextOptions,
@@ -24,6 +24,7 @@ import {
   buildStreetViewStaticViewConfig,
   STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
 } from "@/lib/streetview-url";
+import { dateTimeLabel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -121,6 +122,8 @@ export default async function SlowGeoSharePage({
   const submittedCount = round.results.filter((result) => result.guessLocation).length;
   const participantCount = round.results.length;
   const shareUrl = `/slowgeo/${round.id}`;
+  const starterLabel = getSlowGeoStarterLabel(round, players);
+  const startedAtLabel = dateTimeLabel(getSlowGeoStartedAt(round));
   const shareTexts = isOpen
     ? buildOpenSlowGeoShareTextOptions(round.name, round.id)
     : buildRevealedSlowGeoShareTextOptions({
@@ -173,6 +176,9 @@ export default async function SlowGeoSharePage({
               {isOpen
                 ? `Fasit skjult. ${submittedCount}/${participantCount} pin-svar er låst.`
                 : `Fasit: ${answerLabel}`}
+            </p>
+            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
+              Reist av {starterLabel} · {startedAtLabel}
             </p>
           </div>
           {isOpen ? (
@@ -261,6 +267,8 @@ export default async function SlowGeoSharePage({
             results={revealResults}
             shareUrl={shareUrl}
             answerLabel={answerLabel}
+            startedByLabel={starterLabel}
+            startedAtLabel={startedAtLabel}
             currentPlayerName={currentComputedResult?.player.shortName}
             currentDistanceKm={currentComputedResult?.actualKm}
             winnerNames={computed.winnerNames}

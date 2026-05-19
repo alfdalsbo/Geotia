@@ -60,6 +60,8 @@ export function SlowGeoRevealMap({
   shareUrl,
   detailHref,
   answerLabel,
+  startedByLabel,
+  startedAtLabel,
   currentPlayerName,
   currentDistanceKm,
   winnerNames,
@@ -79,6 +81,8 @@ export function SlowGeoRevealMap({
   shareUrl: string;
   detailHref?: string;
   answerLabel: string;
+  startedByLabel?: string;
+  startedAtLabel?: string;
   currentPlayerName?: string;
   currentDistanceKm?: number | null;
   winnerNames: string[];
@@ -288,6 +292,11 @@ export function SlowGeoRevealMap({
             {winnerNames.length ? ` · vinner ${winnerNames.join(", ")}` : ""}
             {bestResult ? ` · beste bom ${formatKm(bestResult.actualKm)}` : ""}
           </p>
+          {startedByLabel || startedAtLabel ? (
+            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
+              Reist av {startedByLabel ?? "Ukjent igangsetter"} · {startedAtLabel ?? "-"}
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-col gap-2 sm:items-end">
           {detailHref ? (

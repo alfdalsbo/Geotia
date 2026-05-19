@@ -64,6 +64,8 @@ type RoundInput = {
   answerLocation?: GeoLocation | null;
   challenge?: SlowGeoChallenge | null;
   slowGeoMode?: SlowGeoMode;
+  slowGeoStartedBy?: string | null;
+  slowGeoStartedAt?: string | null;
   deadlineAt?: string | null;
   revealedAt?: string | null;
   country: string;
@@ -259,6 +261,8 @@ type RoundLocationData = {
   mapSnapshot: RoundMapSnapshot | null;
   challenge?: SlowGeoChallenge | null;
   slowGeoMode?: SlowGeoMode;
+  slowGeoStartedBy?: string | null;
+  slowGeoStartedAt?: string | null;
   deadlineAt?: string | null;
   revealedAt?: string | null;
 };
@@ -336,6 +340,8 @@ function normalizeRound(round: Round): Round {
     answerLocation,
     challenge: round.challenge ?? null,
     slowGeoMode: normalizeSlowGeoMode(round.slowGeoMode),
+    slowGeoStartedBy: round.slowGeoStartedBy ?? null,
+    slowGeoStartedAt: round.slowGeoStartedAt ?? round.createdAt,
     deadlineAt: round.deadlineAt ?? null,
     revealedAt: round.revealedAt ?? null,
     results,
@@ -701,6 +707,8 @@ function parseRoundLocationData(value: RoundLocationData | string | null | undef
     mapSnapshot: parsed.mapSnapshot ?? null,
     challenge: parsed.challenge ?? null,
     slowGeoMode: normalizeSlowGeoMode(parsed.slowGeoMode),
+    slowGeoStartedBy: parsed.slowGeoStartedBy ?? null,
+    slowGeoStartedAt: parsed.slowGeoStartedAt ?? null,
     deadlineAt: parsed.deadlineAt ?? null,
     revealedAt: parsed.revealedAt ?? null,
   };
@@ -723,6 +731,8 @@ function parseDbRound(row: DbRoundRow): Round {
     mapSnapshot: locationData.mapSnapshot,
     challenge: locationData.challenge ?? null,
     slowGeoMode: locationData.slowGeoMode,
+    slowGeoStartedBy: locationData.slowGeoStartedBy,
+    slowGeoStartedAt: locationData.slowGeoStartedAt,
     deadlineAt: locationData.deadlineAt ?? null,
     revealedAt: locationData.revealedAt ?? null,
     country: row.country,
@@ -923,6 +933,8 @@ async function upsertDbRound(round: Round) {
         mapSnapshot: round.mapSnapshot ?? null,
         challenge: round.challenge ?? null,
         slowGeoMode: getSlowGeoMode(round),
+        slowGeoStartedBy: round.slowGeoStartedBy ?? null,
+        slowGeoStartedAt: round.slowGeoStartedAt ?? round.createdAt,
         deadlineAt: round.deadlineAt ?? null,
         revealedAt: round.revealedAt ?? null,
       })}::jsonb
@@ -1847,6 +1859,8 @@ export async function upsertRound(input: RoundInput) {
     answerLocation: input.answerLocation ?? null,
     challenge: input.challenge ?? existing?.challenge ?? null,
     slowGeoMode: input.slowGeoMode ?? existing?.slowGeoMode ?? "static",
+    slowGeoStartedBy: input.slowGeoStartedBy ?? existing?.slowGeoStartedBy ?? null,
+    slowGeoStartedAt: input.slowGeoStartedAt ?? existing?.slowGeoStartedAt ?? existing?.createdAt ?? timestamp,
     deadlineAt: input.deadlineAt ?? existing?.deadlineAt ?? null,
     revealedAt: input.revealedAt ?? existing?.revealedAt ?? null,
     country: input.country,
@@ -1882,7 +1896,7 @@ function monthKey(value: string) {
 }
 
 export async function createSlowGeoRound(
-  input: { title?: string; deadlineMinutes?: number; deadlineAt?: string; mode?: SlowGeoMode } = {},
+  input: { title?: string; deadlineMinutes?: number; deadlineAt?: string; mode?: SlowGeoMode; startedBy?: string | null } = {},
 ) {
   const rounds = await readRounds();
   const timestamp = nowIso();
@@ -1937,6 +1951,8 @@ export async function createSlowGeoRound(
     answerLocation,
     challenge,
     slowGeoMode,
+    slowGeoStartedBy: input.startedBy?.trim() || null,
+    slowGeoStartedAt: timestamp,
     deadlineAt,
     revealedAt: null,
     country: challenge.country,

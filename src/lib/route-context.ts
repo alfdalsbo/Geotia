@@ -33,7 +33,7 @@ export const RIKS_NAV_ITEMS: readonly RiksNavItem[] = [
     href: "/spill/slowgeo",
     label: "SlowGeo",
     shortLabel: "SlowGeo",
-    description: "Spill, tabeller og runder",
+    description: "Spill, tabeller og fasitarkiv",
     match: ["/spill*", "/slowgeo*", "/runder*", "/tabeller", "/stilling", "/hall-of-fame"],
   },
   {
@@ -89,7 +89,7 @@ export const SLOWGEO_SECONDARY_NAV: readonly SecondaryNavItem[] = [
     id: "runder",
     href: "/runder",
     label: "Rundeprotokoll",
-    description: "Fasit og etterkontroll",
+    description: "Fasitkort og arkiv",
     match: ["/runder*"],
   },
   {

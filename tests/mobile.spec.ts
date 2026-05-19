@@ -220,6 +220,8 @@ async function writeOpenSlowGeoFixture({
             },
             mapSnapshot: null,
             slowGeoMode: mode,
+            slowGeoStartedBy: "alf",
+            slowGeoStartedAt: timestamp,
             challenge: {
               id: "challenge-mobile",
               candidateId: "tromso-bridge",
@@ -372,6 +374,9 @@ async function writeRevealedSlowGeoFixture() {
               source: "google_street_view",
             },
             mapSnapshot: null,
+            slowGeoMode: "static",
+            slowGeoStartedBy: "alf",
+            slowGeoStartedAt: timestamp,
             challenge: {
               id: "challenge-mobile-revealed",
               candidateId: "tromso-bridge",
@@ -482,7 +487,7 @@ test("mobile shell keeps the rikssti and route families clear", async ({ page })
 
     for (const [route, heading] of [
       ["/tabeller", "Rikets tabeller"],
-      ["/runder", "Runder og protokoller"],
+      ["/runder", "Tingets SlowGeo-protokoller"],
       ["/stilling", "SlowGeo-tabell"],
       ["/hall-of-fame", "Æreshallen"],
     ] as const) {
@@ -523,11 +528,16 @@ test("mobile shell keeps the rikssti and route families clear", async ({ page })
 
 test("mobile forms and order progress use readable card layouts", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 900 });
+  const roundId = await writeRevealedSlowGeoFixture();
   await login(page);
 
   await page.goto("/runder", { waitUntil: "domcontentloaded" });
-  await expect(page.locator("table.responsive-protocol").first()).toBeVisible();
-  await expect(page.locator('td[data-label="Km fra fasit"]').first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tingets SlowGeo-protokoller" })).toBeVisible();
+  await expect(page.getByTestId("slowgeo-protocol-card")).toBeVisible();
+  await expect(page.getByText("Reist av: Alf Kåre")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Åpne fasitkort/ })).toHaveAttribute("href", `/slowgeo/${roundId}`);
+  await expect(page.getByLabel("Rundenavn")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Lagre protokoll" })).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
 
   await page.goto("/", { waitUntil: "domcontentloaded" });
@@ -611,7 +621,7 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
   await expect(page.getByText("2/8 pin-svar låst")).toBeVisible();
   await expect(page.getByText("Vegard")).toBeVisible();
   await expect(page.getByText("Svar låst").first()).toBeVisible();
-  await expect(page.getByText("Alf Kåre")).toBeVisible();
+  await expect(page.getByText("Alf Kåre", { exact: true })).toBeVisible();
   await expect(page.getByText("Mangler pin").first()).toBeVisible();
   await expect(page.getByText("Bergen hemmelig pin")).toHaveCount(0);
   await expect(page.getByText("hemmelig vegard-notat")).toHaveCount(0);
@@ -705,6 +715,7 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
 test("SlowGeo Panorama mode opens 360 view in fullscreen on mobile", async ({ page }) => {
   test.setTimeout(120_000);
   await mockGoogleMaps(page);
+  await login(page);
   const roundId = await writeOpenSlowGeoFixture({
     roundId: "playwright-mobile-slowgeo-panorama",
     name: "Panorama-prøven",
@@ -712,7 +723,6 @@ test("SlowGeo Panorama mode opens 360 view in fullscreen on mobile", async ({ pa
     includeLockedGuesses: false,
   });
 
-  await login(page);
   await page.goto(`/runder/${roundId}`, { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "Panorama-prøven" })).toBeVisible();
   await expect(page.getByText("Panorama-modus.")).toBeVisible();
@@ -765,6 +775,7 @@ test("SlowGeo revealed card shows the same map card on answer page and overview"
     await expect(page.getByText("SlowGeo #2 · Fasitkort")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Felles fasitkort-prøven", level: 2 })).toBeVisible();
     await expect(page.getByText("Fasit: Tromsøbrua, Tromsø", { exact: true })).toBeVisible();
+    await expect(page.getByText(/Reist av Alf Kåre/).first()).toBeVisible();
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toBeVisible();
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-map-gesture-handling", "greedy");
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveCSS("touch-action", "none");
@@ -792,6 +803,7 @@ test("SlowGeo revealed card shows the same map card on answer page and overview"
     await page.goto("/spill/slowgeo", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: "Felles fasitkort-prøven", level: 2 })).toBeVisible();
     await expect(page.getByText("SlowGeo #2 · Fasitkort")).toBeVisible();
+    await expect(page.getByText(/Reist av Alf Kåre/).first()).toBeVisible();
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toBeVisible();
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-map-gesture-handling", "greedy");
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveCSS("touch-action", "none");

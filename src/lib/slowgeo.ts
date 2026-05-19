@@ -16,6 +16,15 @@ export function getSlowGeoMode(round: Pick<Round, "slowGeoMode">): SlowGeoMode {
   return normalizeSlowGeoMode(round.slowGeoMode);
 }
 
+export function getSlowGeoStartedAt(round: Pick<Round, "slowGeoStartedAt" | "createdAt">) {
+  return round.slowGeoStartedAt ?? round.createdAt;
+}
+
+export function getSlowGeoStarterLabel(round: Pick<Round, "slowGeoStartedBy">, allPlayers: Player[]) {
+  if (!round.slowGeoStartedBy) return "Ukjent igangsetter";
+  return allPlayers.find((player) => player.id === round.slowGeoStartedBy)?.shortName ?? round.slowGeoStartedBy;
+}
+
 export function isSlowGeoRound(round: Round) {
   return round.challenge?.source === "google_street_view";
 }

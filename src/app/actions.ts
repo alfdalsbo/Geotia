@@ -219,7 +219,7 @@ export async function saveRoundAction(formData: FormData) {
 }
 
 export async function createSlowGeoRoundAction(formData: FormData) {
-  await requireSession();
+  const session = await requireSession();
   const title = field(formData, "title");
   const deadlineAt = slowGeoDeadlineAt(formData);
 
@@ -227,6 +227,7 @@ export async function createSlowGeoRoundAction(formData: FormData) {
     title,
     deadlineAt,
     mode: slowGeoModeField(field(formData, "slowgeo_mode")),
+    startedBy: session.playerId,
   });
 
   revalidateSlowGeoPaths(result.ok ? result.round?.id : undefined);

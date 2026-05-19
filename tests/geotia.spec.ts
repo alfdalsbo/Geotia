@@ -3,6 +3,110 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
+const competingPlayerIds = ["alf", "vegard", "jorgen", "steinar", "sverre", "fredrik", "ruben", "danny"];
+
+async function writeSlowGeoProtocolFixture({
+  roundId = "playwright-slowgeo-protocol",
+  name = "Protokollkortets prøverunde",
+  startedBy = "alf",
+}: {
+  roundId?: string;
+  name?: string;
+  startedBy?: string;
+} = {}) {
+  const timestamp = new Date().toISOString();
+  const dataDir = path.join(process.cwd(), ".data");
+  await mkdir(dataDir, { recursive: true });
+  await writeFile(
+    path.join(dataDir, "playwright-geotia.json"),
+    JSON.stringify(
+      {
+        meta: { schemaVersion: "2" },
+        rounds: [
+          {
+            id: roundId,
+            number: 7,
+            date: timestamp.slice(0, 10),
+            name,
+            answer: "Tromsøbrua, Tromsø",
+            answerLocation: {
+              lat: 69.6534,
+              lon: 18.975,
+              label: "Tromsøbrua, Tromsø",
+              query: "tromso-bridge",
+              country: "Norge",
+              source: "google_street_view",
+            },
+            mapSnapshot: null,
+            slowGeoMode: "static",
+            slowGeoStartedBy: startedBy,
+            slowGeoStartedAt: timestamp,
+            challenge: {
+              id: "challenge-protocol",
+              candidateId: "tromso-bridge",
+              source: "google_street_view",
+              lat: 69.6534,
+              lon: 18.975,
+              label: "Tromsøbrua, Tromsø",
+              country: "Norge",
+              continent: "Europa",
+              heading: 64,
+              pitch: 1,
+              fov: 90,
+              panoId: "playwright-protocol-pano",
+              imageDate: "2024-01",
+              copyright: "© 2024 Google",
+              difficulty: "lett",
+              createdAt: timestamp,
+            },
+            deadlineAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+            revealedAt: timestamp,
+            country: "Norge",
+            continent: "Europa",
+            comment: "Google Street View",
+            status: "locked",
+            createdAt: timestamp,
+            updatedAt: timestamp,
+            results: competingPlayerIds.map((playerId) => {
+              const actualKm = playerId === "alf" ? 0.4 : playerId === "vegard" ? 1221.4 : null;
+              return {
+                playerId,
+                status: actualKm === null ? "ikke_deltatt" : "deltatt",
+                actualKm,
+                guessText: actualKm === null ? "" : playerId === "alf" ? "Tromsøbrua nesten riktig" : "Bergen",
+                guessLocation:
+                  actualKm === null
+                    ? null
+                    : {
+                        lat: playerId === "alf" ? 69.653 : 60.3913,
+                        lon: playerId === "alf" ? 18.974 : 5.3221,
+                        label: playerId === "alf" ? "Tromsøbrua nesten riktig" : "Bergen",
+                        query: playerId === "alf" ? "tromso-pin" : "bergen",
+                        country: "Norge",
+                        source: "manual",
+                      },
+                guessUpdatedAt: actualKm === null ? null : timestamp,
+                distanceSource: actualKm === null ? null : "auto",
+                note: "",
+              };
+            }),
+          },
+        ],
+        gameSessions: [],
+        geotingProposals: [],
+        geoterIndexAdjustments: [],
+        geoticOrderAssessments: [],
+        geoticOrderPromotionCases: [],
+        geocodeCache: [],
+      },
+      null,
+      2,
+    ),
+    "utf8",
+  );
+  return roundId;
+}
+
 async function writeGeotingRoutingFixture() {
   const timestamp = new Date().toISOString();
   const votingStartedAt = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -122,7 +226,7 @@ async function writeGeotingRoutingFixture() {
   };
 }
 
-test("login, register a round, and lock the protocol", async ({ page }) => {
+test("login and open the SlowGeo protocol archive", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "G·E·O·T·I·A" })).toBeVisible();
   await page.getByLabel("Brukernavn").fill("SS");
@@ -144,31 +248,17 @@ test("login, register a round, and lock the protocol", async ({ page }) => {
   await expect(page.getByText("MapTap")).toHaveCount(0);
   await expect(page.getByText("Satle")).toHaveCount(0);
   await expect(page.getByText("Globle")).toHaveCount(0);
+
+  const roundId = await writeSlowGeoProtocolFixture();
   await page.goto("/runder");
 
-  await page.getByLabel("Rundenavn").fill("Playwright-protokollen");
-  await page.getByLabel("Fasit / sted").fill("Wien");
-  await page.getByLabel("Land").fill("Østerrike");
-  await page.getByLabel("Kontinent").fill("Europa");
-
-  const rows = [
-    ["alf", "10"],
-    ["vegard", "20"],
-    ["jorgen", "30"],
-    ["steinar", "40"],
-    ["sverre", "50"],
-    ["danny", "60"],
-  ];
-
-  for (const [id, km] of rows) {
-    await page.locator(`select[name="status_${id}"]`).selectOption("deltatt");
-    await page.locator(`input[name="km_${id}"]`).fill(km);
-  }
-
-  await page.getByRole("button", { name: "Lagre protokoll" }).click();
-  await expect(page.getByText("Protokollen er lagret.")).toBeVisible();
-  await page.getByRole("button", { name: "Lås" }).first().click();
-  await expect(page.getByText("Protokollen er låst. Kattometeret har talt.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tingets SlowGeo-protokoller" })).toBeVisible();
+  await expect(page.getByTestId("slowgeo-protocol-card")).toBeVisible();
+  await expect(page.getByText("Protokollkortets prøverunde")).toBeVisible();
+  await expect(page.getByText("Reist av: Alf Kåre")).toBeVisible();
+  await expect(page.getByLabel("Rundenavn")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Lagre protokoll" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Åpne fasitkort/ })).toHaveAttribute("href", `/slowgeo/${roundId}`);
 
   await page.goto("/tabeller");
   await expect(page.getByRole("cell", { name: /Alf Kåre/ }).first()).toBeVisible();
@@ -310,97 +400,11 @@ test("Danny logs in as Tingvitne without voting power", async ({ page }) => {
   await expect(page.getByText("Kollegiets redigering")).toHaveCount(0);
 });
 
-test("SlowGeo can auto-calculate distances and archive a map protocol", async ({ page }) => {
-  await page.route("**/api/geocode/round-preview", async (route) => {
-    await route.fulfill({
-      contentType: "application/json",
-      body: JSON.stringify({
-        answerLocation: {
-          lat: 48.2082,
-          lon: 16.3738,
-          label: "Wien, Østerrike",
-          query: "Wien",
-          country: "Østerrike",
-          source: "nominatim",
-        },
-        results: [
-          {
-            playerId: "alf",
-            location: {
-              lat: 48.21,
-              lon: 16.37,
-              label: "Wien sentrum",
-              query: "Wien sentrum",
-              country: "Østerrike",
-              source: "nominatim",
-            },
-            distanceKm: 0.4,
-          },
-          {
-            playerId: "vegard",
-            location: {
-              lat: 47.4979,
-              lon: 19.0402,
-              label: "Budapest",
-              query: "Budapest",
-              country: "Ungarn",
-              source: "nominatim",
-            },
-            distanceKm: 214.6,
-          },
-          {
-            playerId: "jorgen",
-            location: {
-              lat: 50.0755,
-              lon: 14.4378,
-              label: "Praha",
-              query: "Praha",
-              country: "Tsjekkia",
-              source: "nominatim",
-            },
-            distanceKm: 252.8,
-          },
-          {
-            playerId: "steinar",
-            location: {
-              lat: 48.3069,
-              lon: 14.2858,
-              label: "Linz",
-              query: "Linz",
-              country: "Østerrike",
-              source: "nominatim",
-            },
-            distanceKm: 154.9,
-          },
-          {
-            playerId: "sverre",
-            location: {
-              lat: 47.0707,
-              lon: 15.4395,
-              label: "Graz",
-              query: "Graz",
-              country: "Østerrike",
-              source: "nominatim",
-            },
-            distanceKm: 144.8,
-          },
-          {
-            playerId: "danny",
-            location: {
-              lat: 48.2082,
-              lon: 16.3738,
-              label: "Wien, Østerrike",
-              query: "Wien",
-              country: "Østerrike",
-              source: "nominatim",
-            },
-            distanceKm: 0,
-          },
-        ],
-      }),
-    });
+test("SlowGeo protocol archive opens the shared answer card", async ({ page }) => {
+  const roundId = await writeSlowGeoProtocolFixture({
+    roundId: "playwright-slowgeo-answer-card",
+    name: "Kartprotokollen uten skjema",
   });
-
   await page.goto("/");
   await page.getByLabel("Brukernavn").fill("SS");
   await page.getByLabel("Passord").fill("geotia");
@@ -408,28 +412,14 @@ test("SlowGeo can auto-calculate distances and archive a map protocol", async ({
   await expect(page.getByRole("button", { name: "Forlat embetsverket" })).toBeVisible({ timeout: 15_000 });
   await page.goto("/runder");
 
-  const roundName = `Kartprotokollen ${Date.now()}`;
-  await page.getByLabel("Rundenavn").fill(roundName);
-  await page.getByLabel("Fasit / sted").fill("Wien");
-  await page.locator('input[name="guess_text_alf"]').fill("Wien sentrum");
-  await page.locator('input[name="guess_text_vegard"]').fill("Budapest");
-  await page.locator('input[name="guess_text_jorgen"]').fill("Praha");
-  await page.locator('input[name="guess_text_steinar"]').fill("Linz");
-  await page.locator('input[name="guess_text_sverre"]').fill("Graz");
-  await page.locator('input[name="guess_text_danny"]').fill("Wien");
-
-  await page.getByRole("button", { name: "Beregn avstander" }).click();
-  await expect(page.locator('input[name="km_danny"]')).toHaveValue("0");
-  await expect(page.locator('select[name="status_danny"]')).toHaveValue("deltatt");
-
-  await page.getByRole("button", { name: "Lagre protokoll" }).click();
-  await expect(page.getByText("Protokollen er lagret.")).toBeVisible();
-  const archiveRow = page.getByRole("row").filter({ hasText: roundName });
   await Promise.all([
-    page.waitForURL(/\/runder\/[^/]+$/),
-    archiveRow.getByRole("link", { name: "Åpne" }).click(),
+    page.waitForURL(new RegExp(`/slowgeo/${roundId}$`)),
+    page.getByRole("link", { name: /Åpne fasitkort/ }).click(),
   ]);
-  await expect(page.getByRole("heading", { name: roundName })).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText("Kartprotokoll", { exact: true })).toBeVisible();
-  await expect(page.getByRole("row", { name: /Danny Tingvitne/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Kartprotokollen uten skjema", level: 1 })).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.getByText("SlowGeo #7 · Fasitkort")).toBeVisible();
+  await expect(page.getByText(/Reist av Alf Kåre/).first()).toBeVisible();
+  await expect(page.getByText("Fasit: Tromsøbrua, Tromsø", { exact: true })).toBeVisible();
 });

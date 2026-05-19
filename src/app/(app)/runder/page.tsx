@@ -1,19 +1,25 @@
 import Link from "next/link";
-import { ArrowRight, Edit3, LockKeyhole, Plus, ShieldCheck } from "lucide-react";
+import type { ReactNode } from "react";
+import { Archive, Clock, ExternalLink, MapPin, ScrollText, ShieldCheck, Trophy, UserRound } from "lucide-react";
 
-import { Section } from "@/components/section";
-import { lockRoundAction } from "@/app/actions";
-import { computeRound } from "@/lib/scoring";
-import { getRoundsState, makeEmptyRound } from "@/lib/store";
-import { dateLabel, formatKm } from "@/lib/utils";
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
-import { PendingSubmitButton } from "@/components/pending-submit-button";
-import { RoundForm } from "@/components/round-form";
+import { Section } from "@/components/section";
 import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
-import type { RoundStatus } from "@/lib/types";
+import { computeRound } from "@/lib/scoring";
+import { getSlowGeoStartedAt, getSlowGeoStarterLabel, isSlowGeoRound } from "@/lib/slowgeo";
+import { getRoundsState } from "@/lib/store";
+import type { ComputedRound, Round, RoundStatus } from "@/lib/types";
+import { cn, dateTimeLabel, formatKm } from "@/lib/utils";
 
 export const metadata = {
-  title: "Runder",
+  title: "SlowGeo-protokoller",
+};
+
+const statusLabel: Record<RoundStatus, string> = {
+  draft: "Utkast",
+  open: "Åpen",
+  revealed: "Fasit vist",
+  locked: "Låst",
 };
 
 export default async function RoundsPage({
@@ -23,25 +29,26 @@ export default async function RoundsPage({
 }) {
   const params = (await searchParams) ?? {};
   const state = await getRoundsState();
-  const sortedRounds = [...state.rounds].sort((a, b) => b.number - a.number);
+  const protocolRounds = state.rounds
+    .filter((round) => isSlowGeoRound(round) && (round.status === "locked" || round.status === "revealed"))
+    .sort((a, b) => roundSortStamp(b) - roundSortStamp(a));
 
   return (
     <div className="space-y-6">
       <div className="geotia-frame rounded p-5 sm:p-7">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
-          Spillregister
+          Protokollhvelvet
         </p>
         <h1 className="font-display mt-2 text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
-          Runder og protokoller
+          Tingets SlowGeo-protokoller
         </h1>
         <p className="mt-3 max-w-3xl text-[#60553f]">
-          Før fasit, geotenes svar, km og hendelser. Kartografen kan regne avstander,
-          men SlowGeo låser seg selv når fasit kommer, og GeoVAR lar deg fortsatt
-          overstyre når verden oppfører seg urimelig.
+          Her ligger de ferdige fasitkortene, sortert slik arkivrådet helst vil ha det:
+          nyeste dom først, minst mulig knoting, ingen ekstra åpningsseremoni.
         </p>
         <p className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm leading-6 text-[#4f412b]">
-          Poengrekken følger antall gyldige deltakere i runden. Kattometeret beregner
-          fortsatt snittet av de tre dårligste for desertering og ugyldige svar.
+          Nye SlowGeo-runder startes i Spillrommet. Dette hvelvet er for fasit, vinnere,
+          kartspor og offentlig etterpåklokskap.
         </p>
       </div>
 
@@ -57,182 +64,29 @@ export default async function RoundsPage({
         <div className="rounded border border-[#285c45]/25 bg-[#285c45]/8 px-4 py-3 text-sm font-medium text-[#285c45]">
           {params.status === "last"
             ? "Protokollen er låst. Kattometeret har talt."
-            : params.status === "apnet"
-              ? "SlowGeo-runden er åpnet."
-              : params.status === "avslort"
-                ? "SlowGeo-fasiten er vist og protokollen er automatisk arkivført."
-              : "Protokollen er lagret."}
+            : params.status === "avslort"
+              ? "SlowGeo-fasiten er vist og fasitkortet ligger i hvelvet."
+              : "SlowGeo-protokollen er oppdatert."}
         </div>
       ) : null}
 
-      <Section
-        title="SlowGeo-spillrom"
-        eyebrow="Street View og pin-svar"
-        action={
-          <Link
-            href="/spill/slowgeo"
-            prefetch={false}
-            className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
-          >
-            Åpne SlowGeo
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            <LinkPendingIndicator />
-          </Link>
-        }
-      >
-        <p className="text-sm leading-6 text-[#5b6257]">
-          Nye Street View-runder startes i SlowGeo-rommet. Rundearkivet under er fortsatt
-          den offisielle protokollen for fasit og etterkontroll, men SlowGeo-runder
-          arkivføres automatisk når fasit vises.
-        </p>
-      </Section>
-
-      <Section title="Manuell protokoll" eyebrow="Embetsverkets hurtigskjema">
-        <RoundForm round={makeEmptyRound()} />
-      </Section>
-
-      <Section title="Rundearkiv" eyebrow="Løpende register">
-        {sortedRounds.length ? (
-          <>
-          <div className="grid gap-3 md:hidden">
-            {sortedRounds.map((round) => {
+      <Section title="Fasitpergamentene" eyebrow="Rundearkiv uten skjema">
+        {protocolRounds.length ? (
+          <div className="grid gap-4 lg:grid-cols-2">
+            {protocolRounds.map((round) => {
               const computed = computeRound(round, state.players);
-              const statusLabel: Record<RoundStatus, string> = {
-                draft: "Utkast",
-                open: "Åpen",
-                revealed: "Fasit vist",
-                locked: "Låst",
-              };
-              return (
-                <article key={round.id} className="rounded border border-[#d8ded0] bg-white p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8e3030]">Runde #{round.number}</p>
-                      <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">{round.name}</h2>
-                      <p className="mt-1 text-sm text-[#5b6257]">{dateLabel(round.date)}</p>
-                    </div>
-                    <span className="rounded border border-[#d8ded0] bg-[#f7f8f5] px-2 py-1 text-xs font-semibold">
-                      {statusLabel[round.status]}
-                    </span>
-                  </div>
-                  <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                    <MobileMetric label="Fasit" value={round.status === "open" && round.challenge ? "Skjult" : round.answer || "-"} />
-                    <MobileMetric label="Deltakere" value={computed.participantCount} />
-                    <MobileMetric label="Straff" value={formatKm(computed.worstThreeAverage)} />
-                    <MobileMetric label="Status" value={statusLabel[round.status]} />
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Link
-                      href={`/runder/${round.id}`}
-                      prefetch={false}
-                      className="inline-flex h-9 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
-                    >
-                      <Edit3 className="h-4 w-4" aria-hidden="true" />
-                      Åpne
-                      <LinkPendingIndicator />
-                    </Link>
-                    {round.status === "draft" || round.status === "revealed" ? (
-                      <form action={lockRoundAction}>
-                        <input type="hidden" name="id" value={round.id} />
-                        <PendingSubmitButton
-                          className="inline-flex h-9 items-center gap-2 rounded bg-[#285c45] px-3 text-sm font-semibold text-white"
-                        >
-                          <LockKeyhole className="h-4 w-4" aria-hidden="true" />
-                          Lås
-                        </PendingSubmitButton>
-                      </form>
-                    ) : null}
-                  </div>
-                </article>
-              );
+              return <ProtocolCard key={round.id} round={round} computed={computed} />;
             })}
           </div>
-          <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[940px] text-left text-sm">
-              <thead className="border-b border-[#d8ded0] text-xs uppercase tracking-[0.12em] text-[#5b6257]">
-                <tr>
-                  <th className="py-2 pr-3">#</th>
-                  <th className="py-2 pr-3">Runde</th>
-                  <th className="py-2 pr-3">Dato</th>
-                  <th className="py-2 pr-3">Fasit</th>
-                  <th className="py-2 pr-3 text-right">Deltakere</th>
-                  <th className="py-2 pr-3 text-right">Kattometerstraff</th>
-                  <th className="py-2 pr-3">Status</th>
-                  <th className="py-2 text-right">Handling</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedRounds.map((round) => {
-                  const computed = computeRound(round, state.players);
-                  const statusLabel: Record<RoundStatus, string> = {
-                    draft: "Utkast",
-                    open: "Åpen",
-                    revealed: "Fasit vist",
-                    locked: "Låst",
-                  };
-                  return (
-                    <tr key={round.id} className="border-b border-[#eef1eb] last:border-b-0">
-                      <td className="py-3 pr-3 font-mono text-[#8e3030]">{round.number}</td>
-                      <td className="py-3 pr-3 font-semibold text-[#203c62]">{round.name}</td>
-                      <td className="py-3 pr-3">{dateLabel(round.date)}</td>
-                      <td className="py-3 pr-3">
-                        {round.status === "open" && round.challenge ? "Skjult til fasit" : round.answer || "-"}
-                      </td>
-                      <td className="py-3 pr-3 text-right">{computed.participantCount}</td>
-                      <td className="py-3 pr-3 text-right">{formatKm(computed.worstThreeAverage)}</td>
-                      <td className="py-3 pr-3">
-                        <span className="inline-flex rounded border border-[#d8ded0] bg-[#f7f8f5] px-2 py-1 text-xs font-semibold">
-                          {statusLabel[round.status]}
-                        </span>
-                      </td>
-                      <td className="py-3 text-right">
-                        <div className="flex justify-end gap-2">
-                          <Link
-                            href={`/runder/${round.id}`}
-                            prefetch={false}
-                            className="inline-flex h-9 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
-                          >
-                            <Edit3 className="h-4 w-4" aria-hidden="true" />
-                            Åpne
-                            <LinkPendingIndicator />
-                          </Link>
-                          {round.status === "draft" || round.status === "revealed" ? (
-                            <form action={lockRoundAction}>
-                              <input type="hidden" name="id" value={round.id} />
-                              <PendingSubmitButton
-                                className="inline-flex h-9 items-center gap-2 rounded bg-[#285c45] px-3 text-sm font-semibold text-white"
-                              >
-                                <LockKeyhole className="h-4 w-4" aria-hidden="true" />
-                                Lås
-                              </PendingSubmitButton>
-                            </form>
-                          ) : round.status === "locked" ? (
-                            <span className="inline-flex h-9 items-center gap-2 rounded bg-[#285c45]/10 px-3 text-sm font-semibold text-[#285c45]">
-                              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-                              Ført
-                            </span>
-                          ) : (
-                            <span className="inline-flex h-9 items-center gap-2 rounded bg-[#b8892f]/10 px-3 text-sm font-semibold text-[#7b591d]">
-                              Åpen
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          </>
         ) : (
           <div className="rounded border border-dashed border-[#b8892f] bg-[#b8892f]/8 p-5">
             <p className="flex items-center gap-2 text-lg font-semibold text-[#7b591d]">
-              <Plus className="h-5 w-5" aria-hidden="true" />
-              Ingen runder ført ennå.
+              <Archive className="h-5 w-5" aria-hidden="true" />
+              Fasitpergamentene er tomme.
             </p>
-            <p className="mt-2 text-sm text-[#5b6257]">
-              Første låste protokoll blir rikets nye år null for denne appen.
+            <p className="mt-2 text-sm leading-6 text-[#5b6257]">
+              Når en SlowGeo er avslørt, havner den her med kart, dom og passelig
+              høytidelig papirknitring.
             </p>
           </div>
         )}
@@ -241,11 +95,97 @@ export default async function RoundsPage({
   );
 }
 
-function MobileMetric({ label, value }: { label: string; value: React.ReactNode }) {
+function ProtocolCard({ round, computed }: { round: Round; computed: ComputedRound }) {
+  const bestResult = computed.results.find((result) => result.rank === 1) ?? null;
+  const submittedCount = computed.results.filter((result) => result.guessLocation || result.actualKm !== null).length;
+  const starterLabel = getSlowGeoStarterLabel(round, computed.results.map((result) => result.player));
+  const startedAtLabel = dateTimeLabel(getSlowGeoStartedAt(round));
+  const statusTone =
+    round.status === "locked"
+      ? "border-[#285c45]/25 bg-[#285c45]/10 text-[#285c45]"
+      : "border-[#b8892f]/30 bg-[#b8892f]/10 text-[#7b591d]";
+
   return (
-    <div className="mobile-metric rounded border border-[#d8c48c] bg-[#fff7e6] p-3">
+    <article
+      data-testid="slowgeo-protocol-card"
+      className="min-w-0 overflow-hidden rounded border border-[#c49a3c]/45 bg-[#fff7e6] shadow-[0_12px_28px_rgba(38,26,12,0.1)]"
+    >
+      <div className="border-b border-[#d8c48c] bg-[#fff3d4] p-4 sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
+              <ScrollText className="h-4 w-4 flex-none" aria-hidden="true" />
+              Fasitpergament #{round.number}
+            </p>
+            <h2 className="font-display mt-2 text-2xl font-semibold text-[#062b40] sm:text-3xl">
+              {round.name}
+            </h2>
+          </div>
+          <span className={cn("inline-flex h-9 items-center gap-2 rounded border px-3 text-xs font-semibold", statusTone)}>
+            <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+            {statusLabel[round.status]}
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <ProtocolFact icon={<UserRound className="h-4 w-4" aria-hidden="true" />} label="Reist av" value={starterLabel} />
+          <ProtocolFact icon={<Clock className="h-4 w-4" aria-hidden="true" />} label="Starttid" value={startedAtLabel} />
+        </div>
+      </div>
+
+      <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5">
+        <ProtocolMetric label="Fasit" value={round.answer || round.challenge?.label || "-"} />
+        <ProtocolMetric label="Vinner" value={computed.winnerNames.join(", ") || "-"} />
+        <ProtocolMetric label="Beste bom" value={formatKm(bestResult?.actualKm ?? bestResult?.chargedKm)} />
+        <ProtocolMetric label="Levert" value={`${submittedCount}/${computed.results.length}`} />
+      </div>
+
+      <div className="flex flex-col gap-3 border-t border-[#d8c48c] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <p className="flex min-w-0 items-start gap-2 text-sm leading-6 text-[#5b6257]">
+          <MapPin className="mt-0.5 h-4 w-4 flex-none text-[#7c2430]" aria-hidden="true" />
+          <span className="min-w-0 break-words">
+            {bestResult
+              ? `${bestResult.player.shortName} kom nærmest med ${formatKm(bestResult.actualKm ?? bestResult.chargedKm)}.`
+              : "Runden er ført, men ingen vinner er kåret."}
+          </span>
+        </p>
+        <Link
+          href={`/slowgeo/${round.id}`}
+          prefetch={false}
+          className="inline-flex h-11 items-center justify-center gap-2 rounded bg-[#203c62] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
+        >
+          <Trophy className="h-4 w-4" aria-hidden="true" />
+          Åpne fasitkort
+          <ExternalLink className="h-4 w-4" aria-hidden="true" />
+          <LinkPendingIndicator />
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+function ProtocolMetric({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="min-w-0 rounded border border-[#d8ded0] bg-white p-3">
       <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">{label}</p>
-      <p className="mobile-metric-value mt-1 font-semibold text-[#062b40]">{value}</p>
+      <p className="mt-1 break-words text-sm font-semibold text-[#062b40]">{value}</p>
     </div>
   );
+}
+
+function ProtocolFact({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex min-w-0 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 py-2 text-sm text-[#203c62]">
+      <span className="flex-none text-[#7c2430]">{icon}</span>
+      <span className="min-w-0">
+        <span className="font-semibold">{label}: </span>
+        <span className="break-words">{value}</span>
+      </span>
+    </div>
+  );
+}
+
+function roundSortStamp(round: Round) {
+  const stamp = new Date(round.revealedAt ?? round.updatedAt ?? round.createdAt).getTime();
+  return Number.isFinite(stamp) ? stamp : round.number;
 }

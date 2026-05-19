@@ -15,7 +15,7 @@ import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
 import { getCurrentGeot } from "@/lib/auth";
 import { selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { computeRound } from "@/lib/scoring";
-import { getSlowGeoMode, hasLockedSlowGeoGuess } from "@/lib/slowgeo";
+import { getSlowGeoMode, getSlowGeoStartedAt, getSlowGeoStarterLabel, hasLockedSlowGeoGuess } from "@/lib/slowgeo";
 import { buildSlowGeoAnswerStatusItems } from "@/lib/slowgeo-answer-status";
 import { buildSlowGeoRevealMarkers, buildSlowGeoRevealResults } from "@/lib/slowgeo-reveal";
 import { getRoundsState, maybeRevealRound } from "@/lib/store";
@@ -26,7 +26,7 @@ import {
   STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
 } from "@/lib/streetview-url";
 import type { Round, RoundStatus } from "@/lib/types";
-import { dateLabel, formatKm } from "@/lib/utils";
+import { dateLabel, dateTimeLabel, formatKm } from "@/lib/utils";
 
 export const metadata = {
   title: "Rundeprotokoll",
@@ -134,6 +134,8 @@ export default async function RoundDetailPage({
     : [];
   const revealMarkers = buildSlowGeoRevealMarkers(computed);
   const revealResults = buildSlowGeoRevealResults(computed);
+  const starterLabel = getSlowGeoStarterLabel(round, state.players);
+  const startedAtLabel = dateTimeLabel(getSlowGeoStartedAt(round));
 
   return (
     <div className="space-y-6">
@@ -150,6 +152,11 @@ export default async function RoundDetailPage({
             {isOpenStreetViewRound ? "Fasit skjult til reveal" : round.answer || "Fasit ikke ført"} ·{" "}
             {computed.participantCount} gyldige deltakere
           </p>
+          {isStreetViewRound ? (
+            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
+              Reist av {starterLabel} · {startedAtLabel}
+            </p>
+          ) : null}
         </div>
         <Link
           href="/runder"
@@ -241,6 +248,8 @@ export default async function RoundDetailPage({
           results={revealResults}
           shareUrl={slowGeoShareUrl}
           answerLabel={round.answer || round.challenge.label}
+          startedByLabel={starterLabel}
+          startedAtLabel={startedAtLabel}
           currentPlayerName={currentComputedResult?.player.shortName}
           currentDistanceKm={currentComputedResult?.actualKm}
           winnerNames={computed.winnerNames}
