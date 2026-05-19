@@ -2,10 +2,19 @@
 
 Privat Vercel-app for SlowGeo, kattometeret, GeoTinget og Geotias riksarkiv.
 
+## Samarbeid
+
+`geotia-web` på branchen `geo-design-v2` er offisiell arbeidsbase. Del arbeid
+via GitHub-klone og egne branches, ikke ved å kopiere hele lokale mapper med
+`.git`, `node_modules`, `.next`, `.vercel`, `.data` eller `.env.local`.
+
+Se `AGENTS.md` for felles regler for Codex og Claude Code, og `CONTRIBUTING.md`
+for menneskelig arbeidsflyt.
+
 ## Lokal kjøring
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -21,11 +30,13 @@ lager. For varig delt lagring på Vercel må `DATABASE_URL` settes.
 ## Kontroll
 
 ```bash
-npm run lint
-npm run test
-npm run build
-npm run test:e2e
+npm run verify
+npm run verify:e2e
 ```
+
+`npm run verify` kjører lint, unit-tester og produksjonsbygg. Bruk
+`npm run verify:e2e` eller målrettet Playwright/browser-sjekk ved synlige
+UI-endringer.
 
 ## Geotisk lov
 

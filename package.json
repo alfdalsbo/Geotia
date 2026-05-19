@@ -8,11 +8,13 @@
     "start": "next start",
     "lint": "eslint",
     "check": "npm run lint && npm run test && npm run build",
+    "verify": "npm run check",
     "finish": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/finish.ps1",
     "ship": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ship.ps1",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "verify:e2e": "npm run test:e2e"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
