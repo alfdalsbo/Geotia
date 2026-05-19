@@ -10,9 +10,9 @@ export default function AppLoading() {
         </div>
       </section>
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="h-28 rounded border border-[#d8ded0] bg-[#fff7e6]" />
-        <div className="h-28 rounded border border-[#d8ded0] bg-[#fff7e6]" />
-        <div className="h-28 rounded border border-[#d8ded0] bg-[#fff7e6]" />
+        <div className="h-28 rounded border border-[#d8ded0] bg-[#fdf7e8]" />
+        <div className="h-28 rounded border border-[#d8ded0] bg-[#fdf7e8]" />
+        <div className="h-28 rounded border border-[#d8ded0] bg-[#fdf7e8]" />
       </div>
     </div>
   );

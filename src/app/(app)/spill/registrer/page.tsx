@@ -34,7 +34,7 @@ export default async function RegisterGamePage({
         <Link
           href="/spill"
           prefetch={false}
-          className="inline-flex h-10 items-center gap-2 rounded border border-[#062b40]/30 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
+          className="inline-flex h-10 items-center gap-2 rounded border border-[#062b40]/30 bg-[#fdf7e8] px-3 text-sm font-semibold text-[#062b40]"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Til spillkammeret
@@ -62,7 +62,7 @@ export default async function RegisterGamePage({
         title={game ? `Ny ${game.name}-økt` : "Ny spilløkt"}
         eyebrow={game?.scoreHelp ?? "Før resultat"}
         action={
-          <span className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
+          <span className="inline-flex h-10 items-center gap-2 rounded bg-[#fdf7e8] px-3 text-sm font-semibold text-[#062b40]">
             <Gamepad2 className="h-4 w-4" aria-hidden="true" />
             {game?.shortName ?? "Spill"}
           </span>

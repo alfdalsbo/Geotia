@@ -145,7 +145,7 @@ export default async function MyGeotPage({
             <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
               Fornavn i riksrullen
             </span>
-            <span className="mt-2 flex min-h-11 items-center gap-2 rounded border border-[#d8c48c] bg-[#fff7e6] px-3 text-base font-semibold text-[#062b40]">
+            <span className="mt-2 flex min-h-11 items-center gap-2 rounded border border-[#d8c48c] bg-[#fdf7e8] px-3 text-base font-semibold text-[#062b40]">
               <LockKeyhole className="h-4 w-4 flex-none text-[#7c2430]" aria-hidden="true" />
               <input
                 aria-label="Fornavn låst"
@@ -193,7 +193,7 @@ export default async function MyGeotPage({
         <StatTile label="Ordensrang" value={orderRow?.rank.name ?? "-"} detail={orderProgressLabel} tone="green" index={3} />
       </div>
 
-      <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-4 py-3 text-sm font-semibold text-[#654517]">
+      <div className="rounded border border-[#c49a3c]/35 bg-[#fdf7e8] px-4 py-3 text-sm font-semibold text-[#654517]">
         {dossierLine}
       </div>
 
@@ -219,7 +219,7 @@ export default async function MyGeotPage({
       </Section>
 
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <details className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+        <details className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4 shadow-sm">
           <summary className="cursor-pointer list-none">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
               Geotisk identitet
@@ -240,7 +240,7 @@ export default async function MyGeotPage({
           title="Ordensvei"
           eyebrow="Synlig stige"
           action={
-            <Link href="/ordenen" className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
+            <Link href="/ordenen" className="inline-flex h-10 items-center gap-2 rounded bg-[#fdf7e8] px-3 text-sm font-semibold text-[#062b40]">
               Åpne
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
@@ -279,7 +279,7 @@ export default async function MyGeotPage({
         </Section>
       </div>
 
-      <details className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+      <details className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4 shadow-sm">
         <summary className="cursor-pointer list-none">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
             Dypere riksmappe
@@ -359,7 +359,7 @@ export default async function MyGeotPage({
               </p>
             ) : null}
             {partyMechanic ? (
-              <div className="mt-4 rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+              <div className="mt-4 rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4 shadow-sm">
                 <p
                   className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#7c2430]"
                   style={{ fontFamily: "var(--font-display)" }}
@@ -383,7 +383,7 @@ export default async function MyGeotPage({
         </div>
       </details>
 
-      <details className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+      <details className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4 shadow-sm">
         <summary className="cursor-pointer list-none">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
             Personlig protokoll
@@ -449,7 +449,7 @@ export default async function MyGeotPage({
 const badgeToneClasses: Record<GeotiaBadgeTone, string> = {
   blue: "border-[#203c62]/30 bg-[#203c62]/10 text-[#062b40]",
   green: "border-[#194832]/30 bg-[#194832]/10 text-[#194832]",
-  gold: "border-[#c49a3c]/45 bg-[#fff7e6] text-[#654517]",
+  gold: "border-[#c49a3c]/45 bg-[#fdf7e8] text-[#654517]",
   red: "border-[#7c2430]/25 bg-[#7c2430]/10 text-[#7c2430]",
 };
 

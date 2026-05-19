@@ -54,7 +54,7 @@ export function GeoGuessrTipToast({
   return (
     <aside
       aria-live="polite"
-      className="fixed bottom-4 right-4 z-50 w-[calc(100vw-2rem)] max-w-sm rounded border border-[#c49a3c]/55 bg-[#fff7e6] p-3 shadow-[0_18px_50px_rgba(22,23,19,0.28)]"
+      className="fixed bottom-4 right-4 z-50 w-[calc(100vw-2rem)] max-w-sm rounded border border-[#c49a3c]/55 bg-[#fdf7e8] p-3"
     >
       <div className="mb-2 flex items-center justify-between gap-3">
         <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">

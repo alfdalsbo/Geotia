@@ -46,7 +46,7 @@ export default async function RoundsPage({
           Dette er hjemmet for alle ferdige SlowGeo-runder. Aktive runder bor i
           Spillrommet; Rundeprotokollen viser bare fasitkort, vinnere og ferdige kartspor.
         </p>
-        <p className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm leading-6 text-[#4f412b]">
+        <p className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fdf7e8] px-3 py-2 text-sm leading-6 text-[#4f412b]">
           Nyeste fasit står først. Ingen startskjema, ingen manuell kontroll,
           ingen aktive runder som later som de er arkiv.
         </p>
@@ -108,7 +108,7 @@ function ProtocolCard({ round, computed }: { round: Round; computed: ComputedRou
   return (
     <article
       data-testid="slowgeo-protocol-card"
-      className="min-w-0 overflow-hidden rounded border border-[#c49a3c]/45 bg-[#fff7e6] shadow-[0_12px_28px_rgba(38,26,12,0.1)]"
+      className="min-w-0 overflow-hidden rounded border border-[#c49a3c]/45 bg-[#fdf7e8] shadow-[0_12px_28px_rgba(38,26,12,0.1)]"
     >
       <div className="border-b border-[#d8c48c] bg-[#fff3d4] p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

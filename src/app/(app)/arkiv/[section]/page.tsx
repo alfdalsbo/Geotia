@@ -38,7 +38,7 @@ export default async function ArchiveSectionPage({ params }: { params: Promise<{
         </div>
         <Link
           href="/arkiv"
-          className="inline-flex h-10 items-center justify-center gap-2 rounded border border-[#062b40]/30 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded border border-[#062b40]/30 bg-[#fdf7e8] px-3 text-sm font-semibold text-[#062b40]"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Oppslagsverk
@@ -227,7 +227,7 @@ function ArchiveBody({
                 <h2 className="font-display mt-1 break-words text-2xl font-semibold text-[#062b40] [overflow-wrap:anywhere] sm:text-3xl">
                   {party.name}
                 </h2>
-                <p className="mt-3 rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm italic leading-6 text-[#4f412b]">
+                <p className="mt-3 rounded border border-[#c49a3c]/35 bg-[#fdf7e8] px-3 py-2 text-sm italic leading-6 text-[#4f412b]">
                   &ldquo;{party.motto}&rdquo;
                 </p>
                 <dl className="mt-5 grid gap-3 text-sm">
@@ -239,7 +239,7 @@ function ArchiveBody({
                   <ArchiveFact label="Kommentar" value={party.comment} />
                 </dl>
                 {mechanic ? (
-                  <div className="mt-5 rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-4">
+                  <div className="mt-5 rounded border border-[#c49a3c]/35 bg-[#fdf7e8] p-4">
                     <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
                       Partimekanikk
                     </h3>
@@ -264,7 +264,7 @@ function ArchiveBody({
                   </div>
                 ) : null}
                 {party.doctrine?.length ? (
-                  <div className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-4">
+                  <div className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fdf7e8] p-4">
                     <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
                       Doktrine
                     </h3>
@@ -335,7 +335,7 @@ function ArchiveBody({
                 </p>
                 <h2 className="font-display mt-2 text-2xl font-semibold text-[#062b40]">{episode.title}</h2>
                 <p className="mt-2 text-sm leading-6 text-[#273125]">{episode.summary}</p>
-                <div className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-3">
+                <div className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fdf7e8] p-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">Huskes for</p>
                   <ul className="mt-2 space-y-2 text-sm leading-6 text-[#4f412b]">
                     {episode.rememberedFor.map((item) => (
@@ -365,7 +365,7 @@ function ArchiveBody({
     const geotingPlayers = livePlayers ?? players;
     return (
       <div className="space-y-6">
-        <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4">
+        <div className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
@@ -456,7 +456,7 @@ function ArchiveBody({
                       ))}
                     </div>
                     {proposal.implementationNote ? (
-                      <p className="mt-3 rounded border border-[#c49a3c]/30 bg-[#fff7e6] p-3 text-sm leading-6 text-[#4f412b]">
+                      <p className="mt-3 rounded border border-[#c49a3c]/30 bg-[#fdf7e8] p-3 text-sm leading-6 text-[#4f412b]">
                         {proposal.implementationNote}
                       </p>
                     ) : null}
@@ -559,7 +559,7 @@ function ArchiveBody({
           </Section>
         </div>
 
-        <p className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-4 text-sm leading-6 text-[#4f412b]">
+        <p className="rounded border border-[#c49a3c]/35 bg-[#fdf7e8] p-4 text-sm leading-6 text-[#4f412b]">
           Dette er en historisk import. Tallene teller ikke inn i dagens levende SlowGeo-tabell, men står som egen æra i
           riksarkivet.
         </p>
@@ -578,7 +578,7 @@ function ArchiveBody({
             </article>
           ))}
         </div>
-        <p className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-4 text-sm leading-6 text-[#4f412b]">
+        <p className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fdf7e8] p-4 text-sm leading-6 text-[#4f412b]">
           Konespillet er et paraspill som registrerer konenes reaksjoner på geotisk
           aktivitet. Det reguleres ikke av GeoGrunnloven, men protokollføres med
           den alvor situasjonen fortjener.
@@ -611,7 +611,7 @@ function HistoricPodium({
 
 function ArchiveFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded border border-[#c49a3c]/30 bg-[#fff7e6] p-3">
+    <div className="rounded border border-[#c49a3c]/30 bg-[#fdf7e8] p-3">
       <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">{label}</dt>
       <dd className="mt-1 leading-6 text-[#4f412b]">{value}</dd>
     </div>

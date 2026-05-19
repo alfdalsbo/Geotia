@@ -164,7 +164,7 @@ export default async function SlowGeoSharePage({
       <PublicGeotiaHeader />
       <main className="px-4 py-5 sm:px-6 lg:px-8">
         <div className="mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-5">
-        <header className="flex min-w-0 flex-col gap-4 rounded border border-[#d6b565]/55 bg-[#fff7e6] p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:p-6">
+        <header className="flex min-w-0 flex-col gap-4 rounded border border-[#d6b565]/55 bg-[#fdf7e8] p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:p-6">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7c2430]">
               SlowGeo #{round.number}

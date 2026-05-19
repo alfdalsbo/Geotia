@@ -149,7 +149,7 @@ function Podium({
           {rows.map((row, index) => (
             <div
               key={`${row.name}-${row.value}`}
-              className="flex items-center justify-between gap-3 rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm"
+              className="flex items-center justify-between gap-3 rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4 shadow-sm"
             >
               <div className="flex min-w-0 items-center gap-3">
                 <RankMark rank={index + 1} />
@@ -194,8 +194,8 @@ function RecordBlock({
     <div
       className={
         tone === "green"
-          ? "rounded border border-[#285c45]/35 bg-[#fff7e6] p-5 shadow-sm"
-          : "rounded border border-[#8e3030]/35 bg-[#fff7e6] p-5 shadow-sm"
+          ? "rounded border border-[#285c45]/35 bg-[#fdf7e8] p-5 shadow-sm"
+          : "rounded border border-[#8e3030]/35 bg-[#fdf7e8] p-5 shadow-sm"
       }
     >
       <div className="flex items-start justify-between gap-3">

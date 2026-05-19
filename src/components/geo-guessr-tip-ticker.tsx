@@ -62,7 +62,7 @@ export function GeoGuessrTipTicker({
         </div>
       </div>
       <GeoGuessrTipCard tip={activeTip} />
-      <p className="mt-3 rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm font-semibold text-[#654517]">
+      <p className="mt-3 rounded border border-[#c49a3c]/35 bg-[#fdf7e8] px-3 py-2 text-sm font-semibold text-[#654517]">
         {tipLine}
       </p>
       {safeTips.length > 1 ? (

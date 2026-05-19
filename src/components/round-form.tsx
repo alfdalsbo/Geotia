@@ -223,7 +223,7 @@ export function RoundForm({ round }: { round: Round }) {
         </label>
       </div>
 
-      <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+      <div className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p
@@ -361,7 +361,7 @@ export function RoundForm({ round }: { round: Round }) {
         </table>
       </div>
 
-      <div className="flex flex-col gap-3 rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2 text-sm text-[#4f412b]">
           <ShieldCheck className="h-4 w-4 text-[#285c45]" aria-hidden="true" />
           <span>

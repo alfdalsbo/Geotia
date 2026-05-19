@@ -63,7 +63,7 @@ export default async function GeotingPergamentsPage({
   const rejectedProposals = resolvedProposals.filter((proposal) => proposal.status === "rejected");
   const archivedProposals = proposals.filter((proposal) => proposal.status === "archived");
   const collegeBadge = canEdit ? (
-    <span className="inline-flex h-10 items-center gap-2 rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
+    <span className="inline-flex h-10 items-center gap-2 rounded border border-[#c49a3c]/45 bg-[#fdf7e8] px-3 text-sm font-semibold text-[#062b40]">
       <ShieldCheck className="h-4 w-4" aria-hidden="true" />
       Tredje Kollegium
     </span>
@@ -133,7 +133,7 @@ export default async function GeotingPergamentsPage({
                 className="group rounded border border-[#d8ded0] bg-[#f7f8f5] transition-shadow hover:shadow-[0_0_0_2px_rgba(196,154,60,0.2)] focus-within:ring-2 focus-within:ring-[#c49a3c]"
                 data-geoting-accordion-item
               >
-                <summary className="cursor-pointer list-none p-4 outline-none transition hover:bg-[#fff7e6]/70 active:bg-[#c49a3c]/10 [&::-webkit-details-marker]:hidden">
+                <summary className="cursor-pointer list-none p-4 outline-none transition hover:bg-[#fdf7e8]/70 active:bg-[#c49a3c]/10 [&::-webkit-details-marker]:hidden">
                   <div className="grid gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
@@ -156,7 +156,7 @@ export default async function GeotingPergamentsPage({
                     <PergamentFact label="Status" value={item.status} />
                   </dl>
                   {item.comment ? (
-                    <p className="mt-3 rounded border border-[#c49a3c]/30 bg-[#fff7e6] px-3 py-2 text-sm leading-6 text-[#4f412b]">
+                    <p className="mt-3 rounded border border-[#c49a3c]/30 bg-[#fdf7e8] px-3 py-2 text-sm leading-6 text-[#4f412b]">
                       {item.comment}
                     </p>
                   ) : null}
@@ -268,7 +268,7 @@ function PergamentCard({
   return (
     <details
       id={`sak-${proposal.id}`}
-      className="group rounded border border-[#d8c48c] bg-[#fff7e6] shadow-sm transition-shadow hover:shadow-[0_0_0_2px_rgba(196,154,60,0.22)] focus-within:ring-2 focus-within:ring-[#c49a3c]"
+      className="group rounded border border-[#d8c48c] bg-[#fdf7e8] shadow-sm transition-shadow hover:shadow-[0_0_0_2px_rgba(196,154,60,0.22)] focus-within:ring-2 focus-within:ring-[#c49a3c]"
       data-geoting-accordion-item
       data-testid="geoting-pergament"
       open={defaultOpen}

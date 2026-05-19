@@ -18,7 +18,7 @@ export function RotatingGeotiaQuote({ quotes }: { quotes: string[] }) {
   const quote = safeQuotes[index] ?? "Kjennelæren avventer sitt neste innfall.";
 
   return (
-    <div className="geotia-inscription rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4">
+    <div className="geotia-inscription rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded border border-[#c49a3c]/45 bg-[#062b40] text-[#e1c06c]">
           <Quote className="h-5 w-5" aria-hidden="true" />

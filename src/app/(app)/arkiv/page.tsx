@@ -104,7 +104,7 @@ export default function ArchivePage() {
       <Section title="Hurtigoppslag" eyebrow="Fra leksikonet">
         <div className="grid gap-3 md:grid-cols-2">
           {archive.lexicon.slice(0, 8).map((entry) => (
-            <div key={entry.term} className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+            <div key={entry.term} className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4 shadow-sm">
               <p className="font-display text-xl font-semibold text-[#062b40]">{entry.term}</p>
               <p className="mt-1 text-sm leading-6 text-[#60553f]">{entry.definition}</p>
             </div>

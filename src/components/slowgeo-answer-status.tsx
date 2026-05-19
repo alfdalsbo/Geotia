@@ -28,7 +28,7 @@ export function SlowGeoAnswerStatus({ items }: { items: SlowGeoAnswerStatusItem[
           return (
             <div
               key={item.playerId}
-              className="flex min-w-0 items-center justify-between gap-3 rounded border border-[#d8ded0] bg-[#fff7e6] px-3 py-2"
+              className="flex min-w-0 items-center justify-between gap-3 rounded border border-[#d8ded0] bg-[#fdf7e8] px-3 py-2"
             >
               <span className="inline-flex min-w-0 items-center gap-2 font-semibold text-[#203c62]">
                 <span className="h-3 w-3 flex-none rounded-sm" style={{ backgroundColor: item.color }} />

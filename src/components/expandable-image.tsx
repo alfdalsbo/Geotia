@@ -66,7 +66,7 @@ export function ExpandableImage({
           unoptimized={unoptimized}
           className={imageClassName}
         />
-        <span className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded border border-[#c49a3c]/60 bg-[#061d2b]/82 text-[#fff7e6] opacity-0 shadow-sm transition group-hover:opacity-100 group-focus-visible:opacity-100">
+        <span className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded border border-[#c49a3c]/60 bg-[#061d2b]/82 text-[#fdf7e8] opacity-0 shadow-sm transition group-hover:opacity-100 group-focus-visible:opacity-100">
           <Expand className="h-4 w-4" aria-hidden="true" />
         </span>
       </button>
@@ -80,7 +80,7 @@ export function ExpandableImage({
           onClick={() => setOpen(false)}
         >
           <div
-            className="relative max-h-[calc(100dvh-1.5rem)] w-full max-w-6xl overflow-y-auto rounded border border-[#c49a3c]/55 bg-[#061d2b] p-3 shadow-[0_28px_80px_rgba(0,0,0,0.45)] sm:max-h-[calc(100dvh-3rem)]"
+            className="relative max-h-[calc(100dvh-1.5rem)] w-full max-w-6xl overflow-y-auto rounded border border-[#c49a3c]/55 bg-[#061d2b] p-3 sm:max-h-[calc(100dvh-3rem)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div id={titleId} className="sr-only">
@@ -89,7 +89,7 @@ export function ExpandableImage({
             <button
               type="button"
               aria-label="Lukk større bilde"
-              className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded border border-[#c49a3c]/65 bg-[#fff7e6] text-[#062b40] shadow-sm transition hover:bg-white"
+              className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded border border-[#c49a3c]/65 bg-[#fdf7e8] text-[#062b40] shadow-sm transition hover:bg-white"
               onClick={() => setOpen(false)}
             >
               <X className="h-5 w-5" aria-hidden="true" />
@@ -106,7 +106,7 @@ export function ExpandableImage({
               />
             </div>
             {caption ? (
-              <p className="border-t border-[#c49a3c]/35 px-2 py-3 text-sm font-medium text-[#fff7e6]">
+              <p className="border-t border-[#c49a3c]/35 px-2 py-3 text-sm font-medium text-[#fdf7e8]">
                 {caption}
               </p>
             ) : null}

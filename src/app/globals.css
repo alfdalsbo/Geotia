@@ -7,9 +7,9 @@
 
 :root {
   /* --- Pergament & blekk (nye, Riksprotokollen v2) --- */
-  --paper:           #f5ead0;
-  --paper-2:         #ecdcb1;
-  --paper-deep:      #e2cf9c;
+  --paper:           #fdf7e8;
+  --paper-2:         #f5ead0;
+  --paper-deep:      #ecdcb1;
   --ink:             #1c1408;
   --ink-muted:       #594226;
 
@@ -39,15 +39,15 @@
   --radius-frame:    3px;
 
   /* --- Skygger --- */
-  --shadow-frame:    0 22px 60px rgba(40, 25, 8, 0.18);
-  --shadow-section:  0 14px 30px rgba(40, 25, 8, 0.10);
-  --shadow-shield:   0 8px 20px rgba(40, 25, 8, 0.10);
-  --shadow-card:     0 10px 22px rgba(40, 25, 8, 0.10);
+  --shadow-frame:    none;
+  --shadow-section:  none;
+  --shadow-shield:   none;
+  --shadow-card:     none;
 
   /* --- Bakoverkompatibilitet med v1 (alias) --- */
   --background:      var(--paper);
   --foreground:      var(--ink);
-  --panel:           #fff7e6;
+  --panel:           #fdf7e8;
   --panel-muted:     #efe3c7;
   --regent-blue:     var(--navy);
   --regent-green:    var(--green-regent);
@@ -61,10 +61,10 @@
   --color-foreground: var(--foreground);
 
   /* Nye font-tokens (variabler settes av next/font/google i layout.tsx) */
-  --font-display: var(--font-display-cinzel), Georgia, "Times New Roman", serif;
-  --font-sans: var(--font-body-eb-garamond), Georgia, "Times New Roman", serif;
-  --font-numerals: var(--font-numerals-cormorant), Georgia, "Times New Roman", serif;
-  --font-italic: var(--font-italic-im-fell), Georgia, "Times New Roman", serif;
+  --font-display: var(--font-lora), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+  --font-numerals: var(--font-lora), Georgia, "Times New Roman", serif;
+  --font-italic: var(--font-lora), Georgia, "Times New Roman", serif;
   --font-mono: var(--font-mono-dm-mono), "Geist Mono", ui-monospace, monospace;
 }
 
@@ -74,11 +74,7 @@ html {
 }
 
 body {
-  background:
-    linear-gradient(90deg, rgba(75, 46, 24, 0.07) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(75, 46, 24, 0.06) 1px, transparent 1px),
-    linear-gradient(180deg, #fbf3df 0%, #e9dcc0 100%);
-  background-size: 46px 46px, 46px 46px, auto;
+  background: #52525b;
   color: var(--foreground);
   font-family: var(--font-sans);
   font-feature-settings:
@@ -104,12 +100,10 @@ svg {
 
 .geotia-civic-bg {
   background:
-    radial-gradient(circle at 18% 8%, rgba(124, 36, 48, 0.14), transparent 26rem),
-    radial-gradient(circle at 92% 12%, rgba(25, 72, 50, 0.14), transparent 28rem),
-    linear-gradient(90deg, rgba(75, 46, 24, 0.08) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(75, 46, 24, 0.07) 1px, transparent 1px),
-    linear-gradient(180deg, #fbf3df 0%, #e4d2aa 100%);
-  background-size: auto, auto, 52px 52px, 52px 52px, auto;
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    #52525b;
+  background-size: 52px 52px, 52px 52px, auto;
 }
 
 .geotia-civic-bg :where(*) {
@@ -154,12 +148,7 @@ textarea {
   min-width: 0;
   overflow: hidden;
   border: 1px solid rgba(196, 154, 60, 0.68);
-  background:
-    linear-gradient(135deg, rgba(255, 250, 236, 0.98), rgba(239, 227, 199, 0.94)),
-    linear-gradient(90deg, rgba(6, 43, 64, 0.08), transparent 42%, rgba(124, 36, 48, 0.08));
-  box-shadow:
-    0 18px 40px rgba(28, 20, 10, 0.14),
-    inset 0 0 0 6px rgba(255, 255, 255, 0.22);
+  background: var(--paper);
 }
 
 .geotia-frame::before {
@@ -189,10 +178,7 @@ textarea {
   min-width: 0;
   overflow: hidden;
   border: 1px solid rgba(196, 154, 60, 0.5);
-  background:
-    linear-gradient(180deg, rgba(255, 248, 232, 0.98), rgba(246, 237, 214, 0.98)),
-    repeating-linear-gradient(0deg, rgba(75, 46, 24, 0.035) 0, rgba(75, 46, 24, 0.035) 1px, transparent 1px, transparent 10px);
-  box-shadow: 0 12px 28px rgba(38, 26, 12, 0.1);
+  background: var(--paper);
 }
 
 .geotia-panel::before {
@@ -209,22 +195,15 @@ textarea {
 }
 
 .geotia-temple {
-  background:
-    linear-gradient(90deg, rgba(6, 43, 64, 0.09), transparent 28%, rgba(124, 36, 48, 0.11)),
-    repeating-linear-gradient(90deg, rgba(75, 46, 24, 0.08) 0 2px, transparent 2px 18px),
-    linear-gradient(135deg, rgba(255, 250, 236, 0.98), rgba(236, 220, 185, 0.96));
+  background: var(--paper);
 }
 
 .geotia-agora {
-  background:
-    linear-gradient(135deg, rgba(255, 247, 230, 0.97), rgba(235, 218, 181, 0.95)),
-    repeating-radial-gradient(circle at 20% 20%, rgba(6, 43, 64, 0.08) 0 1px, transparent 1px 12px);
+  background: var(--paper);
 }
 
 .geotia-sarajevo {
-  background:
-    linear-gradient(135deg, rgba(255, 247, 230, 0.96), rgba(235, 218, 181, 0.92)),
-    linear-gradient(90deg, rgba(124, 36, 48, 0.14), transparent 45%, rgba(6, 43, 64, 0.12));
+  background: var(--paper);
 }
 
 .geotia-inscription {
@@ -240,7 +219,7 @@ textarea {
 .geotia-panel-header {
   background:
     linear-gradient(90deg, #062b40, #0d3b4e 44%, #4f1d24);
-  color: #fff7e6;
+  color: #fdf7e8;
 }
 
 .geotia-ornament {
@@ -606,7 +585,7 @@ textarea {
 
 .subnav-strip {
   border: 1px solid rgba(196, 154, 60, 0.45);
-  background: #fff7e6;
+  background: #fdf7e8;
   padding: 4px;
   box-shadow: 0 8px 24px rgba(22, 23, 19, 0.08);
 }
@@ -754,7 +733,7 @@ textarea {
 .live-case {
   font-family: var(--font-numerals);
   font-size: 21px;
-  color: #fff7e0;
+  color: #fdf7e8;
   font-weight: 600;
   margin-top: 2px;
   line-height: 1.2;
@@ -807,16 +786,12 @@ textarea {
 }
 
 .btn:hover {
-  transform: translateY(-1px);
 }
 
 .btn-wax {
-  color: #fff7e0;
-  background: linear-gradient(180deg, #7e2532, var(--burgundy) 70%);
+  color: #fdf7e8;
+  background: var(--burgundy);
   border-color: rgba(184, 137, 47, 0.55);
-  box-shadow:
-    0 6px 16px rgba(60, 12, 18, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
   position: relative;
 }
 
@@ -825,8 +800,7 @@ textarea {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: radial-gradient(circle, #ffd87a, var(--gold));
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+  background: var(--gold);
   flex: none;
 }
 
@@ -843,9 +817,8 @@ textarea {
 
 .btn-brass {
   color: var(--navy-deep);
-  background: linear-gradient(180deg, var(--gold-bright), #a8841d);
+  background: var(--gold);
   border-color: var(--gold-deep);
-  box-shadow: 0 6px 14px rgba(168, 132, 29, 0.35);
 }
 
 .btn-small {
@@ -896,11 +869,7 @@ textarea {
 .geo-hero {
   position: relative;
   border: 1px solid var(--gold);
-  background: linear-gradient(180deg, rgba(255, 247, 221, 0.95), rgba(238, 217, 168, 0.92));
-  box-shadow:
-    var(--shadow-frame),
-    inset 0 0 0 8px rgba(245, 234, 208, 0.5),
-    inset 0 0 0 10px var(--gold);
+  background: var(--paper);
   overflow: hidden;
 }
 
@@ -1010,7 +979,7 @@ textarea {
 }
 
 .geo-winner-band {
-  background: linear-gradient(90deg, var(--navy-deep), #0d3a55);
+  background: var(--navy-deep);
   color: #f5ead0;
   padding: 18px 24px;
   border-top: 1px solid var(--gold);
@@ -1212,10 +1181,9 @@ textarea {
 /* ----- § 10 — Shield (ny intern StatTile-impl) ----- */
 .shield {
   position: relative;
-  background: linear-gradient(180deg, rgba(255, 250, 228, 0.95), rgba(238, 217, 168, 0.92));
+  background: var(--paper);
   border: 1px solid var(--gold);
   padding: 24px 18px 18px;
-  box-shadow: var(--shadow-shield);
 }
 
 .shield .num {
@@ -1246,7 +1214,7 @@ textarea {
 
 .shield--gold .num {
   background: linear-gradient(180deg, var(--gold-bright), var(--gold-deep));
-  color: #fff7e0;
+  color: #fdf7e8;
 }
 
 .shield .label {
@@ -1277,17 +1245,14 @@ textarea {
 
 /* ----- § 11 — Section + Banner ----- */
 .geo-section {
-  background:
-    linear-gradient(180deg, rgba(255, 247, 221, 0.96), rgba(244, 228, 190, 0.92)),
-    repeating-linear-gradient(0deg, rgba(126, 90, 24, 0.04) 0 1px, transparent 1px 8px);
+  background: var(--paper);
   border: 1px solid var(--gold);
-  box-shadow: var(--shadow-section);
   position: relative;
 }
 
 .geo-banner {
   margin: -1px -1px 0;
-  background: linear-gradient(180deg, var(--navy), var(--navy-deep));
+  background: var(--navy-deep);
   color: #f5d27a;
   padding: 14px 32px;
   display: flex;
@@ -1306,7 +1271,7 @@ textarea {
   width: 34px;
   height: 38px;
   transform: translateY(-50%);
-  background: linear-gradient(180deg, var(--burgundy), #3a0e15);
+  background: var(--burgundy);
   clip-path: polygon(0 0, 100% 0, 80% 50%, 100% 100%, 0 100%);
 }
 
@@ -1371,9 +1336,8 @@ textarea {
   position: relative;
   display: block;
   padding: 24px 22px 22px;
-  background: linear-gradient(180deg, rgba(255, 250, 228, 0.95), rgba(238, 217, 168, 0.85));
+  background: var(--paper);
   border: 1px solid var(--gold);
-  box-shadow: var(--shadow-card);
   color: var(--ink);
   text-decoration: none;
 }
@@ -1455,7 +1419,7 @@ textarea {
 
 .personal-poster-band {
   padding: 12px 24px;
-  color: #fff7e0;
+  color: #fdf7e8;
   font-size: 13px;
   letter-spacing: 0.32em;
   font-weight: 700;
@@ -1729,7 +1693,7 @@ input.geo-checkbox:checked::after {
   left: 5px;
   width: 5px;
   height: 9px;
-  border: solid #fff7e0;
+  border: solid #fdf7e8;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
@@ -1902,7 +1866,7 @@ table.protocol td.right {
 
 .rank-mark.bronze {
   background: radial-gradient(circle, #e6b46d, #9a5b2c);
-  color: #fff7e0;
+  color: #fdf7e8;
 }
 
 .rank-mark.dimmed {

@@ -55,7 +55,7 @@ export function SarajevoVideo() {
             høytid i samme åndedrag.
           </p>
           <p
-            className="mt-4 rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-3 text-sm leading-6 text-[#654517]"
+            className="mt-4 rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-3 text-sm leading-6 text-[#654517]"
             style={{ fontFamily: "var(--font-italic)", fontStyle: "italic" }}
           >
             &ldquo;Å ta en Sarajevo: være svært selvsikker, gå ekstremt høyt ut

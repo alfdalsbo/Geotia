@@ -34,7 +34,7 @@ export function GeotingSubnav({ active }: { active: GeotingTabId }) {
   return (
     <nav
       aria-label="GeoTinget"
-      className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-1 shadow-sm"
+      className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-1 shadow-sm"
     >
       <div className="grid grid-cols-3 gap-1">
         {tabs.map((tab) => {

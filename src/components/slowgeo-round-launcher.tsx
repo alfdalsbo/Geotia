@@ -40,7 +40,7 @@ export function SlowGeoRoundLauncher() {
               defaultChecked={hasServerKey}
               disabled={!hasServerKey}
             />
-            <span className="flex min-h-24 flex-col gap-2 rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-3 text-[#4f412b] shadow-sm transition peer-checked:border-[#203c62] peer-checked:bg-[#203c62] peer-checked:text-white peer-disabled:cursor-not-allowed peer-disabled:opacity-55">
+            <span className="flex min-h-24 flex-col gap-2 rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-3 text-[#4f412b] shadow-sm transition peer-checked:border-[#203c62] peer-checked:bg-[#203c62] peer-checked:text-white peer-disabled:cursor-not-allowed peer-disabled:opacity-55">
               <span className="flex items-center justify-between gap-2">
                 <span className="inline-flex items-center gap-2 text-sm font-semibold">
                   <Camera className="h-4 w-4" aria-hidden="true" />
@@ -80,7 +80,7 @@ export function SlowGeoRoundLauncher() {
           Åpne SlowGeo
         </PendingSubmitButton>
       </div>
-      <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 py-3 text-sm leading-6 text-[#4f412b] shadow-sm lg:col-span-4">
+      <div className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] px-3 py-3 text-sm leading-6 text-[#4f412b] shadow-sm lg:col-span-4">
         <span
           className="mr-1 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[#7c2430]"
           style={{ fontFamily: "var(--font-display)" }}

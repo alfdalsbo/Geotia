@@ -188,7 +188,7 @@ export default async function StandingsPage() {
 
 function MobileMetric({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="mobile-metric rounded border border-[#d8c48c] bg-[#fff7e6] p-3">
+    <div className="mobile-metric rounded border border-[#d8c48c] bg-[#fdf7e8] p-3">
       <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">{label}</p>
       <p className="mobile-metric-value mt-1 font-semibold text-[#062b40]">{value}</p>
     </div>

@@ -161,7 +161,7 @@ export default async function RoundDetailPage({
         <Link
           href="/runder"
           prefetch={false}
-          className="inline-flex h-10 items-center justify-center rounded border border-[#062b40]/30 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
+          className="inline-flex h-10 items-center justify-center rounded border border-[#062b40]/30 bg-[#fdf7e8] px-3 text-sm font-semibold text-[#062b40]"
         >
           Til rundearkivet
           <LinkPendingIndicator />

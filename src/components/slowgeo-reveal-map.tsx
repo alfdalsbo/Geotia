@@ -31,10 +31,10 @@ const answerMarkerIconSvg = encodeURIComponent(`
   <filter id="shadow" x="-25%" y="-15%" width="150%" height="150%">
     <feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#061d2b" flood-opacity="0.34"/>
   </filter>
-  <path filter="url(#shadow)" d="M29 68c9-12 22-27 22-42C51 13.3 41.2 4 29 4S7 13.3 7 26c0 15 13 30 22 42z" fill="#7c2430" stroke="#fff7e6" stroke-width="4"/>
+  <path filter="url(#shadow)" d="M29 68c9-12 22-27 22-42C51 13.3 41.2 4 29 4S7 13.3 7 26c0 15 13 30 22 42z" fill="#7c2430" stroke="#fdf7e8" stroke-width="4"/>
   <circle cx="29" cy="26" r="16" fill="#fff3d4" stroke="#c49a3c" stroke-width="4"/>
   <circle cx="29" cy="26" r="7" fill="#285c45"/>
-  <path d="M23 26.5l4 4.2 8.5-10" fill="none" stroke="#fff7e6" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M23 26.5l4 4.2 8.5-10" fill="none" stroke="#fdf7e8" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
 `);
 
@@ -270,7 +270,7 @@ export function SlowGeoRevealMap({
       ? "grid gap-0 lg:grid-cols-[minmax(0,0.96fr)_minmax(340px,1.04fr)]"
       : "grid gap-0 xl:grid-cols-[minmax(0,1.08fr)_minmax(390px,0.92fr)]";
   const mapShellClass = mapOpen
-    ? "fixed inset-0 z-[80] flex flex-col overflow-hidden bg-[#fff7e6] text-[#273125]"
+    ? "fixed inset-0 z-[80] flex flex-col overflow-hidden bg-[#fdf7e8] text-[#273125]"
     : cn(
         "relative min-h-[280px] overflow-hidden rounded border border-[#d8ded0] bg-[#e9dcc0]",
         variant === "summary" ? "sm:min-h-[300px]" : "sm:min-h-[340px]",
@@ -279,8 +279,8 @@ export function SlowGeoRevealMap({
   return (
     <section
       className={cn(
-        "w-full min-w-0 overflow-hidden rounded border border-[#c49a3c]/55 bg-[#fff7e6] shadow-[0_16px_34px_rgba(38,26,12,0.12)]",
-        variant === "full" && "shadow-[0_18px_40px_rgba(38,26,12,0.14)]",
+        "w-full min-w-0 overflow-hidden rounded border border-[#c49a3c]/55 bg-[#fdf7e8]",
+        variant === "full" && "",
       )}
     >
       <div className="flex flex-col gap-3 border-b border-[#d8c48c] bg-[#fff3d4] px-4 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-5">
@@ -337,7 +337,7 @@ export function SlowGeoRevealMap({
               title={roundName}
             />
           ) : (
-            <div className="flex min-h-[280px] w-full items-center justify-center px-6 text-center text-sm font-semibold text-[#fff7e6]">
+            <div className="flex min-h-[280px] w-full items-center justify-center px-6 text-center text-sm font-semibold text-[#fdf7e8]">
               Street View-bildet kan ikke vises akkurat nå.
             </div>
           )}
@@ -386,7 +386,7 @@ export function SlowGeoRevealMap({
                 style={{ touchAction: "none", overscrollBehavior: mapOpen ? "none" : "contain" }}
               >
                 {mapOpen ? (
-                  <div className="flex items-center justify-between gap-3 border-b border-[#d8ded0] bg-[#fff7e6] px-3 py-3 shadow-sm">
+                  <div className="flex items-center justify-between gap-3 border-b border-[#d8ded0] bg-[#fdf7e8] px-3 py-3 shadow-sm">
                     <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">SlowGeo-kart</p>
                       <p className="truncate text-sm font-semibold text-[#062b40]">{roundName}</p>
@@ -419,7 +419,7 @@ export function SlowGeoRevealMap({
                   ) : null}
                 </div>
                 {mapOpen ? (
-                  <div className="border-t border-[#d8ded0] bg-[#fff7e6] px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-10px_24px_rgba(38,26,12,0.12)]">
+                  <div className="border-t border-[#d8ded0] bg-[#fdf7e8] px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
                     <p className="flex min-h-10 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm text-[#5b6257]">
                       <MapPin className="h-4 w-4 flex-none text-[#7c2430]" aria-hidden="true" />
                       <span>{markers.length} markører i kartet</span>

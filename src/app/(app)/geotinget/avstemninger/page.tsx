@@ -66,7 +66,7 @@ export default async function GeotingVotesPage({
 
       <GeotingVoteAlarm proposals={activeVotingProposals} context="geotinget" />
 
-      <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-4 py-3 text-sm font-semibold text-[#654517]">
+      <div className="rounded border border-[#c49a3c]/35 bg-[#fdf7e8] px-4 py-3 text-sm font-semibold text-[#654517]">
         {geotingLine}
       </div>
 

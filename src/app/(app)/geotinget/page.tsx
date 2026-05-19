@@ -79,14 +79,14 @@ export default async function GeotingPage({
       </div>
 
       {!currentCapabilities.canSubmitBasicProposal ? (
-        <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 text-sm leading-6 text-[#4f412b]">
+        <div className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4 text-sm leading-6 text-[#4f412b]">
           <strong className="text-[#062b40]">Ordensport:</strong>{" "}
           {currentOrderRow?.rank.name ?? "Uført geot"} kan lese og mumle fra benken.{" "}
           {currentCapabilities.lockedSummary}
         </div>
       ) : null}
 
-      <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-4 py-3 text-sm font-semibold text-[#654517]">
+      <div className="rounded border border-[#c49a3c]/35 bg-[#fdf7e8] px-4 py-3 text-sm font-semibold text-[#654517]">
         {geotingLine}
       </div>
 
@@ -119,7 +119,7 @@ export default async function GeotingPage({
               />
             </label>
             {!currentCapabilities.canSubmitLawProposal ? (
-              <p className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm text-[#654517] lg:col-span-2">
+              <p className="rounded border border-[#c49a3c]/35 bg-[#fdf7e8] px-3 py-2 text-sm text-[#654517] lg:col-span-2">
                 Din rang kan sende vanlige tingforslag. Lov- og grunnlovssaker åpner på nivå 5.
               </p>
             ) : null}

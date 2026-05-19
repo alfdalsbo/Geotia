@@ -108,7 +108,7 @@ export function GameSessionForm({ session }: { session: GameSession }) {
         </table>
       </div>
 
-      <div className="flex flex-col gap-3 rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2 text-sm text-[#4f412b]">
           <Gamepad2 className="h-4 w-4 text-[#7c2430]" aria-hidden="true" />
           <span>Geo/MapTap bruker høy score. Satle/Globle bruker færrest forsøk.</span>

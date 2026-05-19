@@ -110,7 +110,7 @@ export default async function SlowGeoGamePage({
                     />
                   </div>
                   {round.challenge ? (
-                    <div className="mt-3 rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-3 text-sm leading-6 text-[#4f412b]">
+                    <div className="mt-3 rounded border border-[#c49a3c]/35 bg-[#fdf7e8] p-3 text-sm leading-6 text-[#4f412b]">
                       <span className="font-semibold text-[#7c2430]">{difficulty ?? "Umerket"}</span>
                       {round.challenge.theme ? ` · ${round.challenge.theme}` : ""}
                       {round.challenge.signature ? ` · ${round.challenge.signature}` : ""}

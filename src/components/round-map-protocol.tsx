@@ -77,8 +77,8 @@ export function RoundMapProtocol({ snapshot }: { snapshot: RoundMapSnapshot | nu
   const answerPoint = positioned.find((marker) => marker.id === answer.id) ?? positioned[0];
 
   return (
-    <section className="overflow-hidden rounded border border-[#c49a3c]/55 bg-[#061d2b] shadow-[0_18px_38px_rgba(0,0,0,0.18)]">
-      <div className="flex flex-col gap-2 border-b border-[#c49a3c]/35 px-4 py-3 text-[#fff7e6] sm:flex-row sm:items-end sm:justify-between">
+    <section className="overflow-hidden rounded border border-[#c49a3c]/55 bg-[#061d2b]">
+      <div className="flex flex-col gap-2 border-b border-[#c49a3c]/35 px-4 py-3 text-[#fdf7e8] sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">Kartprotokoll</p>
           <h2 className="font-display mt-1 text-2xl font-semibold">Fasit og geotenes svar</h2>
@@ -134,7 +134,7 @@ export function RoundMapProtocol({ snapshot }: { snapshot: RoundMapSnapshot | nu
           © OpenStreetMap contributors
         </div>
       </div>
-      <div className="grid gap-2 bg-[#fff7e6] p-4 text-sm md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-2 bg-[#fdf7e8] p-4 text-sm md:grid-cols-2 xl:grid-cols-4">
         {snapshot.markers.map((marker) => (
           <div key={`summary-${marker.id}`} className="rounded border border-[#d8c48c] bg-white/75 p-3">
             <p className="flex items-center gap-2 font-semibold text-[#062b40]">

@@ -232,11 +232,11 @@ export function SlowGeoPlay({
       ? "aspect-[4/3] min-h-[320px] w-full sm:aspect-video sm:min-h-[420px]"
       : "aspect-[4/3] min-h-[320px] w-full sm:aspect-video sm:min-h-[300px]";
   const mapShellClass = mapOpen
-    ? "fixed inset-0 z-[80] flex flex-col overflow-hidden bg-[#fff7e6] text-[#273125]"
+    ? "fixed inset-0 z-[80] flex flex-col overflow-hidden bg-[#fdf7e8] text-[#273125]"
     : "relative min-h-[280px] flex-1 overflow-hidden rounded border border-[#d8ded0] bg-[#e9dcc0] sm:min-h-[320px]";
 
   return (
-    <section className="w-full min-w-0 overflow-hidden rounded border border-[#c49a3c]/55 bg-[#fff7e6] shadow-[0_16px_34px_rgba(38,26,12,0.12)]">
+    <section className="w-full min-w-0 overflow-hidden rounded border border-[#c49a3c]/55 bg-[#fdf7e8]">
       <div className={gridClass}>
         <div className="min-w-0 bg-[#061d2b]">
           {streetViewUrl ? (
@@ -252,7 +252,7 @@ export function SlowGeoPlay({
               title={roundName}
             />
           ) : (
-            <div className="flex min-h-[240px] w-full items-center justify-center px-6 text-center text-sm font-semibold text-[#fff7e6] sm:min-h-[300px]">
+            <div className="flex min-h-[240px] w-full items-center justify-center px-6 text-center text-sm font-semibold text-[#fdf7e8] sm:min-h-[300px]">
               Street View-bildet mangler pano-ID eller Google-nøkkel. Sett Google-miljøvariablene og opprett en ny runde.
             </div>
           )}
@@ -263,7 +263,7 @@ export function SlowGeoPlay({
             </div>
           ) : null}
           {showPanoramaRetry ? (
-            <form action={replaceSlowGeoPanoramaAction} className="grid gap-3 border-t border-white/10 bg-[#fff7e6] px-4 py-4 text-[#273125]">
+            <form action={replaceSlowGeoPanoramaAction} className="grid gap-3 border-t border-white/10 bg-[#fdf7e8] px-4 py-4 text-[#273125]">
               <input type="hidden" name="round_id" value={roundId} />
               <input type="hidden" name="return_to" value={replacePanoramaReturnTo} />
               <p className="text-sm leading-6 text-[#4f412b]">
@@ -330,7 +330,7 @@ export function SlowGeoPlay({
                 style={{ touchAction: "none", overscrollBehavior: mapOpen ? "none" : "contain" }}
               >
                 {mapOpen ? (
-                  <div className="flex items-center justify-between gap-3 border-b border-[#d8ded0] bg-[#fff7e6] px-3 py-3 shadow-sm">
+                  <div className="flex items-center justify-between gap-3 border-b border-[#d8ded0] bg-[#fdf7e8] px-3 py-3 shadow-sm">
                     <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
                         SlowGeo-kart
@@ -365,7 +365,7 @@ export function SlowGeoPlay({
                   ) : null}
                 </div>
                 {mapOpen ? (
-                  <div className="grid gap-3 border-t border-[#d8ded0] bg-[#fff7e6] px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-10px_24px_rgba(38,26,12,0.12)]">
+                  <div className="grid gap-3 border-t border-[#d8ded0] bg-[#fdf7e8] px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
                     <p className="flex min-h-10 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm text-[#5b6257]">
                       <MapPin className="h-4 w-4 flex-none text-[#7c2430]" aria-hidden="true" />
                       <span className="min-w-0 break-words">

@@ -130,12 +130,12 @@ function ProposalCard({
   return (
     <details
       id={`sak-${proposal.id}`}
-      className="geotia-frame group rounded transition-shadow hover:shadow-[0_0_0_2px_rgba(196,154,60,0.22)] focus-within:ring-2 focus-within:ring-[#c49a3c]"
+      className="geotia-frame group rounded focus-within:ring-2 focus-within:ring-[#c49a3c]"
       data-geoting-accordion-item
       data-testid="geoting-case"
       open={defaultOpen}
     >
-      <summary className="cursor-pointer list-none p-4 outline-none transition hover:bg-[#fff7e6]/55 active:bg-[#c49a3c]/10 sm:p-5 [&::-webkit-details-marker]:hidden">
+      <summary className="cursor-pointer list-none p-4 outline-none transition hover:bg-[#fdf7e8]/55 active:bg-[#c49a3c]/10 sm:p-5 [&::-webkit-details-marker]:hidden">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(240px,380px)] lg:items-center">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
@@ -195,14 +195,14 @@ function ProposalCard({
           <PartyMechanicsBoard currentGeot={currentGeot} mechanics={partyMechanics} />
 
           {tingvitner.length ? (
-            <p className="mt-3 rounded border border-[#c49a3c]/30 bg-[#fff7e6] px-3 py-2 text-sm text-[#60553f]">
+            <p className="mt-3 rounded border border-[#c49a3c]/30 bg-[#fdf7e8] px-3 py-2 text-sm text-[#60553f]">
               Tingvitne: {tingvitner.map((player) => player.shortName).join(", ")} følger saken fra benken.
             </p>
           ) : null}
 
         </div>
 
-        <div className="border-t border-[#c49a3c]/35 bg-[#061d2b] p-4 text-[#fff7e6] xl:border-l xl:border-t-0">
+        <div className="border-t border-[#c49a3c]/35 bg-[#061d2b] p-4 text-[#fdf7e8] xl:border-l xl:border-t-0">
           <PartyPositionPanel
             currentCanSetPartyPosition={currentCanSetPartyPosition}
             currentGeot={currentGeot}
@@ -244,7 +244,7 @@ function CompactCaseMetric({ label, value, tone }: { label: string; value: numbe
 
 function ConstitutionChangePanel({ before, after }: { before: string; after: string }) {
   return (
-    <div className="mt-3 grid gap-2 rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-3 sm:grid-cols-2">
+    <div className="mt-3 grid gap-2 rounded border border-[#c49a3c]/35 bg-[#fdf7e8] p-3 sm:grid-cols-2">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">Før</p>
         <p className="mt-1 text-sm leading-6 text-[#4f412b]">{before || "Ikke strukturert. Bruk gjerne 'Før:' i pergamentet."}</p>
@@ -271,7 +271,7 @@ function LifecycleSteps({
             step.state === "done"
               ? "rounded border border-[#285c45]/25 bg-[#285c45]/8 p-3 text-[#194832]"
               : step.state === "current"
-                ? "rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-3 text-[#654517]"
+                ? "rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-3 text-[#654517]"
                 : "rounded border border-[#d8ded0] bg-white/70 p-3 text-[#5b6257]"
           }
         >
@@ -344,7 +344,7 @@ function PartyPositionMap({
   const parties = [...new Map(votingPlayers.filter((player) => player.partyId).map((player) => [player.partyId, player])).values()];
 
   return (
-    <div className="mt-4 min-w-0 rounded border border-[#c49a3c]/30 bg-[#fff7e6] p-3 sm:p-4">
+    <div className="mt-4 min-w-0 rounded border border-[#c49a3c]/30 bg-[#fdf7e8] p-3 sm:p-4">
       <p className="max-w-full break-words text-xs font-semibold uppercase leading-5 tracking-[0.08em] text-[#7c2430] sm:tracking-[0.14em]">
         Partienes offisielle posisjoner
       </p>
@@ -417,7 +417,7 @@ function VoteMap({
   votingPlayers: Player[];
 }) {
   return (
-    <div className="rounded border border-[#c49a3c]/30 bg-[#fff7e6] p-4">
+    <div className="rounded border border-[#c49a3c]/30 bg-[#fdf7e8] p-4">
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
         Stemmekart
       </p>
@@ -464,7 +464,7 @@ function PartyPositionPanel({
   const ownPosition = proposal.partyPositions?.find((position) => position.partyId === currentGeot.partyId);
 
   return (
-    <form action={saveGeotingPartyPositionAction} className="mb-3 rounded border border-[#c49a3c]/45 bg-[#fff7e6]/10 p-4">
+    <form action={saveGeotingPartyPositionAction} className="mb-3 rounded border border-[#c49a3c]/45 bg-[#fdf7e8]/10 p-4">
       <input type="hidden" name="proposalId" value={proposal.id} />
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#e1c06c]">
         Partilinje · {currentGeot.partyId.toUpperCase()}
@@ -472,7 +472,7 @@ function PartyPositionPanel({
       <select
         name="position"
         defaultValue={ownPosition?.position ?? "fri"}
-        className="mt-3 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713] outline-none focus:border-[#e1c06c]"
+        className="mt-3 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fdf7e8] px-2 text-[#161713] outline-none focus:border-[#e1c06c]"
       >
         {(["fri", "for", "mot", "blankt"] as PartyPositionValue[]).map((position) => (
           <option key={position} value={position}>{partyPositionLabels[position]}</option>
@@ -481,7 +481,7 @@ function PartyPositionPanel({
       <input
         name="comment"
         defaultValue={ownPosition?.comment ?? ""}
-        className="mt-3 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713] outline-none focus:border-[#e1c06c]"
+        className="mt-3 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fdf7e8] px-2 text-[#161713] outline-none focus:border-[#e1c06c]"
         placeholder="Kort partibegrunnelse"
       />
       <PendingSubmitButton
@@ -511,7 +511,7 @@ function ActionPanel({
 }) {
   if (!currentCanVote) {
     return (
-      <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/10 p-4 text-sm leading-6 text-[#eadcbd]">
+      <div className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8]/10 p-4 text-sm leading-6 text-[#eadcbd]">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#e1c06c]">
           Tingvitnebenken
         </p>
@@ -525,7 +525,7 @@ function ActionPanel({
   if (!summary.started) {
     if (!currentCanStartVote) {
       return (
-        <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/10 p-4 text-sm leading-6 text-[#eadcbd]">
+        <div className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8]/10 p-4 text-sm leading-6 text-[#eadcbd]">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#e1c06c]">
             Geo-eden står over deg
           </p>
@@ -538,7 +538,7 @@ function ActionPanel({
     }
 
     return (
-      <form action={startGeotingVoteAction} className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/10 p-4">
+      <form action={startGeotingVoteAction} className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8]/10 p-4">
         <input type="hidden" name="proposalId" value={proposal.id} />
         <input type="hidden" name="oathText" value={GEO_OATH_TEXT} />
         <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#e1c06c]">
@@ -546,7 +546,7 @@ function ActionPanel({
           Start avstemning
         </p>
         <p className="mt-3 text-sm leading-6 text-[#eadcbd]">{GEO_OATH_TEXT}</p>
-        <label className="mt-4 flex items-start gap-3 rounded border border-[#c49a3c]/35 bg-[#061d2b]/50 p-3 text-sm leading-6 text-[#fff7e6]">
+        <label className="mt-4 flex items-start gap-3 rounded border border-[#c49a3c]/35 bg-[#061d2b]/50 p-3 text-sm leading-6 text-[#fdf7e8]">
           <input
             name="geoOath"
             type="checkbox"
@@ -568,11 +568,11 @@ function ActionPanel({
 
   if (summary.finished) {
     return (
-      <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/10 p-4 text-sm leading-6 text-[#eadcbd]">
+      <div className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8]/10 p-4 text-sm leading-6 text-[#eadcbd]">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#e1c06c]">
           Riksarkivet
         </p>
-        <p className="font-display mt-2 text-3xl font-semibold text-[#fff7e6]">{summary.resultText}</p>
+        <p className="font-display mt-2 text-3xl font-semibold text-[#fdf7e8]">{summary.resultText}</p>
         <p className="mt-2">
           Urnen er lukket. Saken er automatisk ført i riksarkivet med stemmer, blanke og eventuell taushet.
         </p>
@@ -581,7 +581,7 @@ function ActionPanel({
   }
 
   return (
-    <form action={voteGeotingProposalAction} className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/10 p-4">
+    <form action={voteGeotingProposalAction} className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8]/10 p-4">
       <input type="hidden" name="proposalId" value={proposal.id} />
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#e1c06c]">
         Din stemme {ownVote ? `(${voteLabels[ownVote]})` : ""}
@@ -589,7 +589,7 @@ function ActionPanel({
       <select
         name="vote"
         defaultValue={ownVote && ownVote !== "avhold" ? ownVote : "for"}
-        className="mt-3 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713] outline-none focus:border-[#e1c06c]"
+        className="mt-3 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fdf7e8] px-2 text-[#161713] outline-none focus:border-[#e1c06c]"
       >
         <option value="for">For</option>
         <option value="mot">Mot</option>
@@ -597,7 +597,7 @@ function ActionPanel({
       </select>
       <input
         name="comment"
-        className="mt-3 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-2 text-[#161713] outline-none focus:border-[#e1c06c]"
+        className="mt-3 h-10 w-full rounded border border-[#c49a3c]/45 bg-[#fdf7e8] px-2 text-[#161713] outline-none focus:border-[#e1c06c]"
         placeholder="Kort stikk, om nødvendig"
       />
       <PendingSubmitButton

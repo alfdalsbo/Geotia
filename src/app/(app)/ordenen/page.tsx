@@ -144,15 +144,15 @@ export default async function GeoticOrderPage() {
 
       <Section title={geoticOrderFoundingGate.title} eyebrow="Ingen snarvei til eget parti">
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-5 shadow-sm">
+          <div className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-5 shadow-sm">
             <p className="text-lg leading-8 text-[#4f412b]">{geoticOrderFoundingGate.body}</p>
-            <p className="mt-4 rounded border border-[#c49a3c]/55 bg-[#061d2b] px-4 py-3 text-sm font-semibold text-[#fff7e6]">
+            <p className="mt-4 rounded border border-[#c49a3c]/55 bg-[#061d2b] px-4 py-3 text-sm font-semibold text-[#fdf7e8]">
               {orderLine}
             </p>
           </div>
           <div className="grid gap-3">
             {geoticOrderFoundingGate.requirements.map((requirement) => (
-              <p key={requirement} className="flex items-start gap-2 rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-3 text-sm leading-6 text-[#4f412b] shadow-sm">
+              <p key={requirement} className="flex items-start gap-2 rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-3 text-sm leading-6 text-[#4f412b] shadow-sm">
                 <ShieldCheck className="mt-0.5 h-4 w-4 flex-none text-[#194832]" aria-hidden="true" />
                 {requirement}
               </p>
@@ -164,7 +164,7 @@ export default async function GeoticOrderPage() {
       {currentPath ? (
         <Section title="Prøvestien" eyebrow="Onboarding uten skjema">
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-5 shadow-sm">
+            <div className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-5 shadow-sm">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7c2430]">
@@ -185,7 +185,7 @@ export default async function GeoticOrderPage() {
                 ))}
               </div>
             </div>
-            <aside className="rounded border border-[#c49a3c]/55 bg-[#061d2b] p-4 text-[#fff7e6] shadow-sm">
+            <aside className="rounded border border-[#c49a3c]/55 bg-[#061d2b] p-4 text-[#fdf7e8] shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
                 Aspirantens prøvedør
               </p>
@@ -194,7 +194,7 @@ export default async function GeoticOrderPage() {
               </p>
               <div className="mt-4 grid gap-2">
                 {candidatePaths.slice(0, 4).map(({ row, path }) => (
-                  <div key={row.player.id} className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 py-2 text-sm text-[#4f412b]">
+                  <div key={row.player.id} className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] px-3 py-2 text-sm text-[#4f412b]">
                     <p className="flex items-center justify-between gap-3">
                       <span className="font-semibold text-[#062b40]">{row.player.shortName}</span>
                       <span className="font-semibold text-[#7c2430]">{path.completed}/{path.total}</span>
@@ -210,7 +210,7 @@ export default async function GeoticOrderPage() {
         </Section>
       ) : null}
 
-      <details id="ordensstigen" className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+      <details id="ordensstigen" className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4 shadow-sm">
         <summary className="cursor-pointer list-none">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -240,7 +240,7 @@ export default async function GeoticOrderPage() {
         </div>
       </details>
 
-      <details id="protokollen" className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+      <details id="protokollen" className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4 shadow-sm">
         <summary className="cursor-pointer list-none">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -259,7 +259,7 @@ export default async function GeoticOrderPage() {
         <div className="mt-4 space-y-4">
           <Link
             href="/stilling"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded border border-[#062b40]/30 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40] transition hover:border-[#c49a3c]"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded border border-[#062b40]/30 bg-[#fdf7e8] px-3 text-sm font-semibold text-[#062b40] transition hover:border-[#c49a3c]"
           >
             Se poenggrunnlaget
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -273,7 +273,7 @@ export default async function GeoticOrderPage() {
         </div>
       </details>
 
-      <details className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+      <details className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4 shadow-sm">
         <summary className="cursor-pointer list-none">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -322,7 +322,7 @@ function PersonalPathCard({ row }: { row: OrderRow }) {
   const nextRank = row.nextRank;
   const statusLabel = row.promotionReady ? "PROTOKOLL" : nextRank ? "PÅ VEI" : "FULLFØRT";
   return (
-    <div className="rounded border border-[#c49a3c]/55 bg-[#fff7e6] p-5 shadow-sm" data-testid="personal-order-path">
+    <div className="rounded border border-[#c49a3c]/55 bg-[#fdf7e8] p-5 shadow-sm" data-testid="personal-order-path">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
@@ -364,10 +364,10 @@ function OnboardingStepCard({ step }: { step: OnboardingStep }) {
   const Icon = step.status === "done" ? CheckCircle2 : step.status === "current" ? Clock : LockKeyhole;
   const classes =
     step.status === "done"
-      ? "border-[#194832]/35 bg-[#fff7e6] text-[#194832]"
+      ? "border-[#194832]/35 bg-[#fdf7e8] text-[#194832]"
       : step.status === "current"
-        ? "border-[#7c2430]/45 bg-[#fff7e6] text-[#4f1d24] shadow-sm"
-        : "border-[#d8c48c] bg-[#fff7e6] text-[#60553f]";
+        ? "border-[#7c2430]/45 bg-[#fdf7e8] text-[#4f1d24] shadow-sm"
+        : "border-[#d8c48c] bg-[#fdf7e8] text-[#60553f]";
   const fill = step.status === "done" ? "bg-[#194832]" : step.status === "current" ? "bg-[#7c2430]" : "bg-[#c49a3c]";
 
   return (
@@ -390,11 +390,11 @@ function RankCard({ rank, current }: { rank: GeoticOrderRank; current: boolean }
     <article
       className={
         current
-          ? "overflow-hidden rounded border-2 border-[#7c2430] bg-[#fff7e6] shadow-[0_18px_35px_rgba(124,36,48,0.18)]"
-          : "overflow-hidden rounded border border-[#c49a3c]/50 bg-[#fff7e6] shadow-sm"
+          ? "overflow-hidden rounded border-2 border-[#7c2430] bg-[#fdf7e8] shadow-[0_18px_35px_rgba(124,36,48,0.18)]"
+          : "overflow-hidden rounded border border-[#c49a3c]/50 bg-[#fdf7e8] shadow-sm"
       }
     >
-      <div className="flex items-start gap-4 border-b border-[#d8c48c] bg-[#061d2b] p-4 text-[#fff7e6]">
+      <div className="flex items-start gap-4 border-b border-[#d8c48c] bg-[#061d2b] p-4 text-[#fdf7e8]">
         <RankMark rank={rank.number} className="mt-1 flex-none" />
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
@@ -437,11 +437,11 @@ function OrderPersonCard({ row, current }: { row: OrderRow; current: boolean }) 
     <article
       className={
         current
-          ? "overflow-hidden rounded border-2 border-[#7c2430] bg-[#fff7e6] shadow-[0_18px_35px_rgba(124,36,48,0.16)]"
-          : "overflow-hidden rounded border border-[#c49a3c]/55 bg-[#fff7e6] shadow-sm"
+          ? "overflow-hidden rounded border-2 border-[#7c2430] bg-[#fdf7e8] shadow-[0_18px_35px_rgba(124,36,48,0.16)]"
+          : "overflow-hidden rounded border border-[#c49a3c]/55 bg-[#fdf7e8] shadow-sm"
       }
     >
-      <div className="flex flex-col gap-4 border-b border-[#c49a3c]/45 bg-[#061d2b] p-4 text-[#fff7e6] sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-4 border-b border-[#c49a3c]/45 bg-[#061d2b] p-4 text-[#fdf7e8] sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <span className="mt-1 h-12 w-2 flex-none rounded-full border border-[#e1c06c]/45" style={{ background: row.player.color }} />
           <div className="min-w-0">
@@ -454,7 +454,7 @@ function OrderPersonCard({ row, current }: { row: OrderRow; current: boolean }) 
         </div>
         <div className="flex flex-col items-start gap-2 sm:items-end">
           <Stamp tone={current ? "alarm" : "navy"}>{current ? "DIN RANG" : row.status.publicLabel}</Stamp>
-          <p className="font-display text-xl font-semibold text-[#fff7e6]">{row.rank.name}</p>
+          <p className="font-display text-xl font-semibold text-[#fdf7e8]">{row.rank.name}</p>
         </div>
       </div>
 
@@ -469,7 +469,7 @@ function OrderPersonCard({ row, current }: { row: OrderRow; current: boolean }) 
           <Metric icon={<Crown className="h-4 w-4" aria-hidden="true" />} label="Poeng" value={formatNumber(row.lifetimePoints)} />
         </div>
 
-        <div className="mt-4 rounded border border-[#d8c48c] bg-[#fff7e6] p-3">
+        <div className="mt-4 rounded border border-[#d8c48c] bg-[#fdf7e8] p-3">
           <div className="flex items-center justify-between gap-3 text-sm">
             <span className="font-semibold text-[#062b40]">
               {nextRank ? `Neste: ${nextRank.name}` : "Står ved øverste synlige port"}
@@ -493,7 +493,7 @@ function OrderPersonCard({ row, current }: { row: OrderRow; current: boolean }) 
 
 function MiniList({ icon, title, items }: { icon: React.ReactNode; title: string; items: string[] }) {
   return (
-    <div className="rounded border border-[#d8c48c] bg-[#fff7e6] p-3">
+    <div className="rounded border border-[#d8c48c] bg-[#fdf7e8] p-3">
       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
         {icon}
         {title}
@@ -511,7 +511,7 @@ function MiniList({ icon, title, items }: { icon: React.ReactNode; title: string
 
 function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
-    <div className="mobile-metric rounded border border-[#d8c48c] bg-[#fff7e6] p-3">
+    <div className="mobile-metric rounded border border-[#d8c48c] bg-[#fdf7e8] p-3">
       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
         {icon}
         {label}

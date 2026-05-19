@@ -44,7 +44,7 @@ export function GeoGuessrTipCard({
             {tip.title}
           </h3>
         </div>
-        <span className="flex h-10 w-10 flex-none items-center justify-center rounded border border-[#c49a3c]/45 bg-[#fff7e6] text-[#7c2430]">
+        <span className="flex h-10 w-10 flex-none items-center justify-center rounded border border-[#c49a3c]/45 bg-[#fdf7e8] text-[#7c2430]">
           <BookOpen className="h-4 w-4" aria-hidden="true" />
         </span>
       </div>
@@ -59,7 +59,7 @@ export function GeoGuessrTipCard({
         <span className="rounded border border-[#285c45]/20 bg-[#285c45]/8 px-2 py-1 text-[#285c45]">
           {tipDifficultyLabels[tip.difficulty]}
         </span>
-        <span className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-2 py-1 text-[#654517]">
+        <span className="rounded border border-[#c49a3c]/35 bg-[#fdf7e8] px-2 py-1 text-[#654517]">
           {tipConfidenceLabels[tip.confidence]}
         </span>
       </div>

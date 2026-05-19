@@ -69,7 +69,7 @@ export default async function TablesPage() {
         title="SlowGeo-tabell"
         eyebrow="Offisiell poenglov"
         action={
-          <Link href="/spill/slowgeo" prefetch={false} className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
+          <Link href="/spill/slowgeo" prefetch={false} className="inline-flex h-10 items-center gap-2 rounded bg-[#fdf7e8] px-3 text-sm font-semibold text-[#062b40]">
             Åpne SlowGeo
             <TableProperties className="h-4 w-4" aria-hidden="true" />
             <LinkPendingIndicator />
@@ -136,7 +136,7 @@ export default async function TablesPage() {
           title="Gammel SlowGeo"
           eyebrow="Historisk import, egen æra"
           action={
-            <Link href="/arkiv/gammel-slowgeo" prefetch={false} className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
+            <Link href="/arkiv/gammel-slowgeo" prefetch={false} className="inline-flex h-10 items-center gap-2 rounded bg-[#fdf7e8] px-3 text-sm font-semibold text-[#062b40]">
               Åpne arkiv
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
               <LinkPendingIndicator />
@@ -155,7 +155,7 @@ export default async function TablesPage() {
               <p className="mt-1 text-sm text-[#5b6257]">{formatKm(oldKattometerLeader?.kattometer)}</p>
             </div>
           </div>
-          <p className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-4 text-sm leading-6 text-[#4f412b]">
+          <p className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fdf7e8] p-4 text-sm leading-6 text-[#4f412b]">
             Den gamle tabellen er synlig for historikk og ære, men blandes ikke inn i dagens levende rangering.
           </p>
         </Section>
@@ -174,7 +174,7 @@ export default async function TablesPage() {
         title="Æreshallen"
         eyebrow="Automatiske rekorder"
         action={
-          <Link href="/hall-of-fame" prefetch={false} className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
+          <Link href="/hall-of-fame" prefetch={false} className="inline-flex h-10 items-center gap-2 rounded bg-[#fdf7e8] px-3 text-sm font-semibold text-[#062b40]">
             Egen sal
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
             <LinkPendingIndicator />
@@ -215,7 +215,7 @@ function SlowGeoMobileCards({ standings }: { standings: Standing[] }) {
         const status = geotStatus(standing);
         const stampTone = status === "SOLID" || status === "JEVN" ? "signal" : "alarm";
         return (
-          <article key={standing.player.id} className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+          <article key={standing.player.id} className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4 shadow-sm">
             <div className="flex items-center gap-3">
               <RankMark rank={standing.rank} />
               <div className="min-w-0 flex-1">
@@ -242,7 +242,7 @@ function GameTable({ game, standings }: { game: GameDefinition; standings: GameS
     <Section title={`${game.name}-tabell`} eyebrow={game.scoreHelp}>
       <div className="grid gap-3 md:hidden">
         {standings.map((standing) => (
-          <article key={standing.player.id} className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+          <article key={standing.player.id} className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4 shadow-sm">
             <div className="flex items-center gap-3">
               <RankMark rank={standing.rank} />
               <div className="min-w-0 flex-1">
@@ -303,7 +303,7 @@ function Podium({
   rows: Array<{ name: string; value: string; detail: string }>;
 }) {
   return (
-    <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm">
+    <div className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4 shadow-sm">
       <p className="font-italic-serif text-xs italic text-[#7e5a18]">{eyebrow}</p>
       <h3 className="font-display mt-1 flex items-center gap-2 text-xl font-bold uppercase tracking-[0.18em] text-[#062b40]">
         <span className="text-[#7e5a18]" aria-hidden="true">{icon}</span>
@@ -336,7 +336,7 @@ function Podium({
 
 function Metric({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="mobile-metric rounded border border-[#d8c48c] bg-[#fff7e6] p-3">
+    <div className="mobile-metric rounded border border-[#d8c48c] bg-[#fdf7e8] p-3">
       <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">{label}</p>
       <p className="mobile-metric-value mt-1 break-words font-semibold text-[#062b40]">{value}</p>
     </div>

@@ -181,7 +181,7 @@ export default async function ThirdCollegePage({
             <Ornament>{thirdCollegeMotto}</Ornament>
 
             <div className="mt-7 grid gap-3 md:grid-cols-3 lg:grid-cols-1 2xl:grid-cols-3">
-              <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/10 p-4">
+              <div className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8]/10 p-4">
                 <p
                   className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#e1c06c]"
                   style={{ fontFamily: "var(--font-display)" }}
@@ -189,14 +189,14 @@ export default async function ThirdCollegePage({
                   Din stol
                 </p>
                 <p
-                  className="mt-2 text-xl font-semibold leading-7 break-words text-[#fff7e6] 2xl:text-2xl"
+                  className="mt-2 text-xl font-semibold leading-7 break-words text-[#fdf7e8] 2xl:text-2xl"
                   style={{ fontFamily: "var(--font-numerals)" }}
                 >
                   {currentSeat?.seal ?? "Skjult segl"}
                 </p>
                 <p className="mt-2 text-sm text-[#eadcbd]">{currentSeat?.office}</p>
               </div>
-              <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/10 p-4">
+              <div className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8]/10 p-4">
                 <p
                   className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#e1c06c]"
                   style={{ fontFamily: "var(--font-display)" }}
@@ -204,14 +204,14 @@ export default async function ThirdCollegePage({
                   Dekknavn
                 </p>
                 <p
-                  className="mt-2 text-xl font-semibold leading-7 break-words text-[#fff7e6] 2xl:text-2xl"
+                  className="mt-2 text-xl font-semibold leading-7 break-words text-[#fdf7e8] 2xl:text-2xl"
                   style={{ fontFamily: "var(--font-numerals)" }}
                 >
                   {currentSeat?.codename ?? "Ingen spor"}
                 </p>
                 <p className="mt-2 text-sm text-[#eadcbd]">Innlogget som {currentGeot.shortName}</p>
               </div>
-              <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/10 p-4">
+              <div className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8]/10 p-4">
                 <p
                   className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#e1c06c]"
                   style={{ fontFamily: "var(--font-display)" }}
@@ -219,7 +219,7 @@ export default async function ThirdCollegePage({
                   Synlighet
                 </p>
                 <p
-                  className="mt-2 text-xl font-semibold leading-7 break-words text-[#fff7e6] 2xl:text-2xl"
+                  className="mt-2 text-xl font-semibold leading-7 break-words text-[#fdf7e8] 2xl:text-2xl"
                   style={{ fontFamily: "var(--font-numerals)" }}
                 >
                   Null
@@ -331,7 +331,7 @@ export default async function ThirdCollegePage({
           title="Indre protokoll"
           eyebrow="SS · PKK · IRA"
           action={
-            <span className="inline-flex h-10 items-center gap-2 rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]">
+            <span className="inline-flex h-10 items-center gap-2 rounded border border-[#c49a3c]/45 bg-[#fdf7e8] px-3 text-sm font-semibold text-[#062b40]">
               <Eye className="h-4 w-4" aria-hidden="true" />
               Kun tre par øyne
             </span>
@@ -408,7 +408,7 @@ export default async function ThirdCollegePage({
           action={
             <Link
               href="/geotinget"
-              className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
+              className="inline-flex h-10 items-center gap-2 rounded bg-[#fdf7e8] px-3 text-sm font-semibold text-[#062b40]"
             >
               Til GeoTinget
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -462,7 +462,7 @@ export default async function ThirdCollegePage({
                 <span>{standing.totalPoints} p</span>
               </div>
             ))}
-            <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-3 text-[#60553f]">
+            <div className="rounded border border-[#c49a3c]/35 bg-[#fdf7e8] p-3 text-[#60553f]">
               Kollegiets samlede kattometer:{" "}
               <span className="font-semibold text-[#161713]">
                 {formatKm(collegeStandings.reduce((sum, standing) => sum + standing.totalKattometer, 0))}
@@ -624,7 +624,7 @@ function SlowGeoAdminSection({
   return (
     <Section title="SlowGeo-skuffen" eyebrow="3K-nødrett og æraforberedelse">
       <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-        <article className="rounded border border-[#c49a3c]/55 bg-[#fff7e6] p-4 shadow-sm">
+        <article className="rounded border border-[#c49a3c]/55 bg-[#fdf7e8] p-4 shadow-sm">
           <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
             <Archive className="h-4 w-4" aria-hidden="true" />
             Æraforhåndsvisning
@@ -729,7 +729,7 @@ function GeotingAdminSection({
             const canWithdraw = proposal.status === "open" || proposal.status === "voting";
 
             return (
-              <article key={proposal.id} className="rounded border border-[#d8c48c] bg-[#fff7e6] p-4">
+              <article key={proposal.id} className="rounded border border-[#d8c48c] bg-[#fdf7e8] p-4">
                 <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
@@ -828,7 +828,7 @@ function GeoterIndexSection({
 
   return (
     <section
-      className="overflow-hidden rounded border border-[#c49a3c]/70 bg-[#061d2b] text-[#fff7e6] shadow-[0_22px_48px_rgba(0,0,0,0.24)]"
+      className="overflow-hidden rounded border border-[#c49a3c]/70 bg-[#061d2b] text-[#fdf7e8] shadow-[0_22px_48px_rgba(0,0,0,0.24)]"
       data-testid="geoter-index-section"
     >
       <div className="p-4 sm:p-7">
@@ -868,7 +868,7 @@ function GeoterIndexSection({
               <h3 className="font-display mt-1 text-2xl font-semibold">Alle geoter under observasjon</h3>
             </div>
             <p className="text-sm text-[#eadcbd]">
-              Grunnscore: <span className="font-semibold text-[#fff7e6]">700</span>. Fri, men ikke troverdig.
+              Grunnscore: <span className="font-semibold text-[#fdf7e8]">700</span>. Fri, men ikke troverdig.
             </p>
           </div>
 
@@ -964,7 +964,7 @@ function GeoterIndexSection({
                 {dossier.volatile.map((item) => (
                   <div key={item.playerId} className="rounded border border-[#c49a3c]/35 bg-[#020b11] px-3 py-2 text-sm">
                     <p className="flex items-center justify-between gap-3">
-                      <span className="font-semibold text-[#fff7e6]">{item.playerName}</span>
+                      <span className="font-semibold text-[#fdf7e8]">{item.playerName}</span>
                       <span className="font-mono text-[#e1c06c]">{item.weight}</span>
                     </p>
                     <p className="mt-1 text-xs leading-5 text-[#eadcbd]">{item.detail}</p>
@@ -1018,7 +1018,7 @@ function GeoterIndexSection({
                         {operator?.shortName ?? adjustment.createdBy}
                       </p>
                       {trailPoint ? (
-                        <p className="mt-2 rounded border border-[#c49a3c]/35 bg-[#102f3f] px-2 py-1 font-mono text-xs text-[#fff7e6]">
+                        <p className="mt-2 rounded border border-[#c49a3c]/35 bg-[#102f3f] px-2 py-1 font-mono text-xs text-[#fdf7e8]">
                           {trailPoint.scoreBefore} → {trailPoint.scoreAfter}
                         </p>
                       ) : null}
@@ -1064,7 +1064,7 @@ function GeoterIndexSection({
             </p>
             <div className="mt-4 grid gap-2">
               {geoterIndexLaw.map((line) => (
-                <p key={line} className="rounded border border-[#d8c48c] bg-[#fff7e6] px-3 py-2 text-sm leading-6">
+                <p key={line} className="rounded border border-[#d8c48c] bg-[#fdf7e8] px-3 py-2 text-sm leading-6">
                   {line}
                 </p>
               ))}
@@ -1162,7 +1162,7 @@ function MobileGeoterIndexCard({ row }: { row: GeoterIndexRow }) {
 
   return (
     <article
-      className="rounded border border-[#c49a3c]/60 bg-[#fff7e6] p-4 text-[#161713] shadow-[0_14px_32px_rgba(2,11,17,0.18)]"
+      className="rounded border border-[#c49a3c]/60 bg-[#fdf7e8] p-4 text-[#161713] shadow-[0_14px_32px_rgba(2,11,17,0.18)]"
       data-testid="geoter-index-mobile-card"
     >
       <div className="flex min-w-0 items-start gap-3">
@@ -1223,7 +1223,7 @@ function MobileIndexTrendCard({ row }: { row: GeoterIndexRow }) {
   const last = row.lastAdjustment;
 
   return (
-    <article className="rounded border border-[#c49a3c]/55 bg-[#020b11] p-3 text-[#fff7e6]">
+    <article className="rounded border border-[#c49a3c]/55 bg-[#020b11] p-3 text-[#fdf7e8]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h4 className="break-normal text-base font-semibold leading-tight">{row.player.shortName}</h4>
@@ -1261,7 +1261,7 @@ function GeoticOrderControlSection({
   const pendingPromotionCases = promotionCases.filter((promotionCase) => promotionCase.status === "pending");
 
   return (
-    <section className="overflow-hidden rounded border border-[#c49a3c]/70 bg-[#061d2b] text-[#fff7e6] shadow-[0_22px_48px_rgba(0,0,0,0.24)]">
+    <section className="overflow-hidden rounded border border-[#c49a3c]/70 bg-[#061d2b] text-[#fdf7e8] shadow-[0_22px_48px_rgba(0,0,0,0.24)]">
       <div className="grid gap-0 2xl:grid-cols-[minmax(0,1fr)_390px]">
         <div className="p-5 sm:p-7">
           <p className="inline-flex items-center gap-2 rounded border border-[#c49a3c]/55 bg-[#020b11]/45 px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#e1c06c]">
@@ -1282,23 +1282,23 @@ function GeoticOrderControlSection({
           </div>
 
           <div className="mt-6 grid gap-3 md:grid-cols-4">
-            <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 p-4">
+            <div className="rounded border border-[#c49a3c]/35 bg-[#fdf7e8]/10 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">Høyeste rang</p>
               <p className="font-display mt-2 text-2xl font-semibold">{firstRow?.rank.name ?? "-"}</p>
             </div>
-            <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 p-4">
+            <div className="rounded border border-[#c49a3c]/35 bg-[#fdf7e8]/10 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">Under prøving</p>
               <p className="font-display mt-2 text-2xl font-semibold">
                 {rows.filter((row) => row.status.id === "provetid").length}
               </p>
             </div>
-            <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 p-4">
+            <div className="rounded border border-[#c49a3c]/35 bg-[#fdf7e8]/10 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">Frosset</p>
               <p className="font-display mt-2 text-2xl font-semibold">
                 {rows.filter((row) => row.status.id === "frosset").length}
               </p>
             </div>
-            <div className="rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 p-4">
+            <div className="rounded border border-[#c49a3c]/35 bg-[#fdf7e8]/10 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">Opprykkssaker</p>
               <p className="font-display mt-2 text-2xl font-semibold">
                 {pendingPromotionCases.length}
@@ -1306,7 +1306,7 @@ function GeoticOrderControlSection({
             </div>
           </div>
 
-          <div className="mt-6 overflow-x-auto rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8 p-2">
+          <div className="mt-6 overflow-x-auto rounded border border-[#c49a3c]/45 bg-[#fdf7e8]/8 p-2">
             <table className="protocol protocol--dark w-full min-w-[980px]">
               <thead>
                 <tr>
@@ -1332,7 +1332,7 @@ function GeoticOrderControlSection({
                       </div>
                     </td>
                     <td>
-                      <p className="font-semibold text-[#fff7e6]">{row.rank.name}</p>
+                      <p className="font-semibold text-[#fdf7e8]">{row.rank.name}</p>
                       <p className="text-xs text-[#cdbd97]">Rå terskel: {row.eligibleRank.name}</p>
                     </td>
                     <td>
@@ -1364,8 +1364,8 @@ function GeoticOrderControlSection({
               </p>
               <div className="mt-3 grid gap-2">
                 {geoticOrderHiddenCategories.map((category) => (
-                  <p key={category.id} className="rounded border border-[#c49a3c]/30 bg-[#fff7e6]/8 px-3 py-2 text-sm leading-6">
-                    <span className="font-semibold text-[#fff7e6]">{category.label}:</span>{" "}
+                  <p key={category.id} className="rounded border border-[#c49a3c]/30 bg-[#fdf7e8]/8 px-3 py-2 text-sm leading-6">
+                    <span className="font-semibold text-[#fdf7e8]">{category.label}:</span>{" "}
                     <span className="text-[#eadcbd]">{category.description}</span>
                   </p>
                 ))}
@@ -1379,7 +1379,7 @@ function GeoticOrderControlSection({
               </p>
               <div className="mt-3 grid gap-2">
                 {partyTrials.map((trial) => (
-                  <p key={trial} className="rounded border border-[#c49a3c]/30 bg-[#fff7e6]/8 px-3 py-2 text-sm leading-6 text-[#eadcbd]">
+                  <p key={trial} className="rounded border border-[#c49a3c]/30 bg-[#fdf7e8]/8 px-3 py-2 text-sm leading-6 text-[#eadcbd]">
                     {trial}
                   </p>
                 ))}
@@ -1389,7 +1389,7 @@ function GeoticOrderControlSection({
         </div>
 
         <aside className="border-t border-[#c49a3c]/45 bg-[#020b11] p-5 2xl:border-l 2xl:border-t-0">
-          <form action={submitGeoticOrderAssessmentAction} className="geo-form geo-form--dark rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8 p-4">
+          <form action={submitGeoticOrderAssessmentAction} className="geo-form geo-form--dark rounded border border-[#c49a3c]/45 bg-[#fdf7e8]/8 p-4">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
               <UserCog className="h-4 w-4" aria-hidden="true" />
               Før ordensrang
@@ -1518,7 +1518,7 @@ function PromotionProtocol({
             <Scale className="h-4 w-4" aria-hidden="true" />
             Opprykksprotokollen
           </p>
-          <h3 className="font-display mt-2 text-3xl font-semibold text-[#fff7e6]">
+          <h3 className="font-display mt-2 text-3xl font-semibold text-[#fdf7e8]">
             Tre stoler. Ingen automatikk.
           </h3>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#eadcbd]">
@@ -1544,7 +1544,7 @@ function PromotionProtocol({
             return (
               <article
                 key={promotionCase.id}
-                className="rounded border border-[#c49a3c]/45 bg-[#fff7e6]/8 p-4"
+                className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8]/8 p-4"
                 data-testid="promotion-case"
               >
                 <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -1552,7 +1552,7 @@ function PromotionProtocol({
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
                       Reist {dateTimeLabel(promotionCase.createdAt)}
                     </p>
-                    <h4 className="font-display mt-1 text-3xl font-semibold text-[#fff7e6]">
+                    <h4 className="font-display mt-1 text-3xl font-semibold text-[#fdf7e8]">
                       {player?.shortName ?? promotionCase.playerId}
                     </h4>
                     <p className="mt-2 text-sm leading-6 text-[#eadcbd]">
@@ -1585,7 +1585,7 @@ function PromotionProtocol({
                             className="flex items-center justify-between gap-3 rounded border border-[#c49a3c]/35 bg-[#020b11]/60 px-3 py-2 text-sm"
                           >
                             <div className="min-w-0">
-                              <p className="font-semibold text-[#fff7e6]">{seat.seal}</p>
+                              <p className="font-semibold text-[#fdf7e8]">{seat.seal}</p>
                               <p className="text-xs text-[#cdbd97]">{voter?.shortName ?? seat.playerId}</p>
                             </div>
                             <Stamp tone={vote?.vote === "for" ? "brass" : vote?.vote === "mot" ? "alarm" : "navy"}>
@@ -1596,7 +1596,7 @@ function PromotionProtocol({
                       })}
                     </div>
 
-                    <form action={voteGeoticOrderPromotionAction} className="geo-form geo-form--dark rounded border border-[#c49a3c]/35 bg-[#fff7e6]/8 p-3">
+                    <form action={voteGeoticOrderPromotionAction} className="geo-form geo-form--dark rounded border border-[#c49a3c]/35 bg-[#fdf7e8]/8 p-3">
                       <input type="hidden" name="caseId" value={promotionCase.id} />
                       <label>
                         Protokollbemerkning
@@ -1624,7 +1624,7 @@ function PromotionProtocol({
             );
           })
         ) : (
-          <div className="rounded border border-dashed border-[#c49a3c]/45 bg-[#fff7e6]/8 p-5 text-sm leading-6 text-[#eadcbd]">
+          <div className="rounded border border-dashed border-[#c49a3c]/45 bg-[#fdf7e8]/8 p-5 text-sm leading-6 text-[#eadcbd]">
             Ingen geot står ved den skjulte porten akkurat nå. Det betyr ikke
             at systemet sover, bare at det ikke lager lyd.
           </div>
@@ -1637,8 +1637,8 @@ function PromotionProtocol({
             const player = playerById.get(promotionCase.playerId);
             const targetRank = geoticOrderRanks.find((rank) => rank.id === promotionCase.targetRankId);
             return (
-              <div key={promotionCase.id} className="rounded border border-[#c49a3c]/30 bg-[#fff7e6]/8 px-3 py-2 text-sm">
-                <p className="font-semibold text-[#fff7e6]">
+              <div key={promotionCase.id} className="rounded border border-[#c49a3c]/30 bg-[#fdf7e8]/8 px-3 py-2 text-sm">
+                <p className="font-semibold text-[#fdf7e8]">
                   {player?.shortName ?? promotionCase.playerId} · {targetRank?.name ?? promotionCase.targetRankId}
                 </p>
                 <p className="mt-1 text-[#cdbd97]">
@@ -1659,9 +1659,9 @@ function PromotionProtocol({
 
 function DarkMetric({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="rounded border border-[#c49a3c]/30 bg-[#fff7e6]/8 px-3 py-2">
+    <div className="rounded border border-[#c49a3c]/30 bg-[#fdf7e8]/8 px-3 py-2">
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#e1c06c]">{label}</p>
-      <p className="font-display mt-1 text-2xl font-semibold text-[#fff7e6]">{value}</p>
+      <p className="font-display mt-1 text-2xl font-semibold text-[#fdf7e8]">{value}</p>
     </div>
   );
 }
@@ -1669,13 +1669,13 @@ function DarkMetric({ label, value }: { label: string; value: ReactNode }) {
 const indexDossierToneClasses = {
   blue: "border-[#6e9fbd] bg-[#0b3348] text-[#e6f1f7]",
   green: "border-[#6ca67c] bg-[#113c2d] text-[#e6f5ea]",
-  gold: "border-[#c49a3c] bg-[#3b2c12] text-[#fff7e6]",
+  gold: "border-[#c49a3c] bg-[#3b2c12] text-[#fdf7e8]",
   red: "border-[#b95c66] bg-[#451620] text-[#ffe2dc]",
 } as const;
 
 function IndexSignal({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded border border-[#c49a3c]/55 bg-[#fff7e6] px-3 py-3 text-center text-[#062b40]">
+    <div className="rounded border border-[#c49a3c]/55 bg-[#fdf7e8] px-3 py-3 text-center text-[#062b40]">
       <p className="font-display text-3xl font-semibold leading-none text-[#7c2430]">{value}</p>
       <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em]">{label}</p>
     </div>
@@ -1684,11 +1684,11 @@ function IndexSignal({ label, value }: { label: string; value: number }) {
 
 function RulePanel({ title, items }: { title: string; items: string[] }) {
   return (
-    <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4">
+    <div className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] p-4">
       <h4 className="font-display text-2xl font-semibold text-[#062b40]">{title}</h4>
       <div className="mt-3 grid gap-2">
         {items.map((item) => (
-          <p key={item} className="rounded border border-[#d8c48c] bg-[#fff7e6] px-3 py-2 text-sm leading-6 text-[#4f412b]">
+          <p key={item} className="rounded border border-[#d8c48c] bg-[#fdf7e8] px-3 py-2 text-sm leading-6 text-[#4f412b]">
             {item}
           </p>
         ))}
@@ -1780,7 +1780,7 @@ function IndexHistoryGraph({ rows }: { rows: GeoterIndexRow[] }) {
           );
         })}
         <line stroke="rgba(255,247,230,0.55)" strokeWidth="2" x1={plot.left} x2={plot.left + plotWidth} y1={yFor(700)} y2={yFor(700)} />
-        <text fill="#fff7e6" fontSize="11" fontWeight="700" x={plot.left + 8} y={yFor(700) - 7}>
+        <text fill="#fdf7e8" fontSize="11" fontWeight="700" x={plot.left + 8} y={yFor(700) - 7}>
           grunnscore 700
         </text>
         {rows.map((row, index) => {
@@ -1804,9 +1804,9 @@ function IndexHistoryGraph({ rows }: { rows: GeoterIndexRow[] }) {
               {row.history.map((point, pointIndex) => (
                 <circle key={`${row.player.id}-${point.id}`} cx={xFor(pointIndex)} cy={yFor(point.score)} fill="#061d2b" r="4.5" stroke={row.player.color} strokeWidth="2" />
               ))}
-              <circle cx={lastX} cy={lastY} fill={row.player.color} r="6" stroke="#fff7e6" strokeWidth="2" />
+              <circle cx={lastX} cy={lastY} fill={row.player.color} r="6" stroke="#fdf7e8" strokeWidth="2" />
               <text
-                fill="#fff7e6"
+                fill="#fdf7e8"
                 fontSize="12"
                 fontWeight="700"
                 paintOrder="stroke"

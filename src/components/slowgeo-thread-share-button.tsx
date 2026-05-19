@@ -47,7 +47,7 @@ export function SlowGeoThreadShareButton({
             "max-w-xl rounded border px-3 py-2 text-sm leading-6",
             tone === "dark"
               ? "border-[#c49a3c]/60 bg-[#020b11]/60 text-[#f5ead3]"
-              : "border-[#c49a3c]/45 bg-[#fff7e6] text-[#4f412b]",
+              : "border-[#c49a3c]/45 bg-[#fdf7e8] text-[#4f412b]",
           )}
           style={{ fontFamily: "var(--font-italic)", fontStyle: "italic" }}
         >

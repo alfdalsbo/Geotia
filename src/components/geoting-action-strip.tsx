@@ -14,7 +14,7 @@ export function GeotingSummaryActionStrip({
   return (
     <div
       className={cn(
-        "mt-1 flex min-h-12 w-full items-center justify-between gap-3 rounded border border-[#7c2430]/55 bg-[#7c2430] px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.12em] text-[#fff7e6] shadow-sm transition group-hover:bg-[#641923] group-active:bg-[#4f121b] group-open:border-[#062b40]/55 group-open:bg-[#062b40] lg:col-span-3",
+        "mt-1 flex min-h-12 w-full items-center justify-between gap-3 rounded border border-[#7c2430]/55 bg-[#7c2430] px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.12em] text-[#fdf7e8] shadow-sm transition group-hover:bg-[#641923] group-active:bg-[#4f121b] group-open:border-[#062b40]/55 group-open:bg-[#062b40] lg:col-span-3",
         className,
       )}
       data-testid="geoting-action-strip"
@@ -39,7 +39,7 @@ export function GeotingCloseStrip({
     <button
       type="button"
       className={cn(
-        "mt-4 flex min-h-11 w-full items-center justify-between gap-3 rounded border border-[#062b40]/45 bg-[#062b40] px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.12em] text-[#fff7e6] shadow-sm transition hover:bg-[#0d3a55] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c49a3c]",
+        "mt-4 flex min-h-11 w-full items-center justify-between gap-3 rounded border border-[#062b40]/45 bg-[#062b40] px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.12em] text-[#fdf7e8] shadow-sm transition hover:bg-[#0d3a55] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c49a3c]",
         className,
       )}
       data-geoting-close

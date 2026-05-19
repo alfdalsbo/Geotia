@@ -16,7 +16,7 @@ export function GeotingVoteAlarm({
   if (!active.length) return null;
 
   return (
-    <section className="relative overflow-hidden rounded border-2 border-[#7c2430] bg-[#3b0e16] text-[#fff7e6] shadow-[0_24px_55px_rgba(124,36,48,0.34)]">
+    <section className="relative overflow-hidden rounded border-2 border-[#7c2430] bg-[#3b0e16] text-[#fdf7e8]">
       <div className="absolute inset-x-0 top-0 h-1 bg-[repeating-linear-gradient(90deg,#e1c06c_0,#e1c06c_18px,#7c2430_18px,#7c2430_36px)]" />
       <div className="grid gap-0 xl:grid-cols-[minmax(0,0.9fr)_minmax(360px,1.1fr)]">
         <div className="p-5 sm:p-6">
@@ -47,11 +47,11 @@ export function GeotingVoteAlarm({
         <div className="border-t border-[#e1c06c]/35 bg-[#020b11]/40 p-4 sm:p-5 xl:border-l xl:border-t-0">
           <div className={context === "dashboard" ? "grid gap-3 lg:grid-cols-2 xl:grid-cols-1" : "grid gap-3 lg:grid-cols-2"}>
             {active.slice(0, 4).map((proposal) => (
-              <article key={proposal.id} className="rounded border border-[#e1c06c]/45 bg-[#fff7e6]/8 p-3">
+              <article key={proposal.id} className="rounded border border-[#e1c06c]/45 bg-[#fdf7e8]/8 p-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#e1c06c]">
                   Tingfrist
                 </p>
-                <h3 className="mt-1 line-clamp-2 font-semibold text-[#fff7e6]">{proposal.title}</h3>
+                <h3 className="mt-1 line-clamp-2 font-semibold text-[#fdf7e8]">{proposal.title}</h3>
                 <div className="mt-3">
                   <GeotingCountdown endsAt={proposal.voteEndsAt} compact title="Levende frist" />
                 </div>

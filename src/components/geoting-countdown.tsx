@@ -73,8 +73,8 @@ export function GeotingCountdown({
       aria-live="polite"
       className={
         compact
-          ? "rounded border border-[#c49a3c]/45 bg-[#020b11]/55 p-3 text-[#fff7e6]"
-          : "rounded border border-[#e1c06c]/70 bg-[#020b11]/75 p-4 text-[#fff7e6] shadow-[inset_0_0_0_1px_rgba(255,247,230,0.08)]"
+          ? "rounded border border-[#c49a3c]/45 bg-[#020b11]/55 p-3 text-[#fdf7e8]"
+          : "rounded border border-[#e1c06c]/70 bg-[#020b11]/75 p-4 text-[#fdf7e8] shadow-[inset_0_0_0_1px_rgba(255,247,230,0.08)]"
       }
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -91,7 +91,7 @@ export function GeotingCountdown({
           ["Minutter", remaining.minutes],
           ["Sekunder", remaining.seconds],
         ].map(([label, value]) => (
-          <div key={label} className="rounded border border-[#c49a3c]/35 bg-[#fff7e6]/10 px-2 py-2 text-center">
+          <div key={label} className="rounded border border-[#c49a3c]/35 bg-[#fdf7e8]/10 px-2 py-2 text-center">
             <p className={compact ? "font-display text-xl font-semibold sm:text-2xl" : "font-display text-3xl font-semibold sm:text-4xl"}>
               {expired ? "00" : pad(Number(value))}
             </p>

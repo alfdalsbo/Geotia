@@ -59,7 +59,7 @@ export function SlowGeoAftermath({ round }: { round: ComputedRound }) {
       </div>
 
       {challenge?.signature || challenge?.tags?.length ? (
-        <div className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] p-4">
+        <div className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fdf7e8] p-4">
           <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
             <BookOpen className="h-4 w-4" aria-hidden="true" />
             Kuratornotat

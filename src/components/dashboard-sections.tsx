@@ -75,7 +75,7 @@ export function DashboardPartyGrid({ parties, players }: { parties: Party[]; pla
           return (
             <article
               key={party.id}
-              className="party-poster-card group overflow-hidden bg-[#fff7e6] transition hover:-translate-y-0.5"
+              className="party-poster-card group overflow-hidden bg-[#fdf7e8] transition hover:-translate-y-0.5"
             >
               {party.asset ? (
                 <div className="poster-frame relative aspect-[4/5] w-full bg-[#061d2b]">
