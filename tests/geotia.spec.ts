@@ -344,6 +344,29 @@ test("login and open the SlowGeo protocol archive", async ({ page }) => {
   await expect(page.getByTestId("geoting-case").filter({ hasText: proposalTitle })).toBeVisible();
 });
 
+test("Min geot lets a geot change nickname without editing the locked first name", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Brukernavn").fill("SS");
+  await page.getByLabel("Passord").fill("geotia");
+  await page.getByRole("button", { name: "Åpne Geotia" }).click();
+  await expect(page.getByRole("button", { name: "Forlat embetsverket" })).toBeVisible({ timeout: 15_000 });
+
+  await page.goto("/min-geot");
+  await expect(page.getByRole("heading", { name: "Alf Kåre" })).toBeVisible();
+  await expect(page.getByLabel("Fornavn låst")).toHaveValue("Alf Kåre");
+  await page.getByLabel("Kallenavn").fill("Arkiv-Alf");
+  await page.getByRole("button", { name: "Lagre kallenavn" }).click();
+
+  await expect(page.getByText("Kallenavnet er ført i navneprotokollen.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Arkiv-Alf" })).toBeVisible();
+  await expect(page.getByLabel("Fornavn låst")).toHaveValue("Alf Kåre");
+  await expect(page.getByText(/Innlogget som Arkiv-Alf/)).toBeVisible();
+
+  await page.getByLabel("Kallenavn").fill("");
+  await page.getByRole("button", { name: "Lagre kallenavn" }).click();
+  await expect(page.getByRole("heading", { name: "Alf Kåre" })).toBeVisible();
+});
+
 test("GeoTinget keeps live proposals in Stemmeurnen and resolved proposals in Tingpergamentene", async ({ page }) => {
   const fixture = await writeGeotingRoutingFixture();
 

@@ -19,6 +19,7 @@ import {
   revalidateGeoticOrderPaths,
   revalidateGeotingAdminPaths,
   revalidateGeotingPaths,
+  revalidatePlayerProfilePaths,
   revalidateRoundPaths,
   revalidateSlowGeoPaths,
   revalidateThirdCollegePaths,
@@ -38,6 +39,7 @@ import {
   startGeotingVote,
   submitSlowGeoGuess,
   updateGeotingProposal,
+  updatePlayerProfile,
   unlockRound,
   upsertGeoticOrderAssessment,
   upsertGameSession,
@@ -174,6 +176,23 @@ export async function loginAction(formData: FormData) {
 export async function logoutAction() {
   await destroySession();
   redirect("/login");
+}
+
+export async function updateMyGeotNicknameAction(formData: FormData) {
+  const session = await requireSession();
+  const result = await updatePlayerProfile({
+    playerId: session.playerId,
+    nickname: limitedField(formData, "nickname", 36),
+    updatedBy: session.playerId,
+  });
+
+  revalidatePlayerProfilePaths();
+
+  if (!result.ok) {
+    redirect(`/min-geot?error=${encodeURIComponent(result.reason ?? "Kallenavnet ble ikke ført.")}`);
+  }
+
+  redirect("/min-geot?status=kallenavn");
 }
 
 export async function saveRoundAction(formData: FormData) {

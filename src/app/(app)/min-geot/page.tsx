@@ -7,10 +7,14 @@ import {
   Eye,
   Footprints,
   Gavel,
+  LockKeyhole,
   MapPin,
   ShieldCheck,
+  Tag,
 } from "lucide-react";
 
+import { updateMyGeotNicknameAction } from "@/app/actions";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Section, StatTile } from "@/components/section";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { getCurrentGeot } from "@/lib/auth";
@@ -18,6 +22,7 @@ import { geotiaMyGeotLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { getEarnedPlayerBadges, type GeotiaBadgeTone } from "@/lib/geotia-badges";
 import { getGeoticOrderRows, getOrderCapabilities } from "@/lib/geotisk-orden";
 import { getThirdCollegeSeat, isThirdCollegeMember } from "@/lib/kollegium";
+import { getPlayerDisplayName, getPlayerOfficialFirstName } from "@/lib/player-profile";
 import { getPartyMechanic } from "@/lib/party-mechanics";
 import { getPlayerDossier } from "@/lib/player-dossier";
 import { computeRound, computeStandings } from "@/lib/scoring";
@@ -28,9 +33,18 @@ export const metadata = {
   title: "Min geot",
 };
 
-export default async function MyGeotPage() {
+export default async function MyGeotPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ status?: string; error?: string }>;
+}) {
+  const params = (await searchParams) ?? {};
   const [state, currentGeot] = await Promise.all([getAppState(), getCurrentGeot()]);
-  const player = currentGeot ?? state.players[0];
+  const player = currentGeot
+    ? (state.players.find((candidate) => candidate.id === currentGeot.id) ?? currentGeot)
+    : state.players[0];
+  const displayName = getPlayerDisplayName(player);
+  const officialFirstName = getPlayerOfficialFirstName(player);
   const party = state.parties.find((candidate) => candidate.id === player.partyId);
   const standings = computeStandings(state.players, state.rounds);
   const standing = standings.find((row) => row.player.id === player.id);
@@ -75,7 +89,7 @@ export default async function MyGeotPage() {
         <div className="geo-hero-grid">
           <div className="geo-hero-text">
             <Eyebrow>Din riksmappe · Kapittel VII</Eyebrow>
-            <h1 className="geo-hero-title">{player.shortName}</h1>
+            <h1 className="geo-hero-title">{displayName}</h1>
             <p className="geo-hero-lead geo-hero-lead-dropcap">
               {player.title}. {player.specialty}. Her ligger din synlige plass i
               riket: poeng, kattometer, ordensvei og de siste sporene du la
@@ -119,6 +133,58 @@ export default async function MyGeotPage() {
           </div>
         </div>
       </section>
+
+      <ProfileStatus status={params.status} error={params.error} />
+
+      <Section title="Navneprotokoll" eyebrow="Kallenavn uten folkeregisterkupp">
+        <form
+          action={updateMyGeotNicknameAction}
+          className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)_auto]"
+        >
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
+              Fornavn i riksrullen
+            </span>
+            <span className="mt-2 flex min-h-11 items-center gap-2 rounded border border-[#d8c48c] bg-[#fff7e6] px-3 text-base font-semibold text-[#062b40]">
+              <LockKeyhole className="h-4 w-4 flex-none text-[#7c2430]" aria-hidden="true" />
+              <input
+                aria-label="Fornavn låst"
+                className="w-full border-0 bg-transparent p-0 font-semibold text-[#062b40] outline-none"
+                readOnly
+                value={officialFirstName}
+              />
+            </span>
+            <span className="mt-2 block text-xs leading-5 text-[#60553f]">
+              Dette er fastført i kanon. Bare kallenavnet kan bøyes av samtiden.
+            </span>
+          </label>
+          <label className="block" htmlFor="nickname">
+            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
+              Kallenavn
+            </span>
+            <span className="mt-2 flex min-h-11 items-center gap-2 rounded border border-[#c49a3c]/55 bg-white px-3 text-base text-[#062b40]">
+              <Tag className="h-4 w-4 flex-none text-[#7c2430]" aria-hidden="true" />
+              <input
+                id="nickname"
+                name="nickname"
+                defaultValue={player.nickname ?? ""}
+                maxLength={36}
+                placeholder={officialFirstName}
+                className="w-full min-w-0 border-0 bg-transparent p-0 text-base outline-none placeholder:text-[#9b8a6a]"
+              />
+            </span>
+            <span className="mt-2 block text-xs leading-5 text-[#60553f]">
+              La feltet stå tomt for å bruke fornavnet overalt igjen.
+            </span>
+          </label>
+          <PendingSubmitButton
+            className="btn btn-wax min-h-11 self-end"
+            pendingChildren="Fører..."
+          >
+            Lagre kallenavn
+          </PendingSubmitButton>
+        </form>
+      </Section>
 
       <div className="grid gap-3 md:grid-cols-4">
         <StatTile label="SlowGeo-rang" value={standing ? `#${standing.rank}` : "-"} detail={`${standing?.totalPoints ?? 0} poeng`} tone="blue" index={0} />
@@ -386,6 +452,22 @@ const badgeToneClasses: Record<GeotiaBadgeTone, string> = {
   gold: "border-[#c49a3c]/45 bg-[#fff7e6] text-[#654517]",
   red: "border-[#7c2430]/25 bg-[#7c2430]/10 text-[#7c2430]",
 };
+
+function ProfileStatus({ status, error }: { status?: string; error?: string }) {
+  if (error) {
+    return (
+      <div className="rounded border border-[#7c2430]/35 bg-[#7c2430]/10 px-4 py-3 text-sm font-semibold text-[#7c2430]">
+        {error}
+      </div>
+    );
+  }
+  if (status !== "kallenavn") return null;
+  return (
+    <div className="rounded border border-[#194832]/30 bg-[#194832]/10 px-4 py-3 text-sm font-semibold text-[#194832]">
+      Kallenavnet er ført i navneprotokollen.
+    </div>
+  );
+}
 
 function InfoBlock({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (

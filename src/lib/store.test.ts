@@ -123,6 +123,43 @@ describe("Geotia file store", () => {
     expect(state.geoterIndexAdjustments[0].delta).toBe(30);
   });
 
+  it("lets a geot update a nickname without changing the locked first name", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    vi.resetModules();
+
+    const { getAppState, updatePlayerProfile } = await import("@/lib/store");
+
+    const updated = await updatePlayerProfile({
+      playerId: "steinar",
+      nickname: "KrangleKalifen",
+      updatedBy: "steinar",
+    });
+    let state = await getAppState();
+    let steinar = state.players.find((player) => player.id === "steinar");
+
+    expect(updated.ok).toBe(true);
+    expect(state.playerProfiles[0]).toMatchObject({
+      playerId: "steinar",
+      nickname: "KrangleKalifen",
+      updatedBy: "steinar",
+    });
+    expect(steinar?.shortName).toBe("KrangleKalifen");
+    expect(steinar?.officialShortName).toBe("Steinar");
+    expect(steinar?.name).toBe("Steinar Lofnes");
+
+    await updatePlayerProfile({
+      playerId: "steinar",
+      nickname: "",
+      updatedBy: "steinar",
+    });
+    state = await getAppState();
+    steinar = state.players.find((player) => player.id === "steinar");
+
+    expect(steinar?.shortName).toBe("Steinar");
+    expect(steinar?.nickname).toBeNull();
+  });
+
   it("persists Den Geotiske Orden assessments in the local protocol file", async () => {
     tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
     process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");

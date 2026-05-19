@@ -6,6 +6,7 @@ import { archive, competingPlayers, games, initialState, parties, players } from
 import { canLockRound, computeStandings, emptyResults } from "@/lib/scoring";
 import { addVotingWindow, GEO_OATH_TEXT, normalizeVoteValue, resolveProposalIfReady } from "@/lib/geoting";
 import { buildRoundMapSnapshot } from "@/lib/geo";
+import { applyPlayerProfiles, normalizePlayerNickname } from "@/lib/player-profile";
 import {
   getDefaultHiddenOrderCategory,
   getGeoticOrderRank,
@@ -49,6 +50,7 @@ import type {
   GeotingProposalStatus,
   GeotingVote,
   PartyPositionValue,
+  PlayerProfile,
   PlayerResult,
   ProposalRuleType,
   Round,
@@ -167,6 +169,12 @@ type GeoticOrderPromotionVoteInput = {
   comment: string;
 };
 
+type PlayerProfileInput = {
+  playerId: string;
+  nickname: string | null;
+  updatedBy: string;
+};
+
 type StartVoteInput = {
   proposalId: string;
   playerId: string;
@@ -248,6 +256,13 @@ type DbGeoticOrderPromotionCaseRow = {
   opened_by: string;
 };
 
+type DbPlayerProfileRow = {
+  player_id: string;
+  nickname: string | null;
+  updated_at: string;
+  updated_by: string;
+};
+
 type GeocodeCacheEntry = {
   queryKey: string;
   location: GeoLocation | null;
@@ -280,6 +295,7 @@ type FileState = {
   geoterIndexAdjustments: GeoterIndexAdjustment[];
   geoticOrderAssessments: GeoticOrderAssessment[];
   geoticOrderPromotionCases: GeoticOrderPromotionCase[];
+  playerProfiles: PlayerProfile[];
   geocodeCache: GeocodeCacheEntry[];
 };
 
@@ -423,6 +439,15 @@ function normalizeGeoticOrderPromotionCase(promotionCase: GeoticOrderPromotionCa
   };
 }
 
+function normalizePlayerProfile(profile: PlayerProfile): PlayerProfile {
+  return {
+    playerId: profile.playerId,
+    nickname: normalizePlayerNickname(profile.nickname),
+    updatedAt: profile.updatedAt ?? nowIso(),
+    updatedBy: profile.updatedBy ?? profile.playerId,
+  };
+}
+
 async function ensureFileState() {
   try {
     await fs.access(dataFile);
@@ -439,6 +464,7 @@ async function ensureFileState() {
           geoterIndexAdjustments: [],
           geoticOrderAssessments: [],
           geoticOrderPromotionCases: [],
+          playerProfiles: [],
           geocodeCache: [],
         },
         null,
@@ -464,6 +490,7 @@ async function readFileState(): Promise<FileState> {
     geoterIndexAdjustments: parsed.geoterIndexAdjustments ?? [],
     geoticOrderAssessments: parsed.geoticOrderAssessments ?? [],
     geoticOrderPromotionCases: (parsed.geoticOrderPromotionCases ?? []).map(normalizeGeoticOrderPromotionCase),
+    playerProfiles: (parsed.playerProfiles ?? []).map(normalizePlayerProfile),
     geocodeCache: parsed.geocodeCache ?? [],
   };
 }
@@ -681,6 +708,15 @@ async function setupSchema(sql: SqlClient): Promise<SqlClient> {
   `;
 
   await sql`
+    CREATE TABLE IF NOT EXISTS geotia_player_profiles (
+      player_id text PRIMARY KEY,
+      nickname text,
+      updated_at text NOT NULL,
+      updated_by text NOT NULL
+    )
+  `;
+
+  await sql`
     CREATE TABLE IF NOT EXISTS geotia_geocode_cache (
       query_key text PRIMARY KEY,
       result_json jsonb,
@@ -860,6 +896,15 @@ function parseDbGeoticOrderPromotionCase(row: DbGeoticOrderPromotionCaseRow): Ge
     updatedAt: row.updated_at,
     resolvedAt: row.resolved_at,
     openedBy: row.opened_by || "system",
+  });
+}
+
+function parseDbPlayerProfile(row: DbPlayerProfileRow): PlayerProfile {
+  return normalizePlayerProfile({
+    playerId: row.player_id,
+    nickname: row.nickname,
+    updatedAt: row.updated_at,
+    updatedBy: row.updated_by,
   });
 }
 
@@ -1339,6 +1384,34 @@ async function upsertDbGeoticOrderPromotionCase(promotionCase: GeoticOrderPromot
   return true;
 }
 
+async function readDbPlayerProfiles(): Promise<PlayerProfile[] | null> {
+  const sql = await ensureSchema();
+  if (!sql) return null;
+
+  const rows = (await sql`
+    SELECT player_id, nickname, updated_at, updated_by
+    FROM geotia_player_profiles
+    ORDER BY player_id ASC
+  `) as DbPlayerProfileRow[];
+
+  return rows.map(parseDbPlayerProfile);
+}
+
+async function upsertDbPlayerProfile(profile: PlayerProfile) {
+  const sql = await ensureSchema();
+  if (!sql) return false;
+
+  await sql`
+    INSERT INTO geotia_player_profiles (player_id, nickname, updated_at, updated_by)
+    VALUES (${profile.playerId}, ${profile.nickname}, ${profile.updatedAt}, ${profile.updatedBy})
+    ON CONFLICT (player_id) DO UPDATE SET
+      nickname = EXCLUDED.nickname,
+      updated_at = EXCLUDED.updated_at,
+      updated_by = EXCLUDED.updated_by
+  `;
+  return true;
+}
+
 async function readDbGeocodeCache(queryKey: string): Promise<GeocodeCacheEntry | null> {
   const sql = await ensureSchema();
   if (!sql) return null;
@@ -1402,6 +1475,17 @@ async function readGeoticOrderPromotionCases(): Promise<GeoticOrderPromotionCase
   return (await readFileState()).geoticOrderPromotionCases;
 }
 
+async function readPlayerProfiles(): Promise<PlayerProfile[]> {
+  const dbProfiles = await readDbPlayerProfiles();
+  if (dbProfiles) return dbProfiles;
+  return (await readFileState()).playerProfiles;
+}
+
+async function readHydratedPlayers() {
+  const profiles = await readPlayerProfiles();
+  return applyPlayerProfiles(players, profiles);
+}
+
 async function saveRounds(rounds: Round[]) {
   const sql = await ensureSchema();
   if (sql) {
@@ -1461,6 +1545,17 @@ async function saveGeoticOrderPromotionCases(geoticOrderPromotionCases: GeoticOr
   await writeFileState({ ...state, geoticOrderPromotionCases });
 }
 
+async function savePlayerProfiles(playerProfiles: PlayerProfile[]) {
+  const normalized = playerProfiles.map(normalizePlayerProfile);
+  const sql = await ensureSchema();
+  if (sql) {
+    await Promise.all(normalized.map(upsertDbPlayerProfile));
+    return;
+  }
+  const state = await readFileState();
+  await writeFileState({ ...state, playerProfiles: normalized });
+}
+
 export async function getCachedGeocodeLocation(queryKey: string) {
   const dbEntry = await readDbGeocodeCache(queryKey);
   if (dbEntry) return dbEntry.location;
@@ -1500,6 +1595,7 @@ type PersistentState = Pick<
   | "geoterIndexAdjustments"
   | "geoticOrderAssessments"
   | "geoticOrderPromotionCases"
+  | "playerProfiles"
 >;
 
 async function readPersistentState(): Promise<PersistentState> {
@@ -1513,6 +1609,7 @@ async function readPersistentState(): Promise<PersistentState> {
       geoterIndexAdjustments: state.geoterIndexAdjustments,
       geoticOrderAssessments: state.geoticOrderAssessments,
       geoticOrderPromotionCases: state.geoticOrderPromotionCases,
+      playerProfiles: state.playerProfiles,
     };
   }
 
@@ -1523,6 +1620,7 @@ async function readPersistentState(): Promise<PersistentState> {
     geoterIndexAdjustments,
     geoticOrderAssessments,
     geoticOrderPromotionCases,
+    playerProfiles,
   ] = await Promise.all([
     readRounds(),
     readGameSessions(),
@@ -1530,6 +1628,7 @@ async function readPersistentState(): Promise<PersistentState> {
     readGeoterIndexAdjustments(),
     readGeoticOrderAssessments(),
     readGeoticOrderPromotionCases(),
+    readPlayerProfiles(),
   ]);
   return {
     rounds,
@@ -1538,21 +1637,49 @@ async function readPersistentState(): Promise<PersistentState> {
     geoterIndexAdjustments,
     geoticOrderAssessments,
     geoticOrderPromotionCases,
+    playerProfiles,
   };
 }
 
 export async function getAppState(): Promise<AppState> {
   const state = await readPersistentState();
   const geoticOrderPromotionCases = await syncGeoticOrderPromotionCasesForState(state);
+  const hydratedPlayers = applyPlayerProfiles(players, state.playerProfiles);
   return {
     ...initialState,
-    players,
+    players: hydratedPlayers,
     parties,
     games,
     archive,
     ...state,
     geoticOrderPromotionCases,
   };
+}
+
+export async function getHydratedPlayerById(playerId: string) {
+  const hydratedPlayers = await readHydratedPlayers();
+  return hydratedPlayers.find((player) => player.id === playerId) ?? null;
+}
+
+export async function updatePlayerProfile(input: PlayerProfileInput) {
+  if (!players.some((player) => player.id === input.playerId)) {
+    return { ok: false, reason: "Ukjent geot i navneprotokollen." };
+  }
+
+  const existing = await readPlayerProfiles();
+  const timestamp = nowIso();
+  const profile = normalizePlayerProfile({
+    playerId: input.playerId,
+    nickname: normalizePlayerNickname(input.nickname),
+    updatedAt: timestamp,
+    updatedBy: input.updatedBy,
+  });
+
+  await savePlayerProfiles([
+    profile,
+    ...existing.filter((candidate) => candidate.playerId !== input.playerId),
+  ]);
+  return { ok: true, profile };
 }
 
 export async function getActiveGeotingProposals() {
@@ -1597,8 +1724,9 @@ export async function getScoreboardState() {
   const sql = await getSql();
   if (!sql) {
     const state = await readFileState();
+    const hydratedPlayers = applyPlayerProfiles(players, state.playerProfiles);
     return {
-      players,
+      players: hydratedPlayers,
       games,
       archive,
       rounds: state.rounds,
@@ -1606,53 +1734,56 @@ export async function getScoreboardState() {
     };
   }
 
-  const [rounds, gameSessions] = await Promise.all([readRounds(), readGameSessions()]);
-  return { players, games, archive, rounds, gameSessions };
+  const [rounds, gameSessions, hydratedPlayers] = await Promise.all([readRounds(), readGameSessions(), readHydratedPlayers()]);
+  return { players: hydratedPlayers, games, archive, rounds, gameSessions };
 }
 
 export async function getRoundsState() {
   const sql = await getSql();
   if (!sql) {
     const state = await readFileState();
-    return { players, rounds: state.rounds };
+    const hydratedPlayers = applyPlayerProfiles(players, state.playerProfiles);
+    return { players: hydratedPlayers, rounds: state.rounds };
   }
 
-  const rounds = await readRounds();
-  return { players, rounds };
+  const [rounds, hydratedPlayers] = await Promise.all([readRounds(), readHydratedPlayers()]);
+  return { players: hydratedPlayers, rounds };
 }
 
 export async function getGamesState() {
   const sql = await getSql();
   if (!sql) {
     const state = await readFileState();
+    const hydratedPlayers = applyPlayerProfiles(players, state.playerProfiles);
     return {
-      players,
+      players: hydratedPlayers,
       games,
       rounds: state.rounds,
       gameSessions: state.gameSessions,
     };
   }
 
-  const [rounds, gameSessions] = await Promise.all([readRounds(), readGameSessions()]);
-  return { players, games, rounds, gameSessions };
+  const [rounds, gameSessions, hydratedPlayers] = await Promise.all([readRounds(), readGameSessions(), readHydratedPlayers()]);
+  return { players: hydratedPlayers, games, rounds, gameSessions };
 }
 
 export async function getSlowGeoState() {
   const sql = await getSql();
   if (!sql) {
     const state = await readFileState();
-    return { players, rounds: state.rounds };
+    const hydratedPlayers = applyPlayerProfiles(players, state.playerProfiles);
+    return { players: hydratedPlayers, rounds: state.rounds };
   }
 
-  const rounds = await readRounds();
-  return { players, rounds };
+  const [rounds, hydratedPlayers] = await Promise.all([readRounds(), readHydratedPlayers()]);
+  return { players: hydratedPlayers, rounds };
 }
 
 export async function getSlowGeoRoundState(id: string) {
   const sql = await getSql();
   if (sql) {
-    const round = await readDbRoundById(id);
-    return { players, round: round?.challenge ? round : null };
+    const [round, hydratedPlayers] = await Promise.all([readDbRoundById(id), readHydratedPlayers()]);
+    return { players: hydratedPlayers, round: round?.challenge ? round : null };
   }
 
   const state = await getSlowGeoState();
@@ -1664,15 +1795,16 @@ export async function getGeotingState() {
   const sql = await getSql();
   if (!sql) {
     const state = await readFileState();
+    const hydratedPlayers = applyPlayerProfiles(players, state.playerProfiles);
     return {
-      players,
+      players: hydratedPlayers,
       parties,
       geotingProposals: state.geotingProposals,
     };
   }
 
-  const geotingProposals = await readProposals();
-  return { players, parties, geotingProposals };
+  const [geotingProposals, hydratedPlayers] = await Promise.all([readProposals(), readHydratedPlayers()]);
+  return { players: hydratedPlayers, parties, geotingProposals };
 }
 
 async function readEligibleGeotingVoters() {

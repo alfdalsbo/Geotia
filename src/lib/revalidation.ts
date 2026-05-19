@@ -38,3 +38,20 @@ export function revalidateThirdCollegePaths() {
 export function revalidateGeoticOrderPaths() {
   revalidatePaths(["/tredje-kollegium", "/ordenen", "/min-geot", "/geotinget", "/geotinget/avstemninger", "/"]);
 }
+
+export function revalidatePlayerProfilePaths() {
+  revalidatePaths([
+    "/",
+    "/min-geot",
+    "/tabeller",
+    "/stilling",
+    "/hall-of-fame",
+    "/runder",
+    "/spill/slowgeo",
+    "/geotinget",
+    "/geotinget/avstemninger",
+    "/geotinget/pergamenter",
+    "/ordenen",
+    "/tredje-kollegium",
+  ]);
+}

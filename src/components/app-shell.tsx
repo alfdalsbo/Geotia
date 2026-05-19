@@ -8,6 +8,7 @@ import { RiksCompass } from "@/components/riks-compass";
 import { RiksNav } from "@/components/ui/riks-nav";
 import { RiksSegl } from "@/components/ui/riks-segl";
 import { getCurrentGeot } from "@/lib/auth";
+import { getPlayerDisplayName } from "@/lib/player-profile";
 import { RIKS_NAV_ITEMS } from "@/lib/route-context";
 import { getAppShellState, getStorageMode } from "@/lib/store";
 
@@ -36,7 +37,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
                 Statsarkivet · Rikets embetsverk
                 {currentGeot ? (
                   <>
-                    {" "}· Innlogget som {currentGeot.shortName} — {currentGeot.title}
+                    {" "}· Innlogget som {getPlayerDisplayName(currentGeot)} — {currentGeot.title}
                   </>
                 ) : null}
               </p>

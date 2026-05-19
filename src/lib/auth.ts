@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { players } from "@/lib/seed";
+import { getHydratedPlayerById } from "@/lib/store";
 
 const COOKIE_NAME = "geotia_session";
 const SESSION_SECONDS = 60 * 60 * 24 * 30;
@@ -111,7 +112,8 @@ export async function getSession() {
 
 export async function getCurrentGeot() {
   const session = await getSession();
-  return players.find((player) => player.id === session?.playerId) ?? null;
+  if (!session?.playerId) return null;
+  return getHydratedPlayerById(session.playerId);
 }
 
 export async function requireSession() {

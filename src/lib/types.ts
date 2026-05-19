@@ -67,6 +67,8 @@ export type Player = {
   id: string;
   name: string;
   shortName: string;
+  officialShortName?: string;
+  nickname?: string | null;
   partyId: string;
   username?: string;
   role?: "geot" | "tingvitne";
@@ -79,6 +81,13 @@ export type Player = {
   weaknesses: string;
   moment: string;
   mark: string;
+};
+
+export type PlayerProfile = {
+  playerId: string;
+  nickname: string | null;
+  updatedAt: string;
+  updatedBy: string;
 };
 
 export type Party = {
@@ -451,6 +460,7 @@ export type ArchiveData = {
 
 export type AppState = {
   players: Player[];
+  playerProfiles: PlayerProfile[];
   parties: Party[];
   games: GameDefinition[];
   archive: ArchiveData;

@@ -27,6 +27,7 @@ describe("Geotia canon seed", () => {
       "Obergruppenführer Alf Kåre Dalsbø",
       "Machtsteuerunglebensraum",
       "Pepsi Sjeik Nub Barack av PLO",
+      "Sultan og KrangleKalif Steinar Lofnes av PKK",
       "praesidio constitutionis a morte",
       "Må Orke Spesielle, Slitsomme, Alternative Derivasjoner",
       "Cisrerienserpartiet",
@@ -42,5 +43,6 @@ describe("Geotia canon seed", () => {
     for (const phrase of requiredPhrases) {
       expect(serialized).toContain(phrase);
     }
+    expect(serialized).not.toContain("Thorn Offer");
   });
 });

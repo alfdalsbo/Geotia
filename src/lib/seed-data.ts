@@ -124,7 +124,7 @@ export const players: Player[] = [
     shortName: "Steinar",
     partyId: "pkk",
     color: "#7C2E2E",
-    title: "Sultan / Thorn Offer",
+    title: "Sultan og KrangleKalif av PKK",
     specialty: "Konflikttenning og regeldebatt",
     strengths: "Initiativrik, reformvillig og aldri tom for forslag.",
     weaknesses: "Krangler tidvis for kranglingens egen majestetiske skyld.",
@@ -230,7 +230,7 @@ export const parties: Party[] = [
   {
     id: "pkk",
     name: "PKK - Det Progressive KrangleKalifat",
-    leader: "Sultan Steinar Lofnes / Thorn Offer",
+    leader: "Sultan og KrangleKalif Steinar Lofnes av PKK",
     motto: "Krangling for kranglingens skyld!",
     ideology: "Konfliktisme",
     agenda:
@@ -1021,7 +1021,7 @@ const canon: CanonSection[] = [
       "MOTTO: Kontrollere for å fornye og bevare!",
       "IDEOLOGI: Machtsteuerunglebensraum (Kontrollisme)",
       ...parties[0].doctrine!,
-      "Det Progressive KrangleKalifat - Sultan Steinar Lofnes / Thorn Offer",
+      "Det Progressive KrangleKalifat - Sultan og KrangleKalif Steinar Lofnes av PKK",
       ...parties[1].manifesto!,
       "Motto: Krangling for kranglingens skyld!",
       "Ideologi: Konfliktisme",
@@ -1076,6 +1076,7 @@ export const archive: ArchiveData = {
 
 export const initialState: AppState = {
   players,
+  playerProfiles: [],
   parties,
   games,
   archive,
