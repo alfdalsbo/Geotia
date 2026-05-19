@@ -4,11 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
-
-export type RiksNavItem = {
-  href: string;
-  label: string;
-};
+import { itemMatches, type RiksNavItem } from "@/lib/route-context";
 
 /**
  * RiksNav — Cinzel-knapper med L-formede hjørne-merker via ::before
@@ -30,10 +26,7 @@ export function RiksNav({
   return (
     <nav className="geo-nav" aria-label="Hovednavigasjon">
       {items.map((item) => {
-        const active =
-          item.href === "/"
-            ? pathname === "/"
-            : pathname === item.href || pathname?.startsWith(`${item.href}/`);
+        const active = itemMatches(pathname, item);
         return (
           <Link
             key={item.href}
@@ -41,8 +34,13 @@ export function RiksNav({
             prefetch={false}
             className={active ? "active" : undefined}
             aria-current={active ? "page" : undefined}
+            aria-label={item.label}
+            title={item.description}
           >
-            <span>{item.label}</span>
+            <span className="geo-nav-label">{item.label}</span>
+            <span className="geo-nav-description" aria-hidden="true">
+              {item.description}
+            </span>
             <LinkPendingIndicator className="text-[#e1c06c]" />
           </Link>
         );

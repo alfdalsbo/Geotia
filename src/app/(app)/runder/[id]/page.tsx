@@ -11,10 +11,12 @@ import { Section } from "@/components/section";
 import { SlowGeoAftermath } from "@/components/slowgeo-aftermath";
 import { SlowGeoPlay } from "@/components/slowgeo-play";
 import { SlowGeoRevealMap } from "@/components/slowgeo-reveal-map";
+import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
 import { getCurrentGeot } from "@/lib/auth";
 import { selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { computeRound } from "@/lib/scoring";
 import { buildSlowGeoAnswerStatusItems } from "@/lib/slowgeo-answer-status";
+import { buildSlowGeoRevealMarkers, buildSlowGeoRevealResults } from "@/lib/slowgeo-reveal";
 import { getRoundsState, maybeRevealRound } from "@/lib/store";
 import { buildStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
 import {
@@ -127,16 +129,8 @@ export default async function RoundDetailPage({
         count: 3,
       })
     : [];
-  const revealMarkers =
-    round.mapSnapshot?.markers.map((marker) => ({
-      id: marker.id,
-      type: marker.type,
-      label: marker.label,
-      lat: marker.lat,
-      lon: marker.lon,
-      color: marker.color,
-      distanceKm: marker.distanceKm,
-    })) ?? [];
+  const revealMarkers = buildSlowGeoRevealMarkers(computed);
+  const revealResults = buildSlowGeoRevealResults(computed);
 
   return (
     <div className="space-y-6">
@@ -163,6 +157,8 @@ export default async function RoundDetailPage({
           <LinkPendingIndicator />
         </Link>
       </div>
+
+      <SlowGeoSubnav />
 
       {query.error ? (
         <div className="rounded border border-[#8e3030]/25 bg-[#8e3030]/8 px-4 py-3 text-sm font-medium text-[#8e3030]">
@@ -228,11 +224,13 @@ export default async function RoundDetailPage({
       {isStreetViewRound && round.challenge && round.status !== "open" ? (
         <SlowGeoRevealMap
           roundName={round.name}
+          roundNumber={round.number}
           streetViewUrl={streetViewUrl}
           streetViewStaticViewConfig={streetViewStaticViewConfig}
           streetViewPanorama={streetViewPanorama}
           googleMapsApiKey={publicGoogleKey}
           markers={revealMarkers}
+          results={revealResults}
           shareUrl={slowGeoShareUrl}
           answerLabel={round.answer || round.challenge.label}
           currentPlayerName={currentComputedResult?.player.shortName}
@@ -240,6 +238,7 @@ export default async function RoundDetailPage({
           winnerNames={computed.winnerNames}
           imageDate={round.challenge.imageDate}
           copyright={round.challenge.copyright}
+          variant="full"
         />
       ) : null}
 

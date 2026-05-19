@@ -56,6 +56,8 @@ export default async function GeotingPergamentsPage({
 
   return (
     <div className="space-y-6">
+      <GeotingSubnav active="pergamenter" />
+
       <section className="geotia-frame rounded p-5 sm:p-6">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
           GeoTinget · Arkiv
@@ -68,8 +70,6 @@ export default async function GeotingPergamentsPage({
           {" "}levende pergamenter, {activeCount} åpne og {resolvedCount} avgjort.
         </p>
       </section>
-
-      <GeotingSubnav active="pergamenter" />
 
       <PergamentStatus status={params.status} error={params.error} />
 

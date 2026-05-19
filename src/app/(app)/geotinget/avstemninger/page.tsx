@@ -38,6 +38,8 @@ export default async function GeotingVotesPage({
 
   return (
     <div className="space-y-6">
+      <GeotingSubnav active="avstemninger" />
+
       <section className="geotia-frame rounded p-5 sm:p-6">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
           GeoTinget · Stemmeurne
@@ -50,8 +52,6 @@ export default async function GeotingVotesPage({
           Tingpergamentene er ett klikk unna i fanen under.
         </p>
       </section>
-
-      <GeotingSubnav active="avstemninger" />
 
       <GeotingVoteStatus status={params.status} error={params.error} />
 

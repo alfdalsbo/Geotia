@@ -142,17 +142,18 @@ test("Danny logs in as Tingvitne without voting power", async ({ page }) => {
 
   await expect(page.getByText("Innlogget som Danny — Tingvitne")).toBeVisible();
   await page.getByRole("navigation", { name: "Hovednavigasjon" }).getByRole("link", { name: "GeoTinget" }).click();
-  await expect(page.getByRole("link", { name: "Tingvollen" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Stemmeurnen" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Tingpergamentene" })).toBeVisible();
+  const geotingNav = page.getByRole("navigation", { name: "GeoTinget" });
+  await expect(geotingNav.getByRole("link", { name: "Tingvollen", exact: true })).toBeVisible();
+  await expect(geotingNav.getByRole("link", { name: "Stemmeurnen", exact: true })).toBeVisible();
+  await expect(geotingNav.getByRole("link", { name: "Tingpergamentene", exact: true })).toBeVisible();
   await expect(page.getByText("Ordensport:")).toBeVisible();
   await expect(page.getByText("kan lese og mumle fra benken")).toBeVisible();
   await expect(page.getByText("Nivå 2 åpner enkle forslag")).toBeVisible();
-  await page.getByRole("link", { name: "Stemmeurnen" }).click();
+  await geotingNav.getByRole("link", { name: "Stemmeurnen", exact: true }).click();
   await expect(page.getByRole("button", { name: "Avgi stemme" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Åpne stemmeurnen" })).toHaveCount(0);
   await expect(page.getByText("stiftet parti")).toHaveCount(0);
-  await page.getByRole("link", { name: "Tingpergamentene" }).click();
+  await geotingNav.getByRole("link", { name: "Tingpergamentene", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Tingpergamentene" })).toBeVisible();
   await expect(page.getByText("Kollegiets redigering")).toHaveCount(0);
 });

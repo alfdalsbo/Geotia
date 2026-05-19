@@ -4,6 +4,7 @@ import { ArrowRight, Medal, Shield, Sparkles, TableProperties, Trophy } from "lu
 
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { Section, StatTile } from "@/components/section";
+import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { RankMark } from "@/components/ui/rank-mark";
 import { Stamp } from "@/components/ui/stamp";
@@ -55,6 +56,8 @@ export default async function TablesPage() {
           </div>
         </div>
       </section>
+
+      <SlowGeoSubnav />
 
       <div className="grid gap-3 md:grid-cols-3">
         <StatTile label="Poengleder" value={leader?.player.shortName ?? "-"} detail={`${leader?.totalPoints ?? 0} poeng`} tone="blue" index={0} />

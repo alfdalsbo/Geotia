@@ -344,21 +344,21 @@ function PartyPositionMap({
   const parties = [...new Map(votingPlayers.filter((player) => player.partyId).map((player) => [player.partyId, player])).values()];
 
   return (
-    <div className="mt-4 rounded border border-[#c49a3c]/30 bg-[#fff7e6] p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
+    <div className="mt-4 min-w-0 rounded border border-[#c49a3c]/30 bg-[#fff7e6] p-3 sm:p-4">
+      <p className="max-w-full break-words text-xs font-semibold uppercase leading-5 tracking-[0.08em] text-[#7c2430] sm:tracking-[0.14em]">
         Partienes offisielle posisjoner
       </p>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {parties.map((player) => {
           const partyPosition = proposal.partyPositions?.find((position) => position.partyId === player.partyId);
           return (
-            <div key={player.partyId} className="rounded border border-[#d8ded0] bg-white px-3 py-2 text-sm">
-              <p className="font-semibold text-[#203c62]">{player.partyId.toUpperCase()}</p>
-              <p className="mt-1 text-[#4f412b]">
+            <div key={player.partyId} className="min-w-0 rounded border border-[#d8ded0] bg-white px-3 py-2 text-sm">
+              <p className="min-w-0 break-words font-semibold leading-5 text-[#203c62]">{player.partyId.toUpperCase()}</p>
+              <p className="mt-1 min-w-0 break-words leading-5 text-[#4f412b]">
                 {partyPosition ? partyPositionLabels[partyPosition.position] : "Ikke ført"}
               </p>
               {partyPosition?.comment ? (
-                <p className="mt-1 text-xs leading-5 text-[#60553f]">{partyPosition.comment}</p>
+                <p className="mt-1 min-w-0 break-words text-xs leading-5 text-[#60553f]">{partyPosition.comment}</p>
               ) : null}
             </div>
           );

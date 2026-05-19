@@ -9,6 +9,7 @@ import { dateLabel, formatKm } from "@/lib/utils";
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { RoundForm } from "@/components/round-form";
+import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
 import type { RoundStatus } from "@/lib/types";
 
 export const metadata = {
@@ -43,6 +44,8 @@ export default async function RoundsPage({
           fortsatt snittet av de tre dårligste for desertering og ugyldige svar.
         </p>
       </div>
+
+      <SlowGeoSubnav />
 
       {params.error ? (
         <div className="rounded border border-[#8e3030]/25 bg-[#8e3030]/8 px-4 py-3 text-sm font-medium text-[#8e3030]">

@@ -4,7 +4,6 @@ import {
   ArrowRight,
   BookOpen,
   Crown,
-  Footprints,
   Gavel,
   MapPinned,
   ScrollText,
@@ -31,39 +30,32 @@ export const metadata = {
 
 const exploreCards = [
   {
-    title: "SlowGeo",
+    title: "Start SlowGeo",
     eyebrow: "Spillrommet",
-    description: "Start runde, sett pinnen og se fasiten når protokollen låses.",
+    description: "Åpne dagens bilde, sett pinnen eller start en ny runde.",
     href: "/spill/slowgeo",
     icon: MapPinned,
   },
   {
-    title: "GeoTinget",
-    eyebrow: "Rikets sal",
-    description: "Send forslag, avlegg geo-ed og finn stemmeurnen når riket kaller.",
-    href: "/geotinget",
+    title: "Gå til Stemmeurnen",
+    eyebrow: "GeoTinget",
+    description: "Stem når riket kaller, eller se hvilke saker som brenner.",
+    href: "/geotinget/avstemninger",
     icon: Gavel,
   },
   {
-    title: "Ordenen",
-    eyebrow: "Borgerstigen",
-    description: "Se hvordan en borger blir farlig nok til mer ansvar i Geotia.",
-    href: "/ordenen",
-    icon: Footprints,
-  },
-  {
-    title: "Riksarkivet",
-    eyebrow: "Leksikon og lore",
-    description: "Grunnlov, partier, tegnlære, merkedager og gamle protokoller.",
-    href: "/arkiv",
-    icon: BookOpen,
-  },
-  {
-    title: "Min geot",
+    title: "Se Min geot",
     eyebrow: "Din riksmappe",
-    description: "Din rang, ordensvei, partirolle og siste SlowGeo-spor.",
+    description: "Finn rang, rolle, ordensvei og dine siste SlowGeo-spor.",
     href: "/min-geot",
     icon: UserRound,
+  },
+  {
+    title: "Utforsk Riksarkivet",
+    eyebrow: "Leksikon og lore",
+    description: "Les grunnlov, partier, tegnlære, merkedager og gamle protokoller.",
+    href: "/arkiv",
+    icon: BookOpen,
   },
 ];
 
@@ -117,12 +109,21 @@ export default async function DashboardPage() {
                 <LinkPendingIndicator className="text-white" />
               </Link>
               <Link
-                href="/ordenen"
+                href="/geotinget/avstemninger"
                 prefetch={false}
                 className={buttonClass({ variant: "quiet" })}
               >
-                Gå ordensveien
-                <Footprints className="h-4 w-4" aria-hidden="true" />
+                Gå til Stemmeurnen
+                <Gavel className="h-4 w-4" aria-hidden="true" />
+                <LinkPendingIndicator />
+              </Link>
+              <Link
+                href="/min-geot"
+                prefetch={false}
+                className={buttonClass({ variant: "quiet" })}
+              >
+                Se Min geot
+                <UserRound className="h-4 w-4" aria-hidden="true" />
                 <LinkPendingIndicator />
               </Link>
               <Link
@@ -193,8 +194,8 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <Section title="Utforsk Geotia" eyebrow="Institusjonene">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <Section title="Hva vil du gjøre nå?" eyebrow="Rikets kompass">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {exploreCards.map((card) => {
             const Icon = card.icon;
             return (

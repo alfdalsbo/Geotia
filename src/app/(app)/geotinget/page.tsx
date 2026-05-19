@@ -43,6 +43,8 @@ export default async function GeotingPage({
 
   return (
     <div className="space-y-6">
+      <GeotingSubnav active="tingvollen" />
+
       <section className="geo-hero">
         <div className="geo-hero-grid">
           <div className="geo-hero-text">
@@ -66,8 +68,6 @@ export default async function GeotingPage({
           </div>
         </div>
       </section>
-
-      <GeotingSubnav active="tingvollen" />
 
       <GeotingStatus status={params.status} error={params.error} />
 

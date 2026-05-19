@@ -24,7 +24,7 @@ export function PublicGeotiaHeader() {
             <RiksSegl size={48} />
           </Link>
           <div className="rikshead-text">
-            <h1 className="rikshead-title" style={{ fontSize: 24 }}>G·E·O·T·I·A</h1>
+            <div className="rikshead-title" aria-label="G E O T I A" style={{ fontSize: 24 }}>G·E·O·T·I·A</div>
             <p className="rikshead-sub">Statsarkivet · rikets embetsverk</p>
           </div>
         </div>

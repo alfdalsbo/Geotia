@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { cn } from "@/lib/utils";
+
 /**
  * LiveBar — felles skall for haste-meldinger over hele appen.
  * Brukes av GeotingGlobalAlert og SlowGeoGlobalAlert. Pakke 1-banderol
@@ -25,10 +27,16 @@ export type LiveBarItem = {
   actionLabel: string;
 };
 
-export function LiveBar({ item }: { item: LiveBarItem | null }) {
+export function LiveBar({
+  item,
+  variant = "full",
+}: {
+  item: LiveBarItem | null;
+  variant?: "full" | "compact";
+}) {
   if (!item) return null;
   return (
-    <div className="live-bar" role="status" aria-live="polite">
+    <div className={cn("live-bar", variant === "compact" && "live-bar--compact")} role="status" aria-live="polite">
       <div className="live-bar-inner">
         <span className="pulse-pip" aria-hidden="true" />
         <div className="min-w-0">

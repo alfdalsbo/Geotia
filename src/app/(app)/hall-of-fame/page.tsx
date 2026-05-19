@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Medal, Shield, Sparkles, Trophy } from "lucide-react";
 
 import { Section } from "@/components/section";
+import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { RankMark } from "@/components/ui/rank-mark";
 import { Stamp } from "@/components/ui/stamp";
@@ -42,6 +43,8 @@ export default async function HallOfFamePage() {
           </div>
         </div>
       </section>
+
+      <SlowGeoSubnav />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Podium

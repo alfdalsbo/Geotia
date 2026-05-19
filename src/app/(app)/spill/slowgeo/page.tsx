@@ -1,15 +1,24 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Clock, ExternalLink, MapPinned, Trophy } from "lucide-react";
+import { ArrowRight, Clock, MapPinned, Trophy } from "lucide-react";
 
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { Section, StatTile } from "@/components/section";
+import { SlowGeoRevealMap } from "@/components/slowgeo-reveal-map";
 import { SlowGeoRoundLauncher } from "@/components/slowgeo-round-launcher";
+import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
 import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
 import { computeRound, computeStandings } from "@/lib/scoring";
 import { pickGeoticLine, slowGeoEmptyStateLines } from "@/lib/geotia-jargon";
 import { buildOpenSlowGeoShareTextOptions } from "@/lib/slowgeo-share";
+import { buildSlowGeoRevealMarkers, buildSlowGeoRevealResults } from "@/lib/slowgeo-reveal";
 import { getSlowGeoProgress, getSlowGeoRoundInsights, slowGeoDifficultyLabels } from "@/lib/slowgeo-insights";
 import { getSlowGeoState } from "@/lib/store";
+import { buildStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
+import {
+  buildStreetViewImageUrl,
+  buildStreetViewStaticViewConfig,
+  STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
+} from "@/lib/streetview-url";
 import { dateLabel, dateTimeLabel, formatKm } from "@/lib/utils";
 
 export const metadata = {
@@ -23,6 +32,7 @@ export default async function SlowGeoGamePage({
 }) {
   const params = (await searchParams) ?? {};
   const state = await getSlowGeoState();
+  const publicGoogleKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
   const standings = computeStandings(state.players, state.rounds);
   const activeRounds = state.rounds
     .filter((round) => round.challenge && round.status === "open")
@@ -57,6 +67,8 @@ export default async function SlowGeoGamePage({
         </p>
       </section>
 
+      <SlowGeoSubnav />
+
       {params.error ? (
         <div className="rounded border border-[#8e3030]/25 bg-[#8e3030]/8 px-4 py-3 text-sm font-medium text-[#8e3030]">
           {params.error}
@@ -70,63 +82,54 @@ export default async function SlowGeoGamePage({
         </div>
       ) : null}
 
+      <Section title="Start nytt SlowGeo" eyebrow="Nytt bilde til tråden">
+        <SlowGeoRoundLauncher />
+      </Section>
+
       <div className="grid gap-3 md:grid-cols-3">
         <StatTile label="Åpne runder" value={activeRounds.length} detail="Klar for krangling" tone="green" />
         <StatTile label="Poengleder" value={leader?.player.shortName ?? "-"} detail={`${leader?.totalPoints ?? 0} poeng`} tone="blue" />
         <StatTile label="Lavest kattometer" value={kattometerLeader?.player.shortName ?? "-"} detail={formatKm(kattometerLeader?.totalKattometer)} tone="gold" />
       </div>
 
-      <Section title="Start nytt SlowGeo" eyebrow="Nytt bilde til tråden">
-        <SlowGeoRoundLauncher />
-      </Section>
-
       {latestResolvedRound ? (
         <Section title="Siste fasit står fremme" eyebrow="Automatisk arkivført">
           {(() => {
+            const challenge = latestResolvedRound.challenge;
+            if (!challenge) return null;
             const computed = computeRound(latestResolvedRound, state.players);
-            const winnerKm = computed.results.find((result) => result.rank === 1)?.actualKm;
-            const insight = getSlowGeoRoundInsights(computed).insightCards[0];
+            const streetViewUrl = buildStreetViewImageUrl({
+              challenge,
+              apiKey: publicGoogleKey,
+              allowLocationFallback: true,
+              size: STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
+            });
+            const streetViewStaticViewConfig = buildStreetViewStaticViewConfig(challenge);
+            const streetViewPanorama = buildStreetViewPanoramaConfig({
+              challenge,
+              apiKey: publicGoogleKey,
+              allowLocationFallback: true,
+            });
+            const revealMarkers = buildSlowGeoRevealMarkers(computed);
+            const revealResults = buildSlowGeoRevealResults(computed);
             return (
-              <article className="grid gap-4 rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-4 shadow-sm lg:grid-cols-[1fr_auto] lg:items-center">
-                <div>
-                  <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
-                    <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                    Låst i protokollen
-                  </p>
-                  <h2 className="font-display mt-2 text-3xl font-semibold text-[#062b40]">
-                    {latestResolvedRound.name}
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-[#5b6257]">
-                    Fasit: {latestResolvedRound.answer || latestResolvedRound.challenge?.label || "-"} · vinner{" "}
-                    {computed.winnerNames.join(", ") || "-"} · beste bom {formatKm(winnerKm)}
-                  </p>
-                  {insight ? (
-                    <p className="mt-3 inline-flex rounded border border-[#c49a3c]/45 bg-white/70 px-3 py-2 text-sm font-semibold text-[#654517]">
-                      {insight.title}
-                    </p>
-                  ) : null}
-                </div>
-                <div className="flex flex-wrap gap-2 lg:justify-end">
-                  <Link
-                    href={`/slowgeo/${latestResolvedRound.id}`}
-                    prefetch={false}
-                    className="inline-flex h-10 items-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
-                  >
-                    Se fasitkort
-                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                    <LinkPendingIndicator className="text-white" />
-                  </Link>
-                  <Link
-                    href={`/runder/${latestResolvedRound.id}`}
-                    prefetch={false}
-                    className="inline-flex h-10 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
-                  >
-                    Protokoll
-                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                    <LinkPendingIndicator />
-                  </Link>
-                </div>
-              </article>
+              <SlowGeoRevealMap
+                roundName={latestResolvedRound.name}
+                roundNumber={latestResolvedRound.number}
+                streetViewUrl={streetViewUrl}
+                streetViewStaticViewConfig={streetViewStaticViewConfig}
+                streetViewPanorama={streetViewPanorama}
+                googleMapsApiKey={publicGoogleKey}
+                markers={revealMarkers}
+                results={revealResults}
+                shareUrl={`/slowgeo/${latestResolvedRound.id}`}
+                detailHref={`/slowgeo/${latestResolvedRound.id}`}
+                answerLabel={latestResolvedRound.answer || challenge.label}
+                winnerNames={computed.winnerNames}
+                imageDate={challenge.imageDate}
+                copyright={challenge.copyright}
+                variant="summary"
+              />
             );
           })()}
         </Section>
@@ -243,21 +246,13 @@ export default async function SlowGeoGamePage({
                   ) : null}
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Link
-                      href={`/runder/${round.id}`}
-                      prefetch={false}
-                      className="inline-flex h-9 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
-                    >
-                      Protokoll
-                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                      <LinkPendingIndicator />
-                    </Link>
-                    <Link
                       href={`/slowgeo/${round.id}`}
                       prefetch={false}
-                      className="inline-flex h-9 items-center gap-2 rounded border border-[#d8ded0] bg-[#f7f8f5] px-3 text-sm font-semibold text-[#203c62]"
+                      className="inline-flex h-9 items-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
                     >
-                      Delingskort
-                      <LinkPendingIndicator />
+                      Fasitkort
+                      <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                      <LinkPendingIndicator className="text-white" />
                     </Link>
                   </div>
                 </article>

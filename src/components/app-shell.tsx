@@ -2,22 +2,14 @@ import Link from "next/link";
 import { DoorOpen } from "lucide-react";
 
 import { logoutAction } from "@/app/actions";
-import { GeotingGlobalAlert } from "@/components/geoting-global-alert";
+import { GlobalSignalBar } from "@/components/global-signal-bar";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
-import { SlowGeoGlobalAlert } from "@/components/slowgeo-global-alert";
-import { RiksNav, type RiksNavItem } from "@/components/ui/riks-nav";
+import { RiksCompass } from "@/components/riks-compass";
+import { RiksNav } from "@/components/ui/riks-nav";
 import { RiksSegl } from "@/components/ui/riks-segl";
 import { getCurrentGeot } from "@/lib/auth";
+import { RIKS_NAV_ITEMS } from "@/lib/route-context";
 import { getAppShellState, getStorageMode } from "@/lib/store";
-
-const NAV_ITEMS: readonly RiksNavItem[] = [
-  { href: "/", label: "Kommandosentral" },
-  { href: "/spill/slowgeo", label: "SlowGeo" },
-  { href: "/geotinget", label: "GeoTinget" },
-  { href: "/ordenen", label: "Ordenen" },
-  { href: "/arkiv", label: "Riksarkivet" },
-  { href: "/min-geot", label: "Min geot" },
-];
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const [currentGeot, appShellState] = await Promise.all([
@@ -39,7 +31,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               <RiksSegl size={64} />
             </Link>
             <div className="rikshead-text">
-              <h1 className="rikshead-title">G·E·O·T·I·A</h1>
+              <div className="rikshead-title" aria-label="G E O T I A">G·E·O·T·I·A</div>
               <p className="rikshead-sub">
                 Statsarkivet · Rikets embetsverk
                 {currentGeot ? (
@@ -51,12 +43,16 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <RiksNav
-            items={NAV_ITEMS}
+            items={RIKS_NAV_ITEMS}
             extras={
               <form action={logoutAction}>
-                <PendingSubmitButton className="danger" pendingChildren="Logger ut …">
+                <PendingSubmitButton
+                  aria-label="Forlat embetsverket"
+                  className="danger geo-nav-logout"
+                  pendingChildren="Logger ut …"
+                >
                   <DoorOpen className="h-4 w-4 flex-none" aria-hidden="true" />
-                  <span>Forlat embetsverket</span>
+                  <span className="geo-nav-logout-text">Forlat embetsverket</span>
                 </PendingSubmitButton>
               </form>
             }
@@ -64,8 +60,11 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <GeotingGlobalAlert proposals={appShellState.activeGeotingProposals} />
-      <SlowGeoGlobalAlert rounds={appShellState.activeSlowGeoRounds} />
+      <GlobalSignalBar
+        proposals={appShellState.activeGeotingProposals}
+        rounds={appShellState.activeSlowGeoRounds}
+      />
+      <RiksCompass />
 
       <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
 

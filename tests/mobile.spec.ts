@@ -84,6 +84,24 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(result.offenders, JSON.stringify(result.offenders, null, 2)).toHaveLength(0);
 }
 
+async function expectMainStartsBefore(page: Page, maxTop: number) {
+  const mainTop = await page.locator("main").evaluate((element) => Math.round(element.getBoundingClientRect().top));
+  expect(mainTop).toBeLessThanOrEqual(maxTop);
+}
+
+async function expectOneVisibleH1(page: Page) {
+  const visibleH1s = await page.locator("h1").evaluateAll((elements) =>
+    elements
+      .filter((element) => {
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+      })
+      .map((element) => element.textContent?.trim()),
+  );
+  expect(visibleH1s).toHaveLength(1);
+}
+
 async function mockGoogleMaps(page: Page) {
   await page.route("https://maps.googleapis.com/maps/api/js**", async (route) => {
     await route.fulfill({
@@ -263,6 +281,140 @@ async function writeOpenSlowGeoFixture() {
   return roundId;
 }
 
+async function writeRevealedSlowGeoFixture() {
+  const timestamp = new Date().toISOString();
+  const roundId = "playwright-mobile-revealed-slowgeo";
+  const dataDir = path.join(process.cwd(), ".data");
+  const guesses: Record<string, { lat: number; lon: number; label: string; actualKm: number; note?: string }> = {
+    alf: {
+      lat: 69.653,
+      lon: 18.974,
+      label: "Tromsøbrua nesten på streken",
+      actualKm: 0.1,
+      note: "Bro, fjell og nordlig selvtillit.",
+    },
+    vegard: {
+      lat: 60.3913,
+      lon: 5.3221,
+      label: "Bergen",
+      actualKm: 1221.4,
+    },
+    jorgen: {
+      lat: 63.4305,
+      lon: 10.3951,
+      label: "Trondheim",
+      actualKm: 787.2,
+    },
+    steinar: {
+      lat: 59.9139,
+      lon: 10.7522,
+      label: "Oslo",
+      actualKm: 1148.8,
+    },
+    sverre: {
+      lat: 58.969,
+      lon: 5.7331,
+      label: "Stavanger",
+      actualKm: 1343.6,
+    },
+    fredrik: {
+      lat: 68.4385,
+      lon: 17.4273,
+      label: "Narvik",
+      actualKm: 157.5,
+    },
+  };
+
+  await mkdir(dataDir, { recursive: true });
+  await writeFile(
+    path.join(dataDir, "playwright-geotia.json"),
+    JSON.stringify(
+      {
+        meta: { schemaVersion: "2" },
+        rounds: [
+          {
+            id: roundId,
+            number: 2,
+            date: timestamp.slice(0, 10),
+            name: "Felles fasitkort-prøven",
+            answer: "Tromsøbrua, Tromsø",
+            answerLocation: {
+              lat: 69.6534,
+              lon: 18.975,
+              label: "Tromsøbrua, Tromsø",
+              query: "tromso-bridge",
+              country: "Norge",
+              source: "google_street_view",
+            },
+            mapSnapshot: null,
+            challenge: {
+              id: "challenge-mobile-revealed",
+              candidateId: "tromso-bridge",
+              source: "google_street_view",
+              lat: 69.6534,
+              lon: 18.975,
+              label: "Tromsøbrua, Tromsø",
+              country: "Norge",
+              continent: "Europa",
+              heading: 64,
+              pitch: 1,
+              fov: 90,
+              panoId: "playwright-pano-revealed",
+              imageDate: "2024-01",
+              copyright: "© 2024 Google",
+              difficulty: "lett",
+              theme: "nordlysstat og norsk veifølelse",
+              signature: "Fjell, vann og nordlig infrastruktur uten skam.",
+              tags: ["norge", "nord", "bro"],
+              createdAt: timestamp,
+            },
+            deadlineAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+            revealedAt: timestamp,
+            country: "Norge",
+            continent: "Europa",
+            comment: "Google Street View",
+            status: "locked",
+            createdAt: timestamp,
+            updatedAt: timestamp,
+            results: competingPlayerIds.map((playerId) => {
+              const guess = guesses[playerId];
+              return {
+                playerId,
+                status: guess ? "deltatt" : "ikke_deltatt",
+                actualKm: guess?.actualKm ?? null,
+                guessText: guess?.label ?? "",
+                guessLocation: guess
+                  ? {
+                      lat: guess.lat,
+                      lon: guess.lon,
+                      label: guess.label,
+                      query: guess.label.toLowerCase().replaceAll(" ", "-"),
+                      country: "Norge",
+                      source: "manual",
+                    }
+                  : null,
+                guessUpdatedAt: guess ? timestamp : null,
+                distanceSource: guess ? "auto" : null,
+                note: guess?.note ?? "",
+              };
+            }),
+          },
+        ],
+        gameSessions: [],
+        geotingProposals: [],
+        geoterIndexAdjustments: [],
+        geoticOrderAssessments: [],
+        geoticOrderPromotionCases: [],
+        geocodeCache: [],
+      },
+      null,
+      2,
+    ),
+    "utf8",
+  );
+  return roundId;
+}
+
 test("core pages do not overflow horizontally on mobile", async ({ page }) => {
   test.setTimeout(120_000);
 
@@ -282,6 +434,56 @@ test("core pages do not overflow horizontally on mobile", async ({ page }) => {
       ).toBeVisible({ timeout: 15_000 });
       await expectNoHorizontalOverflow(page);
     }
+  }
+});
+
+test("mobile shell keeps the rikssti and route families clear", async ({ page }) => {
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 320, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await login(page);
+
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    const mainNav = page.getByRole("navigation", { name: "Hovednavigasjon" });
+    await expect(mainNav.getByRole("link", { name: "Kommandosentral" })).toBeVisible();
+    const commandText = await mainNav.getByRole("link", { name: "Kommandosentral" }).innerText();
+    expect(commandText).not.toContain("\n");
+    await expect(page.getByTestId("rikssti")).toBeVisible();
+    await expectMainStartsBefore(page, 430);
+    await expectOneVisibleH1(page);
+
+    for (const [route, heading] of [
+      ["/tabeller", "Rikets tabeller"],
+      ["/runder", "Runder og protokoller"],
+      ["/stilling", "SlowGeo-tabell"],
+      ["/hall-of-fame", "Æreshallen"],
+    ] as const) {
+      await page.goto(route, { waitUntil: "domcontentloaded" });
+      await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+      await expect(mainNav.getByRole("link", { name: "SlowGeo" })).toHaveAttribute("aria-current", "page");
+      await expect(page.getByRole("navigation", { name: "SlowGeo" })).toBeVisible();
+      await expectOneVisibleH1(page);
+      await expectNoHorizontalOverflow(page);
+    }
+
+    await page.goto("/geotinget", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "GeoTinget" })).toBeVisible();
+    await expect(mainNav.getByRole("link", { name: "GeoTinget" })).toHaveAttribute("aria-current", "page");
+    const geotingSubnav = page.getByRole("navigation", { name: "GeoTinget" });
+    await expect(geotingSubnav).toBeVisible();
+    const geotingSubnavTop = await geotingSubnav.evaluate((element) => Math.round(element.getBoundingClientRect().top));
+    expect(geotingSubnavTop).toBeLessThan(viewport.height);
+    await expectOneVisibleH1(page);
+    await expectNoHorizontalOverflow(page);
+
+    await page.goto("/geotinget/avstemninger", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "Stemmeurnen", exact: true })).toBeVisible();
+    await expect(mainNav.getByRole("link", { name: "GeoTinget" })).toHaveAttribute("aria-current", "page");
+    await expect(geotingSubnav.getByRole("link", { name: "Stemmeurnen" })).toHaveAttribute("aria-current", "page");
+    await expectOneVisibleH1(page);
+    await expectNoHorizontalOverflow(page);
   }
 });
 
@@ -458,4 +660,44 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
 
   await dialog.getByRole("button", { name: "Lukk kart" }).click();
   await expect(dialog).toBeHidden();
+});
+
+test("SlowGeo revealed card shows the same map card on answer page and overview", async ({ page }) => {
+  test.setTimeout(120_000);
+  await mockGoogleMaps(page);
+  const roundId = await writeRevealedSlowGeoFixture();
+
+  for (const viewport of [
+    { width: 390, height: 900 },
+    { width: 320, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+
+    await page.goto(`/slowgeo/${roundId}`, { waitUntil: "domcontentloaded" });
+    await expect(page.getByText("SlowGeo #2 · Fasitkort")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Felles fasitkort-prøven", level: 2 })).toBeVisible();
+    await expect(page.getByText("Fasit: Tromsøbrua, Tromsø", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Resultat" })).toBeVisible();
+    await expect(page.getByText("Tromsøbrua nesten på streken")).toBeVisible();
+
+    await page.getByRole("button", { name: "Vis fasitkart i fullskjerm" }).click();
+    const revealDialog = page.getByRole("dialog", { name: "SlowGeo-fasitkart" });
+    await expect(revealDialog).toBeVisible();
+    await expect(revealDialog.getByText("SlowGeo-kart")).toBeVisible();
+    await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await revealDialog.getByRole("button", { name: "Lukk kart" }).click();
+    await expect(revealDialog).toBeHidden();
+    await expectNoHorizontalOverflow(page);
+
+    await login(page);
+    await page.goto("/spill/slowgeo", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "Felles fasitkort-prøven", level: 2 })).toBeVisible();
+    await expect(page.getByText("SlowGeo #2 · Fasitkort")).toBeVisible();
+    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toBeVisible();
+    await expect(page.getByRole("link", { name: /Åpne fasitkort/ })).toHaveAttribute("href", `/slowgeo/${roundId}`);
+    await expect(page.getByRole("link", { name: "Protokoll", exact: true })).toHaveCount(0);
+    await expectNoHorizontalOverflow(page);
+  }
 });

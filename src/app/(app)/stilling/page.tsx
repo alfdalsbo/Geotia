@@ -1,6 +1,7 @@
 import { Crown, Medal, TrendingDown, TrendingUp } from "lucide-react";
 
 import { Section, StatTile } from "@/components/section";
+import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
 import { computeStandings } from "@/lib/scoring";
 import { getRoundsState } from "@/lib/store";
 import { formatKm, formatNumber } from "@/lib/utils";
@@ -32,6 +33,8 @@ export default async function StandingsPage() {
           Slik holdes både ære og avstand i samme statlige hånd.
         </p>
       </div>
+
+      <SlowGeoSubnav />
 
       <div className="grid gap-3 md:grid-cols-3">
         <StatTile
