@@ -487,7 +487,7 @@ test("mobile shell keeps the rikssti and route families clear", async ({ page })
 
     for (const [route, heading] of [
       ["/tabeller", "Rikets tabeller"],
-      ["/runder", "Tingets SlowGeo-protokoller"],
+      ["/runder", "Ferdige SlowGeo-fasitkort"],
       ["/stilling", "SlowGeo-tabell"],
       ["/hall-of-fame", "Æreshallen"],
     ] as const) {
@@ -532,7 +532,7 @@ test("mobile forms and order progress use readable card layouts", async ({ page 
   await login(page);
 
   await page.goto("/runder", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("heading", { name: "Tingets SlowGeo-protokoller" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ferdige SlowGeo-fasitkort" })).toBeVisible();
   await expect(page.getByTestId("slowgeo-protocol-card")).toBeVisible();
   await expect(page.getByText("Reist av: Alf Kåre")).toBeVisible();
   await expect(page.getByRole("link", { name: /Åpne fasitkort/ })).toHaveAttribute("href", `/slowgeo/${roundId}`);

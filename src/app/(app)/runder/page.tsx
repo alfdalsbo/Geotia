@@ -12,7 +12,7 @@ import type { ComputedRound, Round, RoundStatus } from "@/lib/types";
 import { cn, dateTimeLabel, formatKm } from "@/lib/utils";
 
 export const metadata = {
-  title: "SlowGeo-protokoller",
+  title: "Ferdige SlowGeo-fasitkort",
 };
 
 const statusLabel: Record<RoundStatus, string> = {
@@ -40,15 +40,15 @@ export default async function RoundsPage({
           Protokollhvelvet
         </p>
         <h1 className="font-display mt-2 text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
-          Tingets SlowGeo-protokoller
+          Ferdige SlowGeo-fasitkort
         </h1>
         <p className="mt-3 max-w-3xl text-[#60553f]">
-          Her ligger de ferdige fasitkortene, sortert slik arkivrådet helst vil ha det:
-          nyeste dom først, minst mulig knoting, ingen ekstra åpningsseremoni.
+          Dette er arkivet for avsluttede SlowGeo-runder. Aktive runder bor i
+          Spillrommet; her ligger bare fasitkort, vinnere og ferdige kartspor.
         </p>
         <p className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fff7e6] px-3 py-2 text-sm leading-6 text-[#4f412b]">
-          Nye SlowGeo-runder startes i Spillrommet. Dette hvelvet er for fasit, vinnere,
-          kartspor og offentlig etterpåklokskap.
+          Nyeste fasit står først. Ingen startskjema, ingen manuell kontroll,
+          ingen aktive runder som later som de er arkiv.
         </p>
       </div>
 
@@ -70,7 +70,7 @@ export default async function RoundsPage({
         </div>
       ) : null}
 
-      <Section title="Fasitpergamentene" eyebrow="Rundearkiv uten skjema">
+      <Section title="Ferdige fasitkort" eyebrow="Avsluttede SlowGeo-runder">
         {protocolRounds.length ? (
           <div className="grid gap-4 lg:grid-cols-2">
             {protocolRounds.map((round) => {
@@ -82,11 +82,11 @@ export default async function RoundsPage({
           <div className="rounded border border-dashed border-[#b8892f] bg-[#b8892f]/8 p-5">
             <p className="flex items-center gap-2 text-lg font-semibold text-[#7b591d]">
               <Archive className="h-5 w-5" aria-hidden="true" />
-              Fasitpergamentene er tomme.
+              Ingen ferdige SlowGeo-fasitkort ennå.
             </p>
             <p className="mt-2 text-sm leading-6 text-[#5b6257]">
-              Når en SlowGeo er avslørt, havner den her med kart, dom og passelig
-              høytidelig papirknitring.
+              Når en SlowGeo er avslørt, havner den her. Aktive runder ligger
+              fortsatt i Spillrommet.
             </p>
           </div>
         )}
@@ -115,7 +115,7 @@ function ProtocolCard({ round, computed }: { round: Round; computed: ComputedRou
           <div className="min-w-0">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
               <ScrollText className="h-4 w-4 flex-none" aria-hidden="true" />
-              Fasitpergament #{round.number}
+              Fasitkort #{round.number}
             </p>
             <h2 className="font-display mt-2 text-2xl font-semibold text-[#062b40] sm:text-3xl">
               {round.name}

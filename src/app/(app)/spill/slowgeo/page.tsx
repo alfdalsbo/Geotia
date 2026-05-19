@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Clock, MapPinned, Trophy } from "lucide-react";
+import { Archive, ArrowRight, Clock, MapPinned } from "lucide-react";
 
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { Section, StatTile } from "@/components/section";
@@ -38,15 +38,12 @@ export default async function SlowGeoGamePage({
   const activeRounds = state.rounds
     .filter((round) => round.challenge && round.status === "open")
     .sort((a, b) => String(a.deadlineAt).localeCompare(String(b.deadlineAt)));
-  const recentRounds = state.rounds
+  const resolvedRounds = state.rounds
     .filter((round) => round.challenge && round.status !== "open")
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-    .slice(0, 6);
-  const latestResolvedRound = state.rounds
-    .filter((round) => round.challenge && round.status !== "open")
-    .sort((a, b) => b.number - a.number)[0];
+    .sort((a, b) => b.number - a.number);
+  const recentRounds = resolvedRounds.slice(0, 6);
+  const latestResolvedRound = resolvedRounds[0];
   const olderRecentRounds = recentRounds.filter((round) => round.id !== latestResolvedRound?.id);
-  const lockedRounds = state.rounds.filter((round) => round.challenge && round.status === "locked");
   const leader = standings[0];
   const kattometerLeader = standings
     .filter((standing) => standing.lockedRounds > 0)
@@ -93,53 +90,38 @@ export default async function SlowGeoGamePage({
         <StatTile label="Lavest kattometer" value={kattometerLeader?.player.shortName ?? "-"} detail={formatKm(kattometerLeader?.totalKattometer)} tone="gold" />
       </div>
 
-      {latestResolvedRound ? (
-        <Section title="Siste fasit står fremme" eyebrow="Automatisk arkivført">
-          {(() => {
-            const challenge = latestResolvedRound.challenge;
-            if (!challenge) return null;
-            const computed = computeRound(latestResolvedRound, state.players);
-            const streetViewUrl = buildStreetViewImageUrl({
-              challenge,
-              apiKey: publicGoogleKey,
-              allowLocationFallback: true,
-              size: STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
-            });
-            const streetViewStaticViewConfig = buildStreetViewStaticViewConfig(challenge);
-            const streetViewPanorama = buildStreetViewPanoramaConfig({
-              challenge,
-              apiKey: publicGoogleKey,
-              allowLocationFallback: true,
-            });
-            const revealMarkers = buildSlowGeoRevealMarkers(computed);
-            const revealResults = buildSlowGeoRevealResults(computed);
-            return (
-              <SlowGeoRevealMap
-                roundName={latestResolvedRound.name}
-                roundNumber={latestResolvedRound.number}
-                streetViewUrl={streetViewUrl}
-                streetViewStaticViewConfig={streetViewStaticViewConfig}
-                streetViewPanorama={streetViewPanorama}
-                slowGeoMode={getSlowGeoMode(latestResolvedRound)}
-                googleMapsApiKey={publicGoogleKey}
-                markers={revealMarkers}
-                results={revealResults}
-                shareUrl={`/slowgeo/${latestResolvedRound.id}`}
-                detailHref={`/slowgeo/${latestResolvedRound.id}`}
-                answerLabel={latestResolvedRound.answer || challenge.label}
-                startedByLabel={getSlowGeoStarterLabel(latestResolvedRound, state.players)}
-                startedAtLabel={dateTimeLabel(getSlowGeoStartedAt(latestResolvedRound))}
-                winnerNames={computed.winnerNames}
-                imageDate={challenge.imageDate}
-                copyright={challenge.copyright}
-                variant="summary"
-              />
-            );
-          })()}
-        </Section>
-      ) : null}
+      <div className="grid gap-3 lg:grid-cols-2">
+        <div className="rounded border border-[#285c45]/25 bg-[#285c45]/10 p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#285c45]">Pågår nå</p>
+          <h2 className="font-display mt-2 text-2xl font-semibold text-[#062b40]">Aktive SlowGeo-runder</h2>
+          <p className="mt-2 text-sm leading-6 text-[#4f412b]">
+            {activeRounds.length
+              ? `${activeRounds.length} runde${activeRounds.length === 1 ? "" : "r"} er åpen for pin-svar.`
+              : "Ingen aktive runder akkurat nå."}
+          </p>
+        </div>
+        <Link
+          href="/runder"
+          prefetch={false}
+          className="rounded border border-[#203c62]/20 bg-white p-4 text-[#203c62] shadow-sm transition hover:border-[#203c62]/45 hover:bg-[#fff7e6]"
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">Avsluttet</p>
+          <h2 className="font-display mt-2 flex items-center gap-2 text-2xl font-semibold">
+            Ferdige fasitkort
+            <Archive className="h-5 w-5" aria-hidden="true" />
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-[#4f412b]">
+            {resolvedRounds.length} avsluttede SlowGeo-runder ligger i Rundeprotokollen.
+          </p>
+          <span className="mt-3 inline-flex h-10 items-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white">
+            Åpne ferdige fasitkort
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            <LinkPendingIndicator className="text-white" />
+          </span>
+        </Link>
+      </div>
 
-      <Section title="Aktive SlowGeo-runder" eyebrow="Åpne bilder og låste pins">
+      <Section title="Aktive SlowGeo-runder" eyebrow="Pågår nå · fasit skjult">
         {activeRounds.length ? (
           <div className="grid gap-3 lg:grid-cols-2">
             {activeRounds.map((round) => {
@@ -212,17 +194,77 @@ export default async function SlowGeoGamePage({
         )}
       </Section>
 
+      {latestResolvedRound ? (
+        <Section
+          title="Ferdig SlowGeo: siste fasitkort"
+          eyebrow="Avsluttet og arkivført"
+          action={
+            <Link
+              href="/runder"
+              prefetch={false}
+              className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
+            >
+              Alle ferdige
+              <Archive className="h-4 w-4" aria-hidden="true" />
+              <LinkPendingIndicator />
+            </Link>
+          }
+        >
+          {(() => {
+            const challenge = latestResolvedRound.challenge;
+            if (!challenge) return null;
+            const computed = computeRound(latestResolvedRound, state.players);
+            const streetViewUrl = buildStreetViewImageUrl({
+              challenge,
+              apiKey: publicGoogleKey,
+              allowLocationFallback: true,
+              size: STREET_VIEW_STATIC_PREVIEW_IMAGE_SIZE,
+            });
+            const streetViewStaticViewConfig = buildStreetViewStaticViewConfig(challenge);
+            const streetViewPanorama = buildStreetViewPanoramaConfig({
+              challenge,
+              apiKey: publicGoogleKey,
+              allowLocationFallback: true,
+            });
+            const revealMarkers = buildSlowGeoRevealMarkers(computed);
+            const revealResults = buildSlowGeoRevealResults(computed);
+            return (
+              <SlowGeoRevealMap
+                roundName={latestResolvedRound.name}
+                roundNumber={latestResolvedRound.number}
+                streetViewUrl={streetViewUrl}
+                streetViewStaticViewConfig={streetViewStaticViewConfig}
+                streetViewPanorama={streetViewPanorama}
+                slowGeoMode={getSlowGeoMode(latestResolvedRound)}
+                googleMapsApiKey={publicGoogleKey}
+                markers={revealMarkers}
+                results={revealResults}
+                shareUrl={`/slowgeo/${latestResolvedRound.id}`}
+                detailHref={`/slowgeo/${latestResolvedRound.id}`}
+                answerLabel={latestResolvedRound.answer || challenge.label}
+                startedByLabel={getSlowGeoStarterLabel(latestResolvedRound, state.players)}
+                startedAtLabel={dateTimeLabel(getSlowGeoStartedAt(latestResolvedRound))}
+                winnerNames={computed.winnerNames}
+                imageDate={challenge.imageDate}
+                copyright={challenge.copyright}
+                variant="summary"
+              />
+            );
+          })()}
+        </Section>
+      ) : null}
+
       <Section
-        title="Siste SlowGeo-resultater"
-        eyebrow="Fasit, vinner og protokoll"
+        title="Flere ferdige fasitkort"
+        eyebrow="Avsluttet protokoll"
         action={
           <Link
-            href="/tabeller"
+            href="/runder"
             prefetch={false}
             className="inline-flex h-10 items-center gap-2 rounded bg-[#fff7e6] px-3 text-sm font-semibold text-[#062b40]"
           >
-            Tabell
-            <Trophy className="h-4 w-4" aria-hidden="true" />
+            Alle ferdige
+            <Archive className="h-4 w-4" aria-hidden="true" />
             <LinkPendingIndicator />
           </Link>
         }
@@ -271,9 +313,9 @@ export default async function SlowGeoGamePage({
             </p>
           </div>
         )}
-        {lockedRounds.length === 0 ? null : (
+        {resolvedRounds.length === 0 ? null : (
           <p className="mt-4 text-sm text-[#5b6257]">
-            {lockedRounds.length} SlowGeo-runder er låst i den offisielle protokollen.
+            {resolvedRounds.length} ferdige SlowGeo-fasitkort ligger i Rundeprotokollen.
           </p>
         )}
       </Section>
