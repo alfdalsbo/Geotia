@@ -366,6 +366,18 @@ function challengeFromCandidate(
   };
 }
 
+function attributionHintsForCandidate(candidate: StreetViewCandidate) {
+  return [
+    candidate.id,
+    candidate.label,
+    candidate.country,
+    candidate.continent,
+    candidate.theme,
+    candidate.signature,
+    ...candidate.tags,
+  ];
+}
+
 async function fetchMetadata(candidate: StreetViewCandidate, apiKey: string) {
   const params = new URLSearchParams({
     location: `${candidate.lat},${candidate.lon}`,
@@ -406,7 +418,7 @@ export async function createStreetViewChallenge({
     const metadata = await fetchMetadata(candidate, apiKey);
     lastStatus = metadata.status;
     if (metadata.status === "OK" && metadata.pano_id) {
-      if (!isSafeSlowGeoAttribution(metadata.copyright)) {
+      if (!isSafeSlowGeoAttribution(metadata.copyright, attributionHintsForCandidate(candidate))) {
         lastStatus = "UNSAFE_ATTRIBUTION";
         continue;
       }
@@ -421,5 +433,9 @@ export async function createStreetViewChallenge({
     }
   }
 
-  throw new Error(`Ingen kurert SlowGeo-kandidat hadde gyldig Street View akkurat nå (${lastStatus || "ukjent status"}).`);
+  const publicStatus =
+    lastStatus === "UNSAFE_ATTRIBUTION"
+      ? "Street View-attribusjonen røpet for mye"
+      : lastStatus || "ukjent status";
+  throw new Error(`Ingen kurert SlowGeo-kandidat hadde gyldig Street View akkurat nå (${publicStatus}).`);
 }

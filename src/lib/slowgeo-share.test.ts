@@ -69,4 +69,12 @@ describe("SlowGeo sharing and attribution helpers", () => {
     expect(isSafeSlowGeoAttribution("© Mari")).toBe(false);
     expect(isSafeSlowGeoAttribution("© 2024 Google / Mari")).toBe(false);
   });
+
+  it("can allow neutral attribution while rejecting candidate-specific hints", () => {
+    const hints = ["Baščaršija, Sarajevo", "Bosnia-Hercegovina", "sarajevo-bascarsija"];
+
+    expect(isSafeSlowGeoAttribution("© Mari", hints)).toBe(true);
+    expect(isSafeSlowGeoAttribution("© Visit Sarajevo", hints)).toBe(false);
+    expect(isSafeSlowGeoAttribution("© Bascarsija Tours", hints)).toBe(false);
+  });
 });

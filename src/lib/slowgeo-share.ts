@@ -102,19 +102,37 @@ const genericAttributionTokens = new Set([
   "view",
 ]);
 
-export function isSafeSlowGeoAttribution(value: string | null | undefined) {
-  if (!value) return true;
+function attributionTokens(value: string | null | undefined) {
+  if (!value) return [];
 
   const normalized = value
     .normalize("NFKD")
+    .replace(/[æÆ]/g, "ae")
+    .replace(/[øØ]/g, "o")
+    .replace(/[åÅ]/g, "a")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
-  const tokens = normalized.match(/[a-z0-9]+/g) ?? [];
+  return normalized.match(/[a-z0-9]+/g) ?? [];
+}
+
+export function isSafeSlowGeoAttribution(value: string | null | undefined, unsafeHints: string[] = []) {
+  if (!value) return true;
+
+  const tokens = attributionTokens(value);
   const revealingTokens = tokens.filter((token) => {
     if (/^\d{4}$/.test(token)) return false;
     if (/^\d+$/.test(token)) return false;
     return !genericAttributionTokens.has(token);
   });
+
+  if (unsafeHints.length > 0) {
+    const unsafeHintTokens = new Set(
+      unsafeHints
+        .flatMap((hint) => attributionTokens(hint))
+        .filter((token) => token.length >= 4 && !genericAttributionTokens.has(token)),
+    );
+    return !revealingTokens.some((token) => unsafeHintTokens.has(token));
+  }
 
   return revealingTokens.length === 0;
 }
