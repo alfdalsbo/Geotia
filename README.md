@@ -40,6 +40,18 @@ npm run verify:e2e
 `npm run verify:e2e` eller målrettet Playwright/browser-sjekk ved synlige
 UI-endringer.
 
+## SlowGeo-pool
+
+```bash
+npm run slowgeo:pool
+npm run slowgeo:refill
+```
+
+SlowGeo-kandidater ligger i `src/data/slowgeo-candidates.json`. Refill-scriptet
+skriver bare når ubrukt pool er under `SLOWGEO_POOL_LOW_WATERMARK`, og krever
+`GOOGLE_MAPS_SERVER_API_KEY` når nye kandidater faktisk må valideres mot Street
+View metadata.
+
 ## Geotisk lov
 
 - Poeng: 7, 6, 5, 4, 3, 2, 1 etter avstand fra fasit.

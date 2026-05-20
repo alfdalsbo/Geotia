@@ -3,6 +3,7 @@ import { BadgeCheck, Camera, ImageIcon, MapPinned, Satellite } from "lucide-reac
 import { createSlowGeoRoundAction } from "@/app/actions";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { getSlowGeoMonthlyRoundCap } from "@/lib/streetview";
+import { getSlowGeoCandidatePoolState } from "@/lib/store";
 
 function defaultDeadlineTime() {
   const date = new Date(Date.now() + 2 * 60 * 60 * 1000);
@@ -16,11 +17,18 @@ function defaultDeadlineTime() {
   return `${values.hour ?? "20"}:${values.minute ?? "00"}`;
 }
 
-export function SlowGeoRoundLauncher() {
+export async function SlowGeoRoundLauncher() {
   const hasPublicKey = Boolean(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
   const hasServerKey = Boolean(process.env.GOOGLE_MAPS_SERVER_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
   const monthlyCap = getSlowGeoMonthlyRoundCap();
+  const poolStats = await getSlowGeoCandidatePoolState();
   const defaultTime = defaultDeadlineTime();
+  const poolMessage =
+    poolStats.status === "empty"
+      ? "Ingen ubrukte kandidater igjen. Fyll på kandidatlisten før neste runde."
+      : poolStats.status === "low"
+        ? `Lav pool: ${poolStats.unusedCandidateCount} ubrukte kandidater igjen. Kjør slowgeo:refill.`
+        : `${poolStats.unusedCandidateCount} ubrukte av ${poolStats.totalCandidates} kandidater.`;
 
   return (
     <form action={createSlowGeoRoundAction} className="geo-form grid gap-4 lg:grid-cols-[1fr_minmax(300px,1.1fr)_200px_auto]">
@@ -88,7 +96,7 @@ export function SlowGeoRoundLauncher() {
           <MapPinned className="h-3.5 w-3.5" aria-hidden="true" />
           Street View-pool
         </span>{" "}
-        {monthlyCap > 0 ? `Månedstak: ${monthlyCap} runder.` : "Månedstak er av."}{" "}
+        {poolMessage} {monthlyCap > 0 ? `Månedstak: ${monthlyCap} runder.` : "Månedstak er av."}{" "}
         {!hasPublicKey || !hasServerKey
           ? "Google-nøkler mangler, så runden kan opprettes lokalt, men bilde/kart vises først når miljøvariablene er satt."
           : "Google-nøkler er registrert i miljøet."}

@@ -30,7 +30,7 @@ describe("Street View challenge selection", () => {
 
   it("keeps a large curated candidate pool with unique ids", () => {
     const ids = slowGeoCandidates.map((candidate) => candidate.id);
-    expect(slowGeoCandidates).toHaveLength(119);
+    expect(slowGeoCandidates.length).toBeGreaterThanOrEqual(500);
     expect(new Set(ids).size).toBe(ids.length);
   });
 

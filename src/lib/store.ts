@@ -28,7 +28,7 @@ import {
   normalizeSlowGeoMode,
   shouldRevealSlowGeoRound,
 } from "@/lib/slowgeo";
-import { createStreetViewChallenge, getSlowGeoMonthlyRoundCap } from "@/lib/streetview";
+import { createStreetViewChallenge, getSlowGeoCandidatePoolStats, getSlowGeoMonthlyRoundCap } from "@/lib/streetview";
 import type {
   AppState,
   GameId,
@@ -2096,6 +2096,15 @@ export const getSlowGeoState = cache(async function getSlowGeoState() {
 
   const [rounds, hydratedPlayers] = await Promise.all([readRounds(), readHydratedPlayers()]);
   return { players: hydratedPlayers, rounds };
+});
+
+export const getSlowGeoCandidatePoolState = cache(async function getSlowGeoCandidatePoolState() {
+  const rounds = await readRounds();
+  const usedChallenges = await readSlowGeoUsedChallenges(rounds);
+  return getSlowGeoCandidatePoolStats({
+    usedCandidateIds: slowGeoUsedCandidateIds(usedChallenges),
+    usedPanoIds: slowGeoUsedPanoIds(usedChallenges),
+  });
 });
 
 export const getSlowGeoRoundState = cache(async function getSlowGeoRoundState(id: string) {

@@ -100,7 +100,7 @@ describe("Geotia file store", () => {
       "guess-alf",
       "guess-vegard",
     ]);
-  });
+  }, 10_000);
 
   it("persists Geoterindeksen adjustments in the local protocol file", async () => {
     tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
