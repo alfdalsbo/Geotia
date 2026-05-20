@@ -74,7 +74,8 @@ export function SlowGeoPlay({
   const mapsApiRef = useRef<GoogleMapsApi | null>(null);
   const [guess, setGuess] = useState<Guess | null>(existingGuess);
   const [mapError, setMapError] = useState("");
-  const [loadingMap, setLoadingMap] = useState(Boolean(googleMapsApiKey));
+  const [loadingMap, setLoadingMap] = useState(false);
+  const [mapReadyToLoad, setMapReadyToLoad] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
   const [panoramaLoadFailed, setPanoramaLoadFailed] = useState(false);
   const answerLocked = Boolean(existingGuess);
@@ -135,7 +136,34 @@ export function SlowGeoPlay({
   }, [slowGeoMode]);
 
   useEffect(() => {
-    if (!googleMapsApiKey || !mapElementRef.current) {
+    if (!googleMapsApiKey || mapReadyToLoad) return;
+
+    const mapShell = mapShellRef.current;
+    if (!mapShell || !("IntersectionObserver" in window)) {
+      const timer = window.setTimeout(() => setMapReadyToLoad(true), 250);
+      return () => window.clearTimeout(timer);
+    }
+
+    const idleTimer = window.setTimeout(() => setMapReadyToLoad(true), 900);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setMapReadyToLoad(true);
+          window.clearTimeout(idleTimer);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "180px" },
+    );
+    observer.observe(mapShell);
+    return () => {
+      window.clearTimeout(idleTimer);
+      observer.disconnect();
+    };
+  }, [googleMapsApiKey, mapReadyToLoad]);
+
+  useEffect(() => {
+    if (!googleMapsApiKey || !mapReadyToLoad || !mapElementRef.current) {
       setLoadingMap(false);
       return;
     }
@@ -178,7 +206,7 @@ export function SlowGeoPlay({
       cancelled = true;
       markerRef.current?.setMap(null);
     };
-  }, [answerLocked, existingGuess, googleMapsApiKey, placeMarker, updateGuess]);
+  }, [answerLocked, existingGuess, googleMapsApiKey, mapReadyToLoad, placeMarker, updateGuess]);
 
   useEffect(() => {
     if (!mapOpen) return;
@@ -362,6 +390,10 @@ export function SlowGeoPlay({
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                       Laster kart
                     </div>
+                  ) : !mapReadyToLoad ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/55 text-sm font-semibold text-[#203c62]">
+                      Kartet klargjøres
+                    </div>
                   ) : null}
                 </div>
                 {mapOpen ? (
@@ -409,7 +441,10 @@ export function SlowGeoPlay({
               </div>
               <button
                 type="button"
-                onClick={() => setMapOpen(true)}
+                onClick={() => {
+                  setMapReadyToLoad(true);
+                  setMapOpen(true);
+                }}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded bg-[#203c62] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b] xl:hidden"
               >
                 <Maximize2 className="h-4 w-4" aria-hidden="true" />

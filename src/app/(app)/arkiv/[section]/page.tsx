@@ -10,7 +10,7 @@ import { archiveSources, getArchiveSection } from "@/lib/archive";
 import { getGeoGuessrTipCategories, getGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { getGeotingLifecycle, geotingImplementationLabels, partyPositionLabels, summarizeProposal } from "@/lib/geoting";
 import { getPartyMechanic } from "@/lib/party-mechanics";
-import { getAppState } from "@/lib/store";
+import { getGeotingState } from "@/lib/store";
 import type { GeotingProposal, Player } from "@/lib/types";
 import { dateTimeLabel, formatKm, formatNumber } from "@/lib/utils";
 
@@ -22,7 +22,7 @@ export default async function ArchiveSectionPage({ params }: { params: Promise<{
   const { section: slug } = await params;
   const section = getArchiveSection(slug);
   if (!section) notFound();
-  const state = slug === "geotinget" ? await getAppState() : null;
+  const state = slug === "geotinget" ? await getGeotingState() : null;
 
   return (
     <div className="space-y-6">
@@ -64,6 +64,94 @@ function ArchiveBody({
   slug: string;
 }) {
   const { archive, players, parties } = archiveSources;
+
+  if (slug === "ny-i-geotia") {
+    const firstSteps = [
+      {
+        title: "Start med SlowGeo",
+        body: "Se om det finnes en åpen runde. Hvis ja: åpne bildet, sett pinnen og la fasiten vente til riket er klart.",
+        href: "/spill/slowgeo",
+      },
+      {
+        title: "Sjekk Stemmeurnen",
+        body: "Når GeoTinget kaller, ligger levende avstemninger i Stemmeurnen. Der stemmer geoter med riktig ordensrang.",
+        href: "/geotinget/avstemninger",
+      },
+      {
+        title: "Les din riksmappe",
+        body: "Min geot viser rollen din, poeng, kattometer, ordensvei, merker og eventuelle hemmelige dører.",
+        href: "/min-geot",
+      },
+    ];
+    const rooms = [
+      ["SlowGeo", "Rikets geografispill: bilde, pin-svar, fasitkort, poeng og kattometer."],
+      ["GeoTinget", "Forslag, stemmer, geo-ed og vedtak for små og store krangler."],
+      ["Ordenen", "Den synlige stigen fra Borger til mer betrodd geotisk makt."],
+      ["Riksarkivet", "Kanon, partier, merkedager, kjennelære og forklaringer på hvorfor alt ble slik."],
+      ["Min geot", "Din personlige statusflate: rolle, spor, merker og neste ordensmål."],
+    ] as const;
+
+    return (
+      <div className="space-y-6">
+        <Section title="Hva er Geotia?" eyebrow="Kort forklaring">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] p-5 text-base leading-8 text-[#4f412b]">
+              <p>
+                Geotia er et privat mikrorike bygget rundt SlowGeo, intern
+                politikk, ordensrang og et arkiv som tar små geografiske feil
+                på alvorlig nok alvor.
+              </p>
+              <p className="mt-3">
+                Den enkleste bruken er: spill dagens SlowGeo, stem når
+                Stemmeurnen er åpen, sjekk Min geot for egen status, og bruk
+                Riksarkivet når ordene eller ritualene begynner å glitre litt
+                for hardt.
+              </p>
+            </div>
+            <div className="rounded border border-[#c49a3c]/45 bg-[#061d2b] p-5 text-[#fff7e6]">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#e1c06c]">
+                Første regel
+              </p>
+              <p className="font-display mt-2 text-3xl font-semibold">
+                Finn handlingen først. Les lore etterpå.
+              </p>
+            </div>
+          </div>
+        </Section>
+
+        <Section title="Hva gjør du først?" eyebrow="Tre raske steg">
+          <div className="grid gap-4 md:grid-cols-3">
+            {firstSteps.map((step, index) => (
+              <Link
+                key={step.href}
+                href={step.href}
+                className="archive-card group block transition hover:-translate-y-0.5"
+              >
+                <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#7e5a18]">
+                  Steg {index + 1}
+                </p>
+                <h2 className="font-display mt-2 text-2xl font-semibold uppercase tracking-[0.06em] text-[#062b40]">
+                  {step.title}
+                </h2>
+                <p className="lead-detail mt-2 text-sm">{step.body}</p>
+              </Link>
+            ))}
+          </div>
+        </Section>
+
+        <Section title="Romkart" eyebrow="Hvor ting bor">
+          <div className="grid gap-3 md:grid-cols-2">
+            {rooms.map(([title, body]) => (
+              <article key={title} className="rounded border border-[#d8ded0] bg-[#f7f8f5] p-4">
+                <h2 className="font-display text-xl font-semibold text-[#203c62]">{title}</h2>
+                <p className="mt-2 text-sm leading-6 text-[#273125]">{body}</p>
+              </article>
+            ))}
+          </div>
+        </Section>
+      </div>
+    );
+  }
 
   if (slug === "kanon") {
     return (
@@ -198,7 +286,7 @@ function ArchiveBody({
   if (slug === "partier") {
     return (
       <div className="grid gap-6 xl:grid-cols-2">
-        {parties.map((party) => {
+        {parties.map((party, index) => {
           const mechanic = getPartyMechanic(party.id);
           return (
             <article
@@ -211,7 +299,8 @@ function ArchiveBody({
                 <ExpandableImage
                   src={party.asset}
                   alt={`Partikort for ${party.name}`}
-                  loading="eager"
+                  loading={index === 0 ? "eager" : "lazy"}
+                  priority={index === 0}
                   sizes="(min-width: 1280px) 50vw, (min-width: 768px) 50vw, 100vw"
                   className="relative aspect-[4/5] w-full bg-[#061d2b]"
                   imageClassName="object-contain"

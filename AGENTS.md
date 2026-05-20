@@ -42,8 +42,8 @@ intentionally points here; keep `AGENTS.md` as the canonical agent contract.
 
 ## Verification And Handoff
 
-- For code changes, run `npm run verify` when feasible. It covers lint, unit
-  tests, and production build.
+- For code changes, run `npm run verify` when feasible. It covers lint,
+  TypeScript, unit tests, and production build.
 - For UI changes, also run `npm run verify:e2e` or a focused Playwright/browser
   check that covers the changed flow.
 - `npm run finish` and `npm run ship` are manual Windows helper scripts. Do not

@@ -28,6 +28,23 @@ describe("Street View challenge selection", () => {
     vi.restoreAllMocks();
   });
 
+  it("keeps a large curated candidate pool with unique ids", () => {
+    const ids = slowGeoCandidates.map((candidate) => candidate.id);
+    expect(slowGeoCandidates).toHaveLength(119);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("fails instead of recycling when all curated candidates are used", async () => {
+    delete process.env.GOOGLE_MAPS_SERVER_API_KEY;
+    delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+    await expect(
+      createStreetViewChallenge({
+        excludeCandidateIds: slowGeoCandidates.map((candidate) => candidate.id),
+      }),
+    ).rejects.toThrow("Alle kuraterte SlowGeo-bilder er brukt");
+  });
+
   it("skips panoramas whose attribution reveals the candidate and tries the next one", async () => {
     process.env.GOOGLE_MAPS_SERVER_API_KEY = "unit-test-key";
     delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -59,6 +76,41 @@ describe("Street View challenge selection", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(challenge.candidateId).toBe(slowGeoCandidates[1].id);
     expect(challenge.panoId).toBe("safe-pano");
+  });
+
+  it("skips Street View pano ids that have already been used", async () => {
+    process.env.GOOGLE_MAPS_SERVER_API_KEY = "unit-test-key";
+    delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        metadataResponse({
+          status: "OK",
+          pano_id: "used-pano",
+          date: "2024-01",
+          copyright: "© Mari",
+        }),
+      )
+      .mockResolvedValueOnce(
+        metadataResponse({
+          status: "OK",
+          pano_id: "fresh-pano",
+          date: "2024-02",
+          copyright: "© Mari",
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
+
+    const challenge = await createStreetViewChallenge({
+      excludeCandidateIds: slowGeoCandidates.slice(2).map((candidate) => candidate.id),
+      excludePanoIds: ["used-pano"],
+      requirePanoId: true,
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(challenge.candidateId).toBe(slowGeoCandidates[1].id);
+    expect(challenge.panoId).toBe("fresh-pano");
   });
 
   it("allows neutral photographer attribution that does not reveal the place", async () => {

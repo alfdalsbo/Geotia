@@ -80,7 +80,7 @@ import {
   getSlowGeoStarterLabel,
   isSlowGeoRound,
 } from "@/lib/slowgeo";
-import { getAppState } from "@/lib/store";
+import { getThirdCollegeState } from "@/lib/store";
 import type { GeoterIndexAdjustment, GeoticOrderPromotionCase, GeotingProposal, Player, Round } from "@/lib/types";
 import { dateLabel, dateTimeLabel, formatKm, formatNumber } from "@/lib/utils";
 
@@ -113,7 +113,7 @@ export default async function ThirdCollegePage({
     notFound();
   }
 
-  const state = await getAppState();
+  const state = await getThirdCollegeState();
   const currentSeat = getThirdCollegeSeat(currentGeot.id);
   const standings = computeStandings(state.players, state.rounds);
   const standingByPlayerId = new Map(standings.map((standing) => [standing.player.id, standing]));
@@ -657,7 +657,7 @@ function SlowGeoAdminSection({
           </p>
           <h3 className="font-display mt-2 text-3xl font-semibold text-[#062b40]">Runder under Kollegiets hånd</h3>
           <p className="mt-2 text-sm leading-6 text-[#60553f]">
-            Hard sletting fjerner runden fra spillrom, fasitkort, Rundeprotokoll og poenggrunnlag.
+            Hard sletting fjerner runden fra Spill nå, fasitkort, Fasitarkiv og poenggrunnlag.
           </p>
 
           {sortedRounds.length ? (

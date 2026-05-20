@@ -7,12 +7,13 @@ import {
   Gavel,
   MapPinned,
   ScrollText,
+  Trophy,
   UserRound,
 } from "lucide-react";
 
 import { GeoGuessrTipTicker } from "@/components/geo-guessr-tip-ticker";
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
-import { Section, StatTile } from "@/components/section";
+import { Section } from "@/components/section";
 import { buttonClass } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Ornament } from "@/components/ui/ornament";
@@ -21,46 +22,15 @@ import { getGeoGuessrTipDaySeed, selectGeoGuessrTips } from "@/lib/geoguessr-tip
 import { geotiaDashboardLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { getGeoticOrderRows } from "@/lib/geotisk-orden";
 import { computeRound, computeStandings } from "@/lib/scoring";
-import { getAppState } from "@/lib/store";
-import { dateLabel, formatKm } from "@/lib/utils";
+import { getActivityState } from "@/lib/store";
+import { formatKm } from "@/lib/utils";
 
 export const metadata = {
   title: "Kommandosentral",
 };
 
-const exploreCards = [
-  {
-    title: "Start SlowGeo",
-    eyebrow: "Spillrommet",
-    description: "Åpne dagens bilde, sett pinnen eller start en ny runde.",
-    href: "/spill/slowgeo",
-    icon: MapPinned,
-  },
-  {
-    title: "Gå til Stemmeurnen",
-    eyebrow: "GeoTinget",
-    description: "Stem når riket kaller, eller se hvilke saker som brenner.",
-    href: "/geotinget/avstemninger",
-    icon: Gavel,
-  },
-  {
-    title: "Se Min geot",
-    eyebrow: "Din riksmappe",
-    description: "Finn rang, rolle, ordensvei og dine siste SlowGeo-spor.",
-    href: "/min-geot",
-    icon: UserRound,
-  },
-  {
-    title: "Utforsk Riksarkivet",
-    eyebrow: "Leksikon og lore",
-    description: "Les grunnlov, partier, tegnlære, merkedager og gamle protokoller.",
-    href: "/arkiv",
-    icon: BookOpen,
-  },
-];
-
 export default async function DashboardPage() {
-  const [state, currentGeot] = await Promise.all([getAppState(), getCurrentGeot()]);
+  const [state, currentGeot] = await Promise.all([getActivityState(), getCurrentGeot()]);
   const standings = computeStandings(state.players, state.rounds);
   const daySeed = getGeoGuessrTipDaySeed();
   const lockedRounds = state.rounds.filter((round) => round.status === "locked");
@@ -68,6 +38,8 @@ export default async function DashboardPage() {
   const computedLatest = latestRound ? computeRound(latestRound, state.players) : null;
   const activeSlowGeoRounds = state.rounds.filter((round) => round.challenge && round.status === "open");
   const primarySlowGeoRound = activeSlowGeoRounds.at(0);
+  const activeVotingProposals = state.geotingProposals.filter((proposal) => proposal.status === "voting");
+  const primaryVotingProposal = activeVotingProposals.at(0);
   const currentStanding = standings.find((standing) => standing.player.id === currentGeot?.id) ?? standings[0];
   const orderRows = getGeoticOrderRows(
     state.players,
@@ -82,6 +54,32 @@ export default async function DashboardPage() {
     seed: daySeed,
     count: 3,
   });
+  const recommendedAction = primarySlowGeoRound
+    ? {
+        title: "Åpne aktiv SlowGeo",
+        detail: primarySlowGeoRound.name,
+        href: `/runder/${primarySlowGeoRound.id}`,
+        label: "Sett pinnen",
+        icon: MapPinned,
+      }
+    : primaryVotingProposal
+      ? {
+          title: "Gå til Stemmeurnen",
+          detail: primaryVotingProposal.title,
+          href: "/geotinget/avstemninger",
+          label: "Avgi stemme",
+          icon: Gavel,
+        }
+      : {
+          title: "Se Min geot",
+          detail: currentOrderRow
+            ? `${currentOrderRow.rank.name} · ${currentStanding?.totalPoints ?? 0} poeng`
+            : "Riksmappe og ordensvei",
+          href: "/min-geot",
+          label: "Åpne riksmappe",
+          icon: UserRound,
+        };
+  const RecommendedIcon = recommendedAction.icon;
 
   return (
     <div className="space-y-7">
@@ -100,38 +98,20 @@ export default async function DashboardPage() {
 
             <div className="geo-hero-actions">
               <Link
-                href="/spill/slowgeo"
+                href={recommendedAction.href}
                 prefetch={false}
                 className={buttonClass({ variant: "wax" })}
               >
-                Start SlowGeo
-                <MapPinned className="h-4 w-4" aria-hidden="true" />
+                {recommendedAction.label}
+                <RecommendedIcon className="h-4 w-4" aria-hidden="true" />
                 <LinkPendingIndicator className="text-white" />
               </Link>
               <Link
-                href="/geotinget/avstemninger"
+                href="/arkiv/ny-i-geotia"
                 prefetch={false}
                 className={buttonClass({ variant: "quiet" })}
               >
-                Gå til Stemmeurnen
-                <Gavel className="h-4 w-4" aria-hidden="true" />
-                <LinkPendingIndicator />
-              </Link>
-              <Link
-                href="/min-geot"
-                prefetch={false}
-                className={buttonClass({ variant: "quiet" })}
-              >
-                Se Min geot
-                <UserRound className="h-4 w-4" aria-hidden="true" />
-                <LinkPendingIndicator />
-              </Link>
-              <Link
-                href="/arkiv"
-                prefetch={false}
-                className={buttonClass({ variant: "quiet" })}
-              >
-                Åpne Riksarkivet
+                Ny i Geotia
                 <BookOpen className="h-4 w-4" aria-hidden="true" />
                 <LinkPendingIndicator />
               </Link>
@@ -163,98 +143,111 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatTile
-          label="Aktiv SlowGeo"
-          value={activeSlowGeoRounds.length || "Ingen"}
-          detail={primarySlowGeoRound ? "Åpen for pin-svar" : "Klar til ny runde"}
-          tone="green"
-          index={0}
-        />
-        <StatTile
-          label="Din plass"
-          value={currentStanding ? `#${currentStanding.rank}` : "-"}
-          detail={currentStanding ? `${currentStanding.totalPoints} poeng` : "Ingen protokoll ennå"}
-          tone="blue"
-          index={1}
-        />
-        <StatTile
-          label="Ordensvei"
-          value={currentOrderRow?.rank.name ?? "-"}
-          detail={currentOrderRow?.nextRank ? `${currentOrderRow.progressToNext}% mot neste` : "Fullført synlig stige"}
-          tone="gold"
-          index={2}
-        />
-        <StatTile
-          label="Siste protokoll"
-          value={computedLatest ? dateLabel(computedLatest.date) : "-"}
-          detail={computedLatest ? computedLatest.name : "Embetsverket venter"}
-          tone="red"
-          index={3}
-        />
-      </div>
-
-      <Section title="Hva vil du gjøre nå?" eyebrow="Rikets kompass">
+      <Section title="I dag i Geotia" eyebrow="Handling først, lore etterpå">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {exploreCards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <Link
-                key={card.href}
-                href={card.href}
-                prefetch={false}
-                className="archive-card group block transition hover:-translate-y-0.5"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="crown-icon">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <span className="flex items-center gap-2">
-                    <ArrowRight className="h-5 w-5 text-[#7c2430] transition group-hover:translate-x-1" aria-hidden="true" />
-                    <LinkPendingIndicator />
-                  </span>
-                </div>
-                <p
-                  className="mt-3 text-[10px] font-bold uppercase tracking-[0.32em] text-[#7e5a18]"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {card.eyebrow}
-                </p>
-                <h3>{card.title}</h3>
-                <p className="lead-detail mt-2 text-sm">{card.description}</p>
-              </Link>
-            );
-          })}
+          <TodayCard
+            href={primarySlowGeoRound ? `/runder/${primarySlowGeoRound.id}` : "/spill/slowgeo"}
+            icon={<MapPinned className="h-5 w-5" aria-hidden="true" />}
+            eyebrow="SlowGeo"
+            title={primarySlowGeoRound ? "Runde pågår" : "Ingen åpen runde"}
+            detail={primarySlowGeoRound ? primarySlowGeoRound.name : "Start en ny runde når tråden er klar."}
+            action={primarySlowGeoRound ? "Åpne runden" : "Start SlowGeo"}
+          />
+          <TodayCard
+            href={primaryVotingProposal ? "/geotinget/avstemninger" : "/geotinget"}
+            icon={<Gavel className="h-5 w-5" aria-hidden="true" />}
+            eyebrow="GeoTinget"
+            title={primaryVotingProposal ? "Stemmeurnen er åpen" : "Ingen åpen urne"}
+            detail={primaryVotingProposal ? primaryVotingProposal.title : "Forslag kan fortsatt legges frem på Tingvollen."}
+            action={primaryVotingProposal ? "Gå til urnen" : "Se Tingvollen"}
+          />
+          <TodayCard
+            href="/min-geot"
+            icon={<UserRound className="h-5 w-5" aria-hidden="true" />}
+            eyebrow="Din status"
+            title={currentStanding ? `#${currentStanding.rank} i SlowGeo` : "Riksmappe venter"}
+            detail={currentOrderRow ? `${currentOrderRow.rank.name} · ${currentStanding?.totalPoints ?? 0} poeng` : "Se rollen din, merker og ordensvei."}
+            action="Åpne Min geot"
+          />
+          <TodayCard
+            href={recommendedAction.href}
+            icon={<RecommendedIcon className="h-5 w-5" aria-hidden="true" />}
+            eyebrow="Anbefalt neste handling"
+            title={recommendedAction.title}
+            detail={recommendedAction.detail}
+            action={recommendedAction.label}
+          />
         </div>
       </Section>
 
       <GeoGuessrTipTicker tips={dailyTips} />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Link href="/tabeller" prefetch={false} className="archive-card group block transition hover:-translate-y-0.5">
-          <Crown className="h-5 w-5 text-[#7c2430]" aria-hidden="true" />
-          <h3 className="mt-3">Tabellkammeret</h3>
-          <p className="lead-detail mt-2 text-sm">
-            Full SlowGeo-tabell og Æreshallen ligger samlet utenfor toppnavigasjonen.
-          </p>
-        </Link>
-        <Link href="/runder" prefetch={false} className="archive-card group block transition hover:-translate-y-0.5">
-          <ScrollText className="h-5 w-5 text-[#7c2430]" aria-hidden="true" />
-          <h3 className="mt-3">Rundeprotokollen</h3>
-          <p className="lead-detail mt-2 text-sm">
-            Arkiv og manuell etterkontroll når embetsverket trenger full kontroll.
-          </p>
-        </Link>
-        <div className="archive-card">
-          <MapPinned className="h-5 w-5 text-[#7c2430]" aria-hidden="true" />
-          <h3 className="mt-3">Kattometeret</h3>
-          <p className="lead-detail mt-2 text-sm">
-            {computedLatest
-              ? `Siste runde ga ${formatKm(computedLatest.worstThreeAverage)} i skammens snitt.`
-              : "Første låste SlowGeo-runde vekker kattometeret."}
-          </p>
+      <Section title="Flere rom" eyebrow="Når dagens plikt er gjort">
+        <div className="grid gap-4 md:grid-cols-3">
+          <Link href="/tabeller" prefetch={false} className="archive-card group block transition hover:-translate-y-0.5">
+            <Crown className="h-5 w-5 text-[#7c2430]" aria-hidden="true" />
+            <h3 className="mt-3">Tabellkammeret</h3>
+            <p className="lead-detail mt-2 text-sm">
+              Full SlowGeo-tabell og Æreshallen ligger samlet utenfor toppnavigasjonen.
+            </p>
+          </Link>
+          <Link href="/runder" prefetch={false} className="archive-card group block transition hover:-translate-y-0.5">
+            <ScrollText className="h-5 w-5 text-[#7c2430]" aria-hidden="true" />
+            <h3 className="mt-3">Fasitarkivet</h3>
+            <p className="lead-detail mt-2 text-sm">
+              Ferdige SlowGeo-kort, vinnere og kartspor fra runder som er avslørt.
+            </p>
+          </Link>
+          <Link href="/hall-of-fame" prefetch={false} className="archive-card group block transition hover:-translate-y-0.5">
+            <Trophy className="h-5 w-5 text-[#7c2430]" aria-hidden="true" />
+            <h3 className="mt-3">Æreshallen</h3>
+            <p className="lead-detail mt-2 text-sm">
+              {computedLatest
+                ? `Siste runde ga ${formatKm(computedLatest.worstThreeAverage)} i skammens snitt.`
+                : "Rekordene våkner når første SlowGeo-runde låses."}
+            </p>
+          </Link>
         </div>
-      </div>
+      </Section>
     </div>
+  );
+}
+
+function TodayCard({
+  action,
+  detail,
+  eyebrow,
+  href,
+  icon,
+  title,
+}: {
+  action: string;
+  detail: string;
+  eyebrow: string;
+  href: string;
+  icon: React.ReactNode;
+  title: string;
+}) {
+  return (
+    <Link href={href} prefetch={false} className="archive-card group block transition hover:-translate-y-0.5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="crown-icon">{icon}</div>
+        <span className="flex items-center gap-2">
+          <ArrowRight className="h-5 w-5 text-[#7c2430] transition group-hover:translate-x-1" aria-hidden="true" />
+          <LinkPendingIndicator />
+        </span>
+      </div>
+      <p
+        className="mt-3 text-[10px] font-bold uppercase tracking-[0.32em] text-[#7e5a18]"
+        style={{ fontFamily: "var(--font-display)" }}
+      >
+        {eyebrow}
+      </p>
+      <h3>{title}</h3>
+      <p className="lead-detail mt-2 text-sm">{detail}</p>
+      <p className="mt-4 text-xs font-bold uppercase tracking-[0.18em] text-[#7c2430]">
+        {action}
+      </p>
+    </Link>
   );
 }

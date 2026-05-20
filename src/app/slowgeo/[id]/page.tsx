@@ -17,7 +17,7 @@ import {
 } from "@/lib/slowgeo-share";
 import { buildSlowGeoAnswerStatusItems } from "@/lib/slowgeo-answer-status";
 import { buildSlowGeoRevealMarkers, buildSlowGeoRevealResults } from "@/lib/slowgeo-reveal";
-import { getSlowGeoRoundState, maybeRevealRound } from "@/lib/store";
+import { getSlowGeoRoundState } from "@/lib/store";
 import { buildStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
 import {
   buildStreetViewImageUrl,
@@ -94,10 +94,9 @@ export default async function SlowGeoSharePage({
 }) {
   const { id } = await params;
   const query = (await searchParams) ?? {};
-  const revealedRound = await maybeRevealRound(id);
-  if (!revealedRound?.challenge) notFound();
+  const { round } = await getSlowGeoRoundState(id);
+  if (!round?.challenge) notFound();
 
-  const round = revealedRound;
   if (!round.challenge) notFound();
 
   const computed = computeRound(round, players);

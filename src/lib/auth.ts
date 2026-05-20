@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 import { players } from "@/lib/seed";
 import { getHydratedPlayerById } from "@/lib/store";
@@ -100,21 +101,21 @@ export async function destroySession() {
   cookieStore.delete(COOKIE_NAME);
 }
 
-export async function hasSession() {
+export const hasSession = cache(async function hasSession() {
   const cookieStore = await cookies();
   return verifyToken(cookieStore.get(COOKIE_NAME)?.value) !== null;
-}
+});
 
-export async function getSession() {
+export const getSession = cache(async function getSession() {
   const cookieStore = await cookies();
   return verifyToken(cookieStore.get(COOKIE_NAME)?.value);
-}
+});
 
-export async function getCurrentGeot() {
+export const getCurrentGeot = cache(async function getCurrentGeot() {
   const session = await getSession();
   if (!session?.playerId) return null;
   return getHydratedPlayerById(session.playerId);
-}
+});
 
 export async function requireSession() {
   const session = await getSession();

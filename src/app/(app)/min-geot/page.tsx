@@ -26,7 +26,7 @@ import { getPlayerDisplayName, getPlayerOfficialFirstName } from "@/lib/player-p
 import { getPartyMechanic } from "@/lib/party-mechanics";
 import { getPlayerDossier } from "@/lib/player-dossier";
 import { computeRound, computeStandings } from "@/lib/scoring";
-import { getAppState } from "@/lib/store";
+import { getActivityState } from "@/lib/store";
 import { dateLabel, formatKm, formatNumber } from "@/lib/utils";
 
 export const metadata = {
@@ -39,7 +39,7 @@ export default async function MyGeotPage({
   searchParams?: Promise<{ status?: string; error?: string }>;
 }) {
   const params = (await searchParams) ?? {};
-  const [state, currentGeot] = await Promise.all([getAppState(), getCurrentGeot()]);
+  const [state, currentGeot] = await Promise.all([getActivityState(), getCurrentGeot()]);
   const player = currentGeot
     ? (state.players.find((candidate) => candidate.id === currentGeot.id) ?? currentGeot)
     : state.players[0];
@@ -65,6 +65,7 @@ export default async function MyGeotPage({
     round,
     result: round.results.find((result) => result.player.id === player.id)!,
   }));
+  const latestResult = latestResults[0] ?? null;
   const collegeSeat = isThirdCollegeMember(player.id) ? getThirdCollegeSeat(player.id) : null;
   const badges = getEarnedPlayerBadges({
     adjustments: state.geoterIndexAdjustments,
@@ -136,6 +137,82 @@ export default async function MyGeotPage({
 
       <ProfileStatus status={params.status} error={params.error} />
 
+      <div className="grid gap-3 md:grid-cols-4">
+        <StatTile label="SlowGeo-rang" value={standing ? `#${standing.rank}` : "-"} detail={`${standing?.totalPoints ?? 0} poeng`} tone="blue" index={0} />
+        <StatTile label="Kattometer" value={formatKm(standing?.totalKattometer)} detail={`${standing?.roundsPlayed ?? 0} runder spilt`} tone="red" index={1} />
+        <StatTile label="Seire" value={standing?.wins ?? 0} detail={`${standing?.top3 ?? 0} topp 3`} tone="gold" index={2} />
+        <StatTile label="Ordensrang" value={orderRow?.rank.name ?? "-"} detail={orderProgressLabel} tone="green" index={3} />
+      </div>
+
+      <div className="rounded border border-[#c49a3c]/35 bg-[#fdf7e8] px-4 py-3 text-sm font-semibold text-[#654517]">
+        {dossierLine}
+      </div>
+
+      <Section title="Personlig kontrollrom" eyebrow="Neste handling i riksmappe">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Link href="/ordenen" className="archive-card group block transition hover:-translate-y-0.5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="crown-icon">
+                <Footprints className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <ArrowRight className="h-5 w-5 text-[#7c2430] transition group-hover:translate-x-1" aria-hidden="true" />
+            </div>
+            <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.32em] text-[#7e5a18]">
+              Ordensmål
+            </p>
+            <h3>{orderRow?.nextRank ? `Neste: ${orderRow.nextRank.name}` : orderRow?.rank.name ?? "Ordenen venter"}</h3>
+            <p className="lead-detail mt-2 text-sm">{orderProgressLabel}</p>
+          </Link>
+
+          {latestResult ? (
+            <Link
+              href={`/runder/${latestResult.round.id}`}
+              className="archive-card group block transition hover:-translate-y-0.5"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="crown-icon">
+                  <MapPin className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <ArrowRight className="h-5 w-5 text-[#7c2430] transition group-hover:translate-x-1" aria-hidden="true" />
+              </div>
+              <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.32em] text-[#7e5a18]">
+                Siste SlowGeo-spor
+              </p>
+              <h3>{latestResult.round.name}</h3>
+              <p className="lead-detail mt-2 text-sm">
+                {formatKm(latestResult.result.actualKm)} · {latestResult.result.points} poeng
+              </p>
+            </Link>
+          ) : (
+            <div className="archive-card">
+              <div className="crown-icon">
+                <MapPin className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.32em] text-[#7e5a18]">
+                Siste SlowGeo-spor
+              </p>
+              <h3>Ingen låste spor ennå</h3>
+              <p className="lead-detail mt-2 text-sm">Første fasitkort vil lande her når riket får sin neste låste runde.</p>
+            </div>
+          )}
+
+          <div className="archive-card">
+            <div className="crown-icon">
+              <BadgeCheck className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.32em] text-[#7e5a18]">
+              Merker
+            </p>
+            <h3>{badges.length ? `${badges.length} merker ført` : "Ingen merker ennå"}</h3>
+            <p className="lead-detail mt-2 text-sm">
+              {badges.length
+                ? badges.slice(0, 2).map((badge) => badge.title).join(" · ")
+                : "Det er nesten mistenkelig ryddig. Fortsett å spille, stemme og skape protokoll."}
+            </p>
+          </div>
+        </div>
+      </Section>
+
       <Section title="Navneprotokoll" eyebrow="Kallenavn uten folkeregisterkupp">
         <form
           action={updateMyGeotNicknameAction}
@@ -185,17 +262,6 @@ export default async function MyGeotPage({
           </PendingSubmitButton>
         </form>
       </Section>
-
-      <div className="grid gap-3 md:grid-cols-4">
-        <StatTile label="SlowGeo-rang" value={standing ? `#${standing.rank}` : "-"} detail={`${standing?.totalPoints ?? 0} poeng`} tone="blue" index={0} />
-        <StatTile label="Kattometer" value={formatKm(standing?.totalKattometer)} detail={`${standing?.roundsPlayed ?? 0} runder spilt`} tone="red" index={1} />
-        <StatTile label="Seire" value={standing?.wins ?? 0} detail={`${standing?.top3 ?? 0} topp 3`} tone="gold" index={2} />
-        <StatTile label="Ordensrang" value={orderRow?.rank.name ?? "-"} detail={orderProgressLabel} tone="green" index={3} />
-      </div>
-
-      <div className="rounded border border-[#c49a3c]/35 bg-[#fdf7e8] px-4 py-3 text-sm font-semibold text-[#654517]">
-        {dossierLine}
-      </div>
 
       <Section title="Riksmappe" eyebrow="Egne trender">
         <div className="grid gap-3 md:grid-cols-5">

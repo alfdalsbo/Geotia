@@ -2,6 +2,12 @@ import { archive, parties, players } from "@/lib/seed";
 
 export const archiveSections = [
   {
+    slug: "ny-i-geotia",
+    title: "Ny i Geotia",
+    eyebrow: "Startguide",
+    description: "En kort vei inn i riket: hva Geotia er, hva du gjør først, og hvor de viktigste rommene ligger.",
+  },
+  {
     slug: "kanon",
     title: "Rikets fulltekst",
     eyebrow: "Kanon",

@@ -9,7 +9,7 @@ import { geotiaGeotingLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { getGeoticOrderRows, getOrderCapabilities } from "@/lib/geotisk-orden";
 import { isLiveGeotingProposal, isResolvedGeotingProposal } from "@/lib/geoting";
 import { computeStandings } from "@/lib/scoring";
-import { getAppState, resolveDueGeotingProposals } from "@/lib/store";
+import { getGeotingAccessState } from "@/lib/store";
 
 export const metadata = {
   title: "Stemmeurnen",
@@ -21,8 +21,7 @@ export default async function GeotingVotesPage({
   searchParams?: Promise<{ status?: string; error?: string; sak?: string }>;
 }) {
   const params = (await searchParams) ?? {};
-  await resolveDueGeotingProposals();
-  const [state, currentGeot] = await Promise.all([getAppState(), getCurrentGeot()]);
+  const [state, currentGeot] = await Promise.all([getGeotingAccessState(), getCurrentGeot()]);
   const standings = computeStandings(state.players, state.rounds);
   const orderRows = getGeoticOrderRows(
     state.players,
@@ -84,6 +83,7 @@ export default async function GeotingVotesPage({
           votingPlayers={votingPlayers}
         />
       </Section>
+
     </div>
   );
 }

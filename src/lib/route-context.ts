@@ -74,7 +74,7 @@ export const SLOWGEO_SECONDARY_NAV: readonly SecondaryNavItem[] = [
   {
     id: "spillrom",
     href: "/spill/slowgeo",
-    label: "Spillrom",
+    label: "Spill nå",
     description: "Start og følg SlowGeo",
     match: ["/spill*", "/slowgeo*"],
   },
@@ -88,8 +88,8 @@ export const SLOWGEO_SECONDARY_NAV: readonly SecondaryNavItem[] = [
   {
     id: "runder",
     href: "/runder",
-    label: "Rundeprotokoll",
-    description: "Fasitkort og arkiv",
+    label: "Fasitarkiv",
+    description: "Ferdige kort og protokoll",
     match: ["/runder*"],
   },
   {
@@ -103,10 +103,10 @@ export const SLOWGEO_SECONDARY_NAV: readonly SecondaryNavItem[] = [
 
 const ROUTE_LABELS: readonly { match: readonly RouteMatch[]; label: string; shortLabel?: string }[] = [
   { match: ["/"], label: "Kommandosentral" },
-  { match: ["/spill/slowgeo"], label: "Spillrommet", shortLabel: "Spillrom" },
+  { match: ["/spill/slowgeo"], label: "Spill nå", shortLabel: "Spill nå" },
   { match: ["/spill/registrer*"], label: "Spillregistrering", shortLabel: "Registrer" },
   { match: ["/slowgeo*"], label: "SlowGeo-kort", shortLabel: "Delingskort" },
-  { match: ["/runder*"], label: "Rundeprotokollen", shortLabel: "Runder" },
+  { match: ["/runder*"], label: "Fasitarkiv", shortLabel: "Fasit" },
   { match: ["/tabeller"], label: "Rikets tabeller", shortLabel: "Tabeller" },
   { match: ["/stilling"], label: "SlowGeo-tabell", shortLabel: "Stilling" },
   { match: ["/hall-of-fame"], label: "Æreshallen", shortLabel: "Ære" },
@@ -114,6 +114,7 @@ const ROUTE_LABELS: readonly { match: readonly RouteMatch[]; label: string; shor
   { match: ["/geotinget/pergamenter*"], label: "Tingpergamentene", shortLabel: "Pergamenter" },
   { match: ["/geotinget*"], label: "Tingvollen", shortLabel: "Tingvollen" },
   { match: ["/ordenen"], label: "Den Geotiske Orden", shortLabel: "Ordenen" },
+  { match: ["/arkiv/ny-i-geotia"], label: "Ny i Geotia", shortLabel: "Ny i Geotia" },
   { match: ["/arkiv/*"], label: "Arkivseksjon", shortLabel: "Arkiv" },
   { match: ["/arkiv"], label: "Riksarkivet", shortLabel: "Arkivet" },
   { match: ["/min-geot"], label: "Min geot" },

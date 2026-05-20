@@ -96,7 +96,8 @@ export function SlowGeoRevealMap({
   const mapsApiRef = useRef<GoogleMapsApi | null>(null);
   const markerRefs = useRef<GoogleMarker[]>([]);
   const polylineRefs = useRef<GooglePolyline[]>([]);
-  const [loadingMap, setLoadingMap] = useState(Boolean(googleMapsApiKey && markers.length));
+  const [loadingMap, setLoadingMap] = useState(false);
+  const [mapReadyToLoad, setMapReadyToLoad] = useState(false);
   const [mapError, setMapError] = useState("");
   const [mapOpen, setMapOpen] = useState(false);
   const shareTexts =
@@ -142,7 +143,34 @@ export function SlowGeoRevealMap({
   );
 
   useEffect(() => {
-    if (!hasInteractiveMap || !mapElementRef.current || !firstMarker) {
+    if (!hasInteractiveMap || mapReadyToLoad) return;
+
+    const mapShell = mapShellRef.current;
+    if (!mapShell || !("IntersectionObserver" in window)) {
+      const timer = window.setTimeout(() => setMapReadyToLoad(true), 250);
+      return () => window.clearTimeout(timer);
+    }
+
+    const idleTimer = window.setTimeout(() => setMapReadyToLoad(true), 900);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setMapReadyToLoad(true);
+          window.clearTimeout(idleTimer);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "180px" },
+    );
+    observer.observe(mapShell);
+    return () => {
+      window.clearTimeout(idleTimer);
+      observer.disconnect();
+    };
+  }, [hasInteractiveMap, mapReadyToLoad]);
+
+  useEffect(() => {
+    if (!hasInteractiveMap || !mapReadyToLoad || !mapElementRef.current || !firstMarker) {
       setLoadingMap(false);
       return;
     }
@@ -217,7 +245,7 @@ export function SlowGeoRevealMap({
       markerRefs.current = [];
       polylineRefs.current = [];
     };
-  }, [firstMarker, fitMapToMarkers, googleMapsApiKey, hasInteractiveMap, markers]);
+  }, [firstMarker, fitMapToMarkers, googleMapsApiKey, hasInteractiveMap, mapReadyToLoad, markers]);
 
   useEffect(() => {
     if (!mapOpen) return;
@@ -366,7 +394,10 @@ export function SlowGeoRevealMap({
               {hasInteractiveMap ? (
                 <button
                   type="button"
-                  onClick={() => setMapOpen(true)}
+                  onClick={() => {
+                    setMapReadyToLoad(true);
+                    setMapOpen(true);
+                  }}
                   className="inline-flex h-11 items-center justify-center gap-2 rounded bg-[#203c62] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
                   aria-label="Vis fasitkart i fullskjerm"
                 >
@@ -415,6 +446,10 @@ export function SlowGeoRevealMap({
                     <div className="absolute inset-0 flex items-center justify-center bg-white/75 text-sm font-semibold text-[#203c62]">
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                       Laster kart
+                    </div>
+                  ) : !mapReadyToLoad ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/55 text-sm font-semibold text-[#203c62]">
+                      Kartet klargjøres
                     </div>
                   ) : null}
                 </div>

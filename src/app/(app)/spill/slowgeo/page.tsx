@@ -37,17 +37,22 @@ export default async function SlowGeoGamePage({
 
   return (
     <div className="space-y-7">
-      <section className="geotia-frame rounded p-5 sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
-          SlowGeo · Street View · krangletråd
-        </p>
-        <h1 className="font-display mt-2 text-5xl font-semibold tracking-normal text-[#062b40]">
-          SlowGeo
-        </h1>
-        <p className="mt-4 max-w-4xl text-base leading-7 text-[#4f412b]">
-          Start et bilde, del det i samtaletråden, la geotene krangle seg varme,
-          og la appen låse protokollen når fasit vises.
-        </p>
+      <section className="geotia-frame grid gap-4 rounded p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
+            SlowGeo · Spill nå
+          </p>
+          <h1 className="font-display mt-2 text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
+            SlowGeo
+          </h1>
+          <p className="mt-3 max-w-3xl text-base leading-7 text-[#4f412b]">
+            Start et bilde, del det i samtaletråden og la geotene sette pinnen
+            før fasiten låser runden i arkivet.
+          </p>
+        </div>
+        <div className="rounded border border-[#c49a3c]/45 bg-[#fff7e6] px-4 py-3 text-sm font-semibold text-[#654517]">
+          {activeRounds.length ? `${activeRounds.length} åpen runde venter på pin-svar.` : "Ingen åpen runde akkurat nå."}
+        </div>
       </section>
 
       <SlowGeoSubnav />
@@ -67,13 +72,13 @@ export default async function SlowGeoGamePage({
         </div>
       ) : null}
 
-      <Section title="Start nytt SlowGeo" eyebrow="Nytt bilde til tråden">
+      <Section title="Start SlowGeo" eyebrow="Nytt bilde til tråden">
         <SlowGeoRoundLauncher />
       </Section>
 
       <div className="rounded border border-[#d8ded0] bg-white px-4 py-3 text-sm leading-6 text-[#5b6257] shadow-sm">
         <span className="font-semibold text-[#062b40]">{activeRounds.length} åpne runder.</span>{" "}
-        Ferdige SlowGeoer føres rett til Rundeprotokollen, uten resultatkø nederst i spillrommet.
+        Ferdige SlowGeoer føres rett til Fasitarkivet, uten resultatkø nederst i Spill nå-flaten.
       </div>
 
       <Section title="Aktive SlowGeo-runder" eyebrow="Pågår nå · fasit skjult">
@@ -122,7 +127,7 @@ export default async function SlowGeoGamePage({
                       prefetch={false}
                       className="inline-flex h-10 items-center justify-center gap-2 rounded bg-[#203c62] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172d4b]"
                     >
-                      Åpne spill
+                      Åpne runden
                       <ArrowRight className="h-4 w-4" aria-hidden="true" />
                       <LinkPendingIndicator className="text-white" />
                     </Link>

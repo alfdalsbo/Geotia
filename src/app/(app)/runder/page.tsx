@@ -12,7 +12,7 @@ import type { ComputedRound, Round, RoundStatus } from "@/lib/types";
 import { cn, dateTimeLabel, formatKm } from "@/lib/utils";
 
 export const metadata = {
-  title: "Rundeprotokoll",
+  title: "Fasitarkiv",
 };
 
 const statusLabel: Record<RoundStatus, string> = {
@@ -40,11 +40,11 @@ export default async function RoundsPage({
           Ferdige SlowGeo-fasitkort
         </p>
         <h1 className="font-display mt-2 text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
-          Rundeprotokoll
+          Fasitarkiv
         </h1>
         <p className="mt-3 max-w-3xl text-[#60553f]">
           Dette er hjemmet for alle ferdige SlowGeo-runder. Aktive runder bor i
-          Spillrommet; Rundeprotokollen viser bare fasitkort, vinnere og ferdige kartspor.
+          Spill nå; Fasitarkivet viser bare fasitkort, vinnere og ferdige kartspor.
         </p>
         <p className="mt-4 rounded border border-[#c49a3c]/35 bg-[#fdf7e8] px-3 py-2 text-sm leading-6 text-[#4f412b]">
           Nyeste fasit står først. Ingen startskjema, ingen manuell kontroll,
@@ -86,7 +86,7 @@ export default async function RoundsPage({
             </p>
             <p className="mt-2 text-sm leading-6 text-[#5b6257]">
               Når en SlowGeo er avslørt, havner den her. Aktive runder ligger
-              fortsatt i Spillrommet.
+              fortsatt i Spill nå.
             </p>
           </div>
         )}

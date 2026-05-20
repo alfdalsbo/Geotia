@@ -487,7 +487,7 @@ test("mobile shell keeps the rikssti and route families clear", async ({ page })
 
     for (const [route, heading] of [
       ["/tabeller", "Rikets tabeller"],
-      ["/runder", "Rundeprotokoll"],
+      ["/runder", "Fasitarkiv"],
       ["/stilling", "SlowGeo-tabell"],
       ["/hall-of-fame", "Æreshallen"],
     ] as const) {
@@ -532,7 +532,7 @@ test("mobile forms and order progress use readable card layouts", async ({ page 
   await login(page);
 
   await page.goto("/runder", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("heading", { name: "Rundeprotokoll" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Fasitarkiv" })).toBeVisible();
   await expect(page.getByTestId("slowgeo-protocol-card")).toBeVisible();
   await expect(page.getByText("Reist av: Alf Kåre")).toBeVisible();
   await expect(page.getByRole("link", { name: /Åpne fasitkort/ })).toHaveAttribute("href", `/slowgeo/${roundId}`);
@@ -812,7 +812,7 @@ test("SlowGeo revealed rounds stay out of the active room and live in the protoc
     await expectNoHorizontalOverflow(page);
 
     await page.goto("/runder", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: "Rundeprotokoll" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Fasitarkiv" })).toBeVisible();
     await expect(page.getByTestId("slowgeo-protocol-card").filter({ hasText: "Felles fasitkort-prøven" })).toBeVisible();
     await expect(page.getByRole("link", { name: /Åpne fasitkort/ })).toHaveAttribute("href", `/slowgeo/${roundId}`);
     await expectNoHorizontalOverflow(page);

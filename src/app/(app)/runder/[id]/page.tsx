@@ -18,7 +18,7 @@ import { computeRound } from "@/lib/scoring";
 import { getSlowGeoMode, getSlowGeoStartedAt, getSlowGeoStarterLabel, hasLockedSlowGeoGuess } from "@/lib/slowgeo";
 import { buildSlowGeoAnswerStatusItems } from "@/lib/slowgeo-answer-status";
 import { buildSlowGeoRevealMarkers, buildSlowGeoRevealResults } from "@/lib/slowgeo-reveal";
-import { getRoundsState, maybeRevealRound } from "@/lib/store";
+import { getRoundPageState } from "@/lib/store";
 import { buildStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
 import {
   buildStreetViewImageUrl,
@@ -29,7 +29,7 @@ import type { Round, RoundStatus } from "@/lib/types";
 import { dateLabel, dateTimeLabel, formatKm } from "@/lib/utils";
 
 export const metadata = {
-  title: "Rundeprotokoll",
+  title: "Fasitarkiv",
 };
 
 function statusName(status: RoundStatus) {
@@ -83,10 +83,10 @@ export default async function RoundDetailPage({
 }) {
   const { id } = await params;
   const query = (await searchParams) ?? {};
-  const round = await maybeRevealRound(id);
+  const [state, currentGeot] = await Promise.all([getRoundPageState(id), getCurrentGeot()]);
+  const round = state.round;
   if (!round) notFound();
 
-  const [state, currentGeot] = await Promise.all([getRoundsState(), getCurrentGeot()]);
   const computed = computeRound(round, state.players);
   const isStreetViewRound = Boolean(round.challenge);
   const isOpenStreetViewRound = isStreetViewRound && round.status === "open";

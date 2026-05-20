@@ -2,6 +2,8 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
+import { cache } from "react";
+
 import { archive, competingPlayers, games, initialState, parties, players } from "@/lib/seed";
 import { canLockRound, computeStandings, emptyResults } from "@/lib/scoring";
 import { addVotingWindow, GEO_OATH_TEXT, normalizeVoteValue, resolveProposalIfReady } from "@/lib/geoting";
@@ -58,6 +60,8 @@ import type {
   RoundStatus,
   SlowGeoChallenge,
   SlowGeoMode,
+  SlowGeoUsedChallenge,
+  SlowGeoUsedChallengeReason,
   VoteValue,
 } from "@/lib/types";
 
@@ -275,6 +279,15 @@ type DbGeocodeCacheRow = {
   updated_at: string;
 };
 
+type DbSlowGeoUsedChallengeRow = {
+  candidate_id: string;
+  pano_id: string | null;
+  round_id: string | null;
+  challenge_id: string | null;
+  used_at: string;
+  reason: SlowGeoUsedChallengeReason | string;
+};
+
 type RoundLocationData = {
   answerLocation: GeoLocation | null;
   mapSnapshot: RoundMapSnapshot | null;
@@ -297,6 +310,7 @@ type FileState = {
   geoticOrderPromotionCases: GeoticOrderPromotionCase[];
   playerProfiles: PlayerProfile[];
   geocodeCache: GeocodeCacheEntry[];
+  slowGeoUsedChallenges: SlowGeoUsedChallenge[];
 };
 
 const dataFile =
@@ -305,13 +319,14 @@ const dataFile =
     ? path.join("/tmp", "geotia-data.json")
     : path.join(process.cwd(), ".data", "geotia-data.json"));
 const backupDataFile = `${dataFile}.bak`;
-const fileStateSchemaVersion = "2";
+const fileStateSchemaVersion = "3";
 
 let schemaReady = false;
 type SqlClient = ReturnType<typeof import("@neondatabase/serverless").neon>;
 let sqlClient: SqlClient | null | undefined;
 let schemaReadyPromise: Promise<SqlClient | null> | null = null;
 let fileWriteQueue: Promise<void> = Promise.resolve();
+let fileBackupSlowGeoUsedChallengeCache: SlowGeoUsedChallenge[] | null = null;
 
 export function getStorageMode() {
   if (process.env.GEOTIA_FORCE_FILE_STORAGE === "1") return "Lokal filprotokoll";
@@ -448,6 +463,105 @@ function normalizePlayerProfile(profile: PlayerProfile): PlayerProfile {
   };
 }
 
+function cleanOptionalString(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function normalizeSlowGeoUsedChallengeReason(value: unknown): SlowGeoUsedChallengeReason {
+  return value === "created" || value === "replaced" || value === "backfilled" ? value : "backfilled";
+}
+
+function normalizeSlowGeoUsedChallenge(value: Partial<SlowGeoUsedChallenge>): SlowGeoUsedChallenge | null {
+  const candidateId = cleanOptionalString(value.candidateId);
+  if (!candidateId) return null;
+
+  return {
+    candidateId,
+    panoId: cleanOptionalString(value.panoId),
+    roundId: cleanOptionalString(value.roundId),
+    challengeId: cleanOptionalString(value.challengeId),
+    usedAt: cleanOptionalString(value.usedAt) ?? nowIso(),
+    reason: normalizeSlowGeoUsedChallengeReason(value.reason),
+  };
+}
+
+function slowGeoUsedChallengeFromRound(
+  round: Round,
+  reason: SlowGeoUsedChallengeReason = "backfilled",
+): SlowGeoUsedChallenge | null {
+  if (!round.challenge?.candidateId) return null;
+  return {
+    candidateId: round.challenge.candidateId,
+    panoId: round.challenge.panoId ?? null,
+    roundId: round.id,
+    challengeId: round.challenge.id,
+    usedAt: round.challenge.createdAt ?? round.createdAt,
+    reason,
+  };
+}
+
+function slowGeoUsedChallengesFromRounds(
+  rounds: Round[] | undefined,
+  reason: SlowGeoUsedChallengeReason = "backfilled",
+) {
+  return (rounds ?? [])
+    .map((round) => slowGeoUsedChallengeFromRound(round, reason))
+    .filter((entry): entry is SlowGeoUsedChallenge => Boolean(entry));
+}
+
+function mergeSlowGeoUsedChallenges(...groups: Array<Array<Partial<SlowGeoUsedChallenge>> | undefined>) {
+  const byCandidateId = new Map<string, SlowGeoUsedChallenge>();
+
+  for (const group of groups) {
+    for (const rawEntry of group ?? []) {
+      const entry = normalizeSlowGeoUsedChallenge(rawEntry);
+      if (!entry) continue;
+
+      const existing = byCandidateId.get(entry.candidateId);
+      if (!existing) {
+        byCandidateId.set(entry.candidateId, entry);
+        continue;
+      }
+
+      byCandidateId.set(entry.candidateId, {
+        candidateId: existing.candidateId,
+        panoId: existing.panoId ?? entry.panoId ?? null,
+        roundId: existing.roundId ?? entry.roundId ?? null,
+        challengeId: existing.challengeId ?? entry.challengeId ?? null,
+        usedAt: existing.usedAt <= entry.usedAt ? existing.usedAt : entry.usedAt,
+        reason: existing.reason === "backfilled" ? entry.reason : existing.reason,
+      });
+    }
+  }
+
+  return [...byCandidateId.values()].sort((a, b) => a.usedAt.localeCompare(b.usedAt));
+}
+
+async function readFileBackupSlowGeoUsedChallenges() {
+  if (path.basename(dataFile) !== "geotia-data.json") return [];
+  if (fileBackupSlowGeoUsedChallengeCache) return fileBackupSlowGeoUsedChallengeCache;
+
+  const backupDir = path.join(path.dirname(dataFile), "backups");
+  const usedChallenges: SlowGeoUsedChallenge[] = [];
+  try {
+    const files = await fs.readdir(backupDir);
+    for (const file of files.filter((candidate) => candidate.endsWith(".json"))) {
+      try {
+        const raw = await fs.readFile(path.join(backupDir, file), "utf8");
+        const parsed = parseFileState(raw);
+        usedChallenges.push(...slowGeoUsedChallengesFromRounds(parsed?.rounds));
+      } catch {
+        // Broken historical snapshots should not block current SlowGeo operations.
+      }
+    }
+  } catch {
+    // No local backup history exists yet.
+  }
+
+  fileBackupSlowGeoUsedChallengeCache = mergeSlowGeoUsedChallenges(usedChallenges);
+  return fileBackupSlowGeoUsedChallengeCache;
+}
+
 async function ensureFileState() {
   try {
     await fs.access(dataFile);
@@ -466,6 +580,7 @@ async function ensureFileState() {
           geoticOrderPromotionCases: [],
           playerProfiles: [],
           geocodeCache: [],
+          slowGeoUsedChallenges: [],
         },
         null,
         2,
@@ -479,12 +594,17 @@ async function readFileState(): Promise<FileState> {
   await ensureFileState();
   const raw = await fs.readFile(dataFile, "utf8");
   const parsed = parseFileState(raw) ?? (await readBackupFileState());
+  const rounds = (parsed.rounds ?? []).map(normalizeRound);
+  const slowGeoUsedChallenges = mergeSlowGeoUsedChallenges(
+    parsed.slowGeoUsedChallenges,
+    slowGeoUsedChallengesFromRounds(rounds),
+  );
   return {
     meta: {
       schemaVersion: "1",
       ...(parsed.meta ?? {}),
     },
-    rounds: (parsed.rounds ?? []).map(normalizeRound),
+    rounds,
     gameSessions: (parsed.gameSessions ?? []).map(normalizeGameSession),
     geotingProposals: (parsed.geotingProposals ?? []).map(normalizeProposal),
     geoterIndexAdjustments: parsed.geoterIndexAdjustments ?? [],
@@ -492,6 +612,7 @@ async function readFileState(): Promise<FileState> {
     geoticOrderPromotionCases: (parsed.geoticOrderPromotionCases ?? []).map(normalizeGeoticOrderPromotionCase),
     playerProfiles: (parsed.playerProfiles ?? []).map(normalizePlayerProfile),
     geocodeCache: parsed.geocodeCache ?? [],
+    slowGeoUsedChallenges,
   };
 }
 
@@ -604,6 +725,22 @@ async function setupSchema(sql: SqlClient): Promise<SqlClient> {
       value text NOT NULL,
       updated_at text NOT NULL
     )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS geotia_slowgeo_used_challenges (
+      candidate_id text PRIMARY KEY,
+      pano_id text,
+      round_id text,
+      challenge_id text,
+      used_at text NOT NULL,
+      reason text NOT NULL
+    )
+  `;
+  await sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS geotia_slowgeo_used_challenges_pano_id_idx
+    ON geotia_slowgeo_used_challenges (pano_id)
+    WHERE pano_id IS NOT NULL
   `;
 
   await sql`
@@ -916,6 +1053,17 @@ function parseDbGeocodeCache(row: DbGeocodeCacheRow): GeocodeCacheEntry {
         ? (JSON.parse(row.result_json) as GeoLocation | null)
         : row.result_json,
     updatedAt: row.updated_at,
+  };
+}
+
+function parseDbSlowGeoUsedChallenge(row: DbSlowGeoUsedChallengeRow): SlowGeoUsedChallenge {
+  return {
+    candidateId: row.candidate_id,
+    panoId: row.pano_id,
+    roundId: row.round_id,
+    challengeId: row.challenge_id,
+    usedAt: row.used_at,
+    reason: normalizeSlowGeoUsedChallengeReason(row.reason),
   };
 }
 
@@ -1440,10 +1588,91 @@ async function upsertDbGeocodeCache(entry: GeocodeCacheEntry) {
   return true;
 }
 
+async function readDbSlowGeoUsedChallenges(): Promise<SlowGeoUsedChallenge[] | null> {
+  const sql = await ensureSchema();
+  if (!sql) return null;
+
+  const rows = (await sql`
+    SELECT candidate_id, pano_id, round_id, challenge_id, used_at, reason
+    FROM geotia_slowgeo_used_challenges
+    ORDER BY used_at ASC, candidate_id ASC
+  `) as DbSlowGeoUsedChallengeRow[];
+
+  return rows.map(parseDbSlowGeoUsedChallenge);
+}
+
+async function upsertDbSlowGeoUsedChallenge(entry: Partial<SlowGeoUsedChallenge>) {
+  const sql = await ensureSchema();
+  const normalized = normalizeSlowGeoUsedChallenge(entry);
+  if (!sql || !normalized) return false;
+
+  await sql`
+    INSERT INTO geotia_slowgeo_used_challenges (
+      candidate_id, pano_id, round_id, challenge_id, used_at, reason
+    )
+    VALUES (
+      ${normalized.candidateId},
+      ${normalized.panoId ?? null},
+      ${normalized.roundId ?? null},
+      ${normalized.challengeId ?? null},
+      ${normalized.usedAt},
+      ${normalized.reason}
+    )
+    ON CONFLICT (candidate_id) DO UPDATE SET
+      pano_id = COALESCE(geotia_slowgeo_used_challenges.pano_id, EXCLUDED.pano_id),
+      round_id = COALESCE(geotia_slowgeo_used_challenges.round_id, EXCLUDED.round_id),
+      challenge_id = COALESCE(geotia_slowgeo_used_challenges.challenge_id, EXCLUDED.challenge_id),
+      used_at = CASE
+        WHEN geotia_slowgeo_used_challenges.used_at <= EXCLUDED.used_at
+          THEN geotia_slowgeo_used_challenges.used_at
+        ELSE EXCLUDED.used_at
+      END,
+      reason = CASE
+        WHEN geotia_slowgeo_used_challenges.reason = 'backfilled'
+          THEN EXCLUDED.reason
+        ELSE geotia_slowgeo_used_challenges.reason
+      END
+  `;
+  return true;
+}
+
+async function upsertDbSlowGeoUsedChallenges(entries: Partial<SlowGeoUsedChallenge>[]) {
+  await Promise.all(entries.map(upsertDbSlowGeoUsedChallenge));
+}
+
 async function readRounds(): Promise<Round[]> {
   const dbRounds = await readDbRounds();
   if (dbRounds) return dbRounds;
   return readFileRounds();
+}
+
+async function readSlowGeoUsedChallenges(rounds: Round[]) {
+  const backfilled = slowGeoUsedChallengesFromRounds(rounds);
+  const dbUsedChallenges = await readDbSlowGeoUsedChallenges();
+  if (dbUsedChallenges) {
+    const merged = mergeSlowGeoUsedChallenges(dbUsedChallenges, backfilled);
+    const knownCandidateIds = new Set(dbUsedChallenges.map((entry) => entry.candidateId));
+    const missingBackfill = backfilled.filter((entry) => !knownCandidateIds.has(entry.candidateId));
+    if (missingBackfill.length > 0) {
+      await upsertDbSlowGeoUsedChallenges(missingBackfill);
+    }
+    return merged;
+  }
+
+  const state = await readFileState();
+  return mergeSlowGeoUsedChallenges(
+    state.slowGeoUsedChallenges,
+    backfilled,
+    await readFileBackupSlowGeoUsedChallenges(),
+  );
+}
+
+function slowGeoUsedCandidateIds(usedChallenges: SlowGeoUsedChallenge[]) {
+  return usedChallenges.map((entry) => entry.candidateId);
+}
+
+function slowGeoUsedPanoIds(usedChallenges: SlowGeoUsedChallenge[]) {
+  return usedChallenges.flatMap((entry) => (entry.panoId ? [entry.panoId] : []));
 }
 
 async function readGameSessions(): Promise<GameSession[]> {
@@ -1495,14 +1724,30 @@ async function saveRounds(rounds: Round[]) {
   await writeFileRounds(rounds);
 }
 
-async function saveGameSessions(gameSessions: GameSession[]) {
+async function saveRoundsAndSlowGeoUsedChallenges(
+  rounds: Round[],
+  usedChallenges: Partial<SlowGeoUsedChallenge>[],
+) {
+  const normalizedUsedChallenges = mergeSlowGeoUsedChallenges(
+    slowGeoUsedChallengesFromRounds(rounds),
+    usedChallenges,
+  );
   const sql = await ensureSchema();
   if (sql) {
-    await Promise.all(gameSessions.map(upsertDbGameSession));
+    await upsertDbSlowGeoUsedChallenges(normalizedUsedChallenges);
+    await Promise.all(rounds.map(upsertDbRound));
     return;
   }
+
   const state = await readFileState();
-  await writeFileState({ ...state, gameSessions });
+  await writeFileState({
+    ...state,
+    rounds,
+    slowGeoUsedChallenges: mergeSlowGeoUsedChallenges(
+      state.slowGeoUsedChallenges,
+      normalizedUsedChallenges,
+    ),
+  });
 }
 
 async function saveProposals(geotingProposals: GeotingProposal[]) {
@@ -1515,26 +1760,6 @@ async function saveProposals(geotingProposals: GeotingProposal[]) {
   await writeFileState({ ...state, geotingProposals });
 }
 
-async function saveGeoterIndexAdjustments(geoterIndexAdjustments: GeoterIndexAdjustment[]) {
-  const sql = await ensureSchema();
-  if (sql) {
-    await Promise.all(geoterIndexAdjustments.map(upsertDbGeoterIndexAdjustment));
-    return;
-  }
-  const state = await readFileState();
-  await writeFileState({ ...state, geoterIndexAdjustments });
-}
-
-async function saveGeoticOrderAssessments(geoticOrderAssessments: GeoticOrderAssessment[]) {
-  const sql = await ensureSchema();
-  if (sql) {
-    await Promise.all(geoticOrderAssessments.map(upsertDbGeoticOrderAssessment));
-    return;
-  }
-  const state = await readFileState();
-  await writeFileState({ ...state, geoticOrderAssessments });
-}
-
 async function saveGeoticOrderPromotionCases(geoticOrderPromotionCases: GeoticOrderPromotionCase[]) {
   const sql = await ensureSchema();
   if (sql) {
@@ -1545,15 +1770,109 @@ async function saveGeoticOrderPromotionCases(geoticOrderPromotionCases: GeoticOr
   await writeFileState({ ...state, geoticOrderPromotionCases });
 }
 
-async function savePlayerProfiles(playerProfiles: PlayerProfile[]) {
-  const normalized = playerProfiles.map(normalizePlayerProfile);
+async function saveRoundRecord(round: Round, fileRounds?: Round[]) {
   const sql = await ensureSchema();
   if (sql) {
-    await Promise.all(normalized.map(upsertDbPlayerProfile));
+    await upsertDbRound(round);
     return;
   }
+
+  const rounds = fileRounds ?? (await readFileRounds()).map((candidate) => (candidate.id === round.id ? round : candidate));
+  await writeFileRounds(rounds);
+}
+
+async function saveGameSessionRecord(gameSession: GameSession, fileGameSessions?: GameSession[]) {
+  const sql = await ensureSchema();
+  if (sql) {
+    await upsertDbGameSession(gameSession);
+    return;
+  }
+
   const state = await readFileState();
-  await writeFileState({ ...state, playerProfiles: normalized });
+  const gameSessions =
+    fileGameSessions ?? state.gameSessions.map((candidate) => (candidate.id === gameSession.id ? gameSession : candidate));
+  await writeFileState({ ...state, gameSessions });
+}
+
+async function saveProposalRecord(proposal: GeotingProposal, fileProposals?: GeotingProposal[]) {
+  const sql = await ensureSchema();
+  if (sql) {
+    await upsertDbProposal(proposal);
+    return;
+  }
+
+  const state = await readFileState();
+  const geotingProposals =
+    fileProposals ?? state.geotingProposals.map((candidate) => (candidate.id === proposal.id ? proposal : candidate));
+  await writeFileState({ ...state, geotingProposals });
+}
+
+async function saveGeoterIndexAdjustmentRecord(
+  adjustment: GeoterIndexAdjustment,
+  fileAdjustments?: GeoterIndexAdjustment[],
+) {
+  const sql = await ensureSchema();
+  if (sql) {
+    await upsertDbGeoterIndexAdjustment(adjustment);
+    return;
+  }
+
+  const state = await readFileState();
+  await writeFileState({ ...state, geoterIndexAdjustments: fileAdjustments ?? [...state.geoterIndexAdjustments, adjustment] });
+}
+
+async function saveGeoticOrderAssessmentRecord(
+  assessment: GeoticOrderAssessment,
+  fileAssessments?: GeoticOrderAssessment[],
+) {
+  const sql = await ensureSchema();
+  if (sql) {
+    await upsertDbGeoticOrderAssessment(assessment);
+    return;
+  }
+
+  const state = await readFileState();
+  const geoticOrderAssessments =
+    fileAssessments ?? [
+      assessment,
+      ...state.geoticOrderAssessments.filter((candidate) => candidate.playerId !== assessment.playerId),
+    ];
+  await writeFileState({ ...state, geoticOrderAssessments });
+}
+
+async function saveGeoticOrderPromotionCaseRecord(
+  promotionCase: GeoticOrderPromotionCase,
+  filePromotionCases?: GeoticOrderPromotionCase[],
+) {
+  const sql = await ensureSchema();
+  if (sql) {
+    await upsertDbGeoticOrderPromotionCase(promotionCase);
+    return;
+  }
+
+  const state = await readFileState();
+  const geoticOrderPromotionCases =
+    filePromotionCases ?? state.geoticOrderPromotionCases.map((candidate) => (
+      candidate.id === promotionCase.id ? promotionCase : candidate
+    ));
+  await writeFileState({ ...state, geoticOrderPromotionCases });
+}
+
+async function savePlayerProfileRecord(profile: PlayerProfile, fileProfiles?: PlayerProfile[]) {
+  const normalized = normalizePlayerProfile(profile);
+  const sql = await ensureSchema();
+  if (sql) {
+    await upsertDbPlayerProfile(normalized);
+    return;
+  }
+
+  const state = await readFileState();
+  const playerProfiles =
+    fileProfiles?.map(normalizePlayerProfile) ?? [
+      normalized,
+      ...state.playerProfiles.filter((candidate) => candidate.playerId !== normalized.playerId),
+    ];
+  await writeFileState({ ...state, playerProfiles });
 }
 
 export async function getCachedGeocodeLocation(queryKey: string) {
@@ -1641,9 +1960,8 @@ async function readPersistentState(): Promise<PersistentState> {
   };
 }
 
-export async function getAppState(): Promise<AppState> {
+async function getAppStateUncached(): Promise<AppState> {
   const state = await readPersistentState();
-  const geoticOrderPromotionCases = await syncGeoticOrderPromotionCasesForState(state);
   const hydratedPlayers = applyPlayerProfiles(players, state.playerProfiles);
   return {
     ...initialState,
@@ -1652,14 +1970,15 @@ export async function getAppState(): Promise<AppState> {
     games,
     archive,
     ...state,
-    geoticOrderPromotionCases,
   };
 }
 
-export async function getHydratedPlayerById(playerId: string) {
+export const getAppState = cache(getAppStateUncached);
+
+export const getHydratedPlayerById = cache(async function getHydratedPlayerById(playerId: string) {
   const hydratedPlayers = await readHydratedPlayers();
   return hydratedPlayers.find((player) => player.id === playerId) ?? null;
-}
+});
 
 export async function updatePlayerProfile(input: PlayerProfileInput) {
   if (!players.some((player) => player.id === input.playerId)) {
@@ -1675,22 +1994,22 @@ export async function updatePlayerProfile(input: PlayerProfileInput) {
     updatedBy: input.updatedBy,
   });
 
-  await savePlayerProfiles([
+  await savePlayerProfileRecord(profile, [
     profile,
     ...existing.filter((candidate) => candidate.playerId !== input.playerId),
   ]);
   return { ok: true, profile };
 }
 
-export async function getActiveGeotingProposals() {
+export const getActiveGeotingProposals = cache(async function getActiveGeotingProposals() {
   const dbProposals = await readDbActiveGeotingProposals();
   if (dbProposals) return dbProposals;
 
   const proposals = await readProposals();
   return proposals.filter((proposal) => proposal.status === "voting" && proposal.voteEndsAt);
-}
+});
 
-export async function getActiveSlowGeoRounds() {
+export const getActiveSlowGeoRounds = cache(async function getActiveSlowGeoRounds() {
   const dbRounds = await readDbActiveSlowGeoRounds();
   if (dbRounds) return dbRounds;
 
@@ -1698,9 +2017,9 @@ export async function getActiveSlowGeoRounds() {
   return rounds
     .filter((round) => isSlowGeoOpenRound(round) && round.deadlineAt)
     .sort(slowGeoStartSort);
-}
+});
 
-export async function getAppShellState() {
+export const getAppShellState = cache(async function getAppShellState() {
   const sql = await getSql();
   if (!sql) {
     const state = await readFileState();
@@ -1718,9 +2037,9 @@ export async function getAppShellState() {
     getActiveSlowGeoRounds(),
   ]);
   return { activeGeotingProposals, activeSlowGeoRounds };
-}
+});
 
-export async function getScoreboardState() {
+export const getScoreboardState = cache(async function getScoreboardState() {
   const sql = await getSql();
   if (!sql) {
     const state = await readFileState();
@@ -1736,9 +2055,9 @@ export async function getScoreboardState() {
 
   const [rounds, gameSessions, hydratedPlayers] = await Promise.all([readRounds(), readGameSessions(), readHydratedPlayers()]);
   return { players: hydratedPlayers, games, archive, rounds, gameSessions };
-}
+});
 
-export async function getRoundsState() {
+export const getRoundsState = cache(async function getRoundsState() {
   const sql = await getSql();
   if (!sql) {
     const state = await readFileState();
@@ -1748,9 +2067,9 @@ export async function getRoundsState() {
 
   const [rounds, hydratedPlayers] = await Promise.all([readRounds(), readHydratedPlayers()]);
   return { players: hydratedPlayers, rounds };
-}
+});
 
-export async function getGamesState() {
+export const getGamesState = cache(async function getGamesState() {
   const sql = await getSql();
   if (!sql) {
     const state = await readFileState();
@@ -1765,9 +2084,9 @@ export async function getGamesState() {
 
   const [rounds, gameSessions, hydratedPlayers] = await Promise.all([readRounds(), readGameSessions(), readHydratedPlayers()]);
   return { players: hydratedPlayers, games, rounds, gameSessions };
-}
+});
 
-export async function getSlowGeoState() {
+export const getSlowGeoState = cache(async function getSlowGeoState() {
   const sql = await getSql();
   if (!sql) {
     const state = await readFileState();
@@ -1777,9 +2096,9 @@ export async function getSlowGeoState() {
 
   const [rounds, hydratedPlayers] = await Promise.all([readRounds(), readHydratedPlayers()]);
   return { players: hydratedPlayers, rounds };
-}
+});
 
-export async function getSlowGeoRoundState(id: string) {
+export const getSlowGeoRoundState = cache(async function getSlowGeoRoundState(id: string) {
   const sql = await getSql();
   if (sql) {
     const [round, hydratedPlayers] = await Promise.all([readDbRoundById(id), readHydratedPlayers()]);
@@ -1789,9 +2108,9 @@ export async function getSlowGeoRoundState(id: string) {
   const state = await getSlowGeoState();
   const round = state.rounds.find((candidate) => candidate.id === id && candidate.challenge) ?? null;
   return { players: state.players, round };
-}
+});
 
-export async function getGeotingState() {
+export const getGeotingState = cache(async function getGeotingState() {
   const sql = await getSql();
   if (!sql) {
     const state = await readFileState();
@@ -1805,7 +2124,84 @@ export async function getGeotingState() {
 
   const [geotingProposals, hydratedPlayers] = await Promise.all([readProposals(), readHydratedPlayers()]);
   return { players: hydratedPlayers, parties, geotingProposals };
+});
+
+async function getActivityStateUncached() {
+  const sql = await getSql();
+  if (!sql) {
+    const state = await readFileState();
+    const hydratedPlayers = applyPlayerProfiles(players, state.playerProfiles);
+    return {
+      players: hydratedPlayers,
+      parties,
+      rounds: state.rounds,
+      geotingProposals: state.geotingProposals,
+      geoterIndexAdjustments: state.geoterIndexAdjustments,
+      geoticOrderAssessments: state.geoticOrderAssessments,
+    };
+  }
+
+  const [rounds, geotingProposals, geoterIndexAdjustments, geoticOrderAssessments, hydratedPlayers] = await Promise.all([
+    readRounds(),
+    readProposals(),
+    readGeoterIndexAdjustments(),
+    readGeoticOrderAssessments(),
+    readHydratedPlayers(),
+  ]);
+  return {
+    players: hydratedPlayers,
+    parties,
+    rounds,
+    geotingProposals,
+    geoterIndexAdjustments,
+    geoticOrderAssessments,
+  };
 }
+
+export const getActivityState = cache(getActivityStateUncached);
+export const getGeotingAccessState = getActivityState;
+
+export const getThirdCollegeState = cache(async function getThirdCollegeState() {
+  const sql = await getSql();
+  if (!sql) {
+    const state = await readFileState();
+    const hydratedPlayers = applyPlayerProfiles(players, state.playerProfiles);
+    return {
+      players: hydratedPlayers,
+      parties,
+      rounds: state.rounds,
+      geotingProposals: state.geotingProposals,
+      geoterIndexAdjustments: state.geoterIndexAdjustments,
+      geoticOrderAssessments: state.geoticOrderAssessments,
+      geoticOrderPromotionCases: state.geoticOrderPromotionCases,
+    };
+  }
+
+  const [
+    rounds,
+    geotingProposals,
+    geoterIndexAdjustments,
+    geoticOrderAssessments,
+    geoticOrderPromotionCases,
+    hydratedPlayers,
+  ] = await Promise.all([
+    readRounds(),
+    readProposals(),
+    readGeoterIndexAdjustments(),
+    readGeoticOrderAssessments(),
+    readGeoticOrderPromotionCases(),
+    readHydratedPlayers(),
+  ]);
+  return {
+    players: hydratedPlayers,
+    parties,
+    rounds,
+    geotingProposals,
+    geoterIndexAdjustments,
+    geoticOrderAssessments,
+    geoticOrderPromotionCases,
+  };
+});
 
 async function readEligibleGeotingVoters() {
   const [rounds, geoterIndexAdjustments, geoticOrderAssessments] = await Promise.all([
@@ -1939,18 +2335,17 @@ export async function syncGeoticOrderPromotionCases() {
   });
 }
 
-export async function getOrderState() {
+export const getOrderState = cache(async function getOrderState() {
   const sql = await getSql();
   if (!sql) {
     const state = await readFileState();
-    const geoticOrderPromotionCases = await syncGeoticOrderPromotionCasesForState(state);
     return {
       players,
       rounds: state.rounds,
       gameSessions: state.gameSessions,
       geoterIndexAdjustments: state.geoterIndexAdjustments,
       geoticOrderAssessments: state.geoticOrderAssessments,
-      geoticOrderPromotionCases,
+      geoticOrderPromotionCases: state.geoticOrderPromotionCases,
     };
   }
 
@@ -1961,21 +2356,15 @@ export async function getOrderState() {
     readGeoticOrderAssessments(),
     readGeoticOrderPromotionCases(),
   ]);
-  const syncedPromotionCases = await syncGeoticOrderPromotionCasesForState({
-    rounds,
-    geoterIndexAdjustments,
-    geoticOrderAssessments,
-    geoticOrderPromotionCases,
-  });
   return {
     players,
     rounds,
     gameSessions,
     geoterIndexAdjustments,
     geoticOrderAssessments,
-    geoticOrderPromotionCases: syncedPromotionCases,
+    geoticOrderPromotionCases,
   };
-}
+});
 
 export async function resolveDueGeotingProposals(now = new Date()) {
   const [proposals, eligibleVoters] = await Promise.all([readProposals(), readEligibleGeotingVoters()]);
@@ -1985,16 +2374,40 @@ export async function resolveDueGeotingProposals(now = new Date()) {
   );
 
   if (ids.length > 0) {
-    await saveProposals(finalized);
+    const changedIds = new Set(ids);
+    const sql = await ensureSchema();
+    if (sql) {
+      await Promise.all(finalized.filter((proposal) => changedIds.has(proposal.id)).map(upsertDbProposal));
+    } else {
+      await saveProposals(finalized);
+    }
   }
 
   return { resolved: ids.length, ids, proposals: finalized };
 }
 
-export async function getRound(id: string) {
-  const rounds = await readRounds();
+export const getRound = cache(async function getRound(id: string) {
+  const sql = await getSql();
+  if (sql) return (await readDbRoundById(id)) ?? null;
+
+  const rounds = await readFileRounds();
   return rounds.find((round) => round.id === id) ?? null;
-}
+});
+
+export const getRoundPageState = cache(async function getRoundPageState(id: string) {
+  const sql = await getSql();
+  if (sql) {
+    const [round, hydratedPlayers] = await Promise.all([readDbRoundById(id), readHydratedPlayers()]);
+    return { players: hydratedPlayers, round };
+  }
+
+  const state = await readFileState();
+  const hydratedPlayers = applyPlayerProfiles(players, state.playerProfiles);
+  return {
+    players: hydratedPlayers,
+    round: state.rounds.find((candidate) => candidate.id === id) ?? null,
+  };
+});
 
 export async function upsertRound(input: RoundInput) {
   const rounds = await readRounds();
@@ -2027,7 +2440,7 @@ export async function upsertRound(input: RoundInput) {
     ? rounds.map((round) => (round.id === existing.id ? nextRound : round))
     : [...rounds, nextRound];
 
-  await saveRounds(nextRounds);
+  await saveRoundRecord(nextRound, nextRounds);
   return nextRound;
 }
 
@@ -2070,13 +2483,12 @@ export async function createSlowGeoRound(
     };
   }
 
+  const usedChallenges = await readSlowGeoUsedChallenges(rounds);
   let challenge: SlowGeoChallenge;
   try {
     challenge = await createStreetViewChallenge({
-      excludeCandidateIds: rounds
-        .filter((round) => round.challenge)
-        .slice(-8)
-        .map((round) => round.challenge!.candidateId),
+      excludeCandidateIds: slowGeoUsedCandidateIds(usedChallenges),
+      excludePanoIds: slowGeoUsedPanoIds(usedChallenges),
       requirePanoId: slowGeoMode === "panorama",
     });
   } catch (error) {
@@ -2120,7 +2532,10 @@ export async function createSlowGeoRound(
     results: emptyResults(competingPlayers),
   });
 
-  await saveRounds([...rounds, round]);
+  await saveRoundsAndSlowGeoUsedChallenges([...rounds, round], [
+    ...usedChallenges,
+    slowGeoUsedChallengeFromRound(round, "created")!,
+  ]);
   return { ok: true, round };
 }
 
@@ -2140,17 +2555,13 @@ export async function replaceSlowGeoPanoramaRound(input: { roundId: string }) {
     return { ok: false, reason: "Panorama kan ikke byttes etter at et pin-svar er låst." };
   }
 
-  const excluded = new Set<string>();
-  if (round.challenge?.candidateId) excluded.add(round.challenge.candidateId);
-  rounds
-    .filter((candidate) => candidate.id !== round.id && candidate.challenge)
-    .slice(-8)
-    .forEach((candidate) => excluded.add(candidate.challenge!.candidateId));
+  const usedChallenges = await readSlowGeoUsedChallenges(rounds);
 
   let challenge: SlowGeoChallenge;
   try {
     challenge = await createStreetViewChallenge({
-      excludeCandidateIds: [...excluded],
+      excludeCandidateIds: slowGeoUsedCandidateIds(usedChallenges),
+      excludePanoIds: slowGeoUsedPanoIds(usedChallenges),
       requirePanoId: true,
     });
   } catch (error) {
@@ -2184,7 +2595,14 @@ export async function replaceSlowGeoPanoramaRound(input: { roundId: string }) {
     results: emptyResults(competingPlayers),
   });
 
-  await saveRounds(rounds.map((candidate) => (candidate.id === round.id ? replacement : candidate)));
+  await saveRoundsAndSlowGeoUsedChallenges(
+    rounds.map((candidate) => (candidate.id === round.id ? replacement : candidate)),
+    [
+      ...usedChallenges,
+      slowGeoUsedChallengeFromRound(round, "replaced")!,
+      slowGeoUsedChallengeFromRound(replacement, "replaced")!,
+    ],
+  );
   return { ok: true, round: replacement };
 }
 
@@ -2201,8 +2619,11 @@ export async function deleteSlowGeoRound(input: { roundId: string }) {
     return { ok: false, reason: "Bare åpne og ferdige SlowGeo-runder kan slettes." };
   }
 
+  const usedChallenge = slowGeoUsedChallengeFromRound(round, "backfilled");
   const deletedInDb = await deleteDbRound(round.id);
-  if (!deletedInDb) {
+  if (deletedInDb) {
+    if (usedChallenge) await upsertDbSlowGeoUsedChallenge(usedChallenge);
+  } else {
     await writeFileRounds(rounds.filter((candidate) => candidate.id !== round.id));
   }
 
@@ -2230,7 +2651,7 @@ export async function submitSlowGeoGuess(input: {
   const now = new Date();
   if (shouldRevealSlowGeoRound(round, players, now)) {
     const finalized = finalizeSlowGeoRound(round, players, now.toISOString());
-    await saveRounds(rounds.map((candidate) => (candidate.id === round.id ? finalized : candidate)));
+    await saveRoundRecord(finalized, rounds.map((candidate) => (candidate.id === round.id ? finalized : candidate)));
     return { ok: false, reason: "Fristen er ute og fasit er avslørt." };
   }
   const existingResult = round.results.find((result) => result.playerId === input.playerId);
@@ -2272,7 +2693,7 @@ export async function submitSlowGeoGuess(input: {
   const revealed = shouldRevealSlowGeoRound(answeredRound, players, now);
   const nextRound = revealed ? finalizeSlowGeoRound(answeredRound, players, timestamp) : normalizeRound(answeredRound);
 
-  await saveRounds(rounds.map((candidate) => (candidate.id === round.id ? nextRound : candidate)));
+  await saveRoundRecord(nextRound, rounds.map((candidate) => (candidate.id === round.id ? nextRound : candidate)));
   return { ok: true, round: nextRound, revealed };
 }
 
@@ -2299,8 +2720,20 @@ export async function maybeRevealRound(id: string, now = new Date()) {
   if (!round || !shouldRevealSlowGeoRound(round, players, now)) return round ?? null;
 
   const revealed = finalizeSlowGeoRound(round, players, now.toISOString());
-  await saveRounds(rounds.map((candidate) => (candidate.id === id ? revealed : candidate)));
+  await saveRoundRecord(revealed, rounds.map((candidate) => (candidate.id === id ? revealed : candidate)));
   return revealed;
+}
+
+export async function runScheduledMaintenance(now = new Date()) {
+  const geoting = await resolveDueGeotingProposals(now);
+  const slowGeo = await revealDueSlowGeoRounds(now);
+  const geoticOrderPromotionCases = await syncGeoticOrderPromotionCases();
+
+  return {
+    geoting,
+    slowGeo,
+    geoticOrderPromotionCases: geoticOrderPromotionCases.length,
+  };
 }
 
 export async function upsertGameSession(input: GameSessionInput) {
@@ -2329,7 +2762,7 @@ export async function upsertGameSession(input: GameSessionInput) {
     ? gameSessions.map((session) => (session.id === existing.id ? nextSession : session))
     : [...gameSessions, nextSession];
 
-  await saveGameSessions(nextSessions);
+  await saveGameSessionRecord(nextSession, nextSessions);
   return nextSession;
 }
 
@@ -2357,7 +2790,7 @@ export async function createGeotingProposal(input: ProposalInput) {
     votes: [],
   };
 
-  await saveProposals([proposal, ...proposals]);
+  await saveProposalRecord(proposal, [proposal, ...proposals]);
   return proposal;
 }
 
@@ -2388,7 +2821,8 @@ export async function updateGeotingProposal(input: UpdateProposalInput) {
           : (proposal.implementedAt ?? null),
     updatedAt: nowIso(),
   };
-  await saveProposals(
+  await saveProposalRecord(
+    updated,
     proposals.map((candidate) => (candidate.id === proposal.id ? updated : candidate)),
   );
   return { ok: true, proposal: updated };
@@ -2424,7 +2858,8 @@ export async function saveGeotingPartyPosition(input: PartyPositionInput) {
     updatedAt: timestamp,
   };
 
-  await saveProposals(
+  await saveProposalRecord(
+    updated,
     proposals.map((candidate) => (candidate.id === proposal.id ? updated : candidate)),
   );
   return { ok: true, proposal: updated };
@@ -2450,7 +2885,8 @@ export async function withdrawGeotingProposal(input: WithdrawProposalInput) {
     updatedAt: timestamp,
     resolvedAt: proposal.resolvedAt ?? timestamp,
   };
-  await saveProposals(
+  await saveProposalRecord(
+    archived,
     proposals.map((candidate) => (candidate.id === proposal.id ? archived : candidate)),
   );
   return { ok: true, proposal: archived };
@@ -2483,7 +2919,8 @@ export async function startGeotingVote(input: StartVoteInput) {
     oathText: input.oathText || GEO_OATH_TEXT,
   };
 
-  await saveProposals(
+  await saveProposalRecord(
+    nextProposal,
     proposals.map((candidate) => (candidate.id === proposal.id ? nextProposal : candidate)),
   );
   return { ok: true, proposal: nextProposal };
@@ -2506,7 +2943,8 @@ export async function saveGeotingVote(input: VoteInput) {
   }
   if (proposal.voteEndsAt && Date.now() >= new Date(proposal.voteEndsAt).getTime()) {
     const resolved = resolveProposalIfReady(proposal, eligibleVoters);
-    await saveProposals(
+    await saveProposalRecord(
+      resolved,
       proposals.map((candidate) => (candidate.id === proposal.id ? resolved : candidate)),
     );
     return { ok: false, reason: "Tingfristen er ute. Resultatet er protokollført." };
@@ -2525,7 +2963,8 @@ export async function saveGeotingVote(input: VoteInput) {
   };
   const nextProposal = resolveProposalIfReady(votedProposal, eligibleVoters);
 
-  await saveProposals(
+  await saveProposalRecord(
+    nextProposal,
     proposals.map((candidate) => (candidate.id === proposal.id ? nextProposal : candidate)),
   );
   return { ok: true, proposal: nextProposal };
@@ -2544,7 +2983,7 @@ export async function addGeoterIndexAdjustment(input: GeoterIndexAdjustmentInput
     createdBy: input.createdBy,
   };
 
-  await saveGeoterIndexAdjustments([...existing, adjustment]);
+  await saveGeoterIndexAdjustmentRecord(adjustment, [...existing, adjustment]);
   return adjustment;
 }
 
@@ -2607,13 +3046,13 @@ export async function voteGeoticOrderPromotionCase(input: GeoticOrderPromotionVo
   const nextCases = promotionCases.map((candidate) => (candidate.id === promotionCase.id ? updatedCase : candidate));
 
   if (!approved) {
-    await saveGeoticOrderPromotionCases(nextCases);
+    await saveGeoticOrderPromotionCaseRecord(updatedCase, nextCases);
     return { ok: true, promotionCase: updatedCase };
   }
 
   const player = players.find((candidate) => candidate.id === promotionCase.playerId);
   if (!player) {
-    await saveGeoticOrderPromotionCases(nextCases);
+    await saveGeoticOrderPromotionCaseRecord(updatedCase, nextCases);
     return { ok: false, reason: "Kandidaten finnes ikke i geotregisteret." };
   }
 
@@ -2636,11 +3075,14 @@ export async function voteGeoticOrderPromotionCase(input: GeoticOrderPromotionVo
     updatedBy: input.voterId,
   };
 
-  await saveGeoticOrderPromotionCases(nextCases);
-  await saveGeoticOrderAssessments([
+  await saveGeoticOrderPromotionCaseRecord(updatedCase, nextCases);
+  await saveGeoticOrderAssessmentRecord(
     nextAssessment,
-    ...assessments.filter((assessment) => assessment.playerId !== promotionCase.playerId),
-  ]);
+    [
+      nextAssessment,
+      ...assessments.filter((assessment) => assessment.playerId !== promotionCase.playerId),
+    ],
+  );
   return { ok: true, promotionCase: updatedCase, assessment: nextAssessment };
 }
 
@@ -2676,10 +3118,13 @@ export async function upsertGeoticOrderAssessment(input: GeoticOrderAssessmentIn
     updatedBy: input.updatedBy,
   };
 
-  await saveGeoticOrderAssessments([
+  await saveGeoticOrderAssessmentRecord(
     nextAssessment,
-    ...existing.filter((assessment) => assessment.playerId !== input.playerId),
-  ]);
+    [
+      nextAssessment,
+      ...existing.filter((assessment) => assessment.playerId !== input.playerId),
+    ],
+  );
   return { ok: true, assessment: nextAssessment };
 }
 
@@ -2700,7 +3145,7 @@ export async function lockRound(id: string) {
   }
 
   const updated = { ...round, status: "locked" as RoundStatus, updatedAt: nowIso() };
-  await saveRounds(rounds.map((candidate) => (candidate.id === id ? updated : candidate)));
+  await saveRoundRecord(updated, rounds.map((candidate) => (candidate.id === id ? updated : candidate)));
   return { ok: true, round: updated };
 }
 
@@ -2715,7 +3160,7 @@ export async function unlockRound(id: string) {
     status: round.challenge ? ("revealed" as RoundStatus) : ("draft" as RoundStatus),
     updatedAt: nowIso(),
   };
-  await saveRounds(rounds.map((candidate) => (candidate.id === id ? updated : candidate)));
+  await saveRoundRecord(updated, rounds.map((candidate) => (candidate.id === id ? updated : candidate)));
   return { ok: true, round: updated };
 }
 

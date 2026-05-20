@@ -2314,3 +2314,31 @@ table.protocol td.right {
     letter-spacing: 0.04em;
   }
 }
+
+@supports (content-visibility: auto) {
+  .geo-section,
+  .archive-card,
+  .party-poster-card,
+  .geotia-frame {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 420px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .archive-card,
+  .party-poster-card,
+  .group,
+  .hover\:-translate-y-0\.5 {
+    transform: none !important;
+  }
+}
