@@ -24,9 +24,5 @@ export function voteGeoticOrderPromotionCase(...args: Parameters<typeof voteGeot
 }
 
 export function runScheduledMaintenance(...args: Parameters<typeof runScheduledMaintenanceCore>) {
-  return withDataMutationLock("slowgeo", () =>
-    withDataMutationLock("geoting", () =>
-      withDataMutationLock("order", () => runScheduledMaintenanceCore(...args)),
-    ),
-  );
+  return withDataMutationLock("scheduled-maintenance", () => runScheduledMaintenanceCore(...args));
 }

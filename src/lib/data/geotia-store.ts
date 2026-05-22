@@ -349,6 +349,10 @@ function assertDurableProductionStorage() {
   throw new Error("DATABASE_URL må settes på Vercel. Geotia kan ikke bruke midlertidig /tmp-lager i produksjon.");
 }
 
+function usesPostgresStorage() {
+  return Boolean(process.env.DATABASE_URL && process.env.GEOTIA_FORCE_FILE_STORAGE !== "1");
+}
+
 export function getStorageMode() {
   if (process.env.GEOTIA_FORCE_FILE_STORAGE === "1") return "Lokal filprotokoll";
   if (process.env.DATABASE_URL) return "Neon/Postgres";
@@ -975,6 +979,20 @@ function parseDbRound(row: DbRoundRow): Round {
   });
 }
 
+function dbRoundLocationJson(round: Round) {
+  return JSON.stringify({
+    answerLocation: round.answerLocation ?? null,
+    mapSnapshot: round.mapSnapshot ?? null,
+    challenge: round.challenge ?? null,
+    slowGeoMode: getSlowGeoMode(round),
+    slowGeoEraId: round.challenge ? getSlowGeoEraId(round) : (round.slowGeoEraId ?? null),
+    slowGeoStartedBy: round.slowGeoStartedBy ?? null,
+    slowGeoStartedAt: round.slowGeoStartedAt ?? round.createdAt,
+    deadlineAt: round.deadlineAt ?? null,
+    revealedAt: round.revealedAt ?? null,
+  });
+}
+
 function parseDbGameSession(row: DbGameSessionRow): GameSession {
   const results = parseGameResultsPayload(row.results_json);
 
@@ -1163,17 +1181,7 @@ async function upsertDbRound(round: Round) {
       ${round.createdAt},
       ${round.updatedAt},
       ${JSON.stringify(round.results)}::jsonb,
-      ${JSON.stringify({
-        answerLocation: round.answerLocation ?? null,
-        mapSnapshot: round.mapSnapshot ?? null,
-        challenge: round.challenge ?? null,
-        slowGeoMode: getSlowGeoMode(round),
-        slowGeoEraId: round.challenge ? getSlowGeoEraId(round) : (round.slowGeoEraId ?? null),
-        slowGeoStartedBy: round.slowGeoStartedBy ?? null,
-        slowGeoStartedAt: round.slowGeoStartedAt ?? round.createdAt,
-        deadlineAt: round.deadlineAt ?? null,
-        revealedAt: round.revealedAt ?? null,
-      })}::jsonb
+      ${dbRoundLocationJson(round)}::jsonb
     )
     ON CONFLICT (id) DO UPDATE SET
       date = EXCLUDED.date,
@@ -1766,8 +1774,73 @@ async function saveRoundsAndSlowGeoUsedChallenges(
   );
   const sql = await ensureSchema();
   if (sql) {
-    await upsertDbSlowGeoUsedChallenges(normalizedUsedChallenges);
-    await Promise.all(rounds.map(upsertDbRound));
+    const normalizedEntries = normalizedUsedChallenges
+      .map((entry) => normalizeSlowGeoUsedChallenge(entry))
+      .filter((entry): entry is SlowGeoUsedChallenge => Boolean(entry));
+
+    await sql.transaction(
+      (tx) => [
+        ...normalizedEntries.map((entry) => tx`
+          INSERT INTO geotia_slowgeo_used_challenges (
+            candidate_id, pano_id, round_id, challenge_id, used_at, reason
+          )
+          VALUES (
+            ${entry.candidateId},
+            ${entry.panoId ?? null},
+            ${entry.roundId ?? null},
+            ${entry.challengeId ?? null},
+            ${entry.usedAt},
+            ${entry.reason}
+          )
+          ON CONFLICT (candidate_id) DO UPDATE SET
+            pano_id = COALESCE(geotia_slowgeo_used_challenges.pano_id, EXCLUDED.pano_id),
+            round_id = COALESCE(geotia_slowgeo_used_challenges.round_id, EXCLUDED.round_id),
+            challenge_id = COALESCE(geotia_slowgeo_used_challenges.challenge_id, EXCLUDED.challenge_id),
+            used_at = CASE
+              WHEN geotia_slowgeo_used_challenges.used_at <= EXCLUDED.used_at
+                THEN geotia_slowgeo_used_challenges.used_at
+              ELSE EXCLUDED.used_at
+            END,
+            reason = CASE
+              WHEN geotia_slowgeo_used_challenges.reason = 'backfilled'
+                THEN EXCLUDED.reason
+              ELSE geotia_slowgeo_used_challenges.reason
+            END
+        `),
+        ...rounds.map((round) => tx`
+          INSERT INTO geotia_rounds (
+            id, number, date, name, answer, country, continent, comment, status, created_at, updated_at, results_json, location_json
+          )
+          VALUES (
+            ${round.id},
+            ${round.number},
+            ${round.date},
+            ${round.name},
+            ${round.answer},
+            ${round.country},
+            ${round.continent},
+            ${round.comment},
+            ${round.status},
+            ${round.createdAt},
+            ${round.updatedAt},
+            ${JSON.stringify(round.results)}::jsonb,
+            ${dbRoundLocationJson(round)}::jsonb
+          )
+          ON CONFLICT (id) DO UPDATE SET
+            date = EXCLUDED.date,
+            name = EXCLUDED.name,
+            answer = EXCLUDED.answer,
+            country = EXCLUDED.country,
+            continent = EXCLUDED.continent,
+            comment = EXCLUDED.comment,
+            status = EXCLUDED.status,
+            updated_at = EXCLUDED.updated_at,
+            results_json = EXCLUDED.results_json,
+            location_json = EXCLUDED.location_json
+        `),
+      ],
+      { isolationLevel: "Serializable" },
+    );
     return;
   }
 
@@ -2504,7 +2577,15 @@ function slowGeoStartSort(a: Round, b: Round) {
   return String(a.slowGeoStartedAt ?? a.createdAt).localeCompare(String(b.slowGeoStartedAt ?? b.createdAt)) || a.number - b.number;
 }
 
-export async function createSlowGeoRound(
+function isRetryableDbConflict(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as { code?: unknown; message?: unknown };
+  const code = typeof candidate.code === "string" ? candidate.code : "";
+  const message = typeof candidate.message === "string" ? candidate.message.toLowerCase() : "";
+  return code === "23505" || code === "40001" || message.includes("duplicate key") || message.includes("serialization");
+}
+
+async function createSlowGeoRoundAttempt(
   input: { title?: string; deadlineMinutes?: number; deadlineAt?: string; mode?: SlowGeoMode; startedBy?: string | null } = {},
 ) {
   const rounds = await readRounds();
@@ -2578,6 +2659,26 @@ export async function createSlowGeoRound(
     slowGeoUsedChallengeFromRound(round, "created")!,
   ]);
   return { ok: true, round };
+}
+
+export async function createSlowGeoRound(
+  input: { title?: string; deadlineMinutes?: number; deadlineAt?: string; mode?: SlowGeoMode; startedBy?: string | null } = {},
+) {
+  const maxAttempts = usesPostgresStorage() ? 3 : 1;
+  let lastConflict: unknown = null;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      return await createSlowGeoRoundAttempt(input);
+    } catch (error) {
+      if (!isRetryableDbConflict(error) || attempt === maxAttempts - 1) {
+        throw error;
+      }
+      lastConflict = error;
+    }
+  }
+
+  throw lastConflict;
 }
 
 export async function replaceSlowGeoPanoramaRound(input: { roundId: string }) {

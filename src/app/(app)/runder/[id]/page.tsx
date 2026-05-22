@@ -12,6 +12,7 @@ import { SlowGeoAftermath } from "@/components/slowgeo-aftermath";
 import { SlowGeoPlay } from "@/components/slowgeo-play";
 import { SlowGeoRevealMap } from "@/components/slowgeo-reveal-map";
 import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
+import { canManageRounds, canManageSlowGeoAdmin } from "@/lib/admin-permissions";
 import { getCurrentGeot } from "@/lib/auth";
 import { selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { computeRound } from "@/lib/scoring";
@@ -91,7 +92,12 @@ export default async function RoundDetailPage({
   const isStreetViewRound = Boolean(round.challenge);
   const isOpenStreetViewRound = isStreetViewRound && round.status === "open";
   const slowGeoMode = getSlowGeoMode(round);
-  const canReplacePanorama = isOpenStreetViewRound && slowGeoMode === "panorama" && !hasLockedSlowGeoGuess(round);
+  const canManageRound = canManageRounds(currentGeot?.id);
+  const canReplacePanorama =
+    canManageSlowGeoAdmin(currentGeot?.id) &&
+    isOpenStreetViewRound &&
+    slowGeoMode === "panorama" &&
+    !hasLockedSlowGeoGuess(round);
   const slowGeoShareUrl = `/slowgeo/${round.id}`;
   const publicGoogleKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
   const streetViewUrl = round.challenge
@@ -265,23 +271,25 @@ export default async function RoundDetailPage({
 
       {!isStreetViewRound ? <RoundMapProtocol snapshot={round.mapSnapshot} /> : null}
 
-      {!isOpenStreetViewRound ? (
+      {!isOpenStreetViewRound && (isStreetViewRound || canManageRound) ? (
         <Section
           title="Protokollføring"
           eyebrow="Km, deltakelse og kattometer"
           action={
-            <div className="flex flex-wrap gap-2">
-              {roundAction(round)}
-              <Link
-                href="/runder"
-                prefetch={false}
-                className="inline-flex h-10 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
-              >
-                <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                Arkivet
-                <LinkPendingIndicator />
-              </Link>
-            </div>
+            canManageRound ? (
+              <div className="flex flex-wrap gap-2">
+                {roundAction(round)}
+                <Link
+                  href="/runder"
+                  prefetch={false}
+                  className="inline-flex h-10 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
+                >
+                  <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                  Arkivet
+                  <LinkPendingIndicator />
+                </Link>
+              </div>
+            ) : null
           }
         >
           {isStreetViewRound ? (

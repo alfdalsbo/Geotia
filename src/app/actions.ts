@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { createSession, destroySession, getSession, isCorrectPasscode, playerIdFromUsername, requireSession } from "@/lib/auth";
+import { canManageGameSessions, canManageRounds, canManageSlowGeoAdmin } from "@/lib/admin-permissions";
 import { GEO_OATH_TEXT } from "@/lib/geoting";
 import { haversineKm, parseGeoLocationJson } from "@/lib/geo";
 import { geoterIndexCategories } from "@/lib/geoterindeks";
@@ -77,6 +78,30 @@ function limitedField(formData: FormData, key: string, maxLength: number) {
 function safeRedirectPath(value: string) {
   if (!value.startsWith("/") || value.startsWith("//") || value.startsWith("/login")) return "/";
   return value;
+}
+
+async function requireRoundManagerSession() {
+  const session = await requireSession();
+  if (!canManageRounds(session.playerId)) {
+    redirect("/");
+  }
+  return session;
+}
+
+async function requireGameSessionManagerSession() {
+  const session = await requireSession();
+  if (!canManageGameSessions(session.playerId)) {
+    redirect("/");
+  }
+  return session;
+}
+
+async function requireSlowGeoAdminSession() {
+  const session = await requireSession();
+  if (!canManageSlowGeoAdmin(session.playerId)) {
+    redirect("/");
+  }
+  return session;
 }
 
 function kmField(formData: FormData, key: string) {
@@ -196,7 +221,7 @@ export async function updateMyGeotNicknameAction(formData: FormData) {
 }
 
 export async function saveRoundAction(formData: FormData) {
-  await requireSession();
+  await requireRoundManagerSession();
   const answerLocation = parseGeoLocationJson(field(formData, "answer_location_json"));
 
   const results: PlayerResult[] = competingPlayers.map((player) => {
@@ -239,7 +264,7 @@ export async function saveRoundAction(formData: FormData) {
 }
 
 export async function createSlowGeoRoundAction(formData: FormData) {
-  const session = await requireSession();
+  const session = await requireSlowGeoAdminSession();
   const title = field(formData, "title");
   const deadlineAt = slowGeoDeadlineAt(formData);
 
@@ -260,7 +285,7 @@ export async function createSlowGeoRoundAction(formData: FormData) {
 }
 
 export async function replaceSlowGeoPanoramaAction(formData: FormData) {
-  await requireSession();
+  await requireSlowGeoAdminSession();
   const roundId = field(formData, "round_id");
   const returnTo = safeRedirectPath(field(formData, "return_to") || (roundId ? `/slowgeo/${roundId}` : "/spill/slowgeo"));
 
@@ -279,10 +304,7 @@ export async function replaceSlowGeoPanoramaAction(formData: FormData) {
 }
 
 export async function deleteSlowGeoRoundAction(formData: FormData) {
-  const session = await requireSession();
-  if (!isThirdCollegeMember(session.playerId)) {
-    redirect("/");
-  }
+  await requireSlowGeoAdminSession();
 
   const roundId = field(formData, "round_id");
   const returnTo = safeRedirectPath(field(formData, "return_to") || "/tredje-kollegium");
@@ -345,7 +367,7 @@ function gameIdField(value: string): GameId {
 }
 
 export async function saveGameSessionAction(formData: FormData) {
-  await requireSession();
+  await requireGameSessionManagerSession();
   const gameId = gameIdField(field(formData, "gameId"));
 
   const results: GameResult[] = competingPlayers.map((player) => {
@@ -372,7 +394,7 @@ export async function saveGameSessionAction(formData: FormData) {
 }
 
 export async function lockRoundAction(formData: FormData) {
-  await requireSession();
+  await requireRoundManagerSession();
   const id = field(formData, "id");
   const result = await lockRound(id);
   revalidateSlowGeoPaths(id);
@@ -384,7 +406,7 @@ export async function lockRoundAction(formData: FormData) {
 }
 
 export async function unlockRoundAction(formData: FormData) {
-  await requireSession();
+  await requireRoundManagerSession();
   const id = field(formData, "id");
   await unlockRound(id);
   revalidateSlowGeoPaths(id);

@@ -4,6 +4,8 @@ import { ArrowLeft, Gamepad2 } from "lucide-react";
 import { GameSessionForm } from "@/components/game-session-form";
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { Section } from "@/components/section";
+import { canManageGameSessions } from "@/lib/admin-permissions";
+import { getCurrentGeot } from "@/lib/auth";
 import { games } from "@/lib/seed";
 import { makeEmptyGameSession } from "@/lib/store";
 import type { GameId } from "@/lib/types";
@@ -27,6 +29,8 @@ export default async function RegisterGamePage({
   const params = (await searchParams) ?? {};
   const gameId = selectedGameId(params.game);
   const game = scoreGames.find((candidate) => candidate.id === gameId);
+  const currentGeot = await getCurrentGeot();
+  const canManageSessions = canManageGameSessions(currentGeot?.id);
 
   return (
     <div className="space-y-7">
@@ -58,18 +62,24 @@ export default async function RegisterGamePage({
         </div>
       ) : null}
 
-      <Section
-        title={game ? `Ny ${game.name}-økt` : "Ny spilløkt"}
-        eyebrow={game?.scoreHelp ?? "Før resultat"}
-        action={
-          <span className="inline-flex h-10 items-center gap-2 rounded bg-[#fdf7e8] px-3 text-sm font-semibold text-[#062b40]">
-            <Gamepad2 className="h-4 w-4" aria-hidden="true" />
-            {game?.shortName ?? "Spill"}
-          </span>
-        }
-      >
-        <GameSessionForm session={makeEmptyGameSession(gameId)} />
-      </Section>
+      {canManageSessions ? (
+        <Section
+          title={game ? `Ny ${game.name}-økt` : "Ny spilløkt"}
+          eyebrow={game?.scoreHelp ?? "Før resultat"}
+          action={
+            <span className="inline-flex h-10 items-center gap-2 rounded bg-[#fdf7e8] px-3 text-sm font-semibold text-[#062b40]">
+              <Gamepad2 className="h-4 w-4" aria-hidden="true" />
+              {game?.shortName ?? "Spill"}
+            </span>
+          }
+        >
+          <GameSessionForm session={makeEmptyGameSession(gameId)} />
+        </Section>
+      ) : (
+        <div className="rounded border border-[#d8ded0] bg-white px-4 py-3 text-sm leading-6 text-[#5b6257] shadow-sm">
+          Bare Tredje Kollegium kan føre spilløkter.
+        </div>
+      )}
     </div>
   );
 }

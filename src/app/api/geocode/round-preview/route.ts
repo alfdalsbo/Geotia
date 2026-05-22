@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getSession } from "@/lib/auth";
 import { haversineKm, normalizeGeoQuery } from "@/lib/geo";
+import { competingPlayers } from "@/lib/seed";
 import { getCachedGeocodeLocation, setCachedGeocodeLocation } from "@/lib/store";
 import type { GeoLocation } from "@/lib/types";
 
@@ -23,26 +24,46 @@ type NominatimPlace = {
 };
 
 let lastNominatimRequestAt = 0;
+const maxGeocodeTextLength = 180;
+const nominatimTimeoutMs = 8_000;
+const competingPlayerIds = new Set(competingPlayers.map((player) => player.id));
 
 function userAgent() {
   return process.env.GEOTIA_NOMINATIM_USER_AGENT || "GeotiaSlowGeo/0.1 (private SlowGeo archive)";
 }
 
-function isRoundPreviewRequest(value: unknown): value is RoundPreviewRequest {
-  if (!value || typeof value !== "object") return false;
+function parseRoundPreviewRequest(value: unknown): RoundPreviewRequest | null {
+  if (!value || typeof value !== "object") return null;
   const candidate = value as Partial<RoundPreviewRequest>;
-  return (
-    typeof candidate.answer === "string" &&
-    Array.isArray(candidate.guesses) &&
-    candidate.guesses.every((guess) => {
-      return (
-        guess &&
-        typeof guess === "object" &&
-        typeof guess.playerId === "string" &&
-        typeof guess.text === "string"
-      );
-    })
-  );
+  if (typeof candidate.answer !== "string" || !Array.isArray(candidate.guesses)) return null;
+
+  const answer = candidate.answer.trim();
+  if (!answer || answer.length > maxGeocodeTextLength) return null;
+  if (candidate.guesses.length < 1 || candidate.guesses.length > competingPlayers.length) return null;
+
+  const seenPlayerIds = new Set<string>();
+  const guesses: RoundPreviewRequest["guesses"] = [];
+  for (const guess of candidate.guesses) {
+    if (
+      !guess ||
+      typeof guess !== "object" ||
+      typeof guess.playerId !== "string" ||
+      typeof guess.text !== "string"
+    ) {
+      return null;
+    }
+
+    const playerId = guess.playerId.trim();
+    const text = guess.text.trim();
+    if (!competingPlayerIds.has(playerId) || seenPlayerIds.has(playerId) || !text || text.length > maxGeocodeTextLength) {
+      return null;
+    }
+
+    seenPlayerIds.add(playerId);
+    guesses.push({ playerId, text });
+  }
+
+  return { answer, guesses };
 }
 
 async function waitForNominatimSlot() {
@@ -69,13 +90,21 @@ async function geocode(text: string): Promise<GeoLocation | null> {
   url.searchParams.set("limit", "1");
   url.searchParams.set("q", query);
 
-  const response = await fetch(url, {
-    headers: {
-      "Accept": "application/json",
-      "Accept-Language": "nb,en;q=0.8",
-      "User-Agent": userAgent(),
-    },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), nominatimTimeoutMs);
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        "Accept": "application/json",
+        "Accept-Language": "nb,en;q=0.8",
+        "User-Agent": userAgent(),
+      },
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     throw new Error(`Nominatim svarte ${response.status}`);
@@ -98,14 +127,25 @@ async function geocode(text: string): Promise<GeoLocation | null> {
   return location;
 }
 
+function isTimeoutError(error: unknown) {
+  return error instanceof Error && error.name === "AbortError";
+}
+
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Ikke innlogget." }, { status: 401 });
   }
 
-  const payload = (await request.json()) as unknown;
-  if (!isRoundPreviewRequest(payload)) {
+  let rawPayload: unknown;
+  try {
+    rawPayload = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Ugyldig geokodeforespørsel." }, { status: 400 });
+  }
+
+  const payload = parseRoundPreviewRequest(rawPayload);
+  if (!payload) {
     return NextResponse.json({ error: "Ugyldig geokodeforespørsel." }, { status: 400 });
   }
 
@@ -129,9 +169,13 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Geokoding feilet.",
+        error: isTimeoutError(error)
+          ? "Geokoding tok for lang tid."
+          : error instanceof Error
+            ? error.message
+            : "Geokoding feilet.",
       },
-      { status: 502 },
+      { status: isTimeoutError(error) ? 408 : 502 },
     );
   }
 }

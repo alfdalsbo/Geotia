@@ -1,13 +1,14 @@
-const mutationLocks = new Map<string, Promise<void>>();
+let mutationLock: Promise<void> = Promise.resolve();
 
 export async function withDataMutationLock<T>(key: string, operation: () => Promise<T>): Promise<T> {
-  const previous = mutationLocks.get(key) ?? Promise.resolve();
+  void key;
+  const previous = mutationLock;
   let release: () => void = () => {};
   const next = new Promise<void>((resolve) => {
     release = resolve;
   });
   const queued = previous.catch(() => undefined).then(() => next);
-  mutationLocks.set(key, queued);
+  mutationLock = queued;
 
   await previous.catch(() => undefined);
 
@@ -15,8 +16,8 @@ export async function withDataMutationLock<T>(key: string, operation: () => Prom
     return await operation();
   } finally {
     release();
-    if (mutationLocks.get(key) === queued) {
-      mutationLocks.delete(key);
+    if (mutationLock === queued) {
+      mutationLock = Promise.resolve();
     }
   }
 }

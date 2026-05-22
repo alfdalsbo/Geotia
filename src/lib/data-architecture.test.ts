@@ -94,6 +94,34 @@ describe("Geotia data architecture boundaries", () => {
     expect(state.rounds[0].challenge?.candidateId).not.toBe(state.rounds[1].challenge?.candidateId);
   });
 
+  it("serializes mutations across different service keys", async () => {
+    vi.resetModules();
+    const { withDataMutationLock } = await import("@/lib/data/mutation-lock");
+    const events: string[] = [];
+    let releaseFirst: () => void = () => {};
+    const firstCanFinish = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
+
+    const first = withDataMutationLock("profiles", async () => {
+      events.push("profiles-start");
+      await firstCanFinish;
+      events.push("profiles-end");
+    });
+    const second = withDataMutationLock("slowgeo", async () => {
+      events.push("slowgeo-start");
+      events.push("slowgeo-end");
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(events).toEqual(["profiles-start"]);
+
+    releaseFirst();
+    await Promise.all([first, second]);
+
+    expect(events).toEqual(["profiles-start", "profiles-end", "slowgeo-start", "slowgeo-end"]);
+  });
+
   it("serializes concurrent GeoTing votes so no vote is lost", async () => {
     tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-data-architecture-"));
     process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");

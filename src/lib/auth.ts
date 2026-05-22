@@ -9,6 +9,8 @@ import { getHydratedPlayerById } from "@/lib/store";
 
 const COOKIE_NAME = "geotia_session";
 const SESSION_SECONDS = 60 * 60 * 24 * 30;
+const LOCAL_AUTH_SECRET = "local-geotia-auth-secret-change-on-vercel";
+const LOCAL_PASSCODE = "geotia";
 
 type SessionPayload = {
   sub: "geotia";
@@ -17,11 +19,23 @@ type SessionPayload = {
 };
 
 function secret() {
-  return process.env.AUTH_SECRET || "local-geotia-auth-secret-change-on-vercel";
+  const value = process.env.AUTH_SECRET || LOCAL_AUTH_SECRET;
+  if (requiresStrictAuthConfig() && (!process.env.AUTH_SECRET || value === LOCAL_AUTH_SECRET)) {
+    throw new Error("AUTH_SECRET må settes til en egen hemmelig verdi i produksjon.");
+  }
+  return value;
 }
 
 function passcode() {
-  return process.env.GEOTIA_PASSCODE || "geotia";
+  const value = process.env.GEOTIA_PASSCODE || LOCAL_PASSCODE;
+  if (requiresStrictAuthConfig() && (!process.env.GEOTIA_PASSCODE || value === LOCAL_PASSCODE)) {
+    throw new Error("GEOTIA_PASSCODE må settes til en egen verdi i produksjon.");
+  }
+  return value;
+}
+
+function requiresStrictAuthConfig() {
+  return process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL);
 }
 
 function base64Url(input: string) {
