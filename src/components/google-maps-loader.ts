@@ -43,8 +43,13 @@ export type GoogleMapsListener = {
 
 export type GoogleStreetViewPanorama = {
   addListener?(eventName: string, handler: () => void): GoogleMapsListener | void;
+  getLinks?(): unknown[];
+  getPano?(): string;
+  getPov?(): GoogleStreetViewPov;
   getStatus?(): string;
   getZoom(): number;
+  setLinks?(links: unknown[]): void;
+  setPano?(pano: string): void;
   setPov(pov: GoogleStreetViewPov): void;
   setZoom(zoom: number): void;
 };

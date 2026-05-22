@@ -150,16 +150,44 @@ async function mockGoogleMaps(page: Page) {
               this.options = options;
               this.zoom = options.zoom ?? 1;
               this.pov = options.pov;
+              this.pano = options.pano || "mock-start-pano";
               this.status = "OK";
+              this.links = [{ pano: "mock-next-pano" }];
+              this.listeners = {};
               element.dataset.streetViewPanorama = "ready";
+              element.dataset.clickToGo = String(options.clickToGo);
+              element.dataset.keyboardShortcuts = String(options.keyboardShortcuts);
+              element.dataset.linksControl = String(options.linksControl);
+              element.dataset.pano = this.pano;
               element.dataset.zoom = String(this.zoom);
               element.textContent = "Panorama mock";
+              window.__lastStreetViewPanorama = this;
             }
             addListener(eventName, handler) {
-              return { remove() {} };
+              this.listeners[eventName] = this.listeners[eventName] || [];
+              this.listeners[eventName].push(handler);
+              return {
+                remove: () => {
+                  this.listeners[eventName] = (this.listeners[eventName] || []).filter((entry) => entry !== handler);
+                },
+              };
             }
+            emit(eventName) {
+              for (const handler of this.listeners[eventName] || []) handler();
+            }
+            getLinks() { return this.links || []; }
+            getPano() { return this.pano; }
+            getPov() { return this.pov; }
             getStatus() { return this.status; }
             getZoom() { return this.zoom; }
+            setLinks(links) {
+              this.links = links;
+              this.element.dataset.linksCount = String(links.length);
+            }
+            setPano(pano) {
+              this.pano = pano;
+              this.element.dataset.pano = pano;
+            }
             setPov(pov) {
               this.pov = pov;
               this.element.dataset.heading = String(pov.heading);
@@ -167,6 +195,11 @@ async function mockGoogleMaps(page: Page) {
             setZoom(zoom) {
               this.zoom = zoom;
               this.element.dataset.zoom = String(zoom);
+            }
+            simulateTravel(pano) {
+              this.pano = pano;
+              this.element.dataset.pano = pano;
+              this.emit("pano_changed");
             }
           }
           class LatLngBounds {
@@ -715,7 +748,6 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
 test("SlowGeo Panorama mode opens 360 view in fullscreen on mobile", async ({ page }) => {
   test.setTimeout(120_000);
   await mockGoogleMaps(page);
-  await login(page);
   const roundId = await writeOpenSlowGeoFixture({
     roundId: "playwright-mobile-slowgeo-panorama",
     name: "Panorama-prøven",
@@ -723,6 +755,7 @@ test("SlowGeo Panorama mode opens 360 view in fullscreen on mobile", async ({ pa
     includeLockedGuesses: false,
   });
 
+  await login(page);
   await page.goto(`/runder/${roundId}`, { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "Panorama-prøven" })).toBeVisible();
   await expect(page.getByText("Panorama-modus.")).toBeVisible();
@@ -734,6 +767,19 @@ test("SlowGeo Panorama mode opens 360 view in fullscreen on mobile", async ({ pa
   await expect(imageDialog).toBeVisible();
   await expect(imageDialog.getByTestId("slowgeo-panorama-viewport")).toBeVisible();
   await expect(imageDialog.getByTestId("slowgeo-panorama-viewport")).toHaveText("Panorama mock");
+  await expect(imageDialog.getByTestId("slowgeo-panorama-viewport")).toHaveAttribute("data-click-to-go", "false");
+  await expect(imageDialog.getByTestId("slowgeo-panorama-viewport")).toHaveAttribute("data-keyboard-shortcuts", "false");
+  await expect(imageDialog.getByTestId("slowgeo-panorama-viewport")).toHaveAttribute("data-links-control", "false");
+  await expect(imageDialog.getByTestId("slowgeo-panorama-viewport")).toHaveAttribute("data-links-count", "0");
+  await imageDialog.getByTestId("slowgeo-panorama-viewport").evaluate((element) => {
+    (
+      window as typeof window & {
+        __lastStreetViewPanorama?: { simulateTravel(pano: string): void };
+      }
+    ).__lastStreetViewPanorama?.simulateTravel("escaped-pano");
+    return element;
+  });
+  await expect(imageDialog.getByTestId("slowgeo-panorama-viewport")).toHaveAttribute("data-pano", "playwright-pano");
   await expect(imageDialog.getByTestId("slowgeo-image-viewport")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
 
