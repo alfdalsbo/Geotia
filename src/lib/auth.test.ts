@@ -49,7 +49,7 @@ describe("Geotia auth configuration", () => {
     expect(isCorrectPasscode("geotia")).toBe(true);
   }, 15_000);
 
-  it("requires a non-default passcode on Vercel", async () => {
+  it("requires an explicit passcode on Vercel", async () => {
     process.env.VERCEL = "1";
     process.env.AUTH_SECRET = "a-real-production-secret";
     delete process.env.GEOTIA_PASSCODE;
@@ -58,6 +58,17 @@ describe("Geotia auth configuration", () => {
     const { isCorrectPasscode } = await import("@/lib/auth");
 
     expect(() => isCorrectPasscode("geotia")).toThrow("GEOTIA_PASSCODE");
+  });
+
+  it("allows the configured shared passcode on Vercel", async () => {
+    process.env.VERCEL = "1";
+    process.env.AUTH_SECRET = "a-real-production-secret";
+    process.env.GEOTIA_PASSCODE = "geotia";
+    vi.resetModules();
+
+    const { isCorrectPasscode } = await import("@/lib/auth");
+
+    expect(isCorrectPasscode("geotia")).toBe(true);
   });
 
   it("requires a non-default auth secret on Vercel", async () => {

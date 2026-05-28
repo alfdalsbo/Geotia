@@ -28,8 +28,8 @@ function secret() {
 
 function passcode() {
   const value = process.env.GEOTIA_PASSCODE || LOCAL_PASSCODE;
-  if (requiresStrictAuthConfig() && (!process.env.GEOTIA_PASSCODE || value === LOCAL_PASSCODE)) {
-    throw new Error("GEOTIA_PASSCODE må settes til en egen verdi i produksjon.");
+  if (requiresStrictAuthConfig() && !process.env.GEOTIA_PASSCODE) {
+    throw new Error("GEOTIA_PASSCODE må settes i produksjon.");
   }
   return value;
 }
