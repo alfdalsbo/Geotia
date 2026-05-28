@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { createSession, destroySession, getSession, isCorrectPasscode, playerIdFromUsername, requireSession } from "@/lib/auth";
-import { canManageGameSessions, canManageRounds, canManageSlowGeoAdmin } from "@/lib/admin-permissions";
+import { canManageGameSessions, canManageRounds, canManageSlowGeoAdmin, canStartSlowGeoRound } from "@/lib/admin-permissions";
 import { GEO_OATH_TEXT } from "@/lib/geoting";
 import { haversineKm, parseGeoLocationJson } from "@/lib/geo";
 import { geoterIndexCategories } from "@/lib/geoterindeks";
@@ -99,6 +99,14 @@ async function requireGameSessionManagerSession() {
 async function requireSlowGeoAdminSession() {
   const session = await requireSession();
   if (!canManageSlowGeoAdmin(session.playerId)) {
+    redirect("/");
+  }
+  return session;
+}
+
+async function requireSlowGeoStarterSession() {
+  const session = await requireSession();
+  if (!canStartSlowGeoRound(session.playerId)) {
     redirect("/");
   }
   return session;
@@ -264,7 +272,7 @@ export async function saveRoundAction(formData: FormData) {
 }
 
 export async function createSlowGeoRoundAction(formData: FormData) {
-  const session = await requireSlowGeoAdminSession();
+  const session = await requireSlowGeoStarterSession();
   const title = field(formData, "title");
   const deadlineAt = slowGeoDeadlineAt(formData);
 

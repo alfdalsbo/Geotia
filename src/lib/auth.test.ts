@@ -27,6 +27,16 @@ afterEach(() => {
 });
 
 describe("Geotia auth configuration", () => {
+  it("accepts natural geot names and party aliases as login names", async () => {
+    const { playerIdFromUsername } = await import("@/lib/auth");
+
+    expect(playerIdFromUsername("PWP")).toBe("ruben");
+    expect(playerIdFromUsername("Glenn Ruben")).toBe("ruben");
+    expect(playerIdFromUsername("Glenn")).toBe("ruben");
+    expect(playerIdFromUsername("Ruben")).toBe("ruben");
+    expect(playerIdFromUsername("Jorgen")).toBe("jorgen");
+  });
+
   it("allows local development defaults outside production", async () => {
     delete process.env.AUTH_SECRET;
     delete process.env.GEOTIA_PASSCODE;

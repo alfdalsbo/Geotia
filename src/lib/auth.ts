@@ -67,15 +67,31 @@ export function isKnownPlayer(playerId: string) {
   return players.some((player) => player.id === playerId);
 }
 
+function normalizeLoginName(value: string | null | undefined) {
+  return (value ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/\s+/g, " ");
+}
+
 export function playerIdFromUsername(username: string) {
-  const normalized = username.trim().toLowerCase();
+  const normalized = normalizeLoginName(username);
   if (!normalized) return null;
   return (
     players.find((player) => {
-      return (
-        player.username?.toLowerCase() === normalized ||
-        (player.partyId ? player.partyId.toLowerCase() === normalized : false)
-      );
+      const aliases = [
+        player.id,
+        player.username,
+        player.partyId,
+        player.shortName,
+        player.officialShortName,
+        player.name,
+        player.name.split(/\s+/)[0],
+        player.name.split(/\s+/).at(-1),
+      ];
+      return aliases.some((alias) => normalizeLoginName(alias) === normalized);
     })?.id ?? null
   );
 }

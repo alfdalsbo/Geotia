@@ -103,12 +103,12 @@ export default async function LoginPage({
                   id="username"
                   name="username"
                   autoComplete="username"
-                  placeholder="SS, IRA, PLO, PKK, PWP, CIP, MOSSAD eller Danny"
+                  placeholder="PWP, Glenn Ruben, Ruben eller Glenn"
                   required
                 />
                 <small>
-                  Bruk partiforkortelsen: {parties.map((party) => party.id.toUpperCase()).join(" · ")}.
-                  Danny logger inn som Tingvitne.
+                  Bruk parti eller navn: {parties.map((party) => party.id.toUpperCase()).join(" · ")}.
+                  Fornavn, etternavn og visningsnavn virker også.
                 </small>
               </label>
 
@@ -146,9 +146,8 @@ export default async function LoginPage({
               className="mt-6 text-sm leading-6 text-[#594226]"
               style={{ fontFamily: "var(--font-italic)", fontStyle: "italic" }}
             >
-              Hver geot logger inn med sitt parti. Danny logger inn med navnet
-              sitt og får Tingvitnebenken til ordensveien eventuelt gjør ham til
-              Partigründer. Passordet er felles: geotia.
+              Hver geot kan logge inn med parti, fornavn, etternavn eller
+              visningsnavn. Passordet er felles for Geotia.
             </p>
           </div>
         </section>

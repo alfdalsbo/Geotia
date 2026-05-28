@@ -8,7 +8,7 @@ import { Section } from "@/components/section";
 import { SlowGeoRoundLauncher } from "@/components/slowgeo-round-launcher";
 import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
 import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
-import { canManageSlowGeoAdmin } from "@/lib/admin-permissions";
+import { canManageSlowGeoAdmin, canStartSlowGeoRound } from "@/lib/admin-permissions";
 import { getCurrentGeot } from "@/lib/auth";
 import { pickGeoticLine, slowGeoEmptyStateLines } from "@/lib/geotia-jargon";
 import { getSlowGeoMode, slowGeoModeLabels } from "@/lib/slowgeo";
@@ -30,6 +30,7 @@ export default async function SlowGeoGamePage({
   const params = (await searchParams) ?? {};
   const [state, currentGeot] = await Promise.all([getSlowGeoState(), getCurrentGeot()]);
   const canManageSlowGeo = canManageSlowGeoAdmin(currentGeot?.id);
+  const canStartSlowGeo = canStartSlowGeoRound(currentGeot?.id);
   const activeRounds = state.rounds
     .filter((round) => round.challenge && round.status === "open")
     .sort((a, b) => slowGeoStartStamp(a) - slowGeoStartStamp(b) || a.number - b.number);
@@ -72,7 +73,7 @@ export default async function SlowGeoGamePage({
         </div>
       ) : null}
 
-      {canManageSlowGeo ? (
+      {canStartSlowGeo ? (
         <Section title="Start SlowGeo" eyebrow="Nytt bilde til tråden">
           <SlowGeoRoundLauncher />
         </Section>
