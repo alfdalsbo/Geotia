@@ -3,10 +3,13 @@ import { describe, expect, it } from "vitest";
 import {
   allPlayersHaveSlowGeoGuesses,
   computeStandingsForEra,
+  countSlowGeoGuesses,
   filterSlowGeoRoundsForEra,
   finalizeSlowGeoRound,
   getSlowGeoEraId,
+  hasMinimumSlowGeoRevealGuesses,
   isRoundPastDeadline,
+  MIN_SLOWGEO_REVEAL_GUESSES,
   shouldRevealSlowGeoRound,
 } from "@/lib/slowgeo";
 import { competingPlayers, players } from "@/lib/seed";
@@ -62,18 +65,8 @@ function openRound(overrides: Partial<Round> = {}): Round {
 }
 
 describe("SlowGeo reveal rules", () => {
-  it("detects deadlines and all-player reveal triggers", () => {
-    const round = openRound();
-
-    expect(isRoundPastDeadline(round, new Date("2026-05-16T11:59:00.000Z"))).toBe(false);
-    expect(isRoundPastDeadline(round, new Date("2026-05-16T12:00:00.000Z"))).toBe(true);
-    expect(allPlayersHaveSlowGeoGuesses(round, players)).toBe(false);
-    expect(shouldRevealSlowGeoRound(round, players, new Date("2026-05-16T12:01:00.000Z"))).toBe(true);
-  });
-
-  it("reveals immediately when every competing geot has pinned", () => {
-    const results = emptyResults(competingPlayers).map((result, index) => ({
-      ...result,
+  function resultWithGuess(index: number) {
+    return {
       guessText: `Pin ${index}`,
       guessLocation: {
         lat: answerLocation.lat + index * 0.01,
@@ -82,6 +75,36 @@ describe("SlowGeo reveal rules", () => {
         query: "pin",
         source: "manual" as const,
       },
+    };
+  }
+
+  it("requires four pin answers before a deadline can reveal the round", () => {
+    const round = openRound();
+    const threeAnswerRound = openRound({
+      results: emptyResults(competingPlayers).map((result, index) =>
+        index < MIN_SLOWGEO_REVEAL_GUESSES - 1 ? { ...result, ...resultWithGuess(index) } : result,
+      ),
+    });
+    const fourAnswerRound = openRound({
+      results: emptyResults(competingPlayers).map((result, index) =>
+        index < MIN_SLOWGEO_REVEAL_GUESSES ? { ...result, ...resultWithGuess(index) } : result,
+      ),
+    });
+
+    expect(isRoundPastDeadline(round, new Date("2026-05-16T11:59:00.000Z"))).toBe(false);
+    expect(isRoundPastDeadline(round, new Date("2026-05-16T12:00:00.000Z"))).toBe(true);
+    expect(allPlayersHaveSlowGeoGuesses(round, players)).toBe(false);
+    expect(countSlowGeoGuesses(threeAnswerRound)).toBe(3);
+    expect(hasMinimumSlowGeoRevealGuesses(threeAnswerRound)).toBe(false);
+    expect(shouldRevealSlowGeoRound(threeAnswerRound, players, new Date("2026-05-16T12:01:00.000Z"))).toBe(false);
+    expect(hasMinimumSlowGeoRevealGuesses(fourAnswerRound)).toBe(true);
+    expect(shouldRevealSlowGeoRound(fourAnswerRound, players, new Date("2026-05-16T12:01:00.000Z"))).toBe(true);
+  });
+
+  it("reveals immediately when every competing geot has pinned", () => {
+    const results = emptyResults(competingPlayers).map((result, index) => ({
+      ...result,
+      ...resultWithGuess(index),
     }));
     const round = openRound({ results });
 

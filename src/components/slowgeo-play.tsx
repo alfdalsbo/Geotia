@@ -24,6 +24,17 @@ type Guess = {
   label: string;
 };
 
+const guessMarkerIconSvg = encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="46" height="58" viewBox="0 0 46 58">
+  <filter id="shadow" x="-25%" y="-15%" width="150%" height="150%">
+    <feDropShadow dx="0" dy="4" stdDeviation="2.5" flood-color="#061d2b" flood-opacity="0.32"/>
+  </filter>
+  <path filter="url(#shadow)" d="M23 55c7.8-10.4 17-21.6 17-33C40 12.1 32.6 5 23 5S6 12.1 6 22c0 11.4 9.2 22.6 17 33z" fill="#285c45" stroke="#fdf7e8" stroke-width="4"/>
+  <circle cx="23" cy="22" r="9" fill="#fdf7e8" stroke="#c49a3c" stroke-width="3"/>
+  <circle cx="23" cy="22" r="4" fill="#7c2430"/>
+</svg>
+`);
+
 type SlowGeoPlayProps = {
   roundId: string;
   roundName: string;
@@ -46,6 +57,15 @@ type SlowGeoPlayProps = {
 
 function guessLabel(lat: number, lon: number) {
   return `Pin ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+}
+
+function buildGuessMarkerIcon(mapsApi: GoogleMapsApi) {
+  const icon: Record<string, unknown> = {
+    url: `data:image/svg+xml;charset=UTF-8,${guessMarkerIconSvg}`,
+  };
+  if (mapsApi.Size) icon.scaledSize = new mapsApi.Size(46, 58);
+  if (mapsApi.Point) icon.anchor = new mapsApi.Point(23, 55);
+  return icon;
 }
 
 export function SlowGeoPlay({
@@ -95,6 +115,9 @@ export function SlowGeoPlay({
         map,
         position,
         title: nextGuess.label,
+        icon: buildGuessMarkerIcon(mapsApi),
+        optimized: false,
+        zIndex: 1000,
       });
     } else {
       markerRef.current.setPosition(position);

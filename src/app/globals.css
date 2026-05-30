@@ -98,6 +98,13 @@ svg {
   max-width: 100%;
 }
 
+.gm-style img,
+.gm-style video,
+.gm-style canvas,
+.gm-style svg {
+  max-width: none;
+}
+
 .geotia-civic-bg {
   background:
     linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px),

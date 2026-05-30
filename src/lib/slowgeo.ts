@@ -4,6 +4,8 @@ import type { GeotiaEra, Player, Round, SlowGeoMode } from "@/lib/types";
 
 export const slowGeoModes: SlowGeoMode[] = ["static", "panorama"];
 
+export const MIN_SLOWGEO_REVEAL_GUESSES = 4;
+
 export const DEFAULT_SLOWGEO_ERA_ID = "proveaeraen";
 
 export const slowGeoEras: GeotiaEra[] = [
@@ -76,12 +78,24 @@ export function allPlayersHaveSlowGeoGuesses(round: Round, players: Player[]) {
   });
 }
 
+export function countSlowGeoGuesses(round: Round) {
+  return round.results.filter((result) => Boolean(result.guessLocation)).length;
+}
+
+export function hasMinimumSlowGeoRevealGuesses(round: Round) {
+  return countSlowGeoGuesses(round) >= MIN_SLOWGEO_REVEAL_GUESSES;
+}
+
 export function hasLockedSlowGeoGuess(round: Round) {
   return round.results.some((result) => Boolean(result.guessLocation));
 }
 
 export function shouldRevealSlowGeoRound(round: Round, players: Player[], now = new Date()) {
-  return isSlowGeoOpenRound(round) && (isRoundPastDeadline(round, now) || allPlayersHaveSlowGeoGuesses(round, players));
+  return (
+    isSlowGeoOpenRound(round) &&
+    hasMinimumSlowGeoRevealGuesses(round) &&
+    (isRoundPastDeadline(round, now) || allPlayersHaveSlowGeoGuesses(round, players))
+  );
 }
 
 export function finalizeSlowGeoRound(round: Round, players: Player[], revealedAt = new Date().toISOString()): Round {

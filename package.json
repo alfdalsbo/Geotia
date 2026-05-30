@@ -14,7 +14,7 @@
     "ship": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ship.ps1",
     "slowgeo:pool": "node scripts/slowgeo-pool.mjs",
     "slowgeo:refill": "node scripts/slowgeo-refill.mjs",
-    "test": "vitest run",
+    "test": "vitest run --pool=threads --no-file-parallelism --maxWorkers=1",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "verify:e2e": "npm run test:e2e"

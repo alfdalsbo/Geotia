@@ -85,7 +85,7 @@ export async function SlowGeoRoundLauncher() {
       <div className="flex items-end">
         <PendingSubmitButton className="btn btn-wax w-full lg:w-auto">
           <Satellite className="h-4 w-4" aria-hidden="true" />
-          Åpne SlowGeo
+          Start en SlowGeo
         </PendingSubmitButton>
       </div>
       <div className="rounded border border-[#c49a3c]/45 bg-[#fdf7e8] px-3 py-3 text-sm leading-6 text-[#4f412b] shadow-sm lg:col-span-4">
