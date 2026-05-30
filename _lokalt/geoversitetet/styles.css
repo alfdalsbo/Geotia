@@ -1,0 +1,749 @@
+:root {
+  --paper: #fdf7e8;
+  --paper-2: #f5ead0;
+  --ink: #1c1408;
+  --muted: #604a2a;
+  --navy: #061a26;
+  --blue: #0a2b3f;
+  --burgundy: #5e1d27;
+  --red: #8a2f3a;
+  --gold: #b8892f;
+  --gold-bright: #e1c06c;
+  --green: #1e4632;
+  --line: rgba(126, 90, 24, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    #51515a;
+  background-size: 56px 56px;
+  color: var(--ink);
+  font-family: "DM Sans", "Segoe UI", system-ui, sans-serif;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 5px double var(--gold);
+  background: linear-gradient(90deg, var(--navy), #0f3a4f 52%, var(--burgundy));
+  color: var(--paper);
+}
+
+.topbar__inner {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 0;
+}
+
+.brand {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.brand img {
+  width: 54px;
+  height: 54px;
+  flex: none;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.brand strong {
+  display: block;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.brand small {
+  display: block;
+  margin-top: 2px;
+  color: var(--gold-bright);
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+nav a {
+  border: 1px solid rgba(225, 192, 108, 0.55);
+  padding: 9px 11px;
+  text-decoration: none;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+main {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 60px;
+}
+
+#oyologi,
+#kattologi,
+#lokalt,
+#fakulteter,
+#fag,
+#geofessorer {
+  scroll-margin-top: 104px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(300px, 0.88fr);
+  border: 1px solid var(--gold);
+  background: var(--paper);
+}
+
+.hero__copy {
+  min-width: 0;
+  padding: 52px;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--burgundy);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  color: var(--blue);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+h1 {
+  max-width: 100%;
+  font-size: 72px;
+  line-height: 0.96;
+  hyphens: none;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.lead {
+  max-width: 680px;
+  margin: 22px 0 0;
+  color: #3b2c12;
+  font-size: 21px;
+  line-height: 1.55;
+}
+
+.lead::first-letter {
+  float: left;
+  padding: 5px 12px 0 0;
+  color: var(--burgundy);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 54px;
+  font-weight: 900;
+  line-height: 0.9;
+}
+
+.motto {
+  margin-top: 24px;
+  border-block: 1px solid var(--line);
+  padding: 13px 0;
+  color: var(--gold);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--gold);
+  background: rgba(255, 247, 221, 0.9);
+  padding: 12px 16px;
+  color: var(--blue);
+  text-decoration: none;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.button--primary {
+  background: var(--burgundy);
+  color: var(--paper);
+}
+
+.seal-card {
+  margin: 0;
+  border-left: 1px solid var(--gold);
+  background: var(--navy);
+  padding: 40px;
+  display: grid;
+  align-content: center;
+  gap: 16px;
+}
+
+.seal-card img {
+  width: min(430px, 100%);
+  margin: 0 auto;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  background: white;
+}
+
+.seal-card figcaption {
+  color: var(--gold-bright);
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  text-align: center;
+}
+
+.course-announcement {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.28fr);
+  gap: 0;
+  margin-top: 28px;
+  border: 1px solid var(--gold);
+  background: var(--paper);
+}
+
+.course-announcement__copy {
+  min-width: 0;
+  border-right: 1px solid var(--gold);
+  background:
+    linear-gradient(180deg, rgba(255, 250, 240, 0.92), rgba(245, 234, 208, 0.96)),
+    var(--paper);
+  padding: 30px;
+}
+
+.course-announcement__copy h2 {
+  color: var(--burgundy);
+  font-size: 38px;
+}
+
+.course-announcement__copy p {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.course-title {
+  margin: 18px 0 0;
+  color: var(--blue) !important;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 34px !important;
+  font-weight: 800;
+  line-height: 1.05 !important;
+}
+
+.course-title span {
+  display: block;
+  color: var(--gold);
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.course-subtitle {
+  margin: 10px 0 18px;
+  border-block: 1px solid var(--line);
+  padding: 12px 0;
+  color: var(--burgundy) !important;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+}
+
+.course-pill {
+  margin-top: 18px;
+  border: 1px solid rgba(225, 192, 108, 0.6);
+  background: var(--navy);
+  padding: 12px 14px;
+  color: var(--gold-bright);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.poster-frame {
+  min-width: 0;
+  margin: 0;
+  background:
+    linear-gradient(180deg, #071d2a, #061a26),
+    var(--navy);
+  padding: 24px;
+}
+
+.poster-frame img {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  border: 2px solid var(--gold);
+  background: var(--paper);
+}
+
+.poster-frame figcaption {
+  margin-top: 12px;
+  color: var(--gold-bright);
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  text-align: center;
+}
+
+.notice {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 18px;
+  border: 1px solid rgba(225, 192, 108, 0.55);
+  background: #071d2a;
+  padding: 14px 16px;
+  color: var(--paper);
+}
+
+.notice strong {
+  flex: none;
+  color: var(--gold-bright);
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cattology-feature {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(260px, 0.92fr);
+  gap: 20px;
+  margin-top: 28px;
+  border: 1px solid var(--gold);
+  background:
+    linear-gradient(135deg, rgba(94, 29, 39, 0.08), transparent 40%),
+    var(--paper);
+  padding: 30px;
+}
+
+.cattology-feature h2 {
+  max-width: 760px;
+}
+
+.lead-small {
+  max-width: 780px;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.58;
+}
+
+.cattology-feature p:not(.eyebrow):not(.lead-small) {
+  max-width: 760px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.66;
+}
+
+.motto-panel {
+  align-self: stretch;
+  display: grid;
+  place-content: center;
+  border: 5px double var(--gold);
+  background:
+    linear-gradient(180deg, rgba(6, 26, 38, 0.94), rgba(94, 29, 39, 0.92)),
+    var(--navy);
+  padding: 28px;
+  color: var(--paper);
+  text-align: center;
+}
+
+.motto-panel span,
+.motto-panel strong {
+  display: block;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.motto-panel span {
+  color: var(--gold-bright);
+  font-size: 18px;
+}
+
+.motto-panel strong {
+  margin-top: 8px;
+  color: #fff7df;
+  font-size: 32px;
+}
+
+.motto-panel small {
+  display: block;
+  margin-top: 18px;
+  color: #eadcbd;
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.section,
+.roadmap {
+  margin-top: 28px;
+  border: 1px solid var(--gold);
+  background: var(--paper);
+  padding: 30px;
+}
+
+.section__head {
+  max-width: 780px;
+  margin-bottom: 18px;
+}
+
+h2 {
+  font-size: 42px;
+  line-height: 1.05;
+}
+
+.section__head > p:not(.eyebrow) {
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.faculty-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.faculty-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.card {
+  border: 1px solid rgba(184, 137, 47, 0.48);
+  background: #fffaf0;
+  padding: 18px;
+}
+
+.card--green {
+  border-top: 5px solid var(--green);
+}
+
+.card--red {
+  border-top: 5px solid var(--burgundy);
+}
+
+.card--gold {
+  border-top: 5px solid var(--gold);
+}
+
+.code,
+.course-list span {
+  display: inline-flex;
+  margin-bottom: 12px;
+  border: 1px solid currentColor;
+  padding: 4px 8px;
+  color: var(--burgundy);
+  font-family: "DM Mono", Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+.card h3,
+.course-list h3 {
+  font-size: 24px;
+  line-height: 1.05;
+}
+
+.card p,
+.card li,
+.course-list p,
+.roadmap li {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.card ul {
+  margin: 16px 0 0;
+  padding-left: 18px;
+}
+
+.course-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+}
+
+.course-list article {
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 18px;
+}
+
+.course-list article:nth-child(3n) {
+  border-right: 0;
+}
+
+.diploma-frame {
+  margin: 22px 0 0;
+  border: 1px solid rgba(184, 137, 47, 0.55);
+  background: #071d2a;
+  padding: 16px;
+}
+
+.diploma-frame img {
+  width: min(100%, 860px);
+  margin: 0 auto;
+  border: 2px solid var(--gold);
+  background: var(--paper);
+}
+
+.diploma-frame figcaption {
+  margin-top: 12px;
+  color: var(--gold-bright);
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  text-align: center;
+}
+
+.roadmap {
+  background:
+    linear-gradient(90deg, var(--navy), #0d3a55 58%, var(--burgundy));
+  color: var(--paper);
+}
+
+.roadmap h2,
+.roadmap .eyebrow {
+  color: var(--paper);
+}
+
+.roadmap ol {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.roadmap li {
+  border: 1px solid rgba(225, 192, 108, 0.48);
+  padding: 14px;
+  color: #eadcbd;
+}
+
+.roadmap strong {
+  color: var(--gold-bright);
+}
+
+@media (max-width: 980px) {
+  .topbar__inner,
+  .hero,
+  .notice {
+    align-items: flex-start;
+  }
+
+  .topbar__inner {
+    flex-direction: column;
+  }
+
+  nav {
+    justify-content: flex-start;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .course-announcement {
+    grid-template-columns: 1fr;
+  }
+
+  .cattology-feature {
+    grid-template-columns: 1fr;
+  }
+
+  .course-announcement__copy {
+    border-right: 0;
+    border-bottom: 1px solid var(--gold);
+  }
+
+  .seal-card {
+    border-left: 0;
+    border-top: 1px solid var(--gold);
+  }
+
+  .faculty-grid,
+  .faculty-grid--three,
+  .course-list,
+  .roadmap ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .course-list article:nth-child(3n) {
+    border-right: 1px solid var(--line);
+  }
+
+  .course-list article:nth-child(2n) {
+    border-right: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  main,
+  .topbar__inner {
+    width: min(100% - 20px, 1180px);
+  }
+
+  .brand strong {
+    font-size: 16px;
+    letter-spacing: 0.09em;
+  }
+
+  nav {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  nav a {
+    flex: 1 1 calc(50% - 8px);
+    padding: 9px 8px;
+    text-align: center;
+  }
+
+  #oyologi,
+  #kattologi,
+  #lokalt,
+  #fakulteter,
+  #fag,
+  #geofessorer {
+    scroll-margin-top: 224px;
+  }
+
+  .hero__copy,
+  .cattology-feature,
+  .section,
+  .roadmap,
+  .course-announcement__copy {
+    padding: 20px;
+  }
+
+  .motto-panel {
+    padding: 22px;
+  }
+
+  .motto-panel strong {
+    font-size: 24px;
+  }
+
+  h1 {
+    font-size: 42px;
+  }
+
+  h2 {
+    font-size: 32px;
+  }
+
+  .lead {
+    font-size: 18px;
+  }
+
+  .seal-card {
+    padding: 24px;
+  }
+
+  .course-announcement__copy h2 {
+    font-size: 32px;
+  }
+
+  .course-title {
+    font-size: 28px !important;
+  }
+
+  .poster-frame {
+    padding: 12px;
+  }
+
+  .notice {
+    display: block;
+  }
+
+  .notice span {
+    display: block;
+    margin-top: 8px;
+  }
+
+  .actions .button {
+    width: 100%;
+  }
+
+  .faculty-grid,
+  .faculty-grid--three,
+  .course-list,
+  .roadmap ol {
+    grid-template-columns: 1fr;
+  }
+
+  .course-list article,
+  .course-list article:nth-child(3n) {
+    border-right: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  h1 {
+    font-size: 36px;
+  }
+
+  h2 {
+    font-size: 28px;
+  }
+}

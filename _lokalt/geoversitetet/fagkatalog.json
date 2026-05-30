@@ -1,0 +1,209 @@
+{
+  "navn": "Geoversitetet",
+  "status": "lokal_prototype_ikke_vercel",
+  "motto": "Terra et Scientia. Pin og protokoll.",
+  "roller": {
+    "professor": "Geofessor",
+    "student": "Kandidat",
+    "rektor": "Rektor Magnificus Geoticus"
+  },
+  "fakulteter": [
+    {
+      "id": "kjennelaere",
+      "navn": "Fakultet for Kjennelære",
+      "beskrivelse": "Læren om små tegn i verden: skilt, stolper, striper, jordfarge, vegetasjon og annen geografisk småsladder.",
+      "avdelinger": [
+        "Institutt for Skilt, Stolper og Stripologi",
+        "Avdeling for Nummerplater og Veimerker",
+        "Laboratorium for Vegetasjon, Jordfarge og Mistanke"
+      ],
+      "fag": [
+        {
+          "kode": "KJEN-101",
+          "navn": "Innføring i Kjennelære",
+          "kort": "Se etter det som ikke prøver å bli sett."
+        },
+        {
+          "kode": "KJEN-142",
+          "navn": "Skilt, Stolper og Veistriper",
+          "kort": "Et kurs i de små tingene som avslører store land."
+        },
+        {
+          "kode": "KJEN-204",
+          "navn": "Nummerplatemystikk og Bilskygger",
+          "kort": "Når bilen selv er et dokument i riksarkivet."
+        }
+      ]
+    },
+    {
+      "id": "cattologiae-intuitionis-terrarum",
+      "navn": "Facultas Cattologiae et Intuitionis Terrarum",
+      "norsk_navn": "Fakultetet for kattologi og territoriell intuisjon",
+      "dekan": "Geofessor Sverre Skilbreid",
+      "motto": "Non signa sequimur. Felinem sequimur.",
+      "motto_norsk": "Vi følger ikke skiltene. Vi følger katten.",
+      "beskrivelse": "Den intuitive skole innen geovitenskap: lys, vegetasjon, arkitektur, landskapets sjel og Kattemagen som akademisk metode.",
+      "avdelinger": [
+        "Institutt for Kattologi",
+        "Seminar for Geografisk Intuisjon",
+        "Laboratorium for Lys, Vegetasjon og Arkitektur"
+      ],
+      "fag": [
+        {
+          "kode": "KATT-101",
+          "navn": "Innføring i Kattologi",
+          "kort": "For kandidater som må lære å høre på landskapet før de leser skiltet."
+        },
+        {
+          "kode": "KATT-214",
+          "navn": "Kattemagen: Intuisjon under Tidspress",
+          "kort": "Instinktiv lokasjonsforståelse bygget på urimelig mye eksponering for verden."
+        },
+        {
+          "kode": "KATT-232",
+          "navn": "Lys, Vegetasjon og Arkitektur",
+          "kort": "Tre stille vitner som ofte sier mer enn både flagg og veinumre."
+        }
+      ]
+    },
+    {
+      "id": "geografisk-grunntrening",
+      "navn": "Fakultet for Geografisk Grunntrening",
+      "beskrivelse": "Klassisk geografi, men ført med Geotias milde institusjonelle overtenning.",
+      "avdelinger": [
+        "Institutt for Terreng og Klimafølelse",
+        "Avdeling for Kyst, Fjell og Dalstrøk",
+        "Avdeling for Øyologi og Kystlinjer",
+        "Seminar for Språk, Skrift og Stedsnavn"
+      ],
+      "fag": [
+        {
+          "kode": "OYO-101",
+          "navn": "Introduksjon til Øyologi (Insulologia)",
+          "kort": "Øyer, bukter, kystlinjer, territorier, form og landskap, samt praktisk MapTap-overlevelse."
+        },
+        {
+          "kode": "GEO-112",
+          "navn": "Landformenes Mumling",
+          "kort": "Fjell, sletter, elver og den stille følelsen av feil kontinent."
+        },
+        {
+          "kode": "GEO-167",
+          "navn": "Bystruktur for Mistilpassede Kartblikk",
+          "kort": "Rutenett, ringveier, forsteder og panikken i rundkjøringen."
+        }
+      ]
+    },
+    {
+      "id": "slowgeo-praksis",
+      "navn": "Fakultet for SlowGeo-praksis",
+      "beskrivelse": "Der all teori må tåle pin, tidsfrist og offentlig fasit.",
+      "avdelinger": [
+        "Pinsalen",
+        "Avdeling for Fasitdisseksjon",
+        "Klinikk for Kartskam og Feilmargin"
+      ],
+      "fag": [
+        {
+          "kode": "SLOW-201",
+          "navn": "Pinsetting under Sosialt Press",
+          "kort": "Å være bestemt uten å ha grunn til det."
+        },
+        {
+          "kode": "SLOW-260",
+          "navn": "Etterpåklokskapens Vitenskap",
+          "kort": "Hvorfor fasiten selvfølgelig var åpenbar etter at den ble vist."
+        }
+      ]
+    },
+    {
+      "id": "geotisk-dannelse",
+      "navn": "Fakultet for Geotisk Dannelse",
+      "beskrivelse": "Embetsverk, riksprotokoll, GeoTinget, Kattometeret og moralsk orden etter dårlig gjetning.",
+      "avdelinger": [
+        "Institutt for Riksprotokoll",
+        "GeoTingets Retorikksal",
+        "Avdeling for Kattometrisk Etikk"
+      ],
+      "fag": [
+        {
+          "kode": "KATT-301",
+          "navn": "Kattometerets Morallære",
+          "kort": "Skammen skal være målbar, men aldri meningsløs."
+        },
+        {
+          "kode": "TING-220",
+          "navn": "Tingforslag som Nesten Burde Vedtas",
+          "kort": "Parlamentarisk håndverk for forslag med høy temperatur."
+        }
+      ]
+    }
+  ],
+  "geofessorer": [
+    {
+      "navn": "Steinar Lofnes",
+      "embete": "Rector Magnificus",
+      "titler": [
+        "Geofessor Ordinarius Insulologiae",
+        "Geofessor Ordinarius Scriptologiae Comparativae",
+        "Geofessor Ordinarius Litorologiae Africanae",
+        "Praeceptor Litorum Africae"
+      ],
+      "fag": [
+        "Insulologia",
+        "Scriptologia Comparativa",
+        "Litorologia Africana"
+      ],
+      "mandat": "Leder Geoversitetet og forvalter øyer, skriftsystemer og Afrikas kystlinjer."
+    },
+    {
+      "navn": "Alf Kåre Dalsbø",
+      "embete": "Decanus Facultatis Geographiae Generalis",
+      "titler": [
+        "Professor Ordinarius Geographiae Generalis",
+        "Praeceptor Historiae Europaeae (1450-1750)",
+        "Geopotens Maximus",
+        "Custos Equilibrii Geographicis"
+      ],
+      "fag": [
+        "Allmenngeografi",
+        "Europeisk middelalder- og tidlig moderne geografi",
+        "Geopotologi"
+      ],
+      "mandat": "Vokter av geografisk balanse og fremste representant for Geopot-prinsippet."
+    },
+    {
+      "navn": "Vegard McKibben Lofnes",
+      "embete": "Professor Ordinarius Parabologiae et Toponymiae Americanae",
+      "titler": [
+        "Professor Ordinarius Parabologiae",
+        "Professor Toponymiae Americanae",
+        "Magister Antennarum et Nominum",
+        "Custos Foederationis Americanae"
+      ],
+      "fag": [
+        "Parabologi",
+        "USA-studier",
+        "Etymologi og stedsnavn"
+      ],
+      "mandat": "Mester over antenner og navn, og vokter av De forente stater."
+    },
+    {
+      "navn": "Sverre Skilbreid",
+      "embete": "Decanus Facultatis Cattologiae et Intuitionis Terrarum",
+      "titler": [
+        "Geofessor Ordinarius Cattologiae",
+        "Fundator Doctrinae Felinae Geoticae",
+        "Custos Intuitionis Geographicae",
+        "Magister Lucis, Vegetationis et Architecturae"
+      ],
+      "fag": [
+        "Kattologi",
+        "Geografisk intuisjon",
+        "Lys, vegetasjon og arkitektur",
+        "Kattemagen"
+      ],
+      "mandat": "Grunnlegger av moderne geotisk kattologi og vokter av den geografiske intuisjon."
+    }
+  ]
+}

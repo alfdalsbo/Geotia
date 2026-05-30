@@ -16,7 +16,6 @@
 /playwright-report/
 /.artifacts/
 /.tmp/
-/_lokalt/
 
 # next.js
 /.next/

@@ -70,7 +70,7 @@ export default async function TablesPage() {
         eyebrow="Offisiell poenglov"
         action={
           <Link href="/spill/slowgeo" prefetch={false} className="inline-flex h-10 items-center gap-2 rounded bg-[#fdf7e8] px-3 text-sm font-semibold text-[#062b40]">
-            Åpne SlowGeo
+            Start en SlowGeo
             <TableProperties className="h-4 w-4" aria-hidden="true" />
             <LinkPendingIndicator />
           </Link>

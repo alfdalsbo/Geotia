@@ -98,7 +98,7 @@ export default async function MyGeotPage({
             </p>
             <div className="geo-hero-actions">
               <Link href="/spill/slowgeo" className="btn btn-wax">
-                Åpne SlowGeo
+                Start en SlowGeo
                 <MapPin className="h-4 w-4" aria-hidden="true" />
               </Link>
               <Link href="/ordenen" className="btn btn-quiet">

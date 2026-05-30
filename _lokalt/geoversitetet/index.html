@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="no">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Geoversitetet - lokal prototype</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar__inner">
+        <a class="brand" href="#start" aria-label="Til Geoversitetets forside">
+          <img src="assets/geoversitetet-logo.jpeg" alt="Geoversitetets segl" />
+          <span>
+            <strong>Geoversitetet</strong>
+            <small>Universitas Geotiae</small>
+          </span>
+        </a>
+        <nav aria-label="Lokal Geoversitetet-navigasjon">
+          <a href="#oyologi">Nytt kurs</a>
+          <a href="#kattologi">Kattologi</a>
+          <a href="#fakulteter">Fakulteter</a>
+          <a href="#fag">Fag</a>
+          <a href="#geofessorer">Geofessorer</a>
+          <a href="#lokalt">Ikke Vercel</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="start">
+      <section class="hero">
+        <div class="hero__copy">
+          <p class="eyebrow">Lokal grunnmur - ikke deployet - ikke offentlig riksseksjon</p>
+          <h1>Geoversitetet</h1>
+          <p class="lead">
+            Universitetet i Geotia. Her lærer geoter geografi, kjennelære og
+            den høye kunsten å se en lyktestolpe og umiddelbart mistenke tre
+            land, to regioner, én personlig svakhet og muligens Kattemagen.
+          </p>
+          <div class="motto">Terra et Scientia. Pin og protokoll.</div>
+          <div class="actions">
+            <a class="button button--primary" href="#fakulteter">Åpne fagplanen</a>
+            <a class="button" href="#geofessorer">Møt Geofessoratet</a>
+          </div>
+        </div>
+        <figure class="seal-card">
+          <img src="assets/geoversitetet-logo.jpeg" alt="Geoversitetet-logo med globus, fjell, bok og laurbær" />
+          <figcaption>Seglet føres lokalt til riket åpner Vercel-porten.</figcaption>
+        </figure>
+      </section>
+
+      <section class="course-announcement" id="oyologi">
+        <div class="course-announcement__copy">
+          <p class="eyebrow">Kunngjøring fra Rektoratets digitale portal</p>
+          <h2>Nytt kurs</h2>
+          <p class="course-title">Introduksjon til Øyologi <span>(Insulologia)</span></p>
+          <p class="course-subtitle">Rare øyer, kystlinjer og andre geografiske kuriositeter</p>
+          <p>
+            I lys av flere runder i MapTap der Geotias mest ærverdige borgere
+            viste sjokkerende lave kunnskaper i faget rare og øyer, åpner
+            Geoversitetet et høyst frivillig, men sterkt anbefalt kurs.
+          </p>
+          <div class="course-pill">OYO-101 · Øyer · Bukter · Kystlinjer · MapTap-overlevelse</div>
+        </div>
+        <figure class="poster-frame">
+          <img
+            src="assets/oyologi-kunngjoring.jpeg"
+            alt="Kunngjøring fra Geoversitetet om nytt kurs: Introduksjon til Øyologi"
+          />
+          <figcaption>
+            Plakaten føres lokalt til riket eventuelt åpner Geoversitetets offentlige port.
+          </figcaption>
+        </figure>
+      </section>
+
+      <section class="notice" id="lokalt">
+        <strong>Vercel-porten er stengt.</strong>
+        <span>
+          Dette er en lokal arbeidsflate. Den ligger utenfor `src/app` og `public`,
+          og `_lokalt` er lagt i `.vercelignore`.
+        </span>
+      </section>
+
+      <section class="cattology-feature" id="kattologi">
+        <div>
+          <p class="eyebrow">Nytt fakultet ved Universitas Geotiae</p>
+          <h2>Facultas Cattologiae et Intuitionis Terrarum</h2>
+          <p class="lead-small">
+            Fakultetet for kattologi og territoriell intuisjon ledes av
+            Geofessor Sverre Skilbreid, grunnlegger av moderne geotisk
+            kattologi og vokter av den geografiske intuisjon.
+          </p>
+          <p>
+            Der andre forskere søker svar i skilt, veistriper og parabolantenner,
+            har Skilbreid viet sitt akademiske liv til landskapets sjel: lys,
+            vegetasjon, arkitektur og den stille vissheten som melder seg før
+            noen har funnet et eneste veinummer.
+          </p>
+        </div>
+        <aside class="motto-panel" aria-label="Fakultetsmotto">
+          <span>Non signa sequimur.</span>
+          <strong>Felinem sequimur.</strong>
+          <small>Vi følger ikke skiltene. Vi følger katten.</small>
+        </aside>
+      </section>
+
+      <section class="section" id="fakulteter">
+        <div class="section__head">
+          <p class="eyebrow">Rikets akademiske maskineri</p>
+          <h2>Fakulteter og avdelinger</h2>
+        </div>
+        <div class="faculty-grid">
+          <article class="card card--green">
+            <span class="code">KJEN</span>
+            <h3>Fakultet for Kjennelære</h3>
+            <p>
+              Læren om små tegn i verden: skilt, stolper, striper, jordfarge,
+              vegetasjon, bilskygger og andre ting som ikke virker viktige før
+              de plutselig er hele fasiten.
+            </p>
+            <ul>
+              <li>Institutt for Skilt, Stolper og Stripologi</li>
+              <li>Avdeling for Nummerplater og Veimerker</li>
+              <li>Laboratorium for Vegetasjon, Jordfarge og Mistanke</li>
+            </ul>
+          </article>
+
+          <article class="card card--red">
+            <span class="code">KATT</span>
+            <h3>Fakultetet for Kattologi og Territoriell Intuisjon</h3>
+            <p>
+              Den intuitive skole: Kattemagen, lysforhold, vegetasjon,
+              arkitektur og de geografiske følelsene som oppstår før skiltet
+              får ordet.
+            </p>
+            <ul>
+              <li>Institutt for Kattologi</li>
+              <li>Seminar for Geografisk Intuisjon</li>
+              <li>Laboratorium for Lys, Vegetasjon og Arkitektur</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <span class="code">GEO</span>
+            <h3>Fakultet for Geografisk Grunntrening</h3>
+            <p>
+              Terreng, klima, bystruktur, språk, stedsnavn, kyst, fjell og
+              den sitrende følelsen av at dette kan være Balkan, men farlig nok
+              ikke akkurat der.
+            </p>
+            <ul>
+              <li>Institutt for Terreng og Klimafølelse</li>
+              <li>Avdeling for Kyst, Fjell og Dalstrøk</li>
+              <li>Seminar for Språk, Skrift og Stedsnavn</li>
+            </ul>
+          </article>
+
+          <article class="card card--red">
+            <span class="code">SLOW</span>
+            <h3>Fakultet for SlowGeo-praksis</h3>
+            <p>
+              Rikets feltlaboratorium. Her må all teori tåle pin, tidsfrist,
+              fasit og det lille øyeblikket der alle later som de "egentlig"
+              hadde vurdert riktig kontinent.
+            </p>
+            <ul>
+              <li>Pinsalen</li>
+              <li>Avdeling for Fasitdisseksjon</li>
+              <li>Klinikk for Kartskam og Feilmargin</li>
+            </ul>
+          </article>
+
+          <article class="card card--gold">
+            <span class="code">STAT</span>
+            <h3>Fakultet for Geotisk Dannelse</h3>
+            <p>
+              Embetsverk, riksprotokoll, GeoTinget, Kattometerets etikk og
+              evnen til å tape en runde uten å bli et forfatningsproblem.
+            </p>
+            <ul>
+              <li>Institutt for Riksprotokoll</li>
+              <li>GeoTingets Retorikksal</li>
+              <li>Avdeling for Kattometrisk Etikk</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="fag">
+        <div class="section__head">
+          <p class="eyebrow">Første fagkatalog</p>
+          <h2>Emner som bør gi studiepoeng, men først og fremst bedre pins</h2>
+        </div>
+        <div class="course-list">
+          <article>
+            <span>OYO-101</span>
+            <h3>Introduksjon til Øyologi (Insulologia)</h3>
+            <p>Øyer, bukter, kystlinjer, territorier, form og MapTap-overlevelse.</p>
+          </article>
+          <article>
+            <span>KJEN-101</span>
+            <h3>Innføring i Kjennelære</h3>
+            <p>Se etter det som ikke prøver å bli sett.</p>
+          </article>
+          <article>
+            <span>KJEN-142</span>
+            <h3>Skilt, Stolper og Veistriper</h3>
+            <p>Et kurs i de små tingene som avslører store land.</p>
+          </article>
+          <article>
+            <span>KATT-101</span>
+            <h3>Innføring i Kattologi</h3>
+            <p>Å høre på landskapet før kandidaten rekker å lese skiltet.</p>
+          </article>
+          <article>
+            <span>KATT-214</span>
+            <h3>Kattemagen: Intuisjon under Tidspress</h3>
+            <p>Instinktiv lokasjonsforståelse bygget på urimelig mye eksponering.</p>
+          </article>
+          <article>
+            <span>GEO-112</span>
+            <h3>Landformenes Mumling</h3>
+            <p>Fjell, sletter, elver og den stille følelsen av feil kontinent.</p>
+          </article>
+          <article>
+            <span>SLOW-201</span>
+            <h3>Pinsetting under Sosialt Press</h3>
+            <p>Å være bestemt uten å ha grunn til det, og likevel føre svar.</p>
+          </article>
+          <article>
+            <span>KATT-301</span>
+            <h3>Kattometerets Morallære</h3>
+            <p>Skammen skal være målbar, men aldri meningsløs.</p>
+          </article>
+          <article>
+            <span>TING-220</span>
+            <h3>Tingforslag som Nesten Burde Vedtas</h3>
+            <p>Parlamentarisk håndverk for forslag med høy temperatur.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section section--split" id="geofessorer">
+        <div class="section__head">
+          <p class="eyebrow">Geofessoratet</p>
+          <h2>Professorene er Geofessorer</h2>
+          <p>
+            Geofessorer er halvveis lærere, halvveis embetsverk, og helt
+            farlige når de får et kartutsnitt. De første stolene er nå ført i
+            lokal kanon med rektorat, dekanater og faglig særansvar.
+          </p>
+        </div>
+        <div class="faculty-grid">
+          <article class="card">
+            <span class="code">RECTOR</span>
+            <h3>Steinar Lofnes</h3>
+            <p>Rector Magnificus, insulolog, komparativ scriptolog og mester over Afrikas kystlinjer.</p>
+          </article>
+          <article class="card card--green">
+            <span class="code">GEO</span>
+            <h3>Alf Kåre Dalsbø</h3>
+            <p>Professor Ordinarius Geographiae Generalis og vokter av den geografiske balanse.</p>
+          </article>
+          <article class="card card--red">
+            <span class="code">PARA</span>
+            <h3>Vegard McKibben Lofnes</h3>
+            <p>Professor i parabologi og amerikansk toponymi, mester over antenner og navn.</p>
+          </article>
+          <article class="card card--gold">
+            <span class="code">KATT</span>
+            <h3>Sverre Skilbreid</h3>
+            <p>Geofessor Ordinarius Cattologiae, grunnlegger av Kattemagen og vokter av intuisjonen.</p>
+          </article>
+        </div>
+        <figure class="diploma-frame">
+          <img src="assets/geofessor-steinar-lofnes.jpeg" alt="Akademisk diplom for Steinar Lofnes, Rector Magnificus" />
+          <figcaption>Rektoratets diplom føres som lokal artefakt i Geoversitetets arbeidsarkiv.</figcaption>
+        </figure>
+      </section>
+
+      <section class="roadmap">
+        <p class="eyebrow">Videre uten Vercel</p>
+        <h2>Første lokale løype</h2>
+        <ol>
+          <li><strong>Kanon:</strong> lås språk, humor, fag og Geofessor-titler.</li>
+          <li><strong>Fagkatalog:</strong> bygg flere emner, avdelinger og fakultetsmotto i JSON.</li>
+          <li><strong>Artefakter:</strong> før diplomer, kursplakater og segl i lokalt arkiv.</li>
+          <li><strong>Vercel:</strong> først når du sier "nå åpner vi porten".</li>
+        </ol>
+      </section>
+    </main>
+  </body>
+</html>
