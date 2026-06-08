@@ -21,6 +21,7 @@ const coreRoutes = [
   "/arkiv/partier",
   "/hall-of-fame",
   "/tredje-kollegium",
+  "/geoversitetet",
 ];
 
 async function login(page: Page) {
@@ -136,10 +137,13 @@ async function mockGoogleMaps(page: Page) {
                 options.map.element.dataset.markerCount = String(markerCount);
                 if (String(options.title || "").startsWith("Fasit:")) {
                   options.map.element.dataset.answerMarkerIcon = options.icon?.url ? "custom" : "default";
-                  options.map.element.dataset.answerMarkerLabel = options.label ? String(options.label) : "none";
+                  options.map.element.dataset.answerMarkerLabel =
+                    typeof options.label === "object" && options.label?.text ? String(options.label.text) : options.label ? String(options.label) : "none";
                   options.map.element.dataset.answerMarkerZIndex = String(options.zIndex || "");
                 } else {
                   options.map.element.dataset.guessMarkerIcon = options.icon?.url ? "custom" : "default";
+                  options.map.element.dataset.guessMarkerLabel =
+                    typeof options.label === "object" && options.label?.text ? String(options.label.text) : options.label ? String(options.label) : "none";
                   options.map.element.dataset.guessMarkerOptimized = String(options.optimized);
                   options.map.element.dataset.guessMarkerZIndex = String(options.zIndex || "");
                 }
@@ -147,6 +151,23 @@ async function mockGoogleMaps(page: Page) {
             }
             setMap(map) { this.map = map; }
             setPosition(point) { this.position = point; }
+          }
+          class OverlayView {
+            setMap(map) {
+              this.map = map;
+              if (map) {
+                this.onAdd?.();
+                this.draw?.();
+              } else {
+                this.onRemove?.();
+              }
+            }
+            getPanes() {
+              return { overlayMouseTarget: this.map?.element };
+            }
+            getProjection() {
+              return { fromLatLngToDivPixel: () => ({ x: 160, y: 180 }) };
+            }
           }
           class Polyline {
             constructor(options) { this.map = options.map; }
@@ -213,7 +234,7 @@ async function mockGoogleMaps(page: Page) {
           class LatLngBounds {
             extend() {}
           }
-          window.google = { maps: { Map, Marker, Polyline, StreetViewPanorama, LatLngBounds, event: { trigger() {} } } };
+          window.google = { maps: { Map, Marker, OverlayView, Polyline, StreetViewPanorama, LatLngBounds, event: { trigger() {} } } };
         })();
       `,
     });
@@ -680,7 +701,7 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
   await expect(page.getByText("Laster kart")).toHaveCount(0);
   await page.getByTestId("slowgeo-map-surface").click({ position: { x: 160, y: 180 } });
   await expect(page.getByText("59.91270, 10.74610")).toBeVisible();
-  await expect(page.getByTestId("slowgeo-map-surface")).toHaveAttribute("data-guess-marker-icon", "custom");
+  await expect(page.getByTestId("slowgeo-map-surface")).toHaveAttribute("data-guess-marker-icon", "default");
   await expect(page.getByTestId("slowgeo-map-surface")).toHaveAttribute("data-guess-marker-optimized", "false");
   await expectNoHorizontalOverflow(page);
 
@@ -748,7 +769,7 @@ test("SlowGeo answer map opens fullscreen on mobile", async ({ page }) => {
 
   await dialog.getByTestId("slowgeo-map-surface").click({ position: { x: 160, y: 180 } });
   await expect(dialog.getByText("59.91270, 10.74610")).toBeVisible();
-  await expect(dialog.getByTestId("slowgeo-map-surface")).toHaveAttribute("data-guess-marker-icon", "custom");
+  await expect(dialog.getByTestId("slowgeo-map-surface")).toHaveAttribute("data-guess-marker-icon", "default");
   await expect(dialog.getByTestId("slowgeo-map-surface")).toHaveAttribute("data-guess-marker-optimized", "false");
   await expect(dialog.getByRole("button", { name: "Send pin-svar" })).toBeEnabled();
   await expectNoHorizontalOverflow(page);
@@ -837,10 +858,10 @@ test("SlowGeo revealed rounds stay out of the active room and live in the protoc
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toBeVisible();
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-map-gesture-handling", "greedy");
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveCSS("touch-action", "none");
-    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-answer-marker-icon", "custom");
-    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-answer-marker-label", "none");
+    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-answer-marker-icon", "default");
+    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-answer-marker-label", "!");
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-answer-marker-z-index", "1000");
-    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-guess-marker-icon", "custom");
+    await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-guess-marker-icon", "default");
     await expect(page.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-guess-marker-optimized", "false");
     await expect(page.getByRole("heading", { name: "Resultat" })).toBeVisible();
     await expect(page.getByText("Tromsøbrua nesten på streken")).toBeVisible();
@@ -852,9 +873,9 @@ test("SlowGeo revealed rounds stay out of the active room and live in the protoc
     await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toBeVisible();
     await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-map-gesture-handling", "greedy");
     await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toHaveCSS("touch-action", "none");
-    await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-answer-marker-icon", "custom");
-    await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-answer-marker-label", "none");
-    await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-guess-marker-icon", "custom");
+    await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-answer-marker-icon", "default");
+    await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-answer-marker-label", "!");
+    await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-guess-marker-icon", "default");
     await expect(revealDialog.getByTestId("slowgeo-reveal-map-surface")).toHaveAttribute("data-guess-marker-optimized", "false");
     await expectNoHorizontalOverflow(page);
     await revealDialog.getByRole("button", { name: "Lukk kart" }).click();

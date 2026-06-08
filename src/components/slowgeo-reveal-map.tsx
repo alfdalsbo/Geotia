@@ -8,11 +8,11 @@ import {
   loadGoogleMaps,
   type GoogleMap,
   type GoogleMapsApi,
-  type GoogleMarker,
   type GooglePolyline,
 } from "@/components/google-maps-loader";
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { SlowGeoImageViewer } from "@/components/slowgeo-image-viewer";
+import { createSlowGeoMapMarker, type SlowGeoMapMarker } from "@/components/slowgeo-map-marker";
 import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-button";
 import type { SlowGeoRevealMarker, SlowGeoRevealResult } from "@/lib/slowgeo-reveal";
 import type { SlowGeoStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
@@ -25,46 +25,6 @@ import {
 import { cn, formatKm } from "@/lib/utils";
 
 type SlowGeoRevealVariant = "full" | "summary";
-
-const answerMarkerIconSvg = encodeURIComponent(`
-<svg xmlns="http://www.w3.org/2000/svg" width="58" height="72" viewBox="0 0 58 72">
-  <filter id="shadow" x="-25%" y="-15%" width="150%" height="150%">
-    <feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#061d2b" flood-opacity="0.34"/>
-  </filter>
-  <path filter="url(#shadow)" d="M29 68c9-12 22-27 22-42C51 13.3 41.2 4 29 4S7 13.3 7 26c0 15 13 30 22 42z" fill="#7c2430" stroke="#fdf7e8" stroke-width="4"/>
-  <circle cx="29" cy="26" r="16" fill="#fff3d4" stroke="#c49a3c" stroke-width="4"/>
-  <circle cx="29" cy="26" r="7" fill="#285c45"/>
-  <path d="M23 26.5l4 4.2 8.5-10" fill="none" stroke="#fdf7e8" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-`);
-
-function buildAnswerMarkerIcon(mapsApi: GoogleMapsApi) {
-  const icon: Record<string, unknown> = {
-    url: `data:image/svg+xml;charset=UTF-8,${answerMarkerIconSvg}`,
-  };
-  if (mapsApi.Size) icon.scaledSize = new mapsApi.Size(58, 72);
-  if (mapsApi.Point) icon.anchor = new mapsApi.Point(29, 68);
-  return icon;
-}
-
-function buildGuessMarkerIcon(mapsApi: GoogleMapsApi, color: string) {
-  const svg = encodeURIComponent(`
-<svg xmlns="http://www.w3.org/2000/svg" width="46" height="58" viewBox="0 0 46 58">
-  <filter id="shadow" x="-25%" y="-15%" width="150%" height="150%">
-    <feDropShadow dx="0" dy="4" stdDeviation="2.5" flood-color="#061d2b" flood-opacity="0.3"/>
-  </filter>
-  <path filter="url(#shadow)" d="M23 55c7.8-10.4 17-21.6 17-33C40 12.1 32.6 5 23 5S6 12.1 6 22c0 11.4 9.2 22.6 17 33z" fill="${color}" stroke="#fdf7e8" stroke-width="4"/>
-  <circle cx="23" cy="22" r="9" fill="#fdf7e8" stroke="#c49a3c" stroke-width="3"/>
-  <circle cx="23" cy="22" r="4" fill="${color}"/>
-</svg>
-`);
-  const icon: Record<string, unknown> = {
-    url: `data:image/svg+xml;charset=UTF-8,${svg}`,
-  };
-  if (mapsApi.Size) icon.scaledSize = new mapsApi.Size(46, 58);
-  if (mapsApi.Point) icon.anchor = new mapsApi.Point(23, 55);
-  return icon;
-}
 
 export function SlowGeoRevealMap({
   roundName,
@@ -113,7 +73,7 @@ export function SlowGeoRevealMap({
   const mapElementRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<GoogleMap | null>(null);
   const mapsApiRef = useRef<GoogleMapsApi | null>(null);
-  const markerRefs = useRef<GoogleMarker[]>([]);
+  const markerRefs = useRef<SlowGeoMapMarker[]>([]);
   const polylineRefs = useRef<GooglePolyline[]>([]);
   const [loadingMap, setLoadingMap] = useState(false);
   const [mapReadyToLoad, setMapReadyToLoad] = useState(false);
@@ -214,27 +174,15 @@ export function SlowGeoRevealMap({
         const answerMarker = markers.find((marker) => marker.type === "answer");
         markerRefs.current = markers.map((marker, index) => {
           const isAnswerMarker = marker.type === "answer";
-          return new mapsApi.Marker({
+          return createSlowGeoMapMarker({
+            color: marker.color,
+            kind: isAnswerMarker ? "answer" : "guess",
+            label: isAnswerMarker ? "!" : marker.label.slice(0, 1).toUpperCase(),
             map,
+            mapsApi,
             position: { lat: marker.lat, lng: marker.lon },
             title: isAnswerMarker ? `Fasit: ${marker.label}` : marker.label,
-            ...(isAnswerMarker
-              ? {
-                  icon: buildAnswerMarkerIcon(mapsApi),
-                  optimized: false,
-                  zIndex: 1000,
-                }
-              : {
-                  icon: buildGuessMarkerIcon(mapsApi, marker.color),
-                  label: {
-                    text: marker.label.slice(0, 1).toUpperCase(),
-                    color: "#fdf7e8",
-                    fontSize: "13px",
-                    fontWeight: "700",
-                  },
-                  optimized: false,
-                  zIndex: 100 + index,
-                }),
+            zIndex: isAnswerMarker ? 1000 : 100 + index,
           });
         });
         polylineRefs.current = answerMarker
