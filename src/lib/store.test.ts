@@ -15,6 +15,18 @@ function metadataResponse(body: Record<string, unknown>) {
   } as Response;
 }
 
+const slowGeoRevealPlayerIds = ["alf", "vegard", "jorgen", "steinar"] as const;
+
+function slowGeoTestPin(answerLocation: GeoLocation, index: number): GeoLocation {
+  return {
+    lat: answerLocation.lat + index * 0.01,
+    lon: answerLocation.lon,
+    label: `Testpin ${index + 1}`,
+    query: "pin",
+    source: "manual",
+  };
+}
+
 afterEach(async () => {
   delete process.env.GEOTIA_DATA_FILE;
   delete process.env.GOOGLE_MAPS_SERVER_API_KEY;
@@ -100,7 +112,7 @@ describe("Geotia file store", () => {
       "guess-alf",
       "guess-vegard",
     ]);
-  });
+  }, 10_000);
 
   it("persists Geoterindeksen adjustments in the local protocol file", async () => {
     tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
@@ -323,6 +335,16 @@ describe("Geotia file store", () => {
     expect(resubmitted.ok).toBe(false);
     expect(resubmitted.reason).toContain("låst");
 
+    for (const [index, playerId] of ["vegard", "jorgen", "steinar"].entries()) {
+      const extraSubmitted = await submitSlowGeoGuess({
+        roundId: created.round.id,
+        playerId,
+        location: slowGeoTestPin(created.round.answerLocation, index + 1),
+      });
+      expect(extraSubmitted.ok).toBe(true);
+      expect(extraSubmitted.round?.status).toBe("open");
+    }
+
     const reveal = await revealDueSlowGeoRounds(new Date(Date.now() + 25 * 60 * 60 * 1000));
     const state = await getAppState();
     const round = state.rounds.find((candidate) => candidate.id === created.round.id);
@@ -338,8 +360,131 @@ describe("Geotia file store", () => {
     });
     const raw = JSON.parse(await readFile(path.join(tempDir, "state.json"), "utf8")) as { meta?: Record<string, string> };
     const backups = await readdir(path.join(tempDir, "backups"));
-    expect(raw.meta?.schemaVersion).toBe("2");
+    expect(raw.meta?.schemaVersion).toBe("3");
     expect(backups.some((file) => file.startsWith("geotia-data-"))).toBe(true);
+  });
+
+  it("creates BohemGeo rounds outside the official table and reveals them on command", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    process.env.GOOGLE_MAPS_SERVER_API_KEY = "";
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    vi.resetModules();
+
+    const { createSlowGeoRound, revealBohemGeoRoundNow, getAppState } = await import("@/lib/store");
+
+    const bohemDeadline = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const bohem = await createSlowGeoRound({
+      title: "Følelsesprøven",
+      deadlineAt: bohemDeadline,
+      variant: "bohemgeo",
+      startedBy: "alf",
+    });
+    if (!bohem.ok || !bohem.round) throw new Error("BohemGeo-runden ble ikke opprettet");
+
+    expect(bohem.round.slowGeoVariant).toBe("bohemgeo");
+    expect(bohem.round.slowGeoEraId).toBeNull();
+    expect(bohem.round.deadlineAt).toBe(bohemDeadline);
+
+    const revealed = await revealBohemGeoRoundNow({ roundId: bohem.round.id });
+    expect(revealed.ok).toBe(true);
+    expect(revealed.round?.status).toBe("locked");
+    expect(revealed.round?.results.every((result) => result.status === "ikke_deltatt")).toBe(true);
+
+    const official = await createSlowGeoRound({ title: "Lovlig SlowGeo" });
+    if (!official.ok || !official.round) throw new Error("SlowGeo-runden ble ikke opprettet");
+
+    const rejected = await revealBohemGeoRoundNow({ roundId: official.round.id });
+    expect(rejected.ok).toBe(false);
+    expect(rejected.reason).toContain("BohemGeo");
+
+    const state = await getAppState();
+    const storedBohem = state.rounds.find((round) => round.id === bohem.round.id);
+    expect(storedBohem?.slowGeoVariant).toBe("bohemgeo");
+    expect(storedBohem?.slowGeoEraId).toBeNull();
+  });
+
+  it("never repeats a SlowGeo candidate that has already been used", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    process.env.GOOGLE_MAPS_SERVER_API_KEY = "";
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    vi.resetModules();
+
+    const { createSlowGeoRound } = await import("@/lib/store");
+    const first = await createSlowGeoRound({ title: "Første bilde" });
+    const second = await createSlowGeoRound({ title: "Andre bilde" });
+    if (!first.ok || !first.round || !second.ok || !second.round) {
+      throw new Error("SlowGeo-rundene ble ikke opprettet");
+    }
+
+    expect(second.round.challenge?.candidateId).not.toBe(first.round.challenge?.candidateId);
+  });
+
+  it("keeps a deleted SlowGeo candidate permanently blocked", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    process.env.GOOGLE_MAPS_SERVER_API_KEY = "";
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    vi.resetModules();
+
+    const { createSlowGeoRound, deleteSlowGeoRound } = await import("@/lib/store");
+    const first = await createSlowGeoRound({ title: "Slettet bilde" });
+    if (!first.ok || !first.round) throw new Error("Første SlowGeo ble ikke opprettet");
+
+    const deleted = await deleteSlowGeoRound({ roundId: first.round.id });
+    const second = await createSlowGeoRound({ title: "Etter sletting" });
+    if (!second.ok || !second.round) throw new Error("Andre SlowGeo ble ikke opprettet");
+
+    expect(deleted.ok).toBe(true);
+    expect(second.round.challenge?.candidateId).not.toBe(first.round.challenge?.candidateId);
+  });
+
+  it("rejects new SlowGeo rounds without writing when every curated candidate is used", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    const stateFile = path.join(tempDir, "state.json");
+    process.env.GEOTIA_DATA_FILE = stateFile;
+    process.env.GOOGLE_MAPS_SERVER_API_KEY = "";
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    const { slowGeoCandidates } = await import("@/lib/streetview");
+    await writeFile(
+      stateFile,
+      JSON.stringify(
+        {
+          meta: { schemaVersion: "3" },
+          rounds: [],
+          gameSessions: [],
+          geotingProposals: [],
+          geoterIndexAdjustments: [],
+          geoticOrderAssessments: [],
+          geoticOrderPromotionCases: [],
+          playerProfiles: [],
+          geocodeCache: [],
+          slowGeoUsedChallenges: slowGeoCandidates.map((candidate, index) => ({
+            candidateId: candidate.id,
+            panoId: null,
+            roundId: `used-${index}`,
+            challengeId: `challenge-${index}`,
+            usedAt: `2026-05-19T${String(index % 24).padStart(2, "0")}:00:00.000Z`,
+            reason: "backfilled",
+          })),
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+    vi.resetModules();
+
+    const { createSlowGeoRound, getAppState } = await import("@/lib/store");
+    const created = await createSlowGeoRound({ title: "Tom kandidatbank" });
+    const state = await getAppState();
+
+    expect(created.ok).toBe(false);
+    expect(created.reason).toContain("Alle kuraterte SlowGeo-bilder er brukt");
+    expect(state.rounds).toHaveLength(0);
   });
 
   it("rejects Panorama SlowGeo creation when metadata cannot provide a pano id", async () => {
@@ -433,7 +578,7 @@ describe("Geotia file store", () => {
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
     vi.resetModules();
 
-    const { createSlowGeoRound, deleteSlowGeoRound, getAppState, revealDueSlowGeoRounds } = await import("@/lib/store");
+    const { createSlowGeoRound, deleteSlowGeoRound, getAppState, revealDueSlowGeoRounds, submitSlowGeoGuess } = await import("@/lib/store");
 
     const open = await createSlowGeoRound({
       title: "Åpen sletteprøve",
@@ -451,8 +596,16 @@ describe("Geotia file store", () => {
       title: "Låst sletteprøve",
       deadlineAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
     });
-    if (!locked.ok || !locked.round) throw new Error("Låst SlowGeo ble ikke opprettet");
-    await revealDueSlowGeoRounds();
+    if (!locked.ok || !locked.round?.answerLocation) throw new Error("Låst SlowGeo ble ikke opprettet");
+    for (const [index, playerId] of slowGeoRevealPlayerIds.entries()) {
+      const submitted = await submitSlowGeoGuess({
+        roundId: locked.round.id,
+        playerId,
+        location: slowGeoTestPin(locked.round.answerLocation, index),
+      });
+      expect(submitted.ok).toBe(true);
+    }
+    await revealDueSlowGeoRounds(new Date(Date.now() + 25 * 60 * 60 * 1000));
 
     state = await getAppState();
     expect(state.rounds.find((round) => round.id === locked.round?.id)?.status).toBe("locked");
@@ -490,6 +643,7 @@ describe("Geotia file store", () => {
     expect(replaced.round.id).toBe(created.round.id);
     expect(replaced.round.number).toBe(created.round.number);
     expect(replaced.round.slowGeoMode).toBe("panorama");
+    expect(replaced.round.challenge?.candidateId).not.toBe(created.round.challenge?.candidateId);
     expect(replaced.round.slowGeoStartedBy).toBe("vegard");
     expect(replaced.round.slowGeoStartedAt).toBe(created.round.slowGeoStartedAt);
     expect(replaced.round.challenge?.panoId).toBe("second-pano");
@@ -536,9 +690,9 @@ describe("Geotia file store", () => {
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
     vi.resetModules();
 
-    const { createSlowGeoRound, getAppState, revealDueSlowGeoRounds } = await import("@/lib/store");
-    const deadlineAt = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const created = await createSlowGeoRound({ title: "Forfalt, men ren lesing", deadlineAt });
+    const { createSlowGeoRound, getAppState, revealDueSlowGeoRounds, submitSlowGeoGuess } = await import("@/lib/store");
+    const deadlineAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const created = await createSlowGeoRound({ title: "Åpen, men ren lesing", deadlineAt });
     if (!created.ok || !created.round) throw new Error("SlowGeo-runden ble ikke opprettet");
     const beforeRead = JSON.parse(await readFile(path.join(tempDir, "state.json"), "utf8")) as { meta?: Record<string, string> };
 
@@ -553,8 +707,25 @@ describe("Geotia file store", () => {
     const revealedState = await getAppState();
     const revealedRound = revealedState.rounds.find((candidate) => candidate.id === created.round?.id);
 
-    expect(reveal.revealed).toBe(1);
-    expect(revealedRound?.status).toBe("locked");
+    expect(reveal.revealed).toBe(0);
+    expect(revealedRound?.status).toBe("open");
+
+    if (!created.round.answerLocation) throw new Error("SlowGeo-runden mangler fasitpunkt");
+    for (const [index, playerId] of slowGeoRevealPlayerIds.entries()) {
+      const submitted = await submitSlowGeoGuess({
+        roundId: created.round.id,
+        playerId,
+        location: slowGeoTestPin(created.round.answerLocation, index),
+      });
+      expect(submitted.ok).toBe(true);
+    }
+    const afterFourthAnswer = await getAppState();
+    expect(afterFourthAnswer.rounds.find((candidate) => candidate.id === created.round?.id)?.status).toBe("open");
+
+    const finalReveal = await revealDueSlowGeoRounds(new Date(Date.now() + 25 * 60 * 60 * 1000));
+    const afterExplicitReveal = await getAppState();
+    expect(finalReveal.revealed).toBe(1);
+    expect(afterExplicitReveal.rounds.find((candidate) => candidate.id === created.round?.id)?.status).toBe("locked");
   });
 
   it("returns the same slices through focused selectors as the compatibility state", async () => {

@@ -1,4 +1,5 @@
 import { computeRound, roundNumber } from "@/lib/scoring";
+import { filterScoreBearingRounds } from "@/lib/slowgeo";
 import type { ComputedPlayerResult, ComputedRound, Player, Round, Standing } from "@/lib/types";
 
 export type PlayerDossierStat = {
@@ -116,7 +117,7 @@ function momentFor(entry: RoundEntry): PlayerDossierMoment {
 }
 
 export function getPlayerDossier(player: Player, players: Player[], rounds: Round[], standing?: Standing) {
-  const entries = rounds
+  const entries = filterScoreBearingRounds(rounds)
     .filter((round) => round.status === "locked")
     .map((round) => computeRound(round, players))
     .map((round) => {

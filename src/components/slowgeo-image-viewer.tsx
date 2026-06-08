@@ -39,6 +39,7 @@ const minScale = 1;
 const maxScale = 4;
 const zoomStep = 0.5;
 const maxPanoramaZoom = 4;
+const panoramaTravelKeys = new Set(["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"]);
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -184,7 +185,13 @@ export function SlowGeoImageViewer({
     let cancelled = false;
     const listeners: GoogleMapsListener[] = [];
     const element = panoramaElementRef.current;
+    const blockPanoramaTravelKey = (event: KeyboardEvent) => {
+      if (!panoramaTravelKeys.has(event.key)) return;
+      event.preventDefault();
+      event.stopPropagation();
+    };
     setPanoramaStatus("loading");
+    element.addEventListener("keydown", blockPanoramaTravelKey, true);
 
     loadGoogleMaps(streetViewPanorama.apiKey)
       .then((mapsApi) => {
@@ -198,10 +205,12 @@ export function SlowGeoImageViewer({
           zoom: streetViewPanorama.initialZoom,
           addressControl: false,
           clickToGo: false,
+          disableDoubleClickZoom: true,
           disableDefaultUI: true,
           enableCloseButton: false,
           fullscreenControl: false,
           imageDateControl: false,
+          keyboardShortcuts: false,
           linksControl: false,
           motionTracking: false,
           motionTrackingControl: false,
@@ -219,15 +228,51 @@ export function SlowGeoImageViewer({
 
         const panorama = new mapsApi.StreetViewPanorama(element, options);
         panoramaRef.current = panorama;
+        let lockedPanoId = streetViewPanorama.panoId ?? panorama.getPano?.() ?? null;
+        let restoringLockedPano = false;
+        const clearPanoramaLinks = () => {
+          const links = panorama.getLinks?.();
+          if (Array.isArray(links) && links.length === 0) return;
+          panorama.setLinks?.([]);
+        };
+        const restoreLockedPano = () => {
+          if (restoringLockedPano || !lockedPanoId || !panorama.setPano) return;
+          const currentPano = panorama.getPano?.();
+          if (!currentPano || currentPano === lockedPanoId) return;
+
+          const currentPov = panorama.getPov?.() ?? streetViewPanorama.pov;
+          const currentZoom = panorama.getZoom();
+          restoringLockedPano = true;
+          panorama.setPano(lockedPanoId);
+          window.setTimeout(() => {
+            if (cancelled) return;
+            panorama.setPov(currentPov);
+            panorama.setZoom(currentZoom);
+            clearPanoramaLinks();
+            restoringLockedPano = false;
+          }, 0);
+        };
         const statusListener = panorama.addListener?.("status_changed", () => {
           const status = panorama.getStatus?.();
           if (status && status !== "OK") {
             panoramaRef.current = null;
             setPanoramaStatus("error");
             onPanoramaUnavailable?.();
+            return;
           }
+          lockedPanoId = lockedPanoId ?? panorama.getPano?.() ?? null;
+          clearPanoramaLinks();
         });
         if (statusListener) listeners.push(statusListener);
+        const panoListener = panorama.addListener?.("pano_changed", () => {
+          lockedPanoId = lockedPanoId ?? panorama.getPano?.() ?? null;
+          restoreLockedPano();
+          clearPanoramaLinks();
+        });
+        if (panoListener) listeners.push(panoListener);
+        const linksListener = panorama.addListener?.("links_changed", clearPanoramaLinks);
+        if (linksListener) listeners.push(linksListener);
+        clearPanoramaLinks();
         setPanoramaStatus("ready");
       })
       .catch(() => {
@@ -239,6 +284,7 @@ export function SlowGeoImageViewer({
 
     return () => {
       cancelled = true;
+      element.removeEventListener("keydown", blockPanoramaTravelKey, true);
       listeners.forEach((listener) => listener.remove());
       panoramaRef.current = null;
     };

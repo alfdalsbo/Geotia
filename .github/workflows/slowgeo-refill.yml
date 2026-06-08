@@ -1,0 +1,51 @@
+name: SlowGeo candidate refill
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * 1"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Show SlowGeo pool
+        run: npm run slowgeo:pool
+        env:
+          SLOWGEO_USED_CHALLENGES_JSON: ${{ secrets.SLOWGEO_USED_CHALLENGES_JSON }}
+
+      - name: Refill SlowGeo pool
+        run: npm run slowgeo:refill
+        env:
+          GOOGLE_MAPS_SERVER_API_KEY: ${{ secrets.GOOGLE_MAPS_SERVER_API_KEY }}
+          SLOWGEO_USED_CHALLENGES_JSON: ${{ secrets.SLOWGEO_USED_CHALLENGES_JSON }}
+          SLOWGEO_POOL_TARGET_UNUSED: 500
+          SLOWGEO_POOL_LOW_WATERMARK: 100
+
+      - run: npm run verify
+
+      - uses: peter-evans/create-pull-request@v6
+        with:
+          branch: codex/slowgeo-candidate-refill
+          title: "Fyll på SlowGeo-kandidater"
+          commit-message: "Fyll på SlowGeo-kandidater"
+          body: |
+            Automatisk SlowGeo-kandidatpåfyll.
+
+            - Kjører `npm run slowgeo:refill`
+            - Validerer med `npm run verify`
+            - Bruker `SLOWGEO_USED_CHALLENGES_JSON` hvis hemmeligheten er satt
+          labels: slowgeo

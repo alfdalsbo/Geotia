@@ -7,6 +7,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { RankMark } from "@/components/ui/rank-mark";
 import { Stamp } from "@/components/ui/stamp";
 import { computeStandings, getHallOfFame } from "@/lib/scoring";
+import { filterScoreBearingRounds } from "@/lib/slowgeo";
 import { getRoundsState } from "@/lib/store";
 import { dateLabel, formatKm, formatNumber } from "@/lib/utils";
 
@@ -16,8 +17,9 @@ export const metadata = {
 
 export default async function HallOfFamePage() {
   const state = await getRoundsState();
-  const standings = computeStandings(state.players, state.rounds);
-  const hall = getHallOfFame(standings, state.rounds, state.players);
+  const scoreBearingRounds = filterScoreBearingRounds(state.rounds);
+  const standings = computeStandings(state.players, scoreBearingRounds);
+  const hall = getHallOfFame(standings, scoreBearingRounds, state.players);
 
   return (
     <div className="space-y-6">

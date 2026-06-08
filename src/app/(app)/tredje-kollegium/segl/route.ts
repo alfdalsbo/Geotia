@@ -1,15 +1,17 @@
 import { readFile } from "node:fs/promises";
 
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { getCurrentGeot } from "@/lib/auth";
+import { COOKIE_NAME, verifyToken } from "@/lib/auth";
 import { isThirdCollegeMember } from "@/lib/kollegium";
 
 export const runtime = "nodejs";
 
 export async function GET() {
-  const currentGeot = await getCurrentGeot();
-  if (!currentGeot || !isThirdCollegeMember(currentGeot.id)) {
+  const cookieStore = await cookies();
+  const session = verifyToken(cookieStore.get(COOKIE_NAME)?.value);
+  if (!session || !isThirdCollegeMember(session.playerId)) {
     return new NextResponse(null, { status: 404 });
   }
 

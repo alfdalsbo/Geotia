@@ -25,6 +25,7 @@ export const metadata = {
 };
 
 const iconBySlug = {
+  "ny-i-geotia": BookOpen,
   kanon: FileText,
   grunnloven: ScrollText,
   leksikon: BookOpen,
@@ -43,7 +44,7 @@ const archiveGroups = [
     title: "Lær spillet",
     eyebrow: "Første hylle",
     description: "Tegn, poeng, gamle runder og de små paraspillene som forklarer hvorfor Geotia oppfører seg slik.",
-    slugs: ["kjennelaere", "gammel-slowgeo", "konespillet"],
+    slugs: ["ny-i-geotia", "kjennelaere", "gammel-slowgeo", "konespillet"],
   },
   {
     title: "Folk og partier",

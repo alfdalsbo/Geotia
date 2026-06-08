@@ -62,7 +62,7 @@ export function ExpandableImage({
           fill
           sizes={sizes}
           priority={priority}
-          loading={loading}
+          loading={priority ? undefined : (loading ?? "lazy")}
           unoptimized={unoptimized}
           className={imageClassName}
         />
@@ -102,7 +102,7 @@ export function ExpandableImage({
                 sizes="96vw"
                 unoptimized={unoptimized}
                 className="object-contain"
-                priority
+                loading="eager"
               />
             </div>
             {caption ? (

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Gavel, LockKeyhole, RotateCcw } from "lucide-react";
+import { Gavel, LockKeyhole, RotateCcw, Sparkles } from "lucide-react";
 
-import { lockRoundAction, unlockRoundAction } from "@/app/actions";
+import { lockRoundAction, revealBohemGeoNowAction, unlockRoundAction } from "@/app/actions";
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { RoundForm } from "@/components/round-form";
@@ -12,13 +12,22 @@ import { SlowGeoAftermath } from "@/components/slowgeo-aftermath";
 import { SlowGeoPlay } from "@/components/slowgeo-play";
 import { SlowGeoRevealMap } from "@/components/slowgeo-reveal-map";
 import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
+import { canManageRounds, canManageSlowGeoAdmin } from "@/lib/admin-permissions";
 import { getCurrentGeot } from "@/lib/auth";
 import { selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { computeRound } from "@/lib/scoring";
-import { getSlowGeoMode, getSlowGeoStartedAt, getSlowGeoStarterLabel, hasLockedSlowGeoGuess } from "@/lib/slowgeo";
+import {
+  getSlowGeoMode,
+  getSlowGeoStartedAt,
+  getSlowGeoStarterLabel,
+  getSlowGeoVariant,
+  hasLockedSlowGeoGuess,
+  isBohemGeoRound,
+  slowGeoVariantLabels,
+} from "@/lib/slowgeo";
 import { buildSlowGeoAnswerStatusItems } from "@/lib/slowgeo-answer-status";
 import { buildSlowGeoRevealMarkers, buildSlowGeoRevealResults } from "@/lib/slowgeo-reveal";
-import { getRoundsState, maybeRevealRound } from "@/lib/store";
+import { getRoundPageState } from "@/lib/store";
 import { buildStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
 import {
   buildStreetViewImageUrl,
@@ -29,7 +38,7 @@ import type { Round, RoundStatus } from "@/lib/types";
 import { dateLabel, dateTimeLabel, formatKm } from "@/lib/utils";
 
 export const metadata = {
-  title: "Rundeprotokoll",
+  title: "Fasitarkiv",
 };
 
 function statusName(status: RoundStatus) {
@@ -83,15 +92,22 @@ export default async function RoundDetailPage({
 }) {
   const { id } = await params;
   const query = (await searchParams) ?? {};
-  const round = await maybeRevealRound(id);
+  const [state, currentGeot] = await Promise.all([getRoundPageState(id), getCurrentGeot()]);
+  const round = state.round;
   if (!round) notFound();
 
-  const [state, currentGeot] = await Promise.all([getRoundsState(), getCurrentGeot()]);
   const computed = computeRound(round, state.players);
   const isStreetViewRound = Boolean(round.challenge);
   const isOpenStreetViewRound = isStreetViewRound && round.status === "open";
   const slowGeoMode = getSlowGeoMode(round);
-  const canReplacePanorama = isOpenStreetViewRound && slowGeoMode === "panorama" && !hasLockedSlowGeoGuess(round);
+  const slowGeoVariant = getSlowGeoVariant(round);
+  const isBohemGeo = isBohemGeoRound(round);
+  const canManageRound = canManageRounds(currentGeot?.id);
+  const canReplacePanorama =
+    canManageSlowGeoAdmin(currentGeot?.id) &&
+    isOpenStreetViewRound &&
+    slowGeoMode === "panorama" &&
+    !hasLockedSlowGeoGuess(round);
   const slowGeoShareUrl = `/slowgeo/${round.id}`;
   const publicGoogleKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
   const streetViewUrl = round.challenge
@@ -142,7 +158,7 @@ export default async function RoundDetailPage({
       <div className="geotia-frame flex flex-col gap-4 rounded p-5 sm:flex-row sm:items-end sm:justify-between sm:p-7">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
-            Runde #{round.number}
+            {isStreetViewRound ? slowGeoVariantLabels[slowGeoVariant] : "Runde"} #{round.number}
           </p>
           <h1 className="font-display mt-2 text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
             {round.name}
@@ -155,6 +171,12 @@ export default async function RoundDetailPage({
           {isStreetViewRound ? (
             <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
               Reist av {starterLabel} · {startedAtLabel}
+            </p>
+          ) : null}
+          {isBohemGeo ? (
+            <p className="mt-2 inline-flex items-center gap-2 rounded border border-[#7c2430]/25 bg-[#7c2430]/8 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
+              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+              Ikke tabellført
             </p>
           ) : null}
         </div>
@@ -185,6 +207,8 @@ export default async function RoundDetailPage({
                 ? "Fasit er avslørt, protokollen er låst og runden ligger i arkivet."
                 : query.status === "panorama_nytt"
                   ? "Nytt panorama er hentet inn i samme SlowGeo-lenke."
+                  : query.status === "bohemgeo_avslort"
+                    ? "BohemGeo-fasiten er avslørt på kommando."
                 : query.status === "apnet"
                   ? "SlowGeo-runden er åpnet."
                   : "Protokollen er oppdatert."}
@@ -217,6 +241,27 @@ export default async function RoundDetailPage({
       </div>
 
       {isOpenStreetViewRound && round.challenge ? (
+        <>
+        {isBohemGeo && currentGeot ? (
+          <section className="flex flex-col gap-4 rounded border border-[#7c2430]/25 bg-[#7c2430]/10 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
+                <Sparkles className="h-4 w-4" aria-hidden="true" />
+                BohemGeo
+              </p>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-[#4f412b]">
+                Runden er ikke tabellført og kan avsløres uten fire pin-svar.
+              </p>
+            </div>
+            <form action={revealBohemGeoNowAction}>
+              <input type="hidden" name="round_id" value={round.id} />
+              <input type="hidden" name="return_to" value={`/runder/${round.id}`} />
+              <PendingSubmitButton className="inline-flex min-h-11 items-center justify-center gap-2 rounded bg-[#7c2430] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5f1c26]">
+                Avslør BohemGeo nå
+              </PendingSubmitButton>
+            </form>
+          </section>
+        ) : null}
         <SlowGeoPlay
           roundId={round.id}
           roundName={round.name}
@@ -233,6 +278,7 @@ export default async function RoundDetailPage({
           tips={openSlowGeoTips}
           answerStatusItems={answerStatusItems}
         />
+        </>
       ) : null}
 
       {isStreetViewRound && round.challenge && round.status !== "open" ? (
@@ -265,23 +311,25 @@ export default async function RoundDetailPage({
 
       {!isStreetViewRound ? <RoundMapProtocol snapshot={round.mapSnapshot} /> : null}
 
-      {!isOpenStreetViewRound ? (
+      {!isOpenStreetViewRound && (isStreetViewRound || canManageRound) ? (
         <Section
           title="Protokollføring"
           eyebrow="Km, deltakelse og kattometer"
           action={
-            <div className="flex flex-wrap gap-2">
-              {roundAction(round)}
-              <Link
-                href="/runder"
-                prefetch={false}
-                className="inline-flex h-10 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
-              >
-                <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                Arkivet
-                <LinkPendingIndicator />
-              </Link>
-            </div>
+            canManageRound ? (
+              <div className="flex flex-wrap gap-2">
+                {roundAction(round)}
+                <Link
+                  href="/runder"
+                  prefetch={false}
+                  className="inline-flex h-10 items-center gap-2 rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62]"
+                >
+                  <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                  Arkivet
+                  <LinkPendingIndicator />
+                </Link>
+              </div>
+            ) : null
           }
         >
           {isStreetViewRound ? (

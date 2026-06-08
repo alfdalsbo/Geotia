@@ -12,6 +12,7 @@ import {
   FileText,
   Footprints,
   Gavel,
+  GraduationCap,
   History,
   KeyRound,
   Landmark,
@@ -73,14 +74,18 @@ import {
 import { computeRound, computeStandings } from "@/lib/scoring";
 import {
   computeStandingsForEra,
+  filterScoreBearingRounds,
   filterSlowGeoRoundsForEra,
   getActiveSlowGeoEra,
   getSlowGeoEraId,
   getSlowGeoStartedAt,
   getSlowGeoStarterLabel,
+  getSlowGeoVariant,
+  isBohemGeoRound,
   isSlowGeoRound,
+  slowGeoVariantLabels,
 } from "@/lib/slowgeo";
-import { getAppState } from "@/lib/store";
+import { getThirdCollegeState } from "@/lib/store";
 import type { GeoterIndexAdjustment, GeoticOrderPromotionCase, GeotingProposal, Player, Round } from "@/lib/types";
 import { dateLabel, dateTimeLabel, formatKm, formatNumber } from "@/lib/utils";
 
@@ -113,13 +118,14 @@ export default async function ThirdCollegePage({
     notFound();
   }
 
-  const state = await getAppState();
+  const state = await getThirdCollegeState();
   const currentSeat = getThirdCollegeSeat(currentGeot.id);
-  const standings = computeStandings(state.players, state.rounds);
+  const scoreBearingRounds = filterScoreBearingRounds(state.rounds);
+  const standings = computeStandings(state.players, scoreBearingRounds);
   const standingByPlayerId = new Map(standings.map((standing) => [standing.player.id, standing]));
   const playerById = new Map(state.players.map((player) => [player.id, player]));
   const partyById = new Map(state.parties.map((party) => [party.id, party]));
-  const lockedRounds = state.rounds.filter((round) => round.status === "locked");
+  const lockedRounds = scoreBearingRounds.filter((round) => round.status === "locked");
   const draftRounds = state.rounds.filter((round) => round.status === "draft");
   const latestRound = lockedRounds.at(-1);
   const computedLatest = latestRound ? computeRound(latestRound, state.players) : null;
@@ -153,7 +159,7 @@ export default async function ThirdCollegePage({
   const activeSlowGeoEra = getActiveSlowGeoEra();
   const slowGeoRounds = state.rounds.filter(isSlowGeoRound);
   const eraRounds = filterSlowGeoRoundsForEra(state.rounds, activeSlowGeoEra.id);
-  const eraStandings = computeStandingsForEra(state.players, state.rounds, activeSlowGeoEra.id);
+  const eraStandings = computeStandingsForEra(state.players, scoreBearingRounds, activeSlowGeoEra.id);
 
   const memberRows = thirdCollegeSeats.map((seat) => {
     const player = playerById.get(seat.playerId);
@@ -276,6 +282,34 @@ export default async function ThirdCollegePage({
       </div>
 
       <ThirdCollegeStatus status={params.status} error={params.error} />
+
+      <Section
+        title="Geoversitetet"
+        eyebrow="Universitas Geotiae · lukket forhåndsvisning"
+        action={
+          <Link href="/geoversitetet" className="btn btn-wax">
+            Åpne Geoversitetet
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        }
+      >
+        <Link href="/geoversitetet" className="archive-card group block transition hover:-translate-y-0.5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="crown-icon">
+              <GraduationCap className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <ArrowRight className="h-5 w-5 text-[#7c2430] transition group-hover:translate-x-1" aria-hidden="true" />
+          </div>
+          <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.32em] text-[#7e5a18]">
+            GEO-U-KJ · internt akademisk arkiv
+          </p>
+          <h3>Geoversitetet</h3>
+          <p className="lead-detail mt-2 text-sm">
+            Grader, eksamener, geofessorprofiler, diplomarkiv, Annales og
+            feltmanual føres nå i Vercel-appen, men bare for Kollegiet.
+          </p>
+        </Link>
+      </Section>
 
       <div className="grid gap-3 md:grid-cols-3">
         <StatTile
@@ -657,7 +691,7 @@ function SlowGeoAdminSection({
           </p>
           <h3 className="font-display mt-2 text-3xl font-semibold text-[#062b40]">Runder under Kollegiets hånd</h3>
           <p className="mt-2 text-sm leading-6 text-[#60553f]">
-            Hard sletting fjerner runden fra spillrom, fasitkort, Rundeprotokoll og poenggrunnlag.
+            Hard sletting fjerner runden fra Spill nå, fasitkort, Fasitarkiv og poenggrunnlag.
           </p>
 
           {sortedRounds.length ? (
@@ -665,12 +699,14 @@ function SlowGeoAdminSection({
               {sortedRounds.map((round) => {
                 const starter = getSlowGeoStarterLabel(round, players);
                 const eraId = getSlowGeoEraId(round);
+                const variant = getSlowGeoVariant(round);
+                const eraLabel = isBohemGeoRound(round) ? "ikke tabellført" : eraId;
                 return (
                   <div key={round.id} className="rounded border border-[#d8ded0] bg-[#f7f8f5] p-3">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">
                         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
-                          #{round.number} · {slowGeoStatusLabels[round.status]} · {eraId}
+                          #{round.number} · {slowGeoVariantLabels[variant]} · {slowGeoStatusLabels[round.status]} · {eraLabel}
                         </p>
                         <p className="mt-1 break-words text-base font-semibold text-[#062b40]">{round.name}</p>
                         <p className="mt-1 text-xs leading-5 text-[#60553f]">

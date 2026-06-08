@@ -21,6 +21,10 @@ export type SlowGeoDifficulty = "lett" | "middels" | "hard" | "absurd";
 
 export type SlowGeoMode = "static" | "panorama";
 
+export type SlowGeoVariant = "slowgeo" | "bohemgeo";
+
+export type SlowGeoUsedChallengeReason = "created" | "replaced" | "backfilled";
+
 export type GeotiaEra = {
   id: string;
   name: string;
@@ -49,6 +53,15 @@ export type SlowGeoChallenge = {
   signature?: string;
   tags?: string[];
   createdAt: string;
+};
+
+export type SlowGeoUsedChallenge = {
+  candidateId: string;
+  panoId?: string | null;
+  roundId?: string | null;
+  challengeId?: string | null;
+  usedAt: string;
+  reason: SlowGeoUsedChallengeReason;
 };
 
 export type GameDefinition = {
@@ -155,6 +168,7 @@ export type Round = {
   mapSnapshot?: RoundMapSnapshot | null;
   challenge?: SlowGeoChallenge | null;
   slowGeoMode?: SlowGeoMode;
+  slowGeoVariant?: SlowGeoVariant;
   slowGeoEraId?: string | null;
   slowGeoStartedBy?: string | null;
   slowGeoStartedAt?: string | null;

@@ -44,13 +44,23 @@ git switch -c codex/short-description
 Use a branch prefix that matches the worker: `codex/`, `claude/`, or `human/`.
 Keep each branch focused on one task.
 
+## Publishing Rule
+
+Changes that are meant to be shared or reviewed should be published to Vercel by
+default unless the task says otherwise. For feature and WIP work, publish a
+Vercel preview from the branch. Production deploys happen only from the
+configured production branch or after an explicit production-deploy request.
+
+If work must stay private or unfinished, keep it in `_lokalt/` or on an
+unpushed local branch and label it as local-only in handoff notes.
+
 ## What Stays Local
 
 Do not copy or commit machine-specific state:
 
 - `.git/` when sharing folders outside GitHub
 - `node_modules/`
-- `.next/`, `.vercel/`, `.data/`, `.artifacts/`, `test-results/`
+- `.next/`, `.vercel/`, `.data/`, `.artifacts/`, `test-results/`, `_lokalt/`
 - `.env.local` or any real secrets
 - local editor or agent settings
 
@@ -72,6 +82,6 @@ For visible UI changes, also run Playwright or a focused browser check:
 npm run verify:e2e
 ```
 
-Agents should report changed files, checks run, and remaining risks. Humans
-decide when to commit, push, merge, or deploy unless a task explicitly delegates
-those actions.
+Agents should report changed files, checks run, deployments created, and
+remaining risks. Publishing delegated to an agent means a Vercel preview unless
+production is explicitly requested.

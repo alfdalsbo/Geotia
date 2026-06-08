@@ -9,6 +9,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { RankMark } from "@/components/ui/rank-mark";
 import { Stamp } from "@/components/ui/stamp";
 import { computeGameStandings, computeStandings, geotStatus, getHallOfFame } from "@/lib/scoring";
+import { filterScoreBearingRounds } from "@/lib/slowgeo";
 import { getScoreboardState } from "@/lib/store";
 import type { GameDefinition, GameStanding, Standing } from "@/lib/types";
 import { formatKm, formatNumber, formatScore } from "@/lib/utils";
@@ -20,8 +21,9 @@ export const metadata = {
 
 export default async function TablesPage() {
   const state = await getScoreboardState();
-  const standings = computeStandings(state.players, state.rounds);
-  const hall = getHallOfFame(standings, state.rounds, state.players);
+  const scoreBearingRounds = filterScoreBearingRounds(state.rounds);
+  const standings = computeStandings(state.players, scoreBearingRounds);
+  const hall = getHallOfFame(standings, scoreBearingRounds, state.players);
   const leader = standings[0];
   const kattometerLeader = standings
     .filter((standing) => standing.lockedRounds > 0)

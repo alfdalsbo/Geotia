@@ -3,6 +3,7 @@ import { Crown, Medal, TrendingDown, TrendingUp } from "lucide-react";
 import { Section, StatTile } from "@/components/section";
 import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
 import { computeStandings } from "@/lib/scoring";
+import { filterScoreBearingRounds } from "@/lib/slowgeo";
 import { getRoundsState } from "@/lib/store";
 import { formatKm, formatNumber } from "@/lib/utils";
 
@@ -12,7 +13,7 @@ export const metadata = {
 
 export default async function StandingsPage() {
   const state = await getRoundsState();
-  const standings = computeStandings(state.players, state.rounds);
+  const standings = computeStandings(state.players, filterScoreBearingRounds(state.rounds));
   const leader = standings[0];
   const kattometerLeader = standings
     .filter((standing) => standing.lockedRounds > 0)

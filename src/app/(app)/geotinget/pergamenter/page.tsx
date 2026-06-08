@@ -18,7 +18,7 @@ import {
 } from "@/lib/geoting";
 import { isThirdCollegeMember } from "@/lib/kollegium";
 import { archive } from "@/lib/seed";
-import { getGeotingState, resolveDueGeotingProposals } from "@/lib/store";
+import { getGeotingState } from "@/lib/store";
 import type { GeotingProposal, Player } from "@/lib/types";
 import { dateTimeLabel } from "@/lib/utils";
 
@@ -54,7 +54,6 @@ export default async function GeotingPergamentsPage({
   searchParams?: Promise<{ status?: string; error?: string; sak?: string }>;
 }) {
   const params = (await searchParams) ?? {};
-  await resolveDueGeotingProposals();
   const [state, currentGeot] = await Promise.all([getGeotingState(), getCurrentGeot()]);
   const canEdit = isThirdCollegeMember(currentGeot?.id);
   const proposals = sortGeotingPergaments(state.geotingProposals);
@@ -77,7 +76,7 @@ export default async function GeotingPergamentsPage({
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7c2430]">
           GeoTinget · Arkiv
         </p>
-        <h1 className="font-display mt-2 text-4xl font-semibold tracking-normal text-[#062b40] sm:text-5xl">
+        <h1 className="font-display mt-2 text-3xl font-semibold tracking-normal text-[#062b40] sm:text-4xl">
           Tingpergamentene
         </h1>
         <p className="mt-3 max-w-3xl text-base leading-7 text-[#4f412b]">

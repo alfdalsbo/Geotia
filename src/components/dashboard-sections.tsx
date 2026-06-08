@@ -82,7 +82,7 @@ export function DashboardPartyGrid({ parties, players }: { parties: Party[]; pla
                   <ExpandableImage
                     src={party.asset}
                     alt={`Partikort for ${party.name}`}
-                    loading="eager"
+                    loading="lazy"
                     sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                     className="absolute inset-0 h-full w-full"
                     imageClassName="object-cover transition duration-300 group-hover:scale-[1.02]"

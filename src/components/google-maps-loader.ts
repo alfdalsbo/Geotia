@@ -16,6 +16,18 @@ export type GoogleLatLngBounds = {
   extend(point: LatLngLiteral): void;
 };
 
+export type GoogleMapProjection = {
+  fromLatLngToDivPixel(point: LatLngLiteral): { x: number; y: number } | null;
+};
+
+export type GoogleMapPanes = {
+  floatPane?: HTMLElement;
+  mapPane?: HTMLElement;
+  markerLayer?: HTMLElement;
+  overlayLayer?: HTMLElement;
+  overlayMouseTarget?: HTMLElement;
+};
+
 export type GoogleMap = {
   addListener(eventName: string, handler: (event: GoogleMapClickEvent) => void): unknown;
   fitBounds(bounds: GoogleLatLngBounds): void;
@@ -32,6 +44,15 @@ export type GooglePolyline = {
   setMap(map: GoogleMap | null): void;
 };
 
+export type GoogleOverlayView = {
+  draw?(): void;
+  getPanes?(): GoogleMapPanes | null;
+  getProjection?(): GoogleMapProjection | null;
+  onAdd?(): void;
+  onRemove?(): void;
+  setMap(map: GoogleMap | null): void;
+};
+
 export type GoogleStreetViewPov = {
   heading: number;
   pitch: number;
@@ -43,8 +64,13 @@ export type GoogleMapsListener = {
 
 export type GoogleStreetViewPanorama = {
   addListener?(eventName: string, handler: () => void): GoogleMapsListener | void;
+  getLinks?(): unknown[];
+  getPano?(): string;
+  getPov?(): GoogleStreetViewPov;
   getStatus?(): string;
   getZoom(): number;
+  setLinks?(links: unknown[]): void;
+  setPano?(pano: string): void;
   setPov(pov: GoogleStreetViewPov): void;
   setZoom(zoom: number): void;
 };
@@ -52,6 +78,7 @@ export type GoogleStreetViewPanorama = {
 export type GoogleMapsApi = {
   Map: new (element: HTMLElement, options: Record<string, unknown>) => GoogleMap;
   Marker: new (options: Record<string, unknown>) => GoogleMarker;
+  OverlayView?: new () => GoogleOverlayView;
   Polyline: new (options: Record<string, unknown>) => GooglePolyline;
   StreetViewPanorama?: new (element: HTMLElement, options: Record<string, unknown>) => GoogleStreetViewPanorama;
   LatLngBounds: new () => GoogleLatLngBounds;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { COOKIE_NAME, verifyToken } from "@/lib/auth";
+import { canViewGeoversitetet } from "@/lib/geoversitetet";
 import { isThirdCollegeMember } from "@/lib/kollegium";
 
 const PUBLIC_FILE = /\.(.*)$/;
@@ -29,6 +30,10 @@ export function proxy(request: NextRequest) {
   }
 
   if (pathname.startsWith("/tredje-kollegium") && !isThirdCollegeMember(session.playerId)) {
+    return new NextResponse(null, { status: 404 });
+  }
+
+  if (pathname.startsWith("/geoversitetet") && !canViewGeoversitetet(session.playerId)) {
     return new NextResponse(null, { status: 404 });
   }
 

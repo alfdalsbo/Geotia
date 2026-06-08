@@ -2,12 +2,15 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 import { players } from "@/lib/seed";
 import { getHydratedPlayerById } from "@/lib/store";
 
 const COOKIE_NAME = "geotia_session";
 const SESSION_SECONDS = 60 * 60 * 24 * 30;
+const LOCAL_AUTH_SECRET = "local-geotia-auth-secret-change-on-vercel";
+const LOCAL_PASSCODE = "geotia";
 
 type SessionPayload = {
   sub: "geotia";
@@ -16,11 +19,23 @@ type SessionPayload = {
 };
 
 function secret() {
-  return process.env.AUTH_SECRET || "local-geotia-auth-secret-change-on-vercel";
+  const value = process.env.AUTH_SECRET || LOCAL_AUTH_SECRET;
+  if (requiresStrictAuthConfig() && (!process.env.AUTH_SECRET || value === LOCAL_AUTH_SECRET)) {
+    throw new Error("AUTH_SECRET må settes til en egen hemmelig verdi i produksjon.");
+  }
+  return value;
 }
 
 function passcode() {
-  return process.env.GEOTIA_PASSCODE || "geotia";
+  const value = process.env.GEOTIA_PASSCODE || LOCAL_PASSCODE;
+  if (requiresStrictAuthConfig() && !process.env.GEOTIA_PASSCODE) {
+    throw new Error("GEOTIA_PASSCODE må settes i produksjon.");
+  }
+  return value;
+}
+
+function requiresStrictAuthConfig() {
+  return process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL);
 }
 
 function base64Url(input: string) {
@@ -52,15 +67,31 @@ export function isKnownPlayer(playerId: string) {
   return players.some((player) => player.id === playerId);
 }
 
+function normalizeLoginName(value: string | null | undefined) {
+  return (value ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/\s+/g, " ");
+}
+
 export function playerIdFromUsername(username: string) {
-  const normalized = username.trim().toLowerCase();
+  const normalized = normalizeLoginName(username);
   if (!normalized) return null;
   return (
     players.find((player) => {
-      return (
-        player.username?.toLowerCase() === normalized ||
-        (player.partyId ? player.partyId.toLowerCase() === normalized : false)
-      );
+      const aliases = [
+        player.id,
+        player.username,
+        player.partyId,
+        player.shortName,
+        player.officialShortName,
+        player.name,
+        player.name.split(/\s+/)[0],
+        player.name.split(/\s+/).at(-1),
+      ];
+      return aliases.some((alias) => normalizeLoginName(alias) === normalized);
     })?.id ?? null
   );
 }
@@ -100,21 +131,21 @@ export async function destroySession() {
   cookieStore.delete(COOKIE_NAME);
 }
 
-export async function hasSession() {
+export const hasSession = cache(async function hasSession() {
   const cookieStore = await cookies();
   return verifyToken(cookieStore.get(COOKIE_NAME)?.value) !== null;
-}
+});
 
-export async function getSession() {
+export const getSession = cache(async function getSession() {
   const cookieStore = await cookies();
   return verifyToken(cookieStore.get(COOKIE_NAME)?.value);
-}
+});
 
-export async function getCurrentGeot() {
+export const getCurrentGeot = cache(async function getCurrentGeot() {
   const session = await getSession();
   if (!session?.playerId) return null;
   return getHydratedPlayerById(session.playerId);
-}
+});
 
 export async function requireSession() {
   const session = await getSession();

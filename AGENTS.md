@@ -30,7 +30,12 @@ intentionally points here; keep `AGENTS.md` as the canonical agent contract.
   `codex/`, `claude/`, or `human/`.
 - Never revert, overwrite, or reformat unrelated changes that you did not make.
 - Keep machine-local files local: `.env.local`, `.data/`, `.vercel/`, `.next/`,
-  `node_modules/`, test artifacts, and editor caches.
+  `node_modules/`, `_lokalt/`, test artifacts, and editor caches.
+- Publish shareable changes to Vercel by default. Use a preview deployment for
+  feature/WIP branches and production only through the configured production
+  branch or an explicit production-deploy request.
+- Keep work that must not be published yet in `_lokalt/` or on an unpushed local
+  branch, and say clearly that it is local-only.
 
 ## Implementation
 
@@ -42,12 +47,13 @@ intentionally points here; keep `AGENTS.md` as the canonical agent contract.
 
 ## Verification And Handoff
 
-- For code changes, run `npm run verify` when feasible. It covers lint, unit
-  tests, and production build.
+- For code changes, run `npm run verify` when feasible. It covers lint,
+  TypeScript, unit tests, and production build.
 - For UI changes, also run `npm run verify:e2e` or a focused Playwright/browser
   check that covers the changed flow.
 - `npm run finish` and `npm run ship` are manual Windows helper scripts. Do not
   run them unless the user explicitly asks for that workflow.
-- Do not commit, push, or deploy unless the user explicitly asks.
+- Commit, push, and deploy when the task explicitly asks for publishing. If the
+  user has not said otherwise, publishing means a Vercel preview, not production.
 - In the final handoff, always list changed files, checks run with outcomes, and
   any open risks or skipped verification.

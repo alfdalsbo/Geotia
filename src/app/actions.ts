@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { createSession, destroySession, getSession, isCorrectPasscode, playerIdFromUsername, requireSession } from "@/lib/auth";
+import { canManageGameSessions, canManageRounds, canManageSlowGeoAdmin, canStartSlowGeoRound } from "@/lib/admin-permissions";
 import { GEO_OATH_TEXT } from "@/lib/geoting";
 import { haversineKm, parseGeoLocationJson } from "@/lib/geo";
 import { geoterIndexCategories } from "@/lib/geoterindeks";
@@ -34,6 +35,7 @@ import {
   getOrderState,
   lockRound,
   replaceSlowGeoPanoramaRound,
+  revealBohemGeoRoundNow,
   saveGeotingVote,
   saveGeotingPartyPosition,
   startGeotingVote,
@@ -63,8 +65,16 @@ import type {
   ProposalRuleType,
   ResultStatus,
   SlowGeoMode,
+  SlowGeoVariant,
   VoteValue,
 } from "@/lib/types";
+import {
+  filterScoreBearingRounds,
+  normalizeOfficialSlowGeoDeadlineAt,
+  normalizeSlowGeoVariant,
+  osloDateParts,
+  osloWallTimeToDate,
+} from "@/lib/slowgeo";
 
 function field(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -77,6 +87,38 @@ function limitedField(formData: FormData, key: string, maxLength: number) {
 function safeRedirectPath(value: string) {
   if (!value.startsWith("/") || value.startsWith("//") || value.startsWith("/login")) return "/";
   return value;
+}
+
+async function requireRoundManagerSession() {
+  const session = await requireSession();
+  if (!canManageRounds(session.playerId)) {
+    redirect("/");
+  }
+  return session;
+}
+
+async function requireGameSessionManagerSession() {
+  const session = await requireSession();
+  if (!canManageGameSessions(session.playerId)) {
+    redirect("/");
+  }
+  return session;
+}
+
+async function requireSlowGeoAdminSession() {
+  const session = await requireSession();
+  if (!canManageSlowGeoAdmin(session.playerId)) {
+    redirect("/");
+  }
+  return session;
+}
+
+async function requireSlowGeoStarterSession() {
+  const session = await requireSession();
+  if (!canStartSlowGeoRound(session.playerId)) {
+    redirect("/");
+  }
+  return session;
 }
 
 function kmField(formData: FormData, key: string) {
@@ -92,43 +134,7 @@ function numberField(formData: FormData, key: string) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function osloDateParts(date: Date) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Oslo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(date);
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return {
-    year: Number(values.year),
-    month: Number(values.month),
-    day: Number(values.day),
-    hour: Number(values.hour),
-    minute: Number(values.minute),
-    second: Number(values.second),
-  };
-}
-
-function osloWallTimeToDate(year: number, month: number, day: number, hour: number, minute: number) {
-  const desiredWallTime = Date.UTC(year, month - 1, day, hour, minute, 0);
-  const actualParts = osloDateParts(new Date(desiredWallTime));
-  const actualWallTime = Date.UTC(
-    actualParts.year,
-    actualParts.month - 1,
-    actualParts.day,
-    actualParts.hour,
-    actualParts.minute,
-    actualParts.second,
-  );
-  return new Date(desiredWallTime + (desiredWallTime - actualWallTime));
-}
-
-function slowGeoDeadlineAt(formData: FormData) {
+function slowGeoDeadlineAt(formData: FormData, variant: SlowGeoVariant) {
   const rawTime = field(formData, "deadline_time");
   const match = /^(\d{1,2}):(\d{2})$/.exec(rawTime);
   if (!match) return undefined;
@@ -143,11 +149,15 @@ function slowGeoDeadlineAt(formData: FormData) {
   if (candidate.getTime() <= now.getTime()) {
     candidate = osloWallTimeToDate(today.year, today.month, today.day + 1, hour, minute);
   }
-  return candidate.toISOString();
+  return variant === "bohemgeo" ? candidate.toISOString() : normalizeOfficialSlowGeoDeadlineAt(candidate, now).toISOString();
 }
 
 function slowGeoModeField(value: string): SlowGeoMode {
   return value === "panorama" ? "panorama" : "static";
+}
+
+function slowGeoVariantField(value: string): SlowGeoVariant {
+  return normalizeSlowGeoVariant(value);
 }
 
 function statusField(value: string): ResultStatus {
@@ -196,7 +206,7 @@ export async function updateMyGeotNicknameAction(formData: FormData) {
 }
 
 export async function saveRoundAction(formData: FormData) {
-  await requireSession();
+  await requireRoundManagerSession();
   const answerLocation = parseGeoLocationJson(field(formData, "answer_location_json"));
 
   const results: PlayerResult[] = competingPlayers.map((player) => {
@@ -239,14 +249,16 @@ export async function saveRoundAction(formData: FormData) {
 }
 
 export async function createSlowGeoRoundAction(formData: FormData) {
-  const session = await requireSession();
+  const session = await requireSlowGeoStarterSession();
   const title = field(formData, "title");
-  const deadlineAt = slowGeoDeadlineAt(formData);
+  const variant = slowGeoVariantField(field(formData, "slowgeo_variant"));
+  const deadlineAt = slowGeoDeadlineAt(formData, variant);
 
   const result = await createSlowGeoRound({
     title,
     deadlineAt,
     mode: slowGeoModeField(field(formData, "slowgeo_mode")),
+    variant,
     startedBy: session.playerId,
   });
 
@@ -259,8 +271,27 @@ export async function createSlowGeoRoundAction(formData: FormData) {
   redirect(`/slowgeo/${result.round.id}?created=1`);
 }
 
-export async function replaceSlowGeoPanoramaAction(formData: FormData) {
+export async function revealBohemGeoNowAction(formData: FormData) {
   await requireSession();
+  const roundId = field(formData, "round_id");
+  const returnTo = safeRedirectPath(field(formData, "return_to") || (roundId ? `/slowgeo/${roundId}` : "/spill/slowgeo"));
+
+  if (!roundId) {
+    redirect(`${returnTo}?error=${encodeURIComponent("BohemGeo-runden mangler i avsløringsprotokollen.")}`);
+  }
+
+  const result = await revealBohemGeoRoundNow({ roundId });
+  revalidateSlowGeoPaths(roundId);
+
+  if (!result.ok) {
+    redirect(`${returnTo}?error=${encodeURIComponent(result.reason ?? "BohemGeo kunne ikke avsløres akkurat nå.")}`);
+  }
+
+  redirect(`${returnTo}?status=bohemgeo_avslort`);
+}
+
+export async function replaceSlowGeoPanoramaAction(formData: FormData) {
+  await requireSlowGeoAdminSession();
   const roundId = field(formData, "round_id");
   const returnTo = safeRedirectPath(field(formData, "return_to") || (roundId ? `/slowgeo/${roundId}` : "/spill/slowgeo"));
 
@@ -279,10 +310,7 @@ export async function replaceSlowGeoPanoramaAction(formData: FormData) {
 }
 
 export async function deleteSlowGeoRoundAction(formData: FormData) {
-  const session = await requireSession();
-  if (!isThirdCollegeMember(session.playerId)) {
-    redirect("/");
-  }
+  await requireSlowGeoAdminSession();
 
   const roundId = field(formData, "round_id");
   const returnTo = safeRedirectPath(field(formData, "return_to") || "/tredje-kollegium");
@@ -345,7 +373,7 @@ function gameIdField(value: string): GameId {
 }
 
 export async function saveGameSessionAction(formData: FormData) {
-  await requireSession();
+  await requireGameSessionManagerSession();
   const gameId = gameIdField(field(formData, "gameId"));
 
   const results: GameResult[] = competingPlayers.map((player) => {
@@ -372,7 +400,7 @@ export async function saveGameSessionAction(formData: FormData) {
 }
 
 export async function lockRoundAction(formData: FormData) {
-  await requireSession();
+  await requireRoundManagerSession();
   const id = field(formData, "id");
   const result = await lockRound(id);
   revalidateSlowGeoPaths(id);
@@ -384,7 +412,7 @@ export async function lockRoundAction(formData: FormData) {
 }
 
 export async function unlockRoundAction(formData: FormData) {
-  await requireSession();
+  await requireRoundManagerSession();
   const id = field(formData, "id");
   await unlockRound(id);
   revalidateSlowGeoPaths(id);
@@ -437,7 +465,7 @@ function geoticOrderStatus(value: string): GeoticOrderStatus {
 
 async function getCurrentOrderAccess(playerId: string) {
   const state = await getOrderState();
-  const standings = computeStandings(state.players, state.rounds);
+  const standings = computeStandings(state.players, filterScoreBearingRounds(state.rounds));
   const rows = getGeoticOrderRows(
     state.players,
     standings,
