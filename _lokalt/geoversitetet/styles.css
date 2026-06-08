@@ -122,7 +122,8 @@ main {
 #lokalt,
 #fakulteter,
 #fag,
-#geofessorer {
+#geofessorer,
+#diplomarkiv {
   scroll-margin-top: 104px;
 }
 
@@ -532,15 +533,27 @@ h2 {
   border-right: 0;
 }
 
+.diploma-archive {
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+}
+
+.diploma-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
 .diploma-frame {
-  margin: 22px 0 0;
+  margin: 0;
   border: 1px solid rgba(184, 137, 47, 0.55);
   background: #071d2a;
   padding: 16px;
 }
 
 .diploma-frame img {
-  width: min(100%, 860px);
+  width: 100%;
   margin: 0 auto;
   border: 2px solid var(--gold);
   background: var(--paper);
@@ -624,6 +637,7 @@ h2 {
   .faculty-grid,
   .faculty-grid--three,
   .course-list,
+  .diploma-grid,
   .roadmap ol {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -664,7 +678,8 @@ h2 {
   #lokalt,
   #fakulteter,
   #fag,
-  #geofessorer {
+  #geofessorer,
+  #diplomarkiv {
     scroll-margin-top: 224px;
   }
 
@@ -728,6 +743,7 @@ h2 {
   .faculty-grid,
   .faculty-grid--three,
   .course-list,
+  .diploma-grid,
   .roadmap ol {
     grid-template-columns: 1fr;
   }
@@ -745,5 +761,130 @@ h2 {
 
   h2 {
     font-size: 28px;
+  }
+}
+
+/* Akademisk maskineri v2 */
+#studielop,
+#eksamener,
+#organer,
+#profiler,
+#annales,
+#feltmanual,
+#riksarkiv {
+  scroll-margin-top: 104px;
+}
+
+.faculty-grid--five {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.progression-list,
+.profile-grid,
+.archive-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.progression-list {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.progression-list article,
+.archive-grid article {
+  border: 1px solid rgba(184, 137, 47, 0.42);
+  background: #fffaf0;
+  padding: 14px;
+}
+
+.progression-list span,
+.archive-grid span {
+  display: inline-flex;
+  margin-bottom: 10px;
+  border: 1px solid currentColor;
+  padding: 3px 7px;
+  color: var(--burgundy);
+  font-family: "DM Mono", Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.progression-list h3,
+.profile-card h3 {
+  font-size: 20px;
+  line-height: 1.08;
+}
+
+.profile-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.profile-card {
+  border: 1px solid rgba(184, 137, 47, 0.52);
+  border-top: 5px solid var(--navy);
+  background: #fffaf0;
+  padding: 18px;
+}
+
+.profile-card__office,
+.small-note {
+  color: var(--burgundy) !important;
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+}
+
+.annales-section,
+.manual-section {
+  background:
+    linear-gradient(135deg, rgba(6, 26, 38, 0.06), transparent 42%),
+    var(--paper);
+}
+
+.annales-list,
+.manual-list {
+  margin: 18px 0 0;
+  padding-left: 22px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.annales-list li,
+.manual-list li {
+  margin: 8px 0;
+}
+
+.archive-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 980px) {
+  .faculty-grid--five,
+  .progression-list,
+  .profile-grid,
+  .archive-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  #studielop,
+  #eksamener,
+  #organer,
+  #profiler,
+  #annales,
+  #feltmanual,
+  #riksarkiv {
+    scroll-margin-top: 224px;
+  }
+
+  .faculty-grid--five,
+  .progression-list,
+  .profile-grid,
+  .archive-grid {
+    grid-template-columns: 1fr;
   }
 }

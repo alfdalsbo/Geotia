@@ -15,6 +15,7 @@ describe("route context", () => {
     ["/arkiv/ny-i-geotia", "arkiv", "Ny i Geotia"],
     ["/arkiv/partier", "arkiv", "Arkivseksjon"],
     ["/tredje-kollegium", "min-geot", "Tredje Kollegium"],
+    ["/geoversitetet", "min-geot", "Geoversitetet"],
   ])("places %s in the right riksrom", (path, area, pageLabel) => {
     const context = getRouteContext(path);
     expect(context.primary.id).toBe(area);

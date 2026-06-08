@@ -26,6 +26,16 @@ for (const username of ["SS", "PKK", "IRA"]) {
     await expect(page.getByRole("heading", { name: "GEOTERINDEKSEN" })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Åpne poengsystemet")).toBeVisible();
     await expect(page.getByLabel("Vis større bilde: Seglet til Tredje Kollegium")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Åpne Geoversitetet" })).toBeVisible();
+
+    await page.getByRole("link", { name: "Åpne Geoversitetet" }).click();
+    await expect(page).toHaveURL(/\/geoversitetet$/);
+    await expect(page.getByRole("heading", { name: "Geoversitetet", level: 1 })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Annales Geotiae" })).toBeVisible();
+    await expect(page.getByLabel("Vis større bilde: Geoversitetets segl")).toBeVisible();
+
+    const assetResponse = await page.goto("/geoversitetet/aktiva/geoversitetet-logo.jpeg");
+    expect(assetResponse?.status()).toBe(200);
   });
 }
 
@@ -129,6 +139,14 @@ test("Tredje Kollegium stays invisible for every non-member", async ({ page }) =
 
     const imageResponse = await page.goto("/tredje-kollegium/segl");
     expect(imageResponse?.status()).toBe(404);
+
+    await page.goto("/min-geot");
+    await expect(page.getByRole("link", { name: "Geoversitetet" })).toHaveCount(0);
+    const geoversitetetResponse = await page.goto("/geoversitetet");
+    expect(geoversitetetResponse?.status()).toBe(404);
+
+    const geoversitetetAssetResponse = await page.goto("/geoversitetet/aktiva/geoversitetet-logo.jpeg");
+    expect(geoversitetetAssetResponse?.status()).toBe(404);
   }
 });
 

@@ -75,10 +75,10 @@ de får et kartutsnitt. Geoversitetets første navngitte embeter føres slik:
 
 - **Steinar Lofnes**, Rector Magnificus, Professor Ordinarius Insulologiae,
   Scriptologiae Comparativae et Litorologiae Africanae.
-- **Alf Kåre Dalsbø**, Professor Ordinarius Geographiae Generalis, Praeceptor
-  Historiae Europaeae og Custos Equilibrii Geographicis.
-- **Vegard McKibben Lofnes**, Professor Ordinarius Parabologiae et Toponymiae
-  Americanae, Magister Antennarum et Nominum.
+- **Alf Kåre Dalsbø**, Geofessor Ordinarius Geographiae Generalis, Praeceptor
+  Europae (1450-1750) og Custos Equilibrii Geographicis.
+- **Vegard McKibben Lofnes**, Geofessor Ordinarius Parabologiae et Toponymiae
+  Americanae, Expertus Regionum Foederationis og Magister Antennarum et Nominum.
 - **Sverre Skilbreid**, Geofessor Ordinarius Cattologiae, Fundator Doctrinae
   Felinae Geoticae og Custos Intuitionis Geographicae.
 
@@ -86,6 +86,77 @@ Sverre Skilbreid regnes som grunnleggeren av moderne geotisk kattologi. Hans
 teori om **Kattemagen** hevder at den erfarne geograf, gjennom tilstrekkelig
 eksponering for verdens landskap, utvikler en nærmest instinktiv forståelse av
 hvor han befinner seg.
+
+## Diplomarkivet
+
+Geoversitetets lokale diplomarkiv fører nå fire offisielle bilder:
+
+- `assets/geofessor-steinar-lofnes.png` - oppdatert rektoratsdiplom for Steinar
+  Lofnes, Rector Magnificus Universitatis Geotiae.
+- `assets/geofessor-alf-kare-dalsbo.png` - geofessordiplom for Alf Kåre Dalsbø,
+  Geofessor Ordinarius Geographiae Generalis.
+- `assets/geofessor-vegard-lofnes.png` - geofessordiplom for Vegard Lofnes,
+  Geofessor Ordinarius Parabologiae et Toponymiae Americanae.
+- `assets/geofessor-sverre-skilbreid.png` - geofessordiplom for Sverre Skilbreid,
+  Geofessor Ordinarius Cattologiae.
+
+Diplomene er artefakter, ikke bare pynt. De brukes som visuelt bevis på at
+Geoversitetet har passert grensen mellom intern vits og institusjonell realitet.
+
+## Akademisk maskineri v2
+
+Geoversitetet fører nå lokal institusjonsstruktur før Vercel-porten åpnes. Dette
+er ikke publisering, men akademisk grunnmur: grader, eksamener, organer, årbok,
+feltmanual, riksarkiv og studieprogresjon.
+
+### Grader
+
+- **cand.geo.** - grunnleggende overlevelsesgrad for geoter som kan plassere en
+  pin uten å rope Portugal først.
+- **mag.geo.** - for kandidater som kan forklare både riktige og gale pins med
+  verdighet.
+- **doctor pinnae** - doktorgrad i presisjonslære, panikkzoom og pinnens
+  moralske tyngde.
+- **Civ.Geo.** - praktisk embetsgrad for geoter som kan holde hodet kaldt mens
+  riket ser på.
+- **Doctor Honoris Causa in Locis Suspectis** - æresgrad for mistenkelig
+  stedsforståelse.
+
+### Studieprogresjon
+
+Førsteårsgeot -> Kartnovise -> Pin-kandidat -> Feltgeot -> Protokollført kjenner
+-> Geopotensiell -> Urokkelig, men ofte feil.
+
+### Eksamener
+
+- **KJEN-101: Stolper, skilt og første panikk**
+- **KATT-214: Kattemagen under tidspress**
+- **PARA-300: Parabolens taushetsplikt**
+- **OYO-101: Øyer du burde ha visst om**
+- **MUNT-404: Muntlig Latvia-forsvar**
+
+### Institusjonelle organer
+
+- **Senatus Academicus** godkjenner fag, grader og forklaringer som i ettertid
+  later som de var planlagt.
+- **Kattologisk Etikkråd** vurderer om intuisjon var legitim eller bare
+  selvtillit med flaks.
+- **Parabolkommisjonen** gransker antennebasert sannhet.
+- **Øyberedskapsutvalget** aktiveres ved Guam/Fiji/Bermuda/Azorene-hendelser.
+- **Riksarkivet for Feil som Burde Vært Unngått** bevarer nederlag som har
+  pedagogisk verdi.
+
+### Annales Geotiae
+
+Årboken skal føre årets feilpin, årets mest urettferdige fasit, årets
+kursopprettelse i panikk, årets mest akademiske bortforklaring og æresomtaler
+for særlig dannet feilresonnering.
+
+### Feltmanual
+
+Kandidater under kartpress skal se først og gjette senere, mistenke egen
+India-tendens, ikke stole på første Portugal, høre stolpene som vitner og bruke
+Kattemagen uten å adle den etter fasit.
 
 ## Første motto
 

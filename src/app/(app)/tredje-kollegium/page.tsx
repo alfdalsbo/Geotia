@@ -12,6 +12,7 @@ import {
   FileText,
   Footprints,
   Gavel,
+  GraduationCap,
   History,
   KeyRound,
   Landmark,
@@ -276,6 +277,34 @@ export default async function ThirdCollegePage({
       </div>
 
       <ThirdCollegeStatus status={params.status} error={params.error} />
+
+      <Section
+        title="Geoversitetet"
+        eyebrow="Universitas Geotiae · lukket forhåndsvisning"
+        action={
+          <Link href="/geoversitetet" className="btn btn-wax">
+            Åpne Geoversitetet
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        }
+      >
+        <Link href="/geoversitetet" className="archive-card group block transition hover:-translate-y-0.5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="crown-icon">
+              <GraduationCap className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <ArrowRight className="h-5 w-5 text-[#7c2430] transition group-hover:translate-x-1" aria-hidden="true" />
+          </div>
+          <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.32em] text-[#7e5a18]">
+            GEO-U-KJ · internt akademisk arkiv
+          </p>
+          <h3>Geoversitetet</h3>
+          <p className="lead-detail mt-2 text-sm">
+            Grader, eksamener, geofessorprofiler, diplomarkiv, Annales og
+            feltmanual føres nå i Vercel-appen, men bare for Kollegiet.
+          </p>
+        </Link>
+      </Section>
 
       <div className="grid gap-3 md:grid-cols-3">
         <StatTile

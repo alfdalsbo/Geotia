@@ -1,6 +1,8 @@
 # Geotia
 
 Privat Vercel-app for SlowGeo, kattometeret, GeoTinget og Geotias riksarkiv.
+Geoversitetet finnes som lukket appflate på `/geoversitetet`; i første fase er
+den bare synlig for Tredje Kollegium.
 
 ## Samarbeid
 

@@ -66,7 +66,7 @@ export const RIKS_NAV_ITEMS: readonly RiksNavItem[] = [
     label: "Min geot",
     shortLabel: "Min geot",
     description: "Din mappe og rolle",
-    match: ["/min-geot", "/tredje-kollegium"],
+    match: ["/min-geot", "/tredje-kollegium", "/geoversitetet"],
   },
 ];
 
@@ -119,6 +119,7 @@ const ROUTE_LABELS: readonly { match: readonly RouteMatch[]; label: string; shor
   { match: ["/arkiv"], label: "Riksarkivet", shortLabel: "Arkivet" },
   { match: ["/min-geot"], label: "Min geot" },
   { match: ["/tredje-kollegium"], label: "Tredje Kollegium", shortLabel: "3K" },
+  { match: ["/geoversitetet"], label: "Geoversitetet", shortLabel: "Geo-U" },
 ];
 
 export function routeMatches(pathname: string | null | undefined, pattern: RouteMatch) {
