@@ -30,19 +30,19 @@ export async function SlowGeoRoundLauncher() {
         <div className="grid max-w-3xl gap-3">
           <label className="min-w-0 cursor-pointer">
             <input className="peer sr-only" type="radio" name="slowgeo_variant" value="slowgeo" defaultChecked />
-            <span className="flex min-h-20 items-center justify-between gap-4 rounded border-2 border-[#203c62] bg-[#203c62] px-4 py-3 text-white shadow-md transition peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[#c49a3c] peer-checked:ring-2 peer-checked:ring-[#c49a3c]">
+            <span className="flex min-h-20 items-center justify-between gap-4 rounded border-2 border-[#203c62] bg-white px-4 py-3 text-[#4f412b] shadow-sm transition hover:bg-[#f7f8fb] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[#c49a3c] peer-checked:bg-[#203c62] peer-checked:text-white peer-checked:shadow-md peer-checked:ring-2 peer-checked:ring-[#c49a3c]">
               <span className="min-w-0">
                 <span className="inline-flex items-center gap-2 text-lg font-bold">
                   <Scale className="h-5 w-5" aria-hidden="true" />
                   SlowGeo
                 </span>
-                <span className="mt-1 block text-sm leading-6 text-white/85">
+                <span className="mt-1 block text-sm leading-6 opacity-85">
                   GeoGrunnloven gjelder. Runden føres i tabell og orden.
                 </span>
               </span>
-              <span className="inline-flex shrink-0 items-center gap-1 rounded border border-white/30 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em]">
+              <span className="inline-flex shrink-0 items-center gap-1 rounded border border-current/30 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em]">
                 <BadgeCheck className="h-3 w-3" aria-hidden="true" />
-                Valgt
+                Tabell
               </span>
             </span>
           </label>
