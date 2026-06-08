@@ -10,6 +10,7 @@ import { getCurrentGeot } from "@/lib/auth";
 import { geotiaGeotingLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { getGeoticOrderRows, getOrderCapabilities } from "@/lib/geotisk-orden";
 import { computeStandings } from "@/lib/scoring";
+import { filterScoreBearingRounds } from "@/lib/slowgeo";
 import { getGeotingAccessState } from "@/lib/store";
 
 export const metadata = {
@@ -24,7 +25,7 @@ export default async function GeotingPage({
   const params = (await searchParams) ?? {};
   const [state, currentGeot] = await Promise.all([getGeotingAccessState(), getCurrentGeot()]);
   const proposals = state.geotingProposals;
-  const standings = computeStandings(state.players, state.rounds);
+  const standings = computeStandings(state.players, filterScoreBearingRounds(state.rounds));
   const orderRows = getGeoticOrderRows(
     state.players,
     standings,

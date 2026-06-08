@@ -17,6 +17,7 @@ const optionalIsoString = isoString.nullish();
 const resultStatusSchema = z.enum(["deltatt", "ikke_deltatt", "ugyldig"]);
 const distanceSourceSchema = z.enum(["auto", "manual"]);
 const slowGeoModeSchema = z.enum(["static", "panorama"]);
+const slowGeoVariantSchema = z.enum(["slowgeo", "bohemgeo"]);
 const slowGeoDifficultySchema = z.enum(["lett", "middels", "hard", "absurd"]);
 
 export const geoLocationSchema = z.object({
@@ -76,6 +77,7 @@ export const roundLocationDataSchema = z.object({
   mapSnapshot: roundMapSnapshotSchema.nullish(),
   challenge: slowGeoChallengeSchema.nullish(),
   slowGeoMode: slowGeoModeSchema.optional(),
+  slowGeoVariant: slowGeoVariantSchema.nullable().optional(),
   slowGeoEraId: z.string().nullable().optional(),
   slowGeoStartedBy: z.string().nullable().optional(),
   slowGeoStartedAt: z.string().nullable().optional(),
@@ -142,6 +144,7 @@ const roundSchema = z.object({
   mapSnapshot: roundMapSnapshotSchema.nullish(),
   challenge: slowGeoChallengeSchema.nullish(),
   slowGeoMode: slowGeoModeSchema.optional(),
+  slowGeoVariant: slowGeoVariantSchema.optional(),
   slowGeoEraId: z.string().nullable().optional(),
   slowGeoStartedBy: z.string().nullable().optional(),
   slowGeoStartedAt: z.string().nullable().optional(),

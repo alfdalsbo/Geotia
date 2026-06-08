@@ -6,7 +6,7 @@ import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { Section } from "@/components/section";
 import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
 import { computeRound } from "@/lib/scoring";
-import { getSlowGeoStartedAt, getSlowGeoStarterLabel, isSlowGeoRound } from "@/lib/slowgeo";
+import { getSlowGeoStartedAt, getSlowGeoStarterLabel, getSlowGeoVariant, isBohemGeoRound, isSlowGeoRound, slowGeoVariantLabels } from "@/lib/slowgeo";
 import { getRoundsState } from "@/lib/store";
 import type { ComputedRound, Round, RoundStatus } from "@/lib/types";
 import { cn, dateTimeLabel, formatKm } from "@/lib/utils";
@@ -66,6 +66,8 @@ export default async function RoundsPage({
             ? "Protokollen er låst. Kattometeret har talt."
             : params.status === "avslort"
               ? "SlowGeo-fasiten er vist og fasitkortet ligger i hvelvet."
+              : params.status === "bohemgeo_avslort"
+                ? "BohemGeo-fasiten er vist og arkivert uten tabellføring."
               : "SlowGeo-protokollen er oppdatert."}
         </div>
       ) : null}
@@ -100,6 +102,8 @@ function ProtocolCard({ round, computed }: { round: Round; computed: ComputedRou
   const submittedCount = computed.results.filter((result) => result.guessLocation || result.actualKm !== null).length;
   const starterLabel = getSlowGeoStarterLabel(round, computed.results.map((result) => result.player));
   const startedAtLabel = dateTimeLabel(getSlowGeoStartedAt(round));
+  const variant = getSlowGeoVariant(round);
+  const isBohemGeo = isBohemGeoRound(round);
   const statusTone =
     round.status === "locked"
       ? "border-[#285c45]/25 bg-[#285c45]/10 text-[#285c45]"
@@ -115,7 +119,7 @@ function ProtocolCard({ round, computed }: { round: Round; computed: ComputedRou
           <div className="min-w-0">
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7c2430]">
               <ScrollText className="h-4 w-4 flex-none" aria-hidden="true" />
-              Fasitkort #{round.number}
+              {slowGeoVariantLabels[variant]}-fasit #{round.number}
             </p>
             <h2 className="font-display mt-2 text-2xl font-semibold text-[#062b40] sm:text-3xl">
               {round.name}
@@ -131,6 +135,11 @@ function ProtocolCard({ round, computed }: { round: Round; computed: ComputedRou
           <ProtocolFact icon={<UserRound className="h-4 w-4" aria-hidden="true" />} label="Reist av" value={starterLabel} />
           <ProtocolFact icon={<Clock className="h-4 w-4" aria-hidden="true" />} label="Starttid" value={startedAtLabel} />
         </div>
+        {isBohemGeo ? (
+          <p className="mt-3 rounded border border-[#7c2430]/25 bg-[#7c2430]/8 px-3 py-2 text-sm font-semibold text-[#7c2430]">
+            BohemGeo er arkivert uten tabellføring.
+          </p>
+        ) : null}
       </div>
 
       <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5">

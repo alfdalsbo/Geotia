@@ -31,13 +31,19 @@ import {
 import { THIRD_COLLEGIUM_MEMBER_IDS } from "@/lib/kollegium";
 import {
   finalizeSlowGeoRound,
+  filterScoreBearingRounds,
+  addOfficialSlowGeoPlayMinutes,
+  canRevealBohemGeoNow,
   getActiveSlowGeoEra,
   getSlowGeoEraId,
   getSlowGeoMode,
+  getSlowGeoVariant,
   hasLockedSlowGeoGuess,
   isSlowGeoRound,
   isSlowGeoOpenRound,
+  normalizeOfficialSlowGeoDeadlineAt,
   normalizeSlowGeoMode,
+  normalizeSlowGeoVariant,
   shouldRevealSlowGeoRound,
 } from "@/lib/slowgeo";
 import { createStreetViewChallenge, getSlowGeoCandidatePoolStats, getSlowGeoMonthlyRoundCap } from "@/lib/streetview";
@@ -72,6 +78,7 @@ import type {
   RoundStatus,
   SlowGeoChallenge,
   SlowGeoMode,
+  SlowGeoVariant,
   SlowGeoUsedChallenge,
   SlowGeoUsedChallengeReason,
   VoteValue,
@@ -85,6 +92,7 @@ type RoundInput = {
   answerLocation?: GeoLocation | null;
   challenge?: SlowGeoChallenge | null;
   slowGeoMode?: SlowGeoMode;
+  slowGeoVariant?: SlowGeoVariant;
   slowGeoEraId?: string | null;
   slowGeoStartedBy?: string | null;
   slowGeoStartedAt?: string | null;
@@ -305,6 +313,7 @@ type RoundLocationData = {
   mapSnapshot: RoundMapSnapshot | null;
   challenge?: SlowGeoChallenge | null;
   slowGeoMode?: SlowGeoMode;
+  slowGeoVariant?: SlowGeoVariant | null;
   slowGeoEraId?: string | null;
   slowGeoStartedBy?: string | null;
   slowGeoStartedAt?: string | null;
@@ -402,7 +411,8 @@ function normalizeRound(round: Round): Round {
     answerLocation,
     challenge,
     slowGeoMode: normalizeSlowGeoMode(round.slowGeoMode),
-    slowGeoEraId: challenge ? getSlowGeoEraId(round) : (round.slowGeoEraId ?? null),
+    slowGeoVariant: challenge ? getSlowGeoVariant(round) : undefined,
+    slowGeoEraId: challenge && getSlowGeoVariant(round) === "slowgeo" ? getSlowGeoEraId(round) : (round.slowGeoEraId ?? null),
     slowGeoStartedBy: round.slowGeoStartedBy ?? null,
     slowGeoStartedAt: round.slowGeoStartedAt ?? round.createdAt,
     deadlineAt: round.deadlineAt ?? null,
@@ -931,6 +941,7 @@ function parseRoundLocationData(value: RoundLocationData | string | null | undef
       mapSnapshot: null,
       challenge: null,
       slowGeoMode: "static",
+      slowGeoVariant: null,
       slowGeoEraId: null,
       deadlineAt: null,
       revealedAt: null,
@@ -942,6 +953,7 @@ function parseRoundLocationData(value: RoundLocationData | string | null | undef
     mapSnapshot: parsed.mapSnapshot ?? null,
     challenge: parsed.challenge ?? null,
     slowGeoMode: normalizeSlowGeoMode(parsed.slowGeoMode),
+    slowGeoVariant: parsed.slowGeoVariant ? normalizeSlowGeoVariant(parsed.slowGeoVariant) : null,
     slowGeoEraId: parsed.slowGeoEraId ?? null,
     slowGeoStartedBy: parsed.slowGeoStartedBy ?? null,
     slowGeoStartedAt: parsed.slowGeoStartedAt ?? null,
@@ -964,6 +976,7 @@ function parseDbRound(row: DbRoundRow): Round {
     mapSnapshot: locationData.mapSnapshot,
     challenge: locationData.challenge ?? null,
     slowGeoMode: locationData.slowGeoMode,
+    slowGeoVariant: locationData.slowGeoVariant ?? undefined,
     slowGeoEraId: locationData.slowGeoEraId,
     slowGeoStartedBy: locationData.slowGeoStartedBy,
     slowGeoStartedAt: locationData.slowGeoStartedAt,
@@ -985,7 +998,8 @@ function dbRoundLocationJson(round: Round) {
     mapSnapshot: round.mapSnapshot ?? null,
     challenge: round.challenge ?? null,
     slowGeoMode: getSlowGeoMode(round),
-    slowGeoEraId: round.challenge ? getSlowGeoEraId(round) : (round.slowGeoEraId ?? null),
+    slowGeoVariant: round.challenge ? getSlowGeoVariant(round) : null,
+    slowGeoEraId: round.challenge && getSlowGeoVariant(round) === "slowgeo" ? getSlowGeoEraId(round) : (round.slowGeoEraId ?? null),
     slowGeoStartedBy: round.slowGeoStartedBy ?? null,
     slowGeoStartedAt: round.slowGeoStartedAt ?? round.createdAt,
     deadlineAt: round.deadlineAt ?? null,
@@ -2323,7 +2337,7 @@ async function readEligibleGeotingVoters() {
     readGeoterIndexAdjustments(),
     readGeoticOrderAssessments(),
   ]);
-  const standings = computeStandings(players, rounds);
+  const standings = computeStandings(players, filterScoreBearingRounds(rounds));
   const rows = getGeoticOrderRows(players, standings, geoterIndexAdjustments, geoticOrderAssessments);
   const rowByPlayerId = new Map(rows.map((row) => [row.player.id, row]));
   return players.filter((player) => getOrderCapabilities(rowByPlayerId.get(player.id) ?? null).canVote);
@@ -2372,7 +2386,7 @@ async function syncGeoticOrderPromotionCasesForState({
   geoticOrderPromotionCases,
   rounds,
 }: Pick<PersistentState, "geoterIndexAdjustments" | "geoticOrderAssessments" | "geoticOrderPromotionCases" | "rounds">) {
-  const standings = computeStandings(players, rounds);
+  const standings = computeStandings(players, filterScoreBearingRounds(rounds));
   const rows = getGeoticOrderRows(players, standings, geoterIndexAdjustments, geoticOrderAssessments);
   const rowByPlayerId = new Map(rows.map((row) => [row.player.id, row]));
   const timestamp = nowIso();
@@ -2537,6 +2551,7 @@ export async function upsertRound(input: RoundInput) {
     answerLocation: input.answerLocation ?? null,
     challenge: input.challenge ?? existing?.challenge ?? null,
     slowGeoMode: input.slowGeoMode ?? existing?.slowGeoMode ?? "static",
+    slowGeoVariant: input.slowGeoVariant ?? existing?.slowGeoVariant ?? "slowgeo",
     slowGeoStartedBy: input.slowGeoStartedBy ?? existing?.slowGeoStartedBy ?? null,
     slowGeoStartedAt: input.slowGeoStartedAt ?? existing?.slowGeoStartedAt ?? existing?.createdAt ?? timestamp,
     deadlineAt: input.deadlineAt ?? existing?.deadlineAt ?? null,
@@ -2586,11 +2601,12 @@ function isRetryableDbConflict(error: unknown) {
 }
 
 async function createSlowGeoRoundAttempt(
-  input: { title?: string; deadlineMinutes?: number; deadlineAt?: string; mode?: SlowGeoMode; startedBy?: string | null } = {},
+  input: { title?: string; deadlineMinutes?: number; deadlineAt?: string; mode?: SlowGeoMode; variant?: SlowGeoVariant; startedBy?: string | null } = {},
 ) {
   const rounds = await readRounds();
   const timestamp = nowIso();
   const slowGeoMode = normalizeSlowGeoMode(input.mode);
+  const slowGeoVariant = normalizeSlowGeoVariant(input.variant);
   const monthlyCap = getSlowGeoMonthlyRoundCap();
   const currentMonth = monthKey(timestamp);
   const slowGeoRoundsThisMonth = rounds.filter((round) => {
@@ -2621,7 +2637,13 @@ async function createSlowGeoRoundAttempt(
   }
   const nextNumber = rounds.reduce((max, round) => Math.max(max, round.number), 0) + 1;
   const deadlineMinutes = clampDeadlineMinutes(input.deadlineMinutes);
-  const deadlineAt = normalizeDeadlineAt(input.deadlineAt) ?? new Date(Date.now() + deadlineMinutes * 60 * 1000).toISOString();
+  const parsedDeadlineAt = normalizeDeadlineAt(input.deadlineAt);
+  const deadlineAt =
+    slowGeoVariant === "bohemgeo"
+      ? parsedDeadlineAt ?? new Date(new Date(timestamp).getTime() + deadlineMinutes * 60 * 1000).toISOString()
+      : parsedDeadlineAt
+        ? normalizeOfficialSlowGeoDeadlineAt(new Date(parsedDeadlineAt), new Date(timestamp)).toISOString()
+        : addOfficialSlowGeoPlayMinutes(new Date(timestamp), deadlineMinutes).toISOString();
   const answerLocation: GeoLocation = {
     lat: challenge.lat,
     lon: challenge.lon,
@@ -2640,7 +2662,8 @@ async function createSlowGeoRoundAttempt(
     answerLocation,
     challenge,
     slowGeoMode,
-    slowGeoEraId: getActiveSlowGeoEra().id,
+    slowGeoVariant,
+    slowGeoEraId: slowGeoVariant === "slowgeo" ? getActiveSlowGeoEra().id : null,
     slowGeoStartedBy: input.startedBy?.trim() || null,
     slowGeoStartedAt: timestamp,
     deadlineAt,
@@ -2662,7 +2685,7 @@ async function createSlowGeoRoundAttempt(
 }
 
 export async function createSlowGeoRound(
-  input: { title?: string; deadlineMinutes?: number; deadlineAt?: string; mode?: SlowGeoMode; startedBy?: string | null } = {},
+  input: { title?: string; deadlineMinutes?: number; deadlineAt?: string; mode?: SlowGeoMode; variant?: SlowGeoVariant; startedBy?: string | null } = {},
 ) {
   const maxAttempts = usesPostgresStorage() ? 3 : 1;
   let lastConflict: unknown = null;
@@ -2864,6 +2887,22 @@ export async function maybeRevealRound(id: string, now = new Date()) {
   const revealed = finalizeSlowGeoRound(round, players, now.toISOString());
   await saveRoundRecord(revealed, rounds.map((candidate) => (candidate.id === id ? revealed : candidate)));
   return revealed;
+}
+
+export async function revealBohemGeoRoundNow(input: { roundId: string }) {
+  const rounds = await readRounds();
+  const round = rounds.find((candidate) => candidate.id === input.roundId);
+  if (!round) {
+    return { ok: false, reason: "Runden finnes ikke i protokollen." };
+  }
+  if (!canRevealBohemGeoNow(round)) {
+    return { ok: false, reason: "Bare åpne BohemGeo-runder kan avsløres på kommando." };
+  }
+
+  const timestamp = nowIso();
+  const revealed = finalizeSlowGeoRound(round, players, timestamp);
+  await saveRoundRecord(revealed, rounds.map((candidate) => (candidate.id === round.id ? revealed : candidate)));
+  return { ok: true, round: revealed };
 }
 
 export async function runScheduledMaintenance(now = new Date()) {
@@ -3235,7 +3274,7 @@ export async function upsertGeoticOrderAssessment(input: GeoticOrderAssessmentIn
     readGeoterIndexAdjustments(),
   ]);
   const timestamp = nowIso();
-  const standings = computeStandings(players, rounds);
+  const standings = computeStandings(players, filterScoreBearingRounds(rounds));
   const currentRows = getGeoticOrderRows(players, standings, adjustments, existing);
   const currentRow = currentRows.find((row) => row.player.id === input.playerId);
   const requestedRank = getGeoticOrderRank(input.rankId);

@@ -43,6 +43,7 @@ export {
   deleteSlowGeoRound,
   maybeRevealRound,
   replaceSlowGeoPanoramaRound,
+  revealBohemGeoRoundNow,
   revealDueSlowGeoRounds,
   submitSlowGeoGuess,
 } from "@/lib/services/slowgeo-service";

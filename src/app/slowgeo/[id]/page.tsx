@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Sparkles } from "lucide-react";
 
+import { revealBohemGeoNowAction } from "@/app/actions";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { PublicGeotiaHeader } from "@/components/public-geotia-header";
 import { SlowGeoPlay } from "@/components/slowgeo-play";
 import { SlowGeoRevealMap } from "@/components/slowgeo-reveal-map";
@@ -10,7 +12,15 @@ import { getCurrentGeot } from "@/lib/auth";
 import { selectGeoGuessrTips } from "@/lib/geoguessr-tips";
 import { computeRound } from "@/lib/scoring";
 import { players } from "@/lib/seed";
-import { getSlowGeoMode, getSlowGeoStartedAt, getSlowGeoStarterLabel, hasLockedSlowGeoGuess } from "@/lib/slowgeo";
+import {
+  getSlowGeoMode,
+  getSlowGeoStartedAt,
+  getSlowGeoStarterLabel,
+  getSlowGeoVariant,
+  isBohemGeoRound,
+  slowGeoVariantLabels,
+  hasLockedSlowGeoGuess,
+} from "@/lib/slowgeo";
 import {
   buildOpenSlowGeoShareTextOptions,
   buildRevealedSlowGeoShareTextOptions,
@@ -51,10 +61,13 @@ export async function generateMetadata({
     apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
     allowLocationFallback: round.status !== "open",
   });
-  const title = `SlowGeo: ${round.name}`;
+  const variant = getSlowGeoVariant(round);
+  const title = `${slowGeoVariantLabels[variant]}: ${round.name}`;
   const description =
     round.status === "open"
-      ? "Nytt SlowGeo-bilde er oppe. Krangle først, sett pinnen etterpå."
+      ? variant === "bohemgeo"
+        ? "BohemGeo er oppe. Ingen tabell, bare følelser og pin-svar."
+        : "Nytt SlowGeo-bilde er oppe. Krangle først, sett pinnen etterpå."
       : `Fasit er avslørt: ${round.answer || round.challenge.label}.`;
 
   return {
@@ -116,6 +129,8 @@ export default async function SlowGeoSharePage({
   });
   const isOpen = round.status === "open";
   const slowGeoMode = getSlowGeoMode(round);
+  const slowGeoVariant = getSlowGeoVariant(round);
+  const isBohemGeo = isBohemGeoRound(round);
   const canReplacePanorama = isOpen && slowGeoMode === "panorama" && !hasLockedSlowGeoGuess(round);
   const answerLabel = round.answer || round.challenge.label;
   const submittedCount = round.results.filter((result) => result.guessLocation).length;
@@ -166,7 +181,7 @@ export default async function SlowGeoSharePage({
         <header className="flex min-w-0 flex-col gap-4 rounded border border-[#d6b565]/55 bg-[#fdf7e8] p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:p-6">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7c2430]">
-              SlowGeo #{round.number}
+              {slowGeoVariantLabels[slowGeoVariant]} #{round.number}
             </p>
             <h1 className="font-display mt-2 text-3xl font-semibold text-[#062b40] sm:text-5xl">
               {round.name}
@@ -176,13 +191,19 @@ export default async function SlowGeoSharePage({
                 ? `Fasit skjult. ${submittedCount}/${participantCount} pin-svar er låst.`
                 : `Fasit: ${answerLabel}`}
             </p>
+            {isBohemGeo ? (
+              <p className="mt-2 inline-flex items-center gap-2 rounded border border-[#7c2430]/25 bg-[#7c2430]/8 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
+                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                BohemGeo · ikke tabellført
+              </p>
+            ) : null}
             <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
               Reist av {starterLabel} · {startedAtLabel}
             </p>
           </div>
           {isOpen ? (
             <SlowGeoThreadShareButton
-              title={`SlowGeo: ${round.name}`}
+              title={`${slowGeoVariantLabels[slowGeoVariant]}: ${round.name}`}
               texts={shareTexts}
               url={shareUrl}
               label="Del iMessage-tråden"
@@ -206,8 +227,31 @@ export default async function SlowGeoSharePage({
                 ? "Fasit er avslørt, protokollen er låst og runden ligger i arkivet."
                 : query.status === "panorama_nytt"
                   ? "Nytt panorama er hentet inn i samme SlowGeo-lenke."
-                : "SlowGeo er oppdatert."}
+                  : query.status === "bohemgeo_avslort"
+                    ? "BohemGeo-fasiten er avslørt på kommando."
+                    : "SlowGeo er oppdatert."}
           </div>
+        ) : null}
+
+        {isOpen && isBohemGeo && currentGeot ? (
+          <section className="flex flex-col gap-4 rounded border border-[#7c2430]/25 bg-[#7c2430]/10 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">
+                <Sparkles className="h-4 w-4" aria-hidden="true" />
+                BohemGeo
+              </p>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-[#4f412b]">
+                Runden er uten tabellmakt. Fasit kan åpnes nå uten fire svar.
+              </p>
+            </div>
+            <form action={revealBohemGeoNowAction}>
+              <input type="hidden" name="round_id" value={round.id} />
+              <input type="hidden" name="return_to" value={shareUrl} />
+              <PendingSubmitButton className="inline-flex min-h-11 items-center justify-center gap-2 rounded bg-[#7c2430] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5f1c26]">
+                Avslør BohemGeo nå
+              </PendingSubmitButton>
+            </form>
+          </section>
         ) : null}
 
         {highlightThreadShare ? (
@@ -217,11 +261,11 @@ export default async function SlowGeoSharePage({
                 <MessageCircle className="h-4 w-4" aria-hidden="true" />
                 Klar for tråden
               </p>
-              <h2 className="font-display mt-2 text-2xl font-semibold">Del SlowGeo før pin-svarene kommer</h2>
+              <h2 className="font-display mt-2 text-2xl font-semibold">Del {slowGeoVariantLabels[slowGeoVariant]} før pin-svarene kommer</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-[#f5ead3]">{shareText}</p>
             </div>
             <SlowGeoThreadShareButton
-              title={`SlowGeo: ${round.name}`}
+              title={`${slowGeoVariantLabels[slowGeoVariant]}: ${round.name}`}
               texts={shareTexts}
               url={shareUrl}
               label="Del iMessage-tråden"

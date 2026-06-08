@@ -3,6 +3,7 @@ import {
   deleteSlowGeoRound as deleteSlowGeoRoundCore,
   maybeRevealRound as maybeRevealRoundCore,
   replaceSlowGeoPanoramaRound as replaceSlowGeoPanoramaRoundCore,
+  revealBohemGeoRoundNow as revealBohemGeoRoundNowCore,
   revealDueSlowGeoRounds as revealDueSlowGeoRoundsCore,
   submitSlowGeoGuess as submitSlowGeoGuessCore,
 } from "@/lib/data/geotia-store";
@@ -30,4 +31,8 @@ export function revealDueSlowGeoRounds(...args: Parameters<typeof revealDueSlowG
 
 export function maybeRevealRound(...args: Parameters<typeof maybeRevealRoundCore>) {
   return withDataMutationLock("slowgeo", () => maybeRevealRoundCore(...args));
+}
+
+export function revealBohemGeoRoundNow(...args: Parameters<typeof revealBohemGeoRoundNowCore>) {
+  return withDataMutationLock("slowgeo", () => revealBohemGeoRoundNowCore(...args));
 }

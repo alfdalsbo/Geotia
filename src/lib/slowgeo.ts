@@ -1,12 +1,21 @@
 import { buildRoundMapSnapshot, haversineKm } from "@/lib/geo";
 import { computeStandings } from "@/lib/scoring";
-import type { GeotiaEra, Player, Round, SlowGeoMode } from "@/lib/types";
+import type { GeotiaEra, Player, Round, SlowGeoMode, SlowGeoVariant } from "@/lib/types";
 
 export const slowGeoModes: SlowGeoMode[] = ["static", "panorama"];
 
+export const slowGeoVariants: SlowGeoVariant[] = ["slowgeo", "bohemgeo"];
+
 export const MIN_SLOWGEO_REVEAL_GUESSES = 4;
 
+export const MIN_OFFICIAL_SLOWGEO_PLAY_MINUTES = 60;
+
+export const DEFAULT_SLOWGEO_DEADLINE_LEGAL_MINUTES = 120;
+
 export const DEFAULT_SLOWGEO_ERA_ID = "proveaeraen";
+
+const OSLO_TIME_ZONE = "Europe/Oslo";
+const MINUTE_MS = 60 * 1000;
 
 export const slowGeoEras: GeotiaEra[] = [
   {
@@ -23,12 +32,25 @@ export const slowGeoModeLabels: Record<SlowGeoMode, string> = {
   panorama: "Panorama",
 };
 
+export const slowGeoVariantLabels: Record<SlowGeoVariant, string> = {
+  slowgeo: "SlowGeo",
+  bohemgeo: "BohemGeo",
+};
+
 export function normalizeSlowGeoMode(value: unknown): SlowGeoMode {
   return value === "panorama" ? "panorama" : "static";
 }
 
+export function normalizeSlowGeoVariant(value: unknown): SlowGeoVariant {
+  return value === "bohemgeo" ? "bohemgeo" : "slowgeo";
+}
+
 export function getSlowGeoMode(round: Pick<Round, "slowGeoMode">): SlowGeoMode {
   return normalizeSlowGeoMode(round.slowGeoMode);
+}
+
+export function getSlowGeoVariant(round: Pick<Round, "slowGeoVariant">): SlowGeoVariant {
+  return normalizeSlowGeoVariant(round.slowGeoVariant);
 }
 
 export function getActiveSlowGeoEra() {
@@ -40,11 +62,27 @@ export function getSlowGeoEraId(round: Pick<Round, "slowGeoEraId">) {
 }
 
 export function filterSlowGeoRoundsForEra(rounds: Round[], eraId = getActiveSlowGeoEra().id) {
-  return rounds.filter((round) => isSlowGeoRound(round) && getSlowGeoEraId(round) === eraId);
+  return rounds.filter((round) => isScoreBearingSlowGeoRound(round) && getSlowGeoEraId(round) === eraId);
 }
 
 export function computeStandingsForEra(players: Player[], rounds: Round[], eraId = getActiveSlowGeoEra().id) {
   return computeStandings(players, filterSlowGeoRoundsForEra(rounds, eraId));
+}
+
+export function isBohemGeoRound(round: Pick<Round, "challenge" | "slowGeoVariant">) {
+  return Boolean(round.challenge) && getSlowGeoVariant(round) === "bohemgeo";
+}
+
+export function isScoreBearingSlowGeoRound(round: Round) {
+  return isSlowGeoRound(round) && getSlowGeoVariant(round) === "slowgeo";
+}
+
+export function isScoreBearingRound(round: Round) {
+  return !isBohemGeoRound(round);
+}
+
+export function filterScoreBearingRounds(rounds: Round[]) {
+  return rounds.filter(isScoreBearingRound);
 }
 
 export function getSlowGeoStartedAt(round: Pick<Round, "slowGeoStartedAt" | "createdAt">) {
@@ -91,11 +129,135 @@ export function hasLockedSlowGeoGuess(round: Round) {
 }
 
 export function shouldRevealSlowGeoRound(round: Round, players: Player[], now = new Date()) {
+  if (isBohemGeoRound(round)) {
+    return isSlowGeoOpenRound(round) && isRoundPastDeadline(round, now);
+  }
+
   return (
     isSlowGeoOpenRound(round) &&
     hasMinimumSlowGeoRevealGuesses(round) &&
     (isRoundPastDeadline(round, now) || allPlayersHaveSlowGeoGuesses(round, players))
   );
+}
+
+export function canRevealBohemGeoNow(round: Round) {
+  return isSlowGeoOpenRound(round) && isBohemGeoRound(round);
+}
+
+export function osloDateParts(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: OSLO_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return {
+    year: Number(values.year),
+    month: Number(values.month),
+    day: Number(values.day),
+    hour: Number(values.hour),
+    minute: Number(values.minute),
+    second: Number(values.second),
+  };
+}
+
+export function osloWallTimeToDate(year: number, month: number, day: number, hour: number, minute: number) {
+  const desiredWallTime = Date.UTC(year, month - 1, day, hour, minute, 0);
+  const actualParts = osloDateParts(new Date(desiredWallTime));
+  const actualWallTime = Date.UTC(
+    actualParts.year,
+    actualParts.month - 1,
+    actualParts.day,
+    actualParts.hour,
+    actualParts.minute,
+    actualParts.second,
+  );
+  return new Date(desiredWallTime + (desiredWallTime - actualWallTime));
+}
+
+function ceilToMinute(date: Date) {
+  const time = date.getTime();
+  const remainder = time % MINUTE_MS;
+  return new Date(remainder === 0 ? time : time + (MINUTE_MS - remainder));
+}
+
+function isOfficialSlowGeoPlayMinute(date: Date) {
+  const { hour } = osloDateParts(date);
+  return hour >= 7 && hour < 23;
+}
+
+function isOfficialSlowGeoDeadline(date: Date) {
+  const { hour, minute, second } = osloDateParts(date);
+  return (hour >= 7 && hour < 23) || (hour === 23 && minute === 0 && second === 0);
+}
+
+export function countOfficialSlowGeoPlayMinutes(from: Date, to: Date) {
+  const end = to.getTime();
+  let cursor = ceilToMinute(from).getTime();
+  let minutes = 0;
+
+  while (cursor < end) {
+    if (isOfficialSlowGeoPlayMinute(new Date(cursor))) minutes += 1;
+    cursor += MINUTE_MS;
+  }
+
+  return minutes;
+}
+
+export function addOfficialSlowGeoPlayMinutes(from: Date, minutes: number) {
+  const targetMinutes = Math.max(0, Math.round(minutes));
+  let cursor = ceilToMinute(from).getTime();
+  let counted = 0;
+
+  while (counted < targetMinutes) {
+    if (isOfficialSlowGeoPlayMinute(new Date(cursor))) counted += 1;
+    cursor += MINUTE_MS;
+  }
+
+  return new Date(cursor);
+}
+
+export function normalizeOfficialSlowGeoDeadlineAt(candidate: Date, now = new Date()) {
+  const latest = Number.isFinite(candidate.getTime()) && candidate.getTime() > now.getTime()
+    ? candidate
+    : addOfficialSlowGeoPlayMinutes(now, MIN_OFFICIAL_SLOWGEO_PLAY_MINUTES);
+
+  if (
+    isOfficialSlowGeoDeadline(latest) &&
+    countOfficialSlowGeoPlayMinutes(now, latest) >= MIN_OFFICIAL_SLOWGEO_PLAY_MINUTES
+  ) {
+    return latest;
+  }
+
+  let cursor = ceilToMinute(latest).getTime();
+  const maxCursor = cursor + 14 * 24 * 60 * MINUTE_MS;
+
+  while (cursor <= maxCursor) {
+    const deadline = new Date(cursor);
+    if (
+      isOfficialSlowGeoDeadline(deadline) &&
+      countOfficialSlowGeoPlayMinutes(now, deadline) >= MIN_OFFICIAL_SLOWGEO_PLAY_MINUTES
+    ) {
+      return deadline;
+    }
+    cursor += MINUTE_MS;
+  }
+
+  return addOfficialSlowGeoPlayMinutes(now, MIN_OFFICIAL_SLOWGEO_PLAY_MINUTES);
+}
+
+export function defaultOfficialSlowGeoDeadlineAt(now = new Date()) {
+  return addOfficialSlowGeoPlayMinutes(now, DEFAULT_SLOWGEO_DEADLINE_LEGAL_MINUTES);
+}
+
+export function formatOsloTime(date: Date) {
+  const values = osloDateParts(date);
+  return `${String(values.hour).padStart(2, "0")}:${String(values.minute).padStart(2, "0")}`;
 }
 
 export function finalizeSlowGeoRound(round: Round, players: Player[], revealedAt = new Date().toISOString()): Round {

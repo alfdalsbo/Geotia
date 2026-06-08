@@ -1,4 +1,5 @@
 import type { GeoterIndexAdjustment, Player, Round, Standing } from "@/lib/types";
+import { filterScoreBearingRounds } from "@/lib/slowgeo";
 
 export type GeotiaBadgeTone = "blue" | "green" | "gold" | "red";
 
@@ -23,7 +24,7 @@ export function getPlayerBadges({
   standing?: Standing;
 }) {
   const playerAdjustments = adjustments.filter((adjustment) => adjustment.playerId === player.id);
-  const lockedRounds = rounds.filter((round) => round.status === "locked");
+  const lockedRounds = filterScoreBearingRounds(rounds).filter((round) => round.status === "locked");
   const playerResults = lockedRounds
     .map((round) => round.results.find((result) => result.playerId === player.id))
     .filter(Boolean);

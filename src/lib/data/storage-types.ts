@@ -10,6 +10,7 @@ import type {
   RoundMapSnapshot,
   SlowGeoChallenge,
   SlowGeoMode,
+  SlowGeoVariant,
   SlowGeoUsedChallenge,
 } from "@/lib/types";
 
@@ -24,6 +25,7 @@ export type RoundLocationData = {
   mapSnapshot: RoundMapSnapshot | null;
   challenge?: SlowGeoChallenge | null;
   slowGeoMode?: SlowGeoMode;
+  slowGeoVariant?: SlowGeoVariant | null;
   slowGeoEraId?: string | null;
   slowGeoStartedBy?: string | null;
   slowGeoStartedAt?: string | null;

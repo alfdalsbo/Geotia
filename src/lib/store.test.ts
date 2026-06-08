@@ -364,6 +364,46 @@ describe("Geotia file store", () => {
     expect(backups.some((file) => file.startsWith("geotia-data-"))).toBe(true);
   });
 
+  it("creates BohemGeo rounds outside the official table and reveals them on command", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    process.env.GOOGLE_MAPS_SERVER_API_KEY = "";
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    vi.resetModules();
+
+    const { createSlowGeoRound, revealBohemGeoRoundNow, getAppState } = await import("@/lib/store");
+
+    const bohemDeadline = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const bohem = await createSlowGeoRound({
+      title: "Følelsesprøven",
+      deadlineAt: bohemDeadline,
+      variant: "bohemgeo",
+      startedBy: "alf",
+    });
+    if (!bohem.ok || !bohem.round) throw new Error("BohemGeo-runden ble ikke opprettet");
+
+    expect(bohem.round.slowGeoVariant).toBe("bohemgeo");
+    expect(bohem.round.slowGeoEraId).toBeNull();
+    expect(bohem.round.deadlineAt).toBe(bohemDeadline);
+
+    const revealed = await revealBohemGeoRoundNow({ roundId: bohem.round.id });
+    expect(revealed.ok).toBe(true);
+    expect(revealed.round?.status).toBe("locked");
+    expect(revealed.round?.results.every((result) => result.status === "ikke_deltatt")).toBe(true);
+
+    const official = await createSlowGeoRound({ title: "Lovlig SlowGeo" });
+    if (!official.ok || !official.round) throw new Error("SlowGeo-runden ble ikke opprettet");
+
+    const rejected = await revealBohemGeoRoundNow({ roundId: official.round.id });
+    expect(rejected.ok).toBe(false);
+    expect(rejected.reason).toContain("BohemGeo");
+
+    const state = await getAppState();
+    const storedBohem = state.rounds.find((round) => round.id === bohem.round.id);
+    expect(storedBohem?.slowGeoVariant).toBe("bohemgeo");
+    expect(storedBohem?.slowGeoEraId).toBeNull();
+  });
+
   it("never repeats a SlowGeo candidate that has already been used", async () => {
     tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
     process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
@@ -538,7 +578,7 @@ describe("Geotia file store", () => {
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
     vi.resetModules();
 
-    const { createSlowGeoRound, deleteSlowGeoRound, getAppState, submitSlowGeoGuess } = await import("@/lib/store");
+    const { createSlowGeoRound, deleteSlowGeoRound, getAppState, revealDueSlowGeoRounds, submitSlowGeoGuess } = await import("@/lib/store");
 
     const open = await createSlowGeoRound({
       title: "Åpen sletteprøve",
@@ -565,6 +605,7 @@ describe("Geotia file store", () => {
       });
       expect(submitted.ok).toBe(true);
     }
+    await revealDueSlowGeoRounds(new Date(Date.now() + 25 * 60 * 60 * 1000));
 
     state = await getAppState();
     expect(state.rounds.find((round) => round.id === locked.round?.id)?.status).toBe("locked");
@@ -650,8 +691,8 @@ describe("Geotia file store", () => {
     vi.resetModules();
 
     const { createSlowGeoRound, getAppState, revealDueSlowGeoRounds, submitSlowGeoGuess } = await import("@/lib/store");
-    const deadlineAt = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const created = await createSlowGeoRound({ title: "Forfalt, men ren lesing", deadlineAt });
+    const deadlineAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const created = await createSlowGeoRound({ title: "Åpen, men ren lesing", deadlineAt });
     if (!created.ok || !created.round) throw new Error("SlowGeo-runden ble ikke opprettet");
     const beforeRead = JSON.parse(await readFile(path.join(tempDir, "state.json"), "utf8")) as { meta?: Record<string, string> };
 
@@ -679,7 +720,12 @@ describe("Geotia file store", () => {
       expect(submitted.ok).toBe(true);
     }
     const afterFourthAnswer = await getAppState();
-    expect(afterFourthAnswer.rounds.find((candidate) => candidate.id === created.round?.id)?.status).toBe("locked");
+    expect(afterFourthAnswer.rounds.find((candidate) => candidate.id === created.round?.id)?.status).toBe("open");
+
+    const finalReveal = await revealDueSlowGeoRounds(new Date(Date.now() + 25 * 60 * 60 * 1000));
+    const afterExplicitReveal = await getAppState();
+    expect(finalReveal.revealed).toBe(1);
+    expect(afterExplicitReveal.rounds.find((candidate) => candidate.id === created.round?.id)?.status).toBe("locked");
   });
 
   it("returns the same slices through focused selectors as the compatibility state", async () => {

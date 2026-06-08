@@ -6,6 +6,7 @@ import { GeotingMiniCountdown } from "@/components/geoting-countdown";
 import { LiveBar, type LiveBarItem } from "@/components/ui/live-bar";
 import { competingPlayers } from "@/lib/seed";
 import { getRouteContext, type RouteAreaId } from "@/lib/route-context";
+import { getSlowGeoVariant, slowGeoVariantLabels } from "@/lib/slowgeo";
 import { getSlowGeoProgress, slowGeoDifficultyLabels } from "@/lib/slowgeo-insights";
 import type { GeotingProposal, Round } from "@/lib/types";
 
@@ -63,6 +64,7 @@ function buildSlowGeoSignal(rounds: Round[]): Signal | null {
   if (!primary) return null;
 
   const progress = getSlowGeoProgress(primary);
+  const variantLabel = slowGeoVariantLabels[getSlowGeoVariant(primary)];
   const missingNames = competingPlayers
     .filter((player) => {
       const result = primary.results.find((candidate) => candidate.playerId === player.id);
@@ -82,7 +84,7 @@ function buildSlowGeoSignal(rounds: Round[]): Signal | null {
   return {
     area: "slowgeo",
     item: {
-      tag: `SlowGeo pågår nå · ${meta}`,
+      tag: `${variantLabel} pågår nå · ${meta}`,
       caseCode: `RUNDE · ${primary.number}`,
       title: `${primary.name}${titleSuffix}`,
       deadlineLabel: <GeotingMiniCountdown endsAt={primary.deadlineAt} />,

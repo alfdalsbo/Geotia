@@ -21,6 +21,8 @@ export type SlowGeoDifficulty = "lett" | "middels" | "hard" | "absurd";
 
 export type SlowGeoMode = "static" | "panorama";
 
+export type SlowGeoVariant = "slowgeo" | "bohemgeo";
+
 export type SlowGeoUsedChallengeReason = "created" | "replaced" | "backfilled";
 
 export type GeotiaEra = {
@@ -166,6 +168,7 @@ export type Round = {
   mapSnapshot?: RoundMapSnapshot | null;
   challenge?: SlowGeoChallenge | null;
   slowGeoMode?: SlowGeoMode;
+  slowGeoVariant?: SlowGeoVariant;
   slowGeoEraId?: string | null;
   slowGeoStartedBy?: string | null;
   slowGeoStartedAt?: string | null;

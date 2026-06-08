@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Clock, MapPinned, ShieldAlert, Trash2 } from "lucide-react";
 
-import { deleteSlowGeoRoundAction } from "@/app/actions";
+import { deleteSlowGeoRoundAction, revealBohemGeoNowAction } from "@/app/actions";
 import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Section } from "@/components/section";
@@ -11,7 +11,7 @@ import { SlowGeoThreadShareButton } from "@/components/slowgeo-thread-share-butt
 import { canManageSlowGeoAdmin, canStartSlowGeoRound } from "@/lib/admin-permissions";
 import { getCurrentGeot } from "@/lib/auth";
 import { pickGeoticLine, slowGeoEmptyStateLines } from "@/lib/geotia-jargon";
-import { getSlowGeoMode, slowGeoModeLabels } from "@/lib/slowgeo";
+import { getSlowGeoMode, getSlowGeoVariant, isBohemGeoRound, slowGeoModeLabels, slowGeoVariantLabels } from "@/lib/slowgeo";
 import { buildOpenSlowGeoShareTextOptions } from "@/lib/slowgeo-share";
 import { getSlowGeoProgress, slowGeoDifficultyLabels } from "@/lib/slowgeo-insights";
 import { getSlowGeoState } from "@/lib/store";
@@ -69,7 +69,9 @@ export default async function SlowGeoGamePage({
             ? "SlowGeo-runden er åpnet."
             : params.status === "slowgeo-slettet"
               ? "SlowGeo-runden er slettet av Tredje Kollegium."
-              : "SlowGeo-rommet er oppdatert."}
+              : params.status === "bohemgeo_avslort"
+                ? "BohemGeo-fasiten er avslørt på kommando."
+                : "SlowGeo-rommet er oppdatert."}
         </div>
       ) : null}
 
@@ -91,13 +93,15 @@ export default async function SlowGeoGamePage({
               const progress = getSlowGeoProgress(round);
               const shareUrl = `/slowgeo/${round.id}`;
               const mode = getSlowGeoMode(round);
+              const variant = getSlowGeoVariant(round);
+              const isBohemGeo = isBohemGeoRound(round);
               const difficulty = round.challenge?.difficulty ? slowGeoDifficultyLabels[round.challenge.difficulty] : null;
               return (
                 <article key={round.id} className="rounded border border-[#d8ded0] bg-white p-4 shadow-sm">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8e3030]">
-                        Runde #{round.number} · {slowGeoModeLabels[mode]}
+                        Runde #{round.number} · {slowGeoVariantLabels[variant]} · {slowGeoModeLabels[mode]}
                       </p>
                       <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">
                         {round.name}
@@ -111,6 +115,11 @@ export default async function SlowGeoGamePage({
                   <p className="mt-3 text-sm leading-6 text-[#5b6257]">
                     {progress.submittedCount}/{progress.totalCount} pin-svar er låst. Fasit er skjult til reveal.
                   </p>
+                  {isBohemGeo ? (
+                    <p className="mt-3 rounded border border-[#7c2430]/25 bg-[#7c2430]/8 px-3 py-2 text-sm font-semibold text-[#7c2430]">
+                      BohemGeo er ikke tabellført. Fasit kan avsløres når følelsene krever det.
+                    </p>
+                  ) : null}
                   <div className="mt-3 h-2 overflow-hidden rounded bg-[#eef1eb]">
                     <div
                       className="h-full rounded bg-[#285c45]"
@@ -135,12 +144,21 @@ export default async function SlowGeoGamePage({
                       <LinkPendingIndicator className="text-white" />
                     </Link>
                     <SlowGeoThreadShareButton
-                      title={`SlowGeo: ${round.name}`}
+                      title={`${slowGeoVariantLabels[variant]}: ${round.name}`}
                       texts={buildOpenSlowGeoShareTextOptions(round.name, round.id)}
                       url={shareUrl}
                       label="Del iMessage-tråden"
                       copiedLabel="Trådtekst kopiert"
                     />
+                    {isBohemGeo && currentGeot ? (
+                      <form action={revealBohemGeoNowAction}>
+                        <input type="hidden" name="round_id" value={round.id} />
+                        <input type="hidden" name="return_to" value="/spill/slowgeo" />
+                        <PendingSubmitButton className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-[#7c2430] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5f1c26]">
+                          Avslør BohemGeo nå
+                        </PendingSubmitButton>
+                      </form>
+                    ) : null}
                   </div>
                   {canManageSlowGeo ? (
                     <form

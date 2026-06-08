@@ -35,6 +35,7 @@ import {
   getOrderState,
   lockRound,
   replaceSlowGeoPanoramaRound,
+  revealBohemGeoRoundNow,
   saveGeotingVote,
   saveGeotingPartyPosition,
   startGeotingVote,
@@ -64,8 +65,16 @@ import type {
   ProposalRuleType,
   ResultStatus,
   SlowGeoMode,
+  SlowGeoVariant,
   VoteValue,
 } from "@/lib/types";
+import {
+  filterScoreBearingRounds,
+  normalizeOfficialSlowGeoDeadlineAt,
+  normalizeSlowGeoVariant,
+  osloDateParts,
+  osloWallTimeToDate,
+} from "@/lib/slowgeo";
 
 function field(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -125,43 +134,7 @@ function numberField(formData: FormData, key: string) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function osloDateParts(date: Date) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Oslo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(date);
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return {
-    year: Number(values.year),
-    month: Number(values.month),
-    day: Number(values.day),
-    hour: Number(values.hour),
-    minute: Number(values.minute),
-    second: Number(values.second),
-  };
-}
-
-function osloWallTimeToDate(year: number, month: number, day: number, hour: number, minute: number) {
-  const desiredWallTime = Date.UTC(year, month - 1, day, hour, minute, 0);
-  const actualParts = osloDateParts(new Date(desiredWallTime));
-  const actualWallTime = Date.UTC(
-    actualParts.year,
-    actualParts.month - 1,
-    actualParts.day,
-    actualParts.hour,
-    actualParts.minute,
-    actualParts.second,
-  );
-  return new Date(desiredWallTime + (desiredWallTime - actualWallTime));
-}
-
-function slowGeoDeadlineAt(formData: FormData) {
+function slowGeoDeadlineAt(formData: FormData, variant: SlowGeoVariant) {
   const rawTime = field(formData, "deadline_time");
   const match = /^(\d{1,2}):(\d{2})$/.exec(rawTime);
   if (!match) return undefined;
@@ -176,11 +149,15 @@ function slowGeoDeadlineAt(formData: FormData) {
   if (candidate.getTime() <= now.getTime()) {
     candidate = osloWallTimeToDate(today.year, today.month, today.day + 1, hour, minute);
   }
-  return candidate.toISOString();
+  return variant === "bohemgeo" ? candidate.toISOString() : normalizeOfficialSlowGeoDeadlineAt(candidate, now).toISOString();
 }
 
 function slowGeoModeField(value: string): SlowGeoMode {
   return value === "panorama" ? "panorama" : "static";
+}
+
+function slowGeoVariantField(value: string): SlowGeoVariant {
+  return normalizeSlowGeoVariant(value);
 }
 
 function statusField(value: string): ResultStatus {
@@ -274,12 +251,14 @@ export async function saveRoundAction(formData: FormData) {
 export async function createSlowGeoRoundAction(formData: FormData) {
   const session = await requireSlowGeoStarterSession();
   const title = field(formData, "title");
-  const deadlineAt = slowGeoDeadlineAt(formData);
+  const variant = slowGeoVariantField(field(formData, "slowgeo_variant"));
+  const deadlineAt = slowGeoDeadlineAt(formData, variant);
 
   const result = await createSlowGeoRound({
     title,
     deadlineAt,
     mode: slowGeoModeField(field(formData, "slowgeo_mode")),
+    variant,
     startedBy: session.playerId,
   });
 
@@ -290,6 +269,25 @@ export async function createSlowGeoRoundAction(formData: FormData) {
   }
 
   redirect(`/slowgeo/${result.round.id}?created=1`);
+}
+
+export async function revealBohemGeoNowAction(formData: FormData) {
+  await requireSession();
+  const roundId = field(formData, "round_id");
+  const returnTo = safeRedirectPath(field(formData, "return_to") || (roundId ? `/slowgeo/${roundId}` : "/spill/slowgeo"));
+
+  if (!roundId) {
+    redirect(`${returnTo}?error=${encodeURIComponent("BohemGeo-runden mangler i avsløringsprotokollen.")}`);
+  }
+
+  const result = await revealBohemGeoRoundNow({ roundId });
+  revalidateSlowGeoPaths(roundId);
+
+  if (!result.ok) {
+    redirect(`${returnTo}?error=${encodeURIComponent(result.reason ?? "BohemGeo kunne ikke avsløres akkurat nå.")}`);
+  }
+
+  redirect(`${returnTo}?status=bohemgeo_avslort`);
 }
 
 export async function replaceSlowGeoPanoramaAction(formData: FormData) {
@@ -467,7 +465,7 @@ function geoticOrderStatus(value: string): GeoticOrderStatus {
 
 async function getCurrentOrderAccess(playerId: string) {
   const state = await getOrderState();
-  const standings = computeStandings(state.players, state.rounds);
+  const standings = computeStandings(state.players, filterScoreBearingRounds(state.rounds));
   const rows = getGeoticOrderRows(
     state.players,
     standings,

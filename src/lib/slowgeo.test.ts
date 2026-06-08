@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   allPlayersHaveSlowGeoGuesses,
   computeStandingsForEra,
+  filterScoreBearingRounds,
   countSlowGeoGuesses,
   filterSlowGeoRoundsForEra,
   finalizeSlowGeoRound,
@@ -10,10 +11,16 @@ import {
   hasMinimumSlowGeoRevealGuesses,
   isRoundPastDeadline,
   MIN_SLOWGEO_REVEAL_GUESSES,
+  normalizeOfficialSlowGeoDeadlineAt,
+  osloDateParts,
+  osloWallTimeToDate,
   shouldRevealSlowGeoRound,
 } from "@/lib/slowgeo";
 import { competingPlayers, players } from "@/lib/seed";
-import { emptyResults } from "@/lib/scoring";
+import { computeStandings, emptyResults, getHallOfFame } from "@/lib/scoring";
+import { getEarnedPlayerBadges } from "@/lib/geotia-badges";
+import { getGeoticOrderRows } from "@/lib/geotisk-orden";
+import { getPlayerDossier } from "@/lib/player-dossier";
 import type { GeoLocation, Round, SlowGeoChallenge } from "@/lib/types";
 
 const answerLocation: GeoLocation = {
@@ -112,6 +119,45 @@ describe("SlowGeo reveal rules", () => {
     expect(shouldRevealSlowGeoRound(round, players, new Date("2026-05-16T10:30:00.000Z"))).toBe(true);
   });
 
+  it("normalizes official SlowGeo deadlines to legal Oslo play minutes", () => {
+    const lateStart = osloWallTimeToDate(2026, 6, 8, 22, 30);
+    const tooShortDeadline = osloWallTimeToDate(2026, 6, 8, 23, 0);
+    const adjustedLate = normalizeOfficialSlowGeoDeadlineAt(tooShortDeadline, lateStart);
+
+    expect(osloDateParts(adjustedLate)).toMatchObject({
+      year: 2026,
+      month: 6,
+      day: 9,
+      hour: 7,
+      minute: 30,
+    });
+
+    const earlyStart = osloWallTimeToDate(2026, 6, 8, 6, 30);
+    const earlyDeadline = osloWallTimeToDate(2026, 6, 8, 7, 30);
+    const adjustedEarly = normalizeOfficialSlowGeoDeadlineAt(earlyDeadline, earlyStart);
+
+    expect(osloDateParts(adjustedEarly)).toMatchObject({
+      year: 2026,
+      month: 6,
+      day: 8,
+      hour: 8,
+      minute: 0,
+    });
+  });
+
+  it("lets BohemGeo reveal at the deadline without four pin answers", () => {
+    const bohemRound = openRound({
+      slowGeoVariant: "bohemgeo",
+      results: emptyResults(competingPlayers).map((result, index) =>
+        index === 0 ? { ...result, ...resultWithGuess(index) } : result,
+      ),
+    });
+
+    expect(hasMinimumSlowGeoRevealGuesses(bohemRound)).toBe(false);
+    expect(shouldRevealSlowGeoRound(bohemRound, players, new Date("2026-05-16T11:59:00.000Z"))).toBe(false);
+    expect(shouldRevealSlowGeoRound(bohemRound, players, new Date("2026-05-16T12:00:00.000Z"))).toBe(true);
+  });
+
   it("computes automatic km and keeps missing players out until kattometer scoring", () => {
     const round = openRound({
       results: emptyResults(competingPlayers).map((result) =>
@@ -195,9 +241,102 @@ describe("SlowGeo reveal rules", () => {
     );
 
     expect(getSlowGeoEraId(legacyEraRound)).toBe("proveaeraen");
-    expect(filterSlowGeoRoundsForEra([legacyEraRound, futureEraRound], "proveaeraen").map((round) => round.id)).toEqual([
+    const bohemRound = finalizeSlowGeoRound(
+      openRound({
+        id: "bohem-era",
+        slowGeoVariant: "bohemgeo",
+        slowGeoEraId: null,
+        results: emptyResults(competingPlayers).map((result) =>
+          result.playerId === "steinar"
+            ? {
+                ...result,
+                guessLocation: {
+                  lat: answerLocation.lat,
+                  lon: answerLocation.lon,
+                  label: "Fri følelse",
+                  query: "pin",
+                  source: "manual",
+                },
+              }
+            : result,
+        ),
+      }),
+      players,
+      "2026-05-16T12:00:00.000Z",
+    );
+
+    expect(filterSlowGeoRoundsForEra([legacyEraRound, futureEraRound, bohemRound], "proveaeraen").map((round) => round.id)).toEqual([
       "legacy-era",
     ]);
-    expect(computeStandingsForEra(players, [legacyEraRound, futureEraRound], "proveaeraen")[0].player.id).toBe("alf");
+    expect(filterScoreBearingRounds([legacyEraRound, bohemRound]).map((round) => round.id)).toEqual(["legacy-era"]);
+    expect(computeStandingsForEra(players, [legacyEraRound, futureEraRound, bohemRound], "proveaeraen")[0].player.id).toBe("alf");
+  });
+
+  it("keeps BohemGeo out of standings, hall of fame, order, badges, and dossiers", () => {
+    const officialRound = finalizeSlowGeoRound(
+      openRound({
+        id: "official-standing",
+        results: emptyResults(competingPlayers).map((result) =>
+          result.playerId === "alf"
+            ? {
+                ...result,
+                guessLocation: {
+                  lat: answerLocation.lat,
+                  lon: answerLocation.lon,
+                  label: "Offisiell blink",
+                  query: "pin",
+                  source: "manual",
+                },
+              }
+            : result,
+        ),
+      }),
+      players,
+      "2026-05-16T12:00:00.000Z",
+    );
+    const bohemRound = finalizeSlowGeoRound(
+      openRound({
+        id: "bohem-standing",
+        slowGeoVariant: "bohemgeo",
+        slowGeoEraId: null,
+        results: emptyResults(competingPlayers).map((result) =>
+          result.playerId === "ruben"
+            ? {
+                ...result,
+                guessLocation: {
+                  lat: answerLocation.lat,
+                  lon: answerLocation.lon,
+                  label: "Bohemsk blink",
+                  query: "pin",
+                  source: "manual",
+                },
+              }
+            : result,
+        ),
+      }),
+      players,
+      "2026-05-16T12:00:00.000Z",
+    );
+    const scoreBearingRounds = filterScoreBearingRounds([officialRound, bohemRound]);
+    const standings = computeStandings(players, scoreBearingRounds);
+    const ruben = players.find((player) => player.id === "ruben")!;
+    const rubenStanding = standings.find((standing) => standing.player.id === "ruben");
+    const hall = getHallOfFame(standings, scoreBearingRounds, players);
+    const orderRows = getGeoticOrderRows(players, standings, [], []);
+    const rubenOrder = orderRows.find((row) => row.player.id === "ruben");
+    const rubenBadges = getEarnedPlayerBadges({
+      adjustments: [],
+      player: ruben,
+      rounds: [bohemRound],
+      standing: rubenStanding,
+    });
+    const rubenDossier = getPlayerDossier(ruben, players, [bohemRound], rubenStanding);
+
+    expect(standings[0].player.id).toBe("alf");
+    expect(rubenStanding?.totalPoints).toBe(0);
+    expect(hall.bestSingle?.round.id).toBe("official-standing");
+    expect(rubenOrder?.lifetimePoints).toBe(0);
+    expect(rubenBadges.some((badge) => badge.id === "stolpeobservator")).toBe(false);
+    expect(rubenDossier.recentMoments).toEqual([]);
   });
 });

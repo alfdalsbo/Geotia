@@ -22,6 +22,7 @@ import { getGeoGuessrTipDaySeed, selectGeoGuessrTips } from "@/lib/geoguessr-tip
 import { geotiaDashboardLines, pickGeoticLine } from "@/lib/geotia-jargon";
 import { getGeoticOrderRows } from "@/lib/geotisk-orden";
 import { computeRound, computeStandings } from "@/lib/scoring";
+import { filterScoreBearingRounds, getSlowGeoVariant, slowGeoVariantLabels } from "@/lib/slowgeo";
 import { getActivityState } from "@/lib/store";
 import { formatKm } from "@/lib/utils";
 
@@ -31,13 +32,15 @@ export const metadata = {
 
 export default async function DashboardPage() {
   const [state, currentGeot] = await Promise.all([getActivityState(), getCurrentGeot()]);
-  const standings = computeStandings(state.players, state.rounds);
+  const scoreBearingRounds = filterScoreBearingRounds(state.rounds);
+  const standings = computeStandings(state.players, scoreBearingRounds);
   const daySeed = getGeoGuessrTipDaySeed();
-  const lockedRounds = state.rounds.filter((round) => round.status === "locked");
+  const lockedRounds = scoreBearingRounds.filter((round) => round.status === "locked");
   const latestRound = lockedRounds.at(-1);
   const computedLatest = latestRound ? computeRound(latestRound, state.players) : null;
   const activeSlowGeoRounds = state.rounds.filter((round) => round.challenge && round.status === "open");
   const primarySlowGeoRound = activeSlowGeoRounds.at(0);
+  const primarySlowGeoVariant = primarySlowGeoRound ? getSlowGeoVariant(primarySlowGeoRound) : null;
   const activeVotingProposals = state.geotingProposals.filter((proposal) => proposal.status === "voting");
   const primaryVotingProposal = activeVotingProposals.at(0);
   const currentStanding = standings.find((standing) => standing.player.id === currentGeot?.id) ?? standings[0];
@@ -56,7 +59,7 @@ export default async function DashboardPage() {
   });
   const recommendedAction = primarySlowGeoRound
     ? {
-        title: "Åpne aktiv SlowGeo",
+        title: `Åpne aktiv ${slowGeoVariantLabels[primarySlowGeoVariant ?? "slowgeo"]}`,
         detail: primarySlowGeoRound.name,
         href: `/runder/${primarySlowGeoRound.id}`,
         label: "Sett pinnen",
@@ -134,7 +137,7 @@ export default async function DashboardPage() {
             <p className="label">Rikets nåsignal</p>
             <p className="value">
               {primarySlowGeoRound
-                ? `SlowGeo pågår: ${primarySlowGeoRound.name}`
+                ? `${slowGeoVariantLabels[primarySlowGeoVariant ?? "slowgeo"]} pågår: ${primarySlowGeoRound.name}`
                 : computedLatest
                   ? `Siste vinner: ${computedLatest.winnerNames.join(", ")}`
                   : "Riket venter på første låste SlowGeo-runde"}
@@ -150,7 +153,11 @@ export default async function DashboardPage() {
             icon={<MapPinned className="h-5 w-5" aria-hidden="true" />}
             eyebrow="SlowGeo"
             title={primarySlowGeoRound ? "Runde pågår" : "Ingen åpen runde"}
-            detail={primarySlowGeoRound ? primarySlowGeoRound.name : "Start en ny runde når tråden er klar."}
+            detail={
+              primarySlowGeoRound
+                ? `${slowGeoVariantLabels[primarySlowGeoVariant ?? "slowgeo"]}: ${primarySlowGeoRound.name}`
+                : "Start en ny runde når tråden er klar."
+            }
             action={primarySlowGeoRound ? "Åpne runden" : "Start SlowGeo"}
           />
           <TodayCard

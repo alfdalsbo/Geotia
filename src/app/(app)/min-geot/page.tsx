@@ -26,6 +26,7 @@ import { getPlayerDisplayName, getPlayerOfficialFirstName } from "@/lib/player-p
 import { getPartyMechanic } from "@/lib/party-mechanics";
 import { getPlayerDossier } from "@/lib/player-dossier";
 import { computeRound, computeStandings } from "@/lib/scoring";
+import { filterScoreBearingRounds } from "@/lib/slowgeo";
 import { getActivityState } from "@/lib/store";
 import { dateLabel, formatKm, formatNumber } from "@/lib/utils";
 
@@ -46,7 +47,8 @@ export default async function MyGeotPage({
   const displayName = getPlayerDisplayName(player);
   const officialFirstName = getPlayerOfficialFirstName(player);
   const party = state.parties.find((candidate) => candidate.id === player.partyId);
-  const standings = computeStandings(state.players, state.rounds);
+  const scoreBearingRounds = filterScoreBearingRounds(state.rounds);
+  const standings = computeStandings(state.players, scoreBearingRounds);
   const standing = standings.find((row) => row.player.id === player.id);
   const orderRows = getGeoticOrderRows(
     state.players,
@@ -56,7 +58,7 @@ export default async function MyGeotPage({
   );
   const orderRow = orderRows.find((row) => row.player.id === player.id);
   const orderCapabilities = getOrderCapabilities(orderRow ?? null);
-  const lockedRounds = state.rounds
+  const lockedRounds = scoreBearingRounds
     .filter((round) => round.status === "locked")
     .map((round) => computeRound(round, state.players))
     .filter((round) => round.results.some((result) => result.player.id === player.id))
@@ -70,12 +72,12 @@ export default async function MyGeotPage({
   const badges = getEarnedPlayerBadges({
     adjustments: state.geoterIndexAdjustments,
     player,
-    rounds: state.rounds,
+    rounds: scoreBearingRounds,
     standing,
   });
   const dossierLine = pickGeoticLine(geotiaMyGeotLines, player.id);
   const partyMechanic = getPartyMechanic(player.partyId);
-  const dossier = getPlayerDossier(player, state.players, state.rounds, standing);
+  const dossier = getPlayerDossier(player, state.players, scoreBearingRounds, standing);
   const orderProgressLabel = orderRow
     ? orderRow.nextRank
       ? orderRow.promotionReady
