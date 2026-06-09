@@ -17,6 +17,7 @@ import {
   getSlowGeoStartedAt,
   getSlowGeoStarterLabel,
   getSlowGeoVariant,
+  hasMinimumSlowGeoRevealGuesses,
   isBohemGeoRound,
   slowGeoVariantLabels,
   hasLockedSlowGeoGuess,
@@ -131,6 +132,7 @@ export default async function SlowGeoSharePage({
   const slowGeoMode = getSlowGeoMode(round);
   const slowGeoVariant = getSlowGeoVariant(round);
   const isBohemGeo = isBohemGeoRound(round);
+  const isUnderMinimumOfficialSlowGeo = !isBohemGeo && !hasMinimumSlowGeoRevealGuesses(round);
   const canReplacePanorama = isOpen && slowGeoMode === "panorama" && !hasLockedSlowGeoGuess(round);
   const answerLabel = round.answer || round.challenge.label;
   const submittedCount = round.results.filter((result) => result.guessLocation).length;
@@ -195,6 +197,10 @@ export default async function SlowGeoSharePage({
               <p className="mt-2 inline-flex items-center gap-2 rounded border border-[#7c2430]/25 bg-[#7c2430]/8 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
                 <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
                 BohemGeo · ikke tabellført
+              </p>
+            ) : isUnderMinimumOfficialSlowGeo && !isOpen ? (
+              <p className="mt-2 inline-flex items-center gap-2 rounded border border-[#7c2430]/25 bg-[#7c2430]/8 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
+                SlowGeo · ikke tabellført: færre enn fire pin-svar
               </p>
             ) : null}
             <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
@@ -286,6 +292,7 @@ export default async function SlowGeoSharePage({
             streetViewStaticViewConfig={streetViewStaticViewConfig}
             streetViewPanorama={streetViewPanorama}
             slowGeoMode={slowGeoMode}
+            slowGeoVariant={slowGeoVariant}
             canReplacePanorama={canReplacePanorama}
             googleMapsApiKey={publicGoogleKey}
             existingGuess={existingGuess}

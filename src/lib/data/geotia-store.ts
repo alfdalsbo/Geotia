@@ -36,6 +36,7 @@ import {
   canRevealBohemGeoNow,
   getActiveSlowGeoEra,
   getSlowGeoEraId,
+  getSlowGeoGuessWindowState,
   getSlowGeoMode,
   getSlowGeoVariant,
   hasLockedSlowGeoGuess,
@@ -2818,6 +2819,16 @@ export async function submitSlowGeoGuess(input: {
     const finalized = finalizeSlowGeoRound(round, players, now.toISOString());
     await saveRoundRecord(finalized, rounds.map((candidate) => (candidate.id === round.id ? finalized : candidate)));
     return { ok: false, reason: "Fristen er ute og fasit er avslørt." };
+  }
+  const guessWindow = getSlowGeoGuessWindowState(round, now);
+  if (!guessWindow.canSubmit) {
+    return {
+      ok: false,
+      reason:
+        guessWindow.reason === "night"
+          ? "SlowGeo er nattestengt til 07:00."
+          : "Denne SlowGeo-runden er ikke åpen for svar.",
+    };
   }
   const existingResult = round.results.find((result) => result.playerId === input.playerId);
   if (existingResult?.guessLocation) {

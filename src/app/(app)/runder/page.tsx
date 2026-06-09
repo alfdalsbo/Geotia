@@ -6,7 +6,15 @@ import { LinkPendingIndicator } from "@/components/link-pending-indicator";
 import { Section } from "@/components/section";
 import { SlowGeoSubnav } from "@/components/slowgeo-subnav";
 import { computeRound } from "@/lib/scoring";
-import { getSlowGeoStartedAt, getSlowGeoStarterLabel, getSlowGeoVariant, isBohemGeoRound, isSlowGeoRound, slowGeoVariantLabels } from "@/lib/slowgeo";
+import {
+  getSlowGeoStartedAt,
+  getSlowGeoStarterLabel,
+  getSlowGeoVariant,
+  hasMinimumSlowGeoRevealGuesses,
+  isBohemGeoRound,
+  isSlowGeoRound,
+  slowGeoVariantLabels,
+} from "@/lib/slowgeo";
 import { getRoundsState } from "@/lib/store";
 import type { ComputedRound, Round, RoundStatus } from "@/lib/types";
 import { cn, dateTimeLabel, formatKm } from "@/lib/utils";
@@ -104,6 +112,7 @@ function ProtocolCard({ round, computed }: { round: Round; computed: ComputedRou
   const startedAtLabel = dateTimeLabel(getSlowGeoStartedAt(round));
   const variant = getSlowGeoVariant(round);
   const isBohemGeo = isBohemGeoRound(round);
+  const isUnderMinimumOfficialSlowGeo = !isBohemGeo && !hasMinimumSlowGeoRevealGuesses(round);
   const statusTone =
     round.status === "locked"
       ? "border-[#285c45]/25 bg-[#285c45]/10 text-[#285c45]"
@@ -138,6 +147,10 @@ function ProtocolCard({ round, computed }: { round: Round; computed: ComputedRou
         {isBohemGeo ? (
           <p className="mt-3 rounded border border-[#7c2430]/25 bg-[#7c2430]/8 px-3 py-2 text-sm font-semibold text-[#7c2430]">
             BohemGeo er arkivert uten tabellføring.
+          </p>
+        ) : isUnderMinimumOfficialSlowGeo ? (
+          <p className="mt-3 rounded border border-[#7c2430]/25 bg-[#7c2430]/8 px-3 py-2 text-sm font-semibold text-[#7c2430]">
+            Ikke tabellført: færre enn fire pin-svar.
           </p>
         ) : null}
       </div>

@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { osloWallTimeToDate } from "@/lib/slowgeo";
 import type { GeoLocation } from "@/lib/types";
 
 let tempDir: string | null = null;
@@ -32,6 +33,7 @@ afterEach(async () => {
   delete process.env.GOOGLE_MAPS_SERVER_API_KEY;
   delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   delete process.env.SLOWGEO_MONTHLY_ROUND_CAP;
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   vi.resetModules();
@@ -283,6 +285,8 @@ describe("Geotia file store", () => {
     process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
     process.env.GOOGLE_MAPS_SERVER_API_KEY = "";
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    vi.useFakeTimers();
+    vi.setSystemTime(osloWallTimeToDate(2026, 6, 8, 10, 0));
     vi.resetModules();
 
     const { createSlowGeoRound, submitSlowGeoGuess, revealDueSlowGeoRounds, getAppState } = await import("@/lib/store");
@@ -369,6 +373,8 @@ describe("Geotia file store", () => {
     process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
     process.env.GOOGLE_MAPS_SERVER_API_KEY = "";
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    vi.useFakeTimers();
+    vi.setSystemTime(osloWallTimeToDate(2026, 6, 8, 10, 0));
     vi.resetModules();
 
     const { createSlowGeoRound, revealBohemGeoRoundNow, getAppState } = await import("@/lib/store");
@@ -402,6 +408,84 @@ describe("Geotia file store", () => {
     const storedBohem = state.rounds.find((round) => round.id === bohem.round.id);
     expect(storedBohem?.slowGeoVariant).toBe("bohemgeo");
     expect(storedBohem?.slowGeoEraId).toBeNull();
+  });
+
+  it("rejects pin answers after the SlowGeo deadline and reveals the under-four round", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    process.env.GOOGLE_MAPS_SERVER_API_KEY = "";
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    vi.useFakeTimers();
+    vi.setSystemTime(osloWallTimeToDate(2026, 6, 8, 10, 0));
+    vi.resetModules();
+
+    const { createSlowGeoRound, getAppState, submitSlowGeoGuess } = await import("@/lib/store");
+    const created = await createSlowGeoRound({
+      title: "Fristprøven",
+      deadlineAt: osloWallTimeToDate(2026, 6, 8, 11, 0).toISOString(),
+    });
+    if (!created.ok || !created.round?.answerLocation) throw new Error("SlowGeo-runden ble ikke opprettet");
+
+    vi.setSystemTime(osloWallTimeToDate(2026, 6, 8, 11, 1));
+    const lateSubmitted = await submitSlowGeoGuess({
+      roundId: created.round.id,
+      playerId: "alf",
+      location: slowGeoTestPin(created.round.answerLocation, 0),
+    });
+    const state = await getAppState();
+    const round = state.rounds.find((candidate) => candidate.id === created.round.id);
+
+    expect(lateSubmitted.ok).toBe(false);
+    expect(lateSubmitted.reason).toContain("Fristen er ute");
+    expect(round?.status).toBe("locked");
+    expect(round?.results.find((result) => result.playerId === "alf")?.guessLocation).toBeNull();
+    expect(round?.results.filter((result) => result.guessLocation).length).toBe(0);
+  });
+
+  it("rejects official SlowGeo pins at night but lets BohemGeo stay open", async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "geotia-store-"));
+    process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
+    process.env.GOOGLE_MAPS_SERVER_API_KEY = "";
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    vi.useFakeTimers();
+    vi.setSystemTime(osloWallTimeToDate(2026, 6, 8, 22, 30));
+    vi.resetModules();
+
+    const { createSlowGeoRound, getAppState, submitSlowGeoGuess } = await import("@/lib/store");
+    const official = await createSlowGeoRound({
+      title: "Nattestengt SlowGeo",
+      deadlineAt: osloWallTimeToDate(2026, 6, 9, 7, 30).toISOString(),
+    });
+    const bohem = await createSlowGeoRound({
+      title: "Nattåpen BohemGeo",
+      variant: "bohemgeo",
+      deadlineAt: osloWallTimeToDate(2026, 6, 9, 7, 30).toISOString(),
+    });
+    if (!official.ok || !official.round?.answerLocation || !bohem.ok || !bohem.round?.answerLocation) {
+      throw new Error("SlowGeo-rundene ble ikke opprettet");
+    }
+
+    vi.setSystemTime(osloWallTimeToDate(2026, 6, 8, 23, 30));
+    const officialSubmitted = await submitSlowGeoGuess({
+      roundId: official.round.id,
+      playerId: "alf",
+      location: slowGeoTestPin(official.round.answerLocation, 0),
+    });
+    const bohemSubmitted = await submitSlowGeoGuess({
+      roundId: bohem.round.id,
+      playerId: "alf",
+      location: slowGeoTestPin(bohem.round.answerLocation, 0),
+    });
+    const state = await getAppState();
+    const officialRound = state.rounds.find((candidate) => candidate.id === official.round.id);
+    const bohemRound = state.rounds.find((candidate) => candidate.id === bohem.round.id);
+
+    expect(officialSubmitted.ok).toBe(false);
+    expect(officialSubmitted.reason).toContain("nattestengt");
+    expect(officialRound?.status).toBe("open");
+    expect(officialRound?.results.find((result) => result.playerId === "alf")?.guessLocation).toBeNull();
+    expect(bohemSubmitted.ok).toBe(true);
+    expect(bohemRound?.results.find((result) => result.playerId === "alf")?.guessLocation?.label).toBe("Testpin 1");
   });
 
   it("never repeats a SlowGeo candidate that has already been used", async () => {
@@ -492,6 +576,8 @@ describe("Geotia file store", () => {
     process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
     process.env.GOOGLE_MAPS_SERVER_API_KEY = "";
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    vi.useFakeTimers();
+    vi.setSystemTime(osloWallTimeToDate(2026, 6, 8, 10, 0));
     vi.resetModules();
 
     const { createSlowGeoRound } = await import("@/lib/store");
@@ -576,6 +662,8 @@ describe("Geotia file store", () => {
     process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
     process.env.GOOGLE_MAPS_SERVER_API_KEY = "";
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    vi.useFakeTimers();
+    vi.setSystemTime(osloWallTimeToDate(2026, 6, 8, 10, 0));
     vi.resetModules();
 
     const { createSlowGeoRound, deleteSlowGeoRound, getAppState, revealDueSlowGeoRounds, submitSlowGeoGuess } = await import("@/lib/store");
@@ -594,7 +682,7 @@ describe("Geotia file store", () => {
 
     const locked = await createSlowGeoRound({
       title: "Låst sletteprøve",
-      deadlineAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+      deadlineAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
     });
     if (!locked.ok || !locked.round?.answerLocation) throw new Error("Låst SlowGeo ble ikke opprettet");
     for (const [index, playerId] of slowGeoRevealPlayerIds.entries()) {
@@ -622,6 +710,8 @@ describe("Geotia file store", () => {
     process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
     process.env.GOOGLE_MAPS_SERVER_API_KEY = "unit-test-key";
     delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    vi.useFakeTimers();
+    vi.setSystemTime(osloWallTimeToDate(2026, 6, 8, 10, 0));
     vi.stubGlobal(
       "fetch",
       vi
@@ -655,6 +745,8 @@ describe("Geotia file store", () => {
     process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
     process.env.GOOGLE_MAPS_SERVER_API_KEY = "unit-test-key";
     delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    vi.useFakeTimers();
+    vi.setSystemTime(osloWallTimeToDate(2026, 6, 8, 10, 0));
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(metadataResponse({ status: "OK", pano_id: "locked-pano", date: "2024-01", copyright: "© Google" })) as unknown as typeof fetch,
@@ -688,6 +780,8 @@ describe("Geotia file store", () => {
     process.env.GEOTIA_DATA_FILE = path.join(tempDir, "state.json");
     process.env.GOOGLE_MAPS_SERVER_API_KEY = "";
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "";
+    vi.useFakeTimers();
+    vi.setSystemTime(osloWallTimeToDate(2026, 6, 8, 10, 0));
     vi.resetModules();
 
     const { createSlowGeoRound, getAppState, revealDueSlowGeoRounds, submitSlowGeoGuess } = await import("@/lib/store");

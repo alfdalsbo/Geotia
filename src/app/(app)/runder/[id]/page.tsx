@@ -22,6 +22,7 @@ import {
   getSlowGeoStarterLabel,
   getSlowGeoVariant,
   hasLockedSlowGeoGuess,
+  hasMinimumSlowGeoRevealGuesses,
   isBohemGeoRound,
   slowGeoVariantLabels,
 } from "@/lib/slowgeo";
@@ -102,6 +103,7 @@ export default async function RoundDetailPage({
   const slowGeoMode = getSlowGeoMode(round);
   const slowGeoVariant = getSlowGeoVariant(round);
   const isBohemGeo = isBohemGeoRound(round);
+  const isUnderMinimumOfficialSlowGeo = isStreetViewRound && !isBohemGeo && !hasMinimumSlowGeoRevealGuesses(round);
   const canManageRound = canManageRounds(currentGeot?.id);
   const canReplacePanorama =
     canManageSlowGeoAdmin(currentGeot?.id) &&
@@ -177,6 +179,10 @@ export default async function RoundDetailPage({
             <p className="mt-2 inline-flex items-center gap-2 rounded border border-[#7c2430]/25 bg-[#7c2430]/8 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
               Ikke tabellført
+            </p>
+          ) : isUnderMinimumOfficialSlowGeo && round.status !== "open" ? (
+            <p className="mt-2 inline-flex items-center gap-2 rounded border border-[#7c2430]/25 bg-[#7c2430]/8 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7c2430]">
+              SlowGeo · ikke tabellført: færre enn fire pin-svar
             </p>
           ) : null}
         </div>
@@ -270,6 +276,7 @@ export default async function RoundDetailPage({
           streetViewStaticViewConfig={streetViewStaticViewConfig}
           streetViewPanorama={streetViewPanorama}
           slowGeoMode={slowGeoMode}
+          slowGeoVariant={slowGeoVariant}
           canReplacePanorama={canReplacePanorama}
           googleMapsApiKey={publicGoogleKey}
           existingGuess={existingGuess}

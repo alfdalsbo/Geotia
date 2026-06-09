@@ -74,11 +74,11 @@ export function isBohemGeoRound(round: Pick<Round, "challenge" | "slowGeoVariant
 }
 
 export function isScoreBearingSlowGeoRound(round: Round) {
-  return isSlowGeoRound(round) && getSlowGeoVariant(round) === "slowgeo";
+  return isSlowGeoRound(round) && getSlowGeoVariant(round) === "slowgeo" && hasMinimumSlowGeoRevealGuesses(round);
 }
 
 export function isScoreBearingRound(round: Round) {
-  return !isBohemGeoRound(round);
+  return isSlowGeoRound(round) ? isScoreBearingSlowGeoRound(round) : true;
 }
 
 export function filterScoreBearingRounds(rounds: Round[]) {
@@ -133,11 +133,7 @@ export function shouldRevealSlowGeoRound(round: Round, players: Player[], now = 
     return isSlowGeoOpenRound(round) && isRoundPastDeadline(round, now);
   }
 
-  return (
-    isSlowGeoOpenRound(round) &&
-    hasMinimumSlowGeoRevealGuesses(round) &&
-    (isRoundPastDeadline(round, now) || allPlayersHaveSlowGeoGuesses(round, players))
-  );
+  return isSlowGeoOpenRound(round) && (isRoundPastDeadline(round, now) || allPlayersHaveSlowGeoGuesses(round, players));
 }
 
 export function canRevealBohemGeoNow(round: Round) {
@@ -186,9 +182,13 @@ function ceilToMinute(date: Date) {
   return new Date(remainder === 0 ? time : time + (MINUTE_MS - remainder));
 }
 
-function isOfficialSlowGeoPlayMinute(date: Date) {
+export function isOfficialSlowGeoPlayTime(date: Date) {
   const { hour } = osloDateParts(date);
   return hour >= 7 && hour < 23;
+}
+
+function isOfficialSlowGeoPlayMinute(date: Date) {
+  return isOfficialSlowGeoPlayTime(date);
 }
 
 function isOfficialSlowGeoDeadline(date: Date) {
@@ -258,6 +258,34 @@ export function defaultOfficialSlowGeoDeadlineAt(now = new Date()) {
 export function formatOsloTime(date: Date) {
   const values = osloDateParts(date);
   return `${String(values.hour).padStart(2, "0")}:${String(values.minute).padStart(2, "0")}`;
+}
+
+export function nextOfficialSlowGeoPlayOpeningAt(now = new Date()) {
+  const values = osloDateParts(now);
+  const opensToday = values.hour < 7;
+  return osloWallTimeToDate(values.year, values.month, values.day + (opensToday ? 0 : 1), 7, 0);
+}
+
+export type SlowGeoGuessWindowState =
+  | { canSubmit: true; reason: "open"; nextOpensAt?: undefined }
+  | { canSubmit: false; reason: "closed" | "deadline"; nextOpensAt?: undefined }
+  | { canSubmit: false; reason: "night"; nextOpensAt: string };
+
+export function getSlowGeoGuessWindowState(round: Round, now = new Date()): SlowGeoGuessWindowState {
+  if (!isSlowGeoOpenRound(round)) {
+    return { canSubmit: false, reason: "closed" };
+  }
+  if (isRoundPastDeadline(round, now)) {
+    return { canSubmit: false, reason: "deadline" };
+  }
+  if (isBohemGeoRound(round) || isOfficialSlowGeoPlayTime(now)) {
+    return { canSubmit: true, reason: "open" };
+  }
+  return {
+    canSubmit: false,
+    reason: "night",
+    nextOpensAt: nextOfficialSlowGeoPlayOpeningAt(now).toISOString(),
+  };
 }
 
 export function finalizeSlowGeoRound(round: Round, players: Player[], revealedAt = new Date().toISOString()): Round {

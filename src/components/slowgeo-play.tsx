@@ -16,7 +16,8 @@ import type { SlowGeoAnswerStatusItem } from "@/lib/slowgeo-answer-status";
 import type { SlowGeoStreetViewPanoramaConfig } from "@/lib/streetview-panorama";
 import type { StreetViewStaticViewConfig } from "@/lib/streetview-url";
 import { buildOpenSlowGeoShareTextOptions } from "@/lib/slowgeo-share";
-import type { SlowGeoMode } from "@/lib/types";
+import { formatOsloTime, isOfficialSlowGeoPlayTime, nextOfficialSlowGeoPlayOpeningAt } from "@/lib/slowgeo";
+import type { SlowGeoMode, SlowGeoVariant } from "@/lib/types";
 import { dateTimeLabel } from "@/lib/utils";
 
 type Guess = {
@@ -33,6 +34,7 @@ type SlowGeoPlayProps = {
   streetViewStaticViewConfig: StreetViewStaticViewConfig | null;
   streetViewPanorama: SlowGeoStreetViewPanoramaConfig | null;
   slowGeoMode?: SlowGeoMode;
+  slowGeoVariant?: SlowGeoVariant;
   canReplacePanorama?: boolean;
   googleMapsApiKey: string;
   existingGuess: (Guess & { updatedAt?: string | null }) | null;
@@ -57,6 +59,7 @@ export function SlowGeoPlay({
   streetViewStaticViewConfig,
   streetViewPanorama,
   slowGeoMode = "static",
+  slowGeoVariant = "slowgeo",
   canReplacePanorama = false,
   googleMapsApiKey,
   existingGuess,
@@ -79,11 +82,32 @@ export function SlowGeoPlay({
   const [mapReadyToLoad, setMapReadyToLoad] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
   const [panoramaLoadFailed, setPanoramaLoadFailed] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   const answerLocked = Boolean(existingGuess);
+  const deadlineTime = deadlineAt ? new Date(deadlineAt).getTime() : null;
+  const deadlinePassed = deadlineTime !== null && Number.isFinite(deadlineTime) && currentTime.getTime() >= deadlineTime;
+  const officialNightClosed = slowGeoVariant !== "bohemgeo" && !isOfficialSlowGeoPlayTime(currentTime);
+  const nightOpensAt = officialNightClosed ? nextOfficialSlowGeoPlayOpeningAt(currentTime) : null;
+  const answerUnavailableText = deadlinePassed
+    ? "Fristen er ute."
+    : officialNightClosed && nightOpensAt
+      ? `SlowGeo er nattestengt til ${formatOsloTime(nightOpensAt)}.`
+      : "";
+  const canEditAnswer = !answerLocked && !answerUnavailableText;
+  const canEditAnswerRef = useRef(canEditAnswer);
   const openShareTexts = buildOpenSlowGeoShareTextOptions(roundName, roundId);
   const imageViewMode = slowGeoMode === "panorama" && streetViewPanorama ? "panorama" : "static";
   const showPanoramaRetry = slowGeoMode === "panorama" && (!streetViewPanorama || panoramaLoadFailed);
   const replacePanoramaReturnTo = returnTo ?? `/runder/${roundId}`;
+
+  useEffect(() => {
+    canEditAnswerRef.current = canEditAnswer;
+  }, [canEditAnswer]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentTime(new Date()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const placeMarker = useCallback((nextGuess: Guess, center = true) => {
     const mapsApi = mapsApiRef.current;
@@ -115,11 +139,11 @@ export function SlowGeoPlay({
   }, [placeMarker]);
 
   const clearGuess = useCallback(() => {
-    if (answerLocked) return;
+    if (!canEditAnswer) return;
     markerRef.current?.setMap(null);
     markerRef.current = null;
     setGuess(null);
-  }, [answerLocked]);
+  }, [canEditAnswer]);
 
   const recenterMap = useCallback(() => {
     const map = mapRef.current;
@@ -191,6 +215,7 @@ export function SlowGeoPlay({
         mapRef.current = map;
         if (!answerLocked) {
           map.addListener("click", (event) => {
+            if (!canEditAnswerRef.current) return;
             const lat = event.latLng?.lat();
             const lon = event.latLng?.lng();
             if (typeof lat === "number" && typeof lon === "number") {
@@ -346,13 +371,19 @@ export function SlowGeoPlay({
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7c2430]">Ditt svar</p>
               <h2 className="font-display mt-1 text-2xl font-semibold text-[#062b40]">
-                {answerLocked ? "Pin-svaret er låst" : "Sett pinnen"}
+                {answerLocked ? "Pin-svaret er låst" : answerUnavailableText ? "Pin-vinduet er stengt" : "Sett pinnen"}
               </h2>
             </div>
             <p className="rounded border border-[#d8ded0] bg-white px-3 py-2 text-sm font-semibold text-[#203c62]">
               Frist {deadlineAt ? dateTimeLabel(deadlineAt) : "ikke satt"}
             </p>
           </div>
+          {answerUnavailableText ? (
+            <p className="flex items-start gap-2 rounded border border-[#8e3030]/25 bg-[#8e3030]/8 px-3 py-2 text-sm font-semibold leading-6 text-[#8e3030]">
+              <LockKeyhole className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+              {answerUnavailableText}
+            </p>
+          ) : null}
 
           {hasMap ? (
             <>
@@ -423,9 +454,9 @@ export function SlowGeoPlay({
                       <button
                         type="button"
                         onClick={clearGuess}
-                        disabled={!guess || answerLocked}
-                        className="inline-flex h-11 items-center justify-center rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62] disabled:cursor-not-allowed disabled:opacity-55"
-                      >
+                      disabled={!guess || !canEditAnswer}
+                      className="inline-flex h-11 items-center justify-center rounded border border-[#d8ded0] bg-white px-3 text-sm font-semibold text-[#203c62] disabled:cursor-not-allowed disabled:opacity-55"
+                    >
                         Nullstill
                       </button>
                       {answerLocked ? (
@@ -435,7 +466,7 @@ export function SlowGeoPlay({
                         </span>
                       ) : (
                         <PendingSubmitButton
-                          disabled={!guess}
+                          disabled={!guess || !canEditAnswer}
                           className="col-span-2 inline-flex h-11 items-center justify-center gap-2 rounded bg-[#285c45] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#214b38] disabled:cursor-not-allowed disabled:opacity-55 sm:col-span-1"
                         >
                           <Send className="h-4 w-4" aria-hidden="true" />
@@ -468,7 +499,7 @@ export function SlowGeoPlay({
                   step="0.000001"
                   value={guess?.lat ?? ""}
                   onChange={(event) => updateGuess(Number(event.target.value), guess?.lon ?? 0)}
-                  disabled={answerLocked}
+                  disabled={!canEditAnswer}
                   className="h-10 w-full rounded border border-[#d8ded0] px-2 outline-none focus:border-[#203c62]"
                 />
               </label>
@@ -480,7 +511,7 @@ export function SlowGeoPlay({
                   step="0.000001"
                   value={guess?.lon ?? ""}
                   onChange={(event) => updateGuess(guess?.lat ?? 0, Number(event.target.value))}
-                  disabled={answerLocked}
+                  disabled={!canEditAnswer}
                   className="h-10 w-full rounded border border-[#d8ded0] px-2 outline-none focus:border-[#203c62]"
                 />
               </label>
@@ -503,7 +534,7 @@ export function SlowGeoPlay({
               name="guess_note"
               maxLength={280}
               defaultValue={existingNote ?? ""}
-              disabled={answerLocked}
+              disabled={!canEditAnswer}
               placeholder="Valgfritt: skriv hva du så, trodde eller overbeviste deg selv om."
               className="mt-2 min-h-24 w-full resize-none rounded border border-[#d8ded0] bg-[#f7f8f5] px-3 py-2 text-sm leading-6 text-[#273125] outline-none focus:border-[#203c62] disabled:bg-[#eef1eb]"
             />
@@ -518,7 +549,7 @@ export function SlowGeoPlay({
               <span>
                 {guess
                   ? `${guess.lat.toFixed(5)}, ${guess.lon.toFixed(5)}${existingGuess?.updatedAt ? ` · låst ${dateTimeLabel(existingGuess.updatedAt)}` : ""}`
-                  : "Ingen pin satt ennå."}
+                  : answerUnavailableText || "Ingen pin satt ennå."}
               </span>
             </p>
             {answerLocked ? (
@@ -528,7 +559,7 @@ export function SlowGeoPlay({
               </span>
             ) : (
               <PendingSubmitButton
-                disabled={!guess}
+                disabled={!guess || !canEditAnswer}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded bg-[#285c45] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#214b38] disabled:cursor-not-allowed disabled:opacity-55"
               >
                 <Send className="h-4 w-4" aria-hidden="true" />

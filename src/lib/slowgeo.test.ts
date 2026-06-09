@@ -8,6 +8,7 @@ import {
   filterSlowGeoRoundsForEra,
   finalizeSlowGeoRound,
   getSlowGeoEraId,
+  getSlowGeoGuessWindowState,
   hasMinimumSlowGeoRevealGuesses,
   isRoundPastDeadline,
   MIN_SLOWGEO_REVEAL_GUESSES,
@@ -85,7 +86,7 @@ describe("SlowGeo reveal rules", () => {
     };
   }
 
-  it("requires four pin answers before a deadline can reveal the round", () => {
+  it("reveals official SlowGeo at the deadline and only scores rounds with four pin answers", () => {
     const round = openRound();
     const threeAnswerRound = openRound({
       results: emptyResults(competingPlayers).map((result, index) =>
@@ -103,9 +104,56 @@ describe("SlowGeo reveal rules", () => {
     expect(allPlayersHaveSlowGeoGuesses(round, players)).toBe(false);
     expect(countSlowGeoGuesses(threeAnswerRound)).toBe(3);
     expect(hasMinimumSlowGeoRevealGuesses(threeAnswerRound)).toBe(false);
-    expect(shouldRevealSlowGeoRound(threeAnswerRound, players, new Date("2026-05-16T12:01:00.000Z"))).toBe(false);
+    expect(shouldRevealSlowGeoRound(threeAnswerRound, players, new Date("2026-05-16T12:01:00.000Z"))).toBe(true);
     expect(hasMinimumSlowGeoRevealGuesses(fourAnswerRound)).toBe(true);
     expect(shouldRevealSlowGeoRound(fourAnswerRound, players, new Date("2026-05-16T12:01:00.000Z"))).toBe(true);
+    expect(filterScoreBearingRounds([finalizeSlowGeoRound(threeAnswerRound, players)])).toEqual([]);
+    expect(filterScoreBearingRounds([finalizeSlowGeoRound(fourAnswerRound, players)]).map((candidate) => candidate.id)).toEqual([
+      "round-1",
+    ]);
+  });
+
+  it("opens official SlowGeo pins only during legal Oslo play time before the deadline", () => {
+    const round = openRound({
+      deadlineAt: osloWallTimeToDate(2026, 6, 9, 8, 0).toISOString(),
+    });
+
+    expect(getSlowGeoGuessWindowState(round, osloWallTimeToDate(2026, 6, 8, 6, 59))).toMatchObject({
+      canSubmit: false,
+      reason: "night",
+    });
+    expect(getSlowGeoGuessWindowState(round, osloWallTimeToDate(2026, 6, 8, 7, 0))).toMatchObject({
+      canSubmit: true,
+      reason: "open",
+    });
+    expect(getSlowGeoGuessWindowState(round, osloWallTimeToDate(2026, 6, 8, 22, 59))).toMatchObject({
+      canSubmit: true,
+      reason: "open",
+    });
+    expect(getSlowGeoGuessWindowState(round, osloWallTimeToDate(2026, 6, 8, 23, 0))).toMatchObject({
+      canSubmit: false,
+      reason: "night",
+    });
+    expect(getSlowGeoGuessWindowState(round, osloWallTimeToDate(2026, 6, 9, 8, 0))).toMatchObject({
+      canSubmit: false,
+      reason: "deadline",
+    });
+  });
+
+  it("keeps BohemGeo pins open at night until the absolute deadline", () => {
+    const bohemRound = openRound({
+      slowGeoVariant: "bohemgeo",
+      deadlineAt: osloWallTimeToDate(2026, 6, 9, 8, 0).toISOString(),
+    });
+
+    expect(getSlowGeoGuessWindowState(bohemRound, osloWallTimeToDate(2026, 6, 8, 23, 30))).toMatchObject({
+      canSubmit: true,
+      reason: "open",
+    });
+    expect(getSlowGeoGuessWindowState(bohemRound, osloWallTimeToDate(2026, 6, 9, 8, 0))).toMatchObject({
+      canSubmit: false,
+      reason: "deadline",
+    });
   });
 
   it("reveals immediately when every competing geot has pinned", () => {
@@ -199,14 +247,14 @@ describe("SlowGeo reveal rules", () => {
     const legacyEraRound = finalizeSlowGeoRound(
       openRound({
         id: "legacy-era",
-        results: emptyResults(competingPlayers).map((result) =>
-          result.playerId === "alf"
+        results: emptyResults(competingPlayers).map((result, index) =>
+          index < MIN_SLOWGEO_REVEAL_GUESSES
             ? {
                 ...result,
                 guessLocation: {
-                  lat: answerLocation.lat,
+                  lat: answerLocation.lat + index * 0.01,
                   lon: answerLocation.lon,
-                  label: "Blink",
+                  label: `Blink ${index}`,
                   query: "pin",
                   source: "manual",
                 },
@@ -276,14 +324,14 @@ describe("SlowGeo reveal rules", () => {
     const officialRound = finalizeSlowGeoRound(
       openRound({
         id: "official-standing",
-        results: emptyResults(competingPlayers).map((result) =>
-          result.playerId === "alf"
+        results: emptyResults(competingPlayers).map((result, index) =>
+          index < MIN_SLOWGEO_REVEAL_GUESSES
             ? {
                 ...result,
                 guessLocation: {
-                  lat: answerLocation.lat,
+                  lat: answerLocation.lat + index * 0.01,
                   lon: answerLocation.lon,
-                  label: "Offisiell blink",
+                  label: `Offisiell blink ${index}`,
                   query: "pin",
                   source: "manual",
                 },
