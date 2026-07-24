@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { cache } from "react";
 
 import { recordAppliedSchemaMigrations } from "@/lib/data/migrations";
+import { withDataMutationLock } from "@/lib/data/mutation-lock";
 import {
   safeParseFileStatePayload,
   parseGameResultsPayload,
@@ -349,7 +350,9 @@ let sqlClient: SqlClient | null | undefined;
 let schemaReadyPromise: Promise<SqlClient | null> | null = null;
 let fileWriteQueue: Promise<void> = Promise.resolve();
 let fileBackupSlowGeoUsedChallengeCache: SlowGeoUsedChallenge[] | null = null;
-let interactiveMaintenancePromise: Promise<void> | null = null;
+type ScheduledMaintenanceResult = Awaited<ReturnType<typeof runScheduledMaintenance>>;
+
+let interactiveMaintenancePromise: Promise<ScheduledMaintenanceResult> | null = null;
 let lastInteractiveMaintenanceAt = 0;
 
 const INTERACTIVE_MAINTENANCE_INTERVAL_MS = 5 * 60 * 1000;
@@ -2934,16 +2937,17 @@ export async function runScheduledMaintenance(now = new Date()) {
   };
 }
 
-async function runInteractiveMaintenance() {
-  if (!usesPostgresStorage()) return;
+export async function runInteractiveMaintenance(): Promise<ScheduledMaintenanceResult | null> {
+  if (!usesPostgresStorage()) return null;
 
   const now = Date.now();
   if (interactiveMaintenancePromise) return interactiveMaintenancePromise;
-  if (now - lastInteractiveMaintenanceAt < INTERACTIVE_MAINTENANCE_INTERVAL_MS) return;
+  if (now - lastInteractiveMaintenanceAt < INTERACTIVE_MAINTENANCE_INTERVAL_MS) return null;
 
-  interactiveMaintenancePromise = runScheduledMaintenance()
-    .then(() => {
+  interactiveMaintenancePromise = withDataMutationLock("interactive-maintenance", () => runScheduledMaintenance())
+    .then((result) => {
       lastInteractiveMaintenanceAt = Date.now();
+      return result;
     })
     .finally(() => {
       interactiveMaintenancePromise = null;

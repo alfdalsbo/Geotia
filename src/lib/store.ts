@@ -20,6 +20,7 @@ export {
 
 export {
   addGeoterIndexAdjustment,
+  runInteractiveMaintenance,
   runScheduledMaintenance,
   syncGeoticOrderPromotionCases,
   upsertGeoticOrderAssessment,

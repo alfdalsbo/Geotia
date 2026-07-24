@@ -3,6 +3,7 @@ import { DoorOpen } from "lucide-react";
 
 import { logoutAction } from "@/app/actions";
 import { GlobalSignalBar } from "@/components/global-signal-bar";
+import { MaintenanceHeartbeat } from "@/components/maintenance-heartbeat";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { RiksCompass } from "@/components/riks-compass";
 import { RiksNav } from "@/components/ui/riks-nav";
@@ -20,6 +21,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="geotia-civic-bg min-h-screen text-[#161713]">
+      <MaintenanceHeartbeat />
       <header className="geo-rikshead">
         <div className="rikshead-inner">
           <div className="rikshead-identity">

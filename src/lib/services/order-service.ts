@@ -1,5 +1,6 @@
 import {
   addGeoterIndexAdjustment as addGeoterIndexAdjustmentCore,
+  runInteractiveMaintenance as runInteractiveMaintenanceCore,
   runScheduledMaintenance as runScheduledMaintenanceCore,
   syncGeoticOrderPromotionCases as syncGeoticOrderPromotionCasesCore,
   upsertGeoticOrderAssessment as upsertGeoticOrderAssessmentCore,
@@ -25,4 +26,8 @@ export function voteGeoticOrderPromotionCase(...args: Parameters<typeof voteGeot
 
 export function runScheduledMaintenance(...args: Parameters<typeof runScheduledMaintenanceCore>) {
   return withDataMutationLock("scheduled-maintenance", () => runScheduledMaintenanceCore(...args));
+}
+
+export function runInteractiveMaintenance(...args: Parameters<typeof runInteractiveMaintenanceCore>) {
+  return runInteractiveMaintenanceCore(...args);
 }
