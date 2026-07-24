@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/slowgeo-reveal",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 * * * *"
     }
   ]
 }

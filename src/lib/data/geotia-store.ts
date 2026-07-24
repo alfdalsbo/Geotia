@@ -349,6 +349,10 @@ let sqlClient: SqlClient | null | undefined;
 let schemaReadyPromise: Promise<SqlClient | null> | null = null;
 let fileWriteQueue: Promise<void> = Promise.resolve();
 let fileBackupSlowGeoUsedChallengeCache: SlowGeoUsedChallenge[] | null = null;
+let interactiveMaintenancePromise: Promise<void> | null = null;
+let lastInteractiveMaintenanceAt = 0;
+
+const INTERACTIVE_MAINTENANCE_INTERVAL_MS = 5 * 60 * 1000;
 
 function productionRequiresDatabaseUrl() {
   return Boolean(process.env.VERCEL && process.env.GEOTIA_FORCE_FILE_STORAGE !== "1" && !process.env.DATABASE_URL);
@@ -2140,6 +2144,8 @@ export const getActiveSlowGeoRounds = cache(async function getActiveSlowGeoRound
 });
 
 export const getAppShellState = cache(async function getAppShellState() {
+  await runInteractiveMaintenance();
+
   const sql = await getSql();
   if (!sql) {
     const state = await readFileState();
@@ -2926,6 +2932,24 @@ export async function runScheduledMaintenance(now = new Date()) {
     slowGeo,
     geoticOrderPromotionCases: geoticOrderPromotionCases.length,
   };
+}
+
+async function runInteractiveMaintenance() {
+  if (!usesPostgresStorage()) return;
+
+  const now = Date.now();
+  if (interactiveMaintenancePromise) return interactiveMaintenancePromise;
+  if (now - lastInteractiveMaintenanceAt < INTERACTIVE_MAINTENANCE_INTERVAL_MS) return;
+
+  interactiveMaintenancePromise = runScheduledMaintenance()
+    .then(() => {
+      lastInteractiveMaintenanceAt = Date.now();
+    })
+    .finally(() => {
+      interactiveMaintenancePromise = null;
+    });
+
+  return interactiveMaintenancePromise;
 }
 
 export async function upsertGameSession(input: GameSessionInput) {
