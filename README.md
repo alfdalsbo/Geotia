@@ -1,16 +1,36 @@
 # Geotia
 
-Privat Vercel-app for SlowGeo, kattometeret, GeoTinget og Geotias riksarkiv.
+Vercel-app for SlowGeo, kattometeret, GeoTinget og Geotias riksarkiv.
 Geoversitetet finnes som lukket appflate på `/geoversitetet`; i første fase er
 den bare synlig for Tredje Kollegium.
 
 ## Samarbeid
 
-`geotia-web` på branchen `geo-design-v2` er offisiell arbeidsbase. Del arbeid
-via GitHub-klone og egne branches, ikke ved å kopiere hele lokale mapper med
-`.git`, `node_modules`, `.next`, `.vercel`, `.data` eller `.env.local`.
+`main` er kanonisk felles base og representerer den nyeste produksjonsnære
+tilstanden. Nye branches skal normalt opprettes fra oppdatert `main`.
+
+Den eldre grenen `geo-design-v2` er bevart som historisk/alternativ utviklingsgren,
+men er ikke lenger standard arbeidsbase. Den skal ikke flettes eller slettes
+automatisk; dersom unik kode der senere skal gjenbrukes, vurderes den eksplisitt
+mot dagens `main`.
+
+Del arbeid via GitHub-klone og egne branches, ikke ved å kopiere hele lokale
+mapper med `.git`, `node_modules`, `.next`, `.vercel`, `.data` eller `.env.local`.
 `geotia-web-f7-clean` i foreldremappen er kun lokal referanse/worktree, ikke
 stedet nye endringer skal implementeres.
+
+### `_lokalt/`
+
+Navnet er historisk. `_lokalt/` i dette repoet er **versjonsstyrt**, men holdes
+utenfor Vercel-publisering når `.vercelignore` sier det. Det brukes til
+prototype-/arbeidsarkiv som det er nyttig å bevare i Git-historikken, blant annet
+Geoversitetet. Det skal derfor ikke behandles som maskinlokalt eller ucommittet
+scratchområde.
+
+Ekte maskinlokale filer er blant annet `.env.local`, `.data/`, `.vercel/`,
+`.next/`, `node_modules/`, testartefakter og editorcacher. Nye ting som absolutt
+ikke skal inn i Git, skal ligge i ignorert lokal plassering, ikke i den
+versjonsstyrte `_lokalt/`-mappen.
 
 Se `AGENTS.md` for felles regler for Codex og Claude Code, og `CONTRIBUTING.md`
 for menneskelig arbeidsflyt.
