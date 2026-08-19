@@ -34,9 +34,17 @@ For GitHub, CI, Vercel or release work, read the latest `alfdalsbo/arbeidssystem
 
 1. **No deploy** for proven non-runtime work.
 2. **Atomic one-shot publish** for one small coherent low-risk change: gather all affected files first, validate them together, then make one commit/push/publish round.
-3. **Iterative branch/draft PR** for expected iteration or broad/risky work: local/agent verification and Vercel Preview while iterating, final external CI only when the PR is ready, then merge and Production + smoke.
+3. **Iterative branch/draft PR** for expected iteration or broad/risky work: local/agent verification while iterating, one finished Preview candidate, final external gate when relevant, then integration to `main`, Production + smoke.
 
-Do not split one logical connector-driven change into multiple `main` pushes. Direct manual Vercel production deploy is not the normal source flow. Database/auth/security or irreversible work follows stricter local gates.
+Do not split one logical connector-driven change into multiple `main` pushes. Direct manual production deploy is not the normal source flow when a Git-integrated release path is available. Database/auth/security or irreversible work follows stricter local gates.
+
+### Geotia Vercel transport
+
+Do not assume automatic Vercel Git Preview exists merely because the project is on Vercel. Verify the live integration before relying on it. The rollout check on 19 August 2026 produced no automatic branch Preview for `agent/app-release-standard`, so Git-triggered Preview is currently **not confirmed**.
+
+- If a branch push creates a Vercel Preview, use the normal Git-integrated Preview → merge → Production flow.
+- If no automatic Preview appears, do **not** make extra pushes to trigger Vercel. Finish and verify the branch locally/with the agent, then create at most one explicit Preview/deployment through the configured Vercel tooling (typically Codex/local CLI when needed), integrate the verified change to `main`, then create/verify Production once.
+- Recheck this status when Geotia is next resumed for substantive development; if Git integration is restored, remove the fallback in practice without needing a new global rule.
 
 ## Implementation
 
@@ -50,6 +58,6 @@ Do not split one logical connector-driven change into multiple `main` pushes. Di
 - For UI changes, also run `npm run verify:e2e` or a focused Playwright/browser check that covers the changed flow.
 - `npm run finish` and `npm run ship` are manual Windows helper scripts. Do not run them unless the user explicitly asks for that workflow.
 - Commit and push when the task requires a persistent GitHub change. Broad/risky or iterative changes should use a feature branch and normally a draft PR rather than rewriting `main` blindly.
-- Vercel Git integration owns Preview from branch/PR and Production from `main`; never assume either is complete without checking actual Vercel state.
-- Pure docs, `.github` and `_lokalt/` changes may be skipped by Vercel through the fail-safe `ignoreCommand`; runtime-affecting files must still build.
+- Never assume Preview or Production is complete without checking actual Vercel state.
+- Pure docs, `.github` and `_lokalt/` changes may be skipped by Vercel through the fail-safe `ignoreCommand` when Git-integrated builds are active; runtime-affecting files must still build.
 - In the final handoff, always list changed files, checks run with outcomes, and any open risks or skipped verification.
