@@ -9,6 +9,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 These rules are shared by Codex, Claude Code, and any other coding agent. `CLAUDE.md`
 intentionally points here; keep `AGENTS.md` as the canonical agent contract.
 
+## Systemkobling
+
+- Geotia er et fritidsprodukt, ikke et eget person- eller kunnskapsdomene. Repoet eier kode, spilldata, produktlogikk, design og release.
+- Ikke utled harde personlighetspåstander fra spilldata, vennemønstre eller produktvalg alene.
+- Dersom Alf Kåre eksplisitt avklarer en stabil interesse, arbeidsform eller preferanse med tydelig verdi utover Geotia, kan den promoteres til `alfdalsbo/personlig`; avledede/usikre funn går til personrepoets `context/PROFILKANDIDATER.md`.
+- Generaliserbar app-, agent-, spillprodukt- eller leveranselæring vurderes mot `alfdalsbo/arbeidssystem`. Ikke opprett lokal personprofil eller ekstra kontekstarkitektur bare for symmetri.
+
 ## Workspace
 
 - Work from this repository root. If you are opened in the parent folder, the active app workspace is `geotia-web`.
