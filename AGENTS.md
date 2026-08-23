@@ -32,7 +32,8 @@ intentionally points here; keep `AGENTS.md` as the canonical agent contract.
 - Never revert, overwrite, or reformat unrelated changes that you did not make.
 - Keep genuinely machine-local files local: `.env.local`, `.data/`, `.vercel/`, `.next/`, `node_modules/`, test artifacts, and editor caches.
 - `_lokalt/` is different: despite the name it is version-controlled, non-deployed prototype/archive content. Preserve it in Git when it is part of the intended archive; do not use it as a generic ignored scratch directory.
-- Publish shareable changes to Vercel by default. Use a preview deployment for feature/WIP branches and production only through the configured production flow or an explicit recovery request.
+- Push shareable work to GitHub by default. A Git commit is not a deployment request. Vercel is used only when a defined product/runtime input changes or a finished candidate genuinely needs browser/runtime verification.
+- Never create a Vercel deployment, Preview or Production release merely as a heartbeat, checkpoint, queue receipt, documentation update or proof that an agent is active.
 - Work that must not enter Git belongs in a genuinely ignored local path or an unpushed local branch, not automatically under `_lokalt/`.
 
 ## Global app release gate
@@ -41,17 +42,20 @@ For GitHub, CI, Vercel or release work, read the latest `alfdalsbo/arbeidssystem
 
 1. **No deploy** for proven non-runtime work.
 2. **Atomic one-shot publish** for one small coherent low-risk change: gather all affected files first, validate them together, then make one commit/push/publish round.
-3. **Iterative branch/draft PR** for expected iteration or broad/risky work: local/agent verification while iterating, one finished Preview candidate, final external gate when relevant, then integration to `main`, Production + smoke.
+3. **Iterative branch/draft PR** for expected iteration or broad/risky work: local/agent verification while iterating, one finished Preview candidate only when it adds real browser/runtime signal, final external gate when relevant, then integration to `main`, Production + smoke.
 
 Do not split one logical connector-driven change into multiple `main` pushes. Direct manual production deploy is not the normal source flow when a Git-integrated release path is available. Database/auth/security or irreversible work follows stricter local gates.
 
 ### Geotia Vercel transport
 
-Do not assume automatic Vercel Git Preview exists merely because the project is on Vercel. Verify the live integration before relying on it. The rollout check on 19 August 2026 produced no automatic branch Preview for `agent/app-release-standard`, so Git-triggered Preview is currently **not confirmed**.
+Geotia deliberately separates GitHub work from Vercel publication.
 
-- If a branch push creates a Vercel Preview, use the normal Git-integrated Preview → merge → Production flow.
-- If no automatic Preview appears, do **not** make extra pushes to trigger Vercel. Finish and verify the branch locally/with the agent, then create at most one explicit Preview/deployment through the configured Vercel tooling (typically Codex/local CLI when needed), integrate the verified change to `main`, then create/verify Production once.
-- Recheck this status when Geotia is next resumed for substantive development; if Git integration is restored, remove the fallback in practice without needing a new global rule.
+- High-frequency work branches such as `codex/**`, `chatgpt/**`, `agent/**`, `research/**`, `docs/**` and related internal branch families are deploy-silent through `vercel.json`.
+- Do not try extra pushes when a branch does not create Preview; lack of Preview is normally intentional.
+- `scripts/vercel-ignore-build.mjs` owns the positive product boundary for `main`: `src/**`, `public/**`, `content/**` and relevant framework/package/Vercel configuration can trigger a build; docs, `_lokalt/`, GitHub workflows and operational helper scripts do not build by themselves.
+- If a finished feature actually needs Preview/browser/runtime verification, create at most one explicit candidate through the configured Vercel tooling. Do not use Vercel as the inner development loop.
+- Production should follow integration of a verified product change to `main`, or an explicit recovery request. Never run `vercel --prod` or equivalent for non-product/checkpoint work.
+- If a new file outside the current boundary becomes a real build/runtime input, update `scripts/vercel-ignore-build.mjs` and its regression test in the same change.
 
 ## Implementation
 
@@ -61,10 +65,10 @@ Do not assume automatic Vercel Git Preview exists merely because the project is 
 
 ## Verification And Handoff
 
-- For code changes, run `npm run verify` when feasible. It covers lint, TypeScript, unit tests, and production build.
+- For code changes, run `npm run verify` when feasible. It covers lint, TypeScript, unit tests, the Vercel-routing regression test and production build.
 - For UI changes, also run `npm run verify:e2e` or a focused Playwright/browser check that covers the changed flow.
 - `npm run finish` and `npm run ship` are manual Windows helper scripts. Do not run them unless the user explicitly asks for that workflow.
 - Commit and push when the task requires a persistent GitHub change. Broad/risky or iterative changes should use a feature branch and normally a draft PR rather than rewriting `main` blindly.
-- Never assume Preview or Production is complete without checking actual Vercel state.
-- Pure docs, `.github` and `_lokalt/` changes may be skipped by Vercel through the fail-safe `ignoreCommand` when Git-integrated builds are active; runtime-affecting files must still build.
+- Never assume Preview or Production is complete without checking actual Vercel state when a deployment was genuinely required.
+- Non-product work that passes the product-boundary test is complete when GitHub state and relevant checks are correct; it must not wait for Vercel.
 - In the final handoff, always list changed files, checks run with outcomes, and any open risks or skipped verification.
